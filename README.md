@@ -13,7 +13,7 @@ tables into a FAIRe workbook. The Galaxy eDNA Lab is at edna.dev.gvl.org.au.
 | `tools/faire2ena` | FAIRe2ENA: samples; FAIRe2ENA: experiments and runs | [FAIR-eDNA/FAIRe2ENA](https://github.com/FAIR-eDNA/FAIRe2ENA) | Lint clean; 10/10 tests pass; runs can be chosen by assay or sequencing run, and a library holding several assays gets one run; needs ENA test-server trial |
 | `tools/faire2ncbi` | FAIRe2NCBI: BioSample; FAIRe2NCBI: SRA | [aomlomics/FAIRe2NCBI](https://github.com/aomlomics/FAIRe2NCBI) | Lint clean; 17/17 tests pass; a library holding several assays gets one SRA row; needs a trial in the NCBI Submission Portal |
 | `tools/faire2qiime` | FAIRe2QIIME | [aomlomics/faire2qiime](https://github.com/aomlomics/faire2qiime) | Lint clean; 4/4 tests pass; needs trial with a FAIRe-ator workbook and QIIME 2 |
-| `tools/faire2mdt` | FAIRe2MDT | [FAIR-eDNA/FAIRe2MDT](https://github.com/FAIR-eDNA/FAIRe2MDT) | Lint clean; 6/6 tests pass; leaves out control samples, as GBIF asks; ran on 11 assay and run combinations of the FAIRe examples; MDT trial reached an archive GBIF can index; licence (CC BY-SA 4.0) not yet in the repository |
+| `tools/faire2mdt` | FAIRe2MDT | [FAIR-eDNA/FAIRe2MDT](https://github.com/FAIR-eDNA/FAIRe2MDT) | Lint clean; 6/6 tests pass; leaves out control samples, as GBIF asks; ran on 11 assay and run combinations of the FAIRe examples; MDT trial reached an archive GBIF can index; CC BY 4.0 licence copied in (`LICENSE.upstream`) |
 | `tools/edna2obis` | edna2obis: match taxa; edna2obis: build Darwin Core tables | [aomlomics/edna2obis](https://github.com/aomlomics/edna2obis) | Lint clean; all 11 tests pass on GitHub with internet access (Galaxy 26.1, 6 November 2026), and the 9 build tests also offline here; needs a trial on Galaxy Australia and an IPT |
 | `tools/faire_mapper` | FAIRe mapper: identify your files (says what each file is and where it goes); profile columns; propose mapping; find primers; build primer table; apply mapping (writes a FAIRe workbook); ask a language model (optional answers for the columns to review) (plus a model script for methods text) | New code, from the project's `faire_mapper` prototype; bundled primer table from Takahashi et al. 2023 and a bacteria and archaea register | Lint clean; 49/49 tests pass (Galaxy 26.1); benchmarked, tried on four Dryad datasets, two Australian datasets, the SEA-MES record (16S, COI, 18S and Wilderlab) and nine FAIRe examples; model step not yet run against the API |
 
@@ -95,15 +95,15 @@ replace functions inside the upstream code while it runs; their READMEs say whic
   licence. The repository's own `LICENSE` (MIT, added by Miwa Takahashi on 11 November 2026) names
   CSIRO; the `LICENSE` in each tool folder and the workflows' creator still read "FAIRe Galaxy
   project contributors".
-- **Upstream licences** (as given by the authors, 4 and 6 November 2026; the FAIRe-ator and FAIRe
-  checklist licence files were added on 11 November 2026):
+- **Upstream licences** (as given by the authors, 4 and 6 November 2026; the FAIRe-ator, FAIRe
+  checklist and FAIRe2MDT licence files were added on 11 November 2026):
 
   | Upstream | Licence | Licence file in the repository |
   |---|---|---|
   | FAIRe-ator | CC BY 4.0 | Yes |
   | FAIReSheets (not wrapped) | MIT | Yes (added 9 November 2026) |
   | FAIRe-fier | BSD 3-Clause | Yes |
-  | FAIRe2MDT | CC BY-SA 4.0 | Not yet |
+  | FAIRe2MDT | CC BY 4.0 | Yes |
   | edna2obis | MIT | Yes |
   | FAIRe2NCBI | CC0 1.0 | Yes |
   | FAIRe2ENA | MIT | Yes |
@@ -111,10 +111,8 @@ replace functions inside the upstream code while it runs; their READMEs say whic
   | FAIRe checklist (bundled with FAIRe-ator, FAIRe-fier and the FAIRe mapper) | CC BY 4.0 | Yes |
 
   `LICENSE.upstream` is copied in once each repository carries its licence file, and the FAIRe
-  checklist's licence is in `checklist/LICENSE` in each folder that bundles it. FAIRe2MDT's
-  CC BY-SA 4.0 asks that adaptations carry the same licence: `FAIRe2MDT.R` is bundled unchanged,
-  with its licence and credit to its authors. The Galaxy driver changes one of its functions at run
-  time, which is a grey area; it stays MIT (decided 6 November 2026; see `tools/faire2mdt/README.md`).
+  checklist's licence is in `checklist/LICENSE` in each folder that bundles it. FAIRe2MDT was
+  first given as CC BY-SA 4.0; its licence file, added on 11 November 2026, is CC BY 4.0.
 - **Primer table** (3 November 2026). The Takahashi et al. 2023 primer tables and the Wilderlab
   assay list are confirmed for inclusion with the FAIRe mapper tools.
 - **GitHub home** (3 and 11 November 2026). The repository is
@@ -137,8 +135,8 @@ inputs) are the texts the tools show in Galaxy, for reuse on the Galaxy eDNA Lab
 data to ENA from inside Galaxy.
 
 1. Agree with the upstream authors that the wrappers can be published, and report the issues listed
-   in each README. Ask for tagged releases, and a licence file in the FAIRe2MDT repository
-   (FAIRe-ator and the FAIRe checklist added theirs on 11 November 2026).
+   in each README, and ask for tagged releases. (All the upstream repositories now have licence
+   files: FAIRe-ator, the FAIRe checklist and FAIRe2MDT added theirs on 11 November 2026.)
 2. Choose a ToolShed owner account (the GitHub home is FAIR-eDNA/FAIRe-Galaxy). Fill in `owner`
    in each `.shed.yml`, and add maintainers to each `<creator>` block.
 3. Continuous integration (done, `.github/workflows/pr.yaml`). The IUC's planemo-ci GitHub Actions workflow runs lint and tests on

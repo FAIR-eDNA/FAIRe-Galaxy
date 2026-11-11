@@ -9,8 +9,9 @@ sequencing run into the Excel workbook taken by GBIF's
 | FAIRe metadata workbook (.xlsx), assay name, sequencing run ID, OTU table (otuFinal) and taxonomy table (taxaFinal) as Excel sheets, TSV or CSV | MDT workbook (sheets Study, Samples, Taxonomy, OTU_table), log |
 
 Upstream: [FAIR-eDNA/FAIRe2MDT](https://github.com/FAIR-eDNA/FAIRe2MDT) at commit `13d1fcc`
-(script version 1.1.0, 16 Jul 2025, the latest on `main` as of 3 Nov 2026). The authors have chosen
-CC BY-SA 4.0 (4 November 2026), but **the repository has no licence file yet** (see below).
+(script version 1.1.0, 16 Jul 2025, the latest on `main` as of 3 Nov 2026). CC BY 4.0: the licence
+file was added upstream on 11 November 2026 (`a1f83d0`, which changes nothing else) and is copied in
+here as `LICENSE.upstream`.
 
 ## Status
 
@@ -57,6 +58,7 @@ CC BY-SA 4.0 (4 November 2026), but **the repository has no licence file yet** (
 | `test-data/` | Made-up test data (see below) |
 | `faire_guide.xml` | The guide shown at the end of every FAIRe tool's help (`@HELP_FAIRE_GUIDE@`); a copy of `dev/faire_guide/faire_guide.xml`, updated by `dev/faire_guide/sync.py` |
 | `LICENSE` | MIT licence for the wrapper code in this folder (upstream files keep their own licence) |
+| `LICENSE.upstream` | FAIRe2MDT's CC BY 4.0 licence |
 | `.shed.yml` | ToolShed metadata (owner still to fill in) |
 
 ## How the wrapper works
@@ -139,14 +141,10 @@ long as it keeps that line and those table names.
 
 To the FAIRe2MDT authors (FAIR-eDNA):
 
-1. **No licence file.** The authors have chosen CC BY-SA 4.0 (4 November 2026); the ToolShed and
-   bioconda need the file in the repository. Once it is there, copy it here as `LICENSE.upstream`.
-   CC BY-SA asks that adaptations carry the same licence. `FAIRe2MDT.R` is bundled unchanged, with
-   its licence and credit to its authors. `faire2mdt_galaxy.R`, the Galaxy driver, runs it and
-   replaces `grepl` inside it at run time; whether that makes the driver an adaptation is a grey
-   area. Decided 6 November 2026: the driver stays MIT, like the other wrappers, as the stakes are
-   low, the community works by collaboration, and what matters is that the authors' work is
-   acknowledged.
+1. ~~**No licence file.**~~ Done 11 November 2026: the authors added a CC BY 4.0 licence file
+   (they had earlier given CC BY-SA 4.0), copied here as `LICENSE.upstream`. `FAIRe2MDT.R` is
+   bundled unchanged, with its licence and credit to its authors. `faire2mdt_galaxy.R`, the Galaxy
+   driver, runs it and replaces `grepl` inside it at run time; it is MIT, like the other wrappers.
 2. **Assay and run matched as part of the text** (wrapper item 1). In the test workbook, assay
    `MiFish` with run `run1` gives 7 Samples rows in place of 3: S1 and S2 twice (also
    from MiFish-E), and S3 twice from run10.
@@ -204,8 +202,8 @@ show whether the site has the FAIRe format, and what this tool still adds.
 
 ### Must do
 
-1. **Add the licence file upstream** (CC BY-SA 4.0, item 1 above), copy it here as
-   `LICENSE.upstream` (the driver stays MIT, decided 6 November 2026).
+1. ~~**Add the licence file upstream** and copy it here as `LICENSE.upstream`.~~ Done 11 November
+   2026 (CC BY 4.0). The driver is MIT.
 2. **Answer the GBIF questions from the MDT trial** (upstream items 8 and 9): the target_gene flag
    from the data validator, and whether MDT's own FAIRe upload makes this tool unnecessary. The
    trial itself is done: the NECR534 workbook went through MDT to an archive GBIF can index.
