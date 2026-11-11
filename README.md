@@ -11,14 +11,48 @@ tables into a FAIRe workbook. The Galaxy eDNA Lab is at edna.dev.gvl.org.au.
 | `tools/faireator` | FAIRe-ator | [FAIR-eDNA/FAIRe-ator](https://github.com/FAIR-eDNA/FAIRe-ator) | Lint clean; 3/3 tests pass; CC BY 4.0 licence copied in (`LICENSE.upstream`); templates open cleanly in Excel, LibreOffice and Google Sheets |
 | `tools/fairefier` | FAIRe-fier (with a new command-line version) | [csiro/FAIRe-fier](https://github.com/csiro/FAIRe-fier) | Lint clean; 6/6 tests pass; outputs identical to the web app; offer the command line upstream |
 | `tools/faire2ena` | FAIRe2ENA: samples; FAIRe2ENA: experiments and runs | [FAIR-eDNA/FAIRe2ENA](https://github.com/FAIR-eDNA/FAIRe2ENA) | Lint clean; 10/10 tests pass; runs can be chosen by assay or sequencing run, and a library holding several assays gets one run; needs ENA test-server trial |
-| `tools/faire2ncbi` | FAIRe2NCBI: BioSample; FAIRe2NCBI: SRA | [aomlomics/FAIRe2NCBI](https://github.com/aomlomics/FAIRe2NCBI) | Lint clean; 17/17 tests pass; a library holding several assays gets one SRA row; needs a trial in the NCBI Submission Portal |
-| `tools/faire2qiime` | FAIRe2QIIME | [aomlomics/faire2qiime](https://github.com/aomlomics/faire2qiime) | Lint clean; 4/4 tests pass; needs trial with a FAIRe-ator workbook and QIIME 2 |
+| `tools/faire2ncbi` | FAIRe2NCBI: BioSample; FAIRe2NCBI: SRA | [aomlomics/FAIRe2NCBI](https://github.com/aomlomics/FAIRe2NCBI) | Lint clean; 20/20 tests pass; a library holding several assays gets one SRA row; needs a trial in the NCBI Submission Portal |
+| `tools/faire2qiime` | FAIRe2QIIME | [aomlomics/faire2qiime](https://github.com/aomlomics/faire2qiime) | Lint clean; 7/7 tests pass; needs a trial importing its files into QIIME 2 |
 | `tools/faire2mdt` | FAIRe2MDT | [FAIR-eDNA/FAIRe2MDT](https://github.com/FAIR-eDNA/FAIRe2MDT) | Lint clean; 6/6 tests pass; leaves out control samples, as GBIF asks; ran on 11 assay and run combinations of the FAIRe examples; MDT trial reached an archive GBIF can index; CC BY 4.0 licence copied in (`LICENSE.upstream`) |
-| `tools/edna2obis` | edna2obis: match taxa; edna2obis: build Darwin Core tables | [aomlomics/edna2obis](https://github.com/aomlomics/edna2obis) | Lint clean; all 11 tests pass on GitHub with internet access (Galaxy 26.1, 6 November 2026), and the 9 build tests also offline here; needs a trial on Galaxy Australia and an IPT |
+| `tools/edna2obis` | edna2obis: match taxa; edna2obis: build Darwin Core tables | [aomlomics/edna2obis](https://github.com/aomlomics/edna2obis) | Lint clean; 14/14 tests pass (Galaxy 26.1, with internet access); one request at a time to WoRMS and GBIF by default, at most 4; needs a trial on Galaxy Australia and an IPT |
 | `tools/faire_mapper` | FAIRe mapper: identify your files (says what each file is and where it goes); profile columns; propose mapping; find primers; build primer table; apply mapping (writes a FAIRe workbook); ask a language model (optional answers for the columns to review) (plus a model script for methods text) | New code, from the project's `faire_mapper` prototype; bundled primer table from Takahashi et al. 2023 and a bacteria and archaea register | Lint clean; 49/49 tests pass (Galaxy 26.1); benchmarked, tried on four Dryad datasets, two Australian datasets, the SEA-MES record (16S, COI, 18S and Wilderlab) and nine FAIRe examples; model step not yet run against the API |
 
 Each tool directory has its own README with what the wrapper adds, upstream issues found, and the
 steps still needed before deployment.
+
+## Evaluating the tools
+
+Notes for Galaxy Australia and other evaluators.
+
+- **Where to start.** The table above lists the tools. Each tool folder's README says what the
+  wrapper adds, what was tested and what is still to do. `docs/faire_tools_guide.md` is the guide
+  shown at the end of every tool's help: where to start, the steps in order, and which tool serves
+  which repository.
+- **Installing.** Each folder under `tools/` is one ToolShed repository with its own tests
+  (`planemo test tools/FOLDER`). The tools are not on the ToolShed yet, as the owner account is still
+  to be chosen. Dependencies come from conda (conda-forge and bioconda) or containers. All 115 tool
+  tests pass on Galaxy release_26.1 in this repository's checks; the tools were also tested on
+  release_25.0. Tools use profile 23.0, except *FAIRe mapper: ask a language model* (25.1, for
+  Galaxy's credentials).
+- **Data to try.** Each tool's `test-data/` folder (all under 200 KB). For a fuller example,
+  `demo/seames` is a small copy of CSIRO's SEA-MES eDNA data record (CC BY 4.0), with the same
+  files and layouts: sample sheets, 16S, 18S and Wilderlab ASV tables, methods text and ENA's run
+  report. `DATA=demo/seames dev/faire_mapper_seames/run.sh OUTDIR` runs the FAIRe mapper, FAIRe-fier,
+  FAIRe2NCBI, FAIRe2ENA, FAIRe2QIIME and (with R) FAIRe2MDT on it in about a minute. The three
+  workflows in `workflows/faire/` chain the tools, each with its own tests.
+- **Network.** Only *edna2obis: match taxa* needs the internet, to look up names in WoRMS and GBIF.
+  It sends one request at a time by default, and at most 4.
+- **Language model (optional).** *FAIRe mapper: ask a language model* needs a model service: one
+  the server provides (set in the job rules) or the user's own key (Galaxy's credentials). Every
+  other tool, and every other mapper step, works without one. It has not yet been run against a
+  real model.
+- **No submission.** No tool submits anything to NCBI, ENA, GBIF or OBIS, and none takes
+  credentials. The tools write the files that users then submit themselves.
+- **Job size.** The test jobs are small. edna2obis and FAIRe2MDT have not yet been timed on large
+  OTU tables (thousands of sequences by hundreds of samples), which job rules may need.
+- **Still to do.** A trial submission on ENA's test server and in NCBI's Submission Portal,
+  importing FAIRe2QIIME's files into QIIME 2, and loading edna2obis's output into an IPT. Each
+  tool's README lists its remaining steps.
 
 ## Layout
 
@@ -163,7 +197,11 @@ python, pandas and openpyxl, plus pydantic for FAIRe-fier, pyyaml for FAIRe2NCBI
 pygbif for edna2obis) on the first run, which takes a while. Galaxy will not start as root, so run
 the tests as an ordinary user.
 
-Tests were last run together on 4 November 2026, after the shared guide was added, with planemo
+On 11 November 2026, this repository's GitHub checks passed all 115 tool tests in the eight tool
+folders (Galaxy `release_26.1`, tools in containers, with internet access). The earlier history
+follows.
+
+Tests were run together on 4 November 2026, after the shared guide was added, with planemo
 0.75.47 against Galaxy `release_25.0`, for all eight tool folders (15 tools) in one Galaxy: 69 of 71
 passed. The 2 that did not are edna2obis's taxon-matching tests, which need WoRMS and GBIF; this
 workspace cannot reach them, and both stopped with the tool's own message, as they should. Give the

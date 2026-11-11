@@ -173,7 +173,10 @@ Python warnings: Galaxy sets `PYTHONWARNINGS=ignore`. edna2obis reports through 
   the taxonomy string, no higherClassification, 3 GBIF candidates, GBIF selection by confidence.
   *Include non-marine taxa* is on the main form because Australian freshwater and estuarine data
   will need it.
-- **Parallel requests**: 4 by default (upstream uses up to 10, or all CPUs).
+- **Parallel requests**: 1 by default, at most 4 (upstream uses up to 10, or all CPUs). Galaxy
+  Australia advised (November 2026) that jobs on the same node share WoRMS's and GBIF's request
+  limits, and that going over a limit can make jobs fail. Retrying after a refused request would
+  help further; that is a change for upstream.
 - **Defaults for samples**: controls are rows with `samp_category` *negative control*, *positive
   control* or *PCR standard* (upstream's defaults, with PCR standard added on 6 November 2026, as
   FAIRe's three control categories); locationID from `line_id` and `station_id` (upstream's
