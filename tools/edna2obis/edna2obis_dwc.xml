@@ -1,0 +1,750 @@
+<tool id="edna2obis_dwc" name="edna2obis: build Darwin Core tables" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="@PROFILE@" license="MIT">
+    <description>for OBIS and GBIF from a FAIRe workbook and ASV tables</description>
+    <macros>
+        <import>macros.xml</import>
+        <import>faire_guide.xml</import>
+    </macros>
+    <expand macro="creator"/>
+    <expand macro="requirements"/>
+    <version_command>echo '@TOOL_VERSION@'</version_command>
+    <command detect_errors="exit_code"><![CDATA[
+set -o pipefail;
+python '$__tool_directory__/edna2obis_galaxy.py' build
+    --form '$form_json'
+    --outputs outputs
+    < /dev/null
+| tee '$log'
+    ]]></command>
+    <expand macro="form_json"/>
+    <inputs>
+        <param name="input_file" type="data" format="xlsx" label="FAIRe metadata workbook"
+            help="Excel workbook with projectMetadata, sampleMetadata and experimentRunMetadata sheets. Both the FAIRe layout (assay1, assay2 ... or project_level columns, as FAIRe-ator writes) and the FAIRe-NOAA layout (columns named by assay, optionally with analysisMetadata sheets) are accepted."/>
+        <param name="text_dates" type="select" label="Text dates in eventDate written day or month first (such as 7/6/19)"
+            help="FAIRe asks for eventDate in ISO 8601, year first (2019-06-07). Excel date cells and year-first text are always read correctly. Choose how to read dates such as 7/6/19, which are 7 June in Australia but 6 July in the USA.">
+            <option value="stop" selected="true">Stop and list them, so I can correct the workbook</option>
+            <option value="dmy">Read them day first, as in Australia (7/6/19 is 7 June 2019)</option>
+            <option value="mdy">Read them month first, as in the USA (7/6/19 is 6 July 2019)</option>
+        </param>
+        <param name="na_text" type="select" label="Text such as NA or N/A in the workbook"
+            help="FAIRe asks for the reason a value is missing, in its own terms. edna2obis passes text such as NA, N/A, null or #N/A on as written (into locationID, for example). The tool can replace it with one of FAIRe's missing-value terms, keep it, or stop and list the cells. Every replacement is listed in the log. 'None' is left as written, as it can be a real answer.">
+            <option value="not_provided" selected="true">Replace it with 'missing: not provided' (a value was not given)</option>
+            <option value="not_collected">Replace it with 'missing: not collected'</option>
+            <option value="not_applicable">Replace it with 'not applicable'</option>
+            <option value="restricted_access">Replace it with 'missing: restricted access'</option>
+            <option value="keep">Keep it as written, as edna2obis does</option>
+            <option value="stop">Stop and list the cells, so I can correct the workbook</option>
+        </param>
+        <repeat name="analyses" title="Assay tables" min="1" default="1">
+            <expand macro="assay_name"/>
+            <param name="run_name" type="text" value="" optional="true" label="Analysis run name"
+                help="Part of every occurrenceID, so keep it the same when you republish. Leave empty to use the assay name, or, for a workbook with analysisMetadata sheets, the analysis_run_name of the one sheet for this assay. Needed when one assay has several sets of tables.">
+                <sanitizer sanitize="false"/>
+                <validator type="regex" message="Use letters, digits, '.', '_' and '-' only">^[A-Za-z0-9._-]*$</validator>
+            </param>
+            <expand macro="taxonomy_table"/>
+            <param name="abundance" type="data" format="tabular,csv,xlsx" label="Abundance table (reads per ASV and library)"
+                help="Feature IDs in the first column and one column per sequencing library, headed by lib_id (or by samp_name when the sample has one run for this assay). Rows above the field names are skipped."/>
+            <expand macro="skip_species"/>
+        </repeat>
+        <conditional name="taxa">
+            <param name="source" type="select" label="Taxonomy for the Darwin Core tables">
+                <option value="mapping" selected="true">From a mapping table made by 'edna2obis: match taxa' (no internet needed)</option>
+                <option value="api">Look up names now in WoRMS or GBIF (needs internet)</option>
+            </param>
+            <when value="mapping">
+                <param name="mapping_file" type="data" format="tabular,csv,xlsx" label="Mapping table"
+                    help="The reviewed output of 'edna2obis: match taxa', or edna2obis's taxa_mapping_INFO file. The row with selected_match True is used for each name (and assay, if the table has an assay_name column). Every taxonomy string with reads must have one."/>
+            </when>
+            <when value="api">
+                <expand macro="api_conditional"/>
+            </when>
+        </conditional>
+        <section name="samples" title="Samples and locations" expanded="false">
+            <param name="control_column" type="text" value="samp_category" label="sampleMetadata field that marks control samples">
+                <sanitizer sanitize="false"/>
+                <validator type="regex" message="Enter one field name">^[A-Za-z0-9_]+$</validator>
+            </param>
+            <param name="control_values" type="text" value="negative control, positive control, PCR standard" optional="true" label="Values that mark a control sample"
+                help="Comma-separated. Control samples and their runs are left out of the Darwin Core tables. Leave empty to keep all samples.">
+                <sanitizer sanitize="false"/>
+                <validator type="regex" message="Enter values separated by commas, on one line">^[^\n\r\t]*$</validator>
+            </param>
+            <param name="location_fields" type="text" value="line_id, station_id" optional="true" label="sampleMetadata fields that make up locationID"
+                help="Comma-separated; their values are joined with '_'. A locationID field in sampleMetadata is used as it is. If these fields are missing, locationID stays empty.">
+                <sanitizer sanitize="false"/>
+                <validator type="regex" message="Enter field names separated by commas">^([A-Za-z0-9_]+( *, *[A-Za-z0-9_]+)*)?$</validator>
+            </param>
+        </section>
+        <param name="core_type" type="select" label="Darwin Core archive layout">
+            <option value="occurrence" selected="true">Occurrence core with DNA-derived data (and eMoF) extensions</option>
+            <option value="event">Event core (samples and libraries) with occurrence, DNA-derived data (and eMoF) extensions</option>
+        </param>
+        <conditional name="emof">
+            <param name="emof_select" type="select" label="Extended Measurement Or Fact (eMoF) extension"
+                help="Measurements such as temperature or salinity from sampleMetadata and experimentRunMetadata, one row per occurrence.">
+                <option value="default" selected="true">Use edna2obis's template</option>
+                <option value="custom">Use my template</option>
+                <option value="none">No eMoF</option>
+            </param>
+            <when value="default"/>
+            <when value="custom">
+                <param name="emof_template" type="data" format="tabular" label="eMoF template"
+                    help="Tab-separated, with the columns of edna2obis's raw-v3/eMoF_Fields_edna2obis.tsv: verbatimMeasurementType (the FAIRe field), measurementType, measurementValue, measurementUnit, measurementTypeID, measurementValueID, measurementUnitID, measurementRemarks."/>
+            </when>
+            <when value="none"/>
+        </conditional>
+        <conditional name="eml">
+            <param name="eml_select" type="select" label="Dataset metadata (eml.xml)"
+                help="OBIS and GBIF need dataset metadata. Write it here, or later in the IPT.">
+                <option value="form" selected="true">Write it from a few fields on this form</option>
+                <option value="yaml">Use my edna2obis EML_config.yaml file</option>
+                <option value="none">No eml.xml (write the metadata in the IPT)</option>
+            </param>
+            <when value="form">
+                <param name="title" type="text" value="" optional="true" label="Dataset title"
+                    help="Leave empty to use project_name from projectMetadata.">
+                    <sanitizer sanitize="false"/>
+                </param>
+                <param name="abstract" type="text" area="true" value="" label="Abstract"
+                    help="What the dataset holds: where and when the samples were taken, the markers and what they target.">
+                    <sanitizer sanitize="false"/>
+                    <validator type="empty_field"/>
+                </param>
+                <param name="given_name" type="text" value="" label="Creator and contact: given name">
+                    <sanitizer sanitize="false"/>
+                    <validator type="empty_field"/>
+                </param>
+                <param name="surname" type="text" value="" label="Creator and contact: surname">
+                    <sanitizer sanitize="false"/>
+                    <validator type="empty_field"/>
+                </param>
+                <param name="organisation" type="text" value="" optional="true" label="Creator and contact: organisation">
+                    <sanitizer sanitize="false"/>
+                </param>
+                <param name="email" type="text" value="" label="Creator and contact: email">
+                    <sanitizer sanitize="false"/>
+                    <validator type="regex" message="Enter an email address">^[^@\s]+@[^@\s]+\.[^@\s]+$</validator>
+                </param>
+                <param name="orcid" type="text" value="" optional="true" label="Creator ORCID" help="For example 0000-0002-1825-0097">
+                    <sanitizer sanitize="false"/>
+                    <validator type="regex" message="Enter an ORCID such as 0000-0002-1825-0097">^((https://orcid\.org/)?\d{4}-\d{4}-\d{4}-\d{3}[\dX])?$</validator>
+                </param>
+                <param name="licence" type="select" label="Licence"
+                    help="The licences OBIS and GBIF accept for occurrence data.">
+                    <option value="CC0" selected="true">CC0 1.0 (public domain)</option>
+                    <option value="CC-BY">CC BY 4.0 (attribution)</option>
+                    <option value="CC-BY-NC">CC BY-NC 4.0 (attribution, non-commercial)</option>
+                </param>
+                <param name="keywords" type="text" value="eDNA, metabarcoding" optional="true" label="Keywords" help="Comma-separated">
+                    <sanitizer sanitize="false"/>
+                </param>
+                <param name="publication_date" type="text" value="" optional="true" label="Publication date" help="YYYY-MM-DD; may be left empty">
+                    <sanitizer sanitize="false"/>
+                    <validator type="regex" message="Use YYYY-MM-DD">^(\d{4}-\d{2}-\d{2})?$</validator>
+                </param>
+                <param name="geographic_description" type="text" value="" optional="true" label="Geographic description"
+                    help="Leave empty to list the geo_loc_name values. The bounding box and date range are taken from the data.">
+                    <sanitizer sanitize="false"/>
+                </param>
+                <param name="sampling_description" type="text" area="true" value="" optional="true" label="Sampling and methods description">
+                    <sanitizer sanitize="false"/>
+                </param>
+            </when>
+            <when value="yaml">
+                <param name="eml_yaml" type="data" format="yaml,txt" label="EML configuration (YAML)"
+                    help="An edna2obis EML_config.yaml file with an eml_metadata section."/>
+                <param name="contacts_yaml" type="data" format="yaml,txt" optional="true" label="Contacts (YAML)"
+                    help="Optional: an edna2obis contacts.yaml file, for people named with contact_ref in the EML file."/>
+            </when>
+            <when value="none"/>
+        </conditional>
+    </inputs>
+    <outputs>
+        <data name="archive" format="zip" from_work_dir="outputs/dwca.zip" label="${tool.name} on ${on_string}: Darwin Core archive"/>
+        <data name="occurrence" format="csv" from_work_dir="outputs/occurrence_core.csv" label="${tool.name} on ${on_string}: occurrence"/>
+        <data name="dna_derived" format="csv" from_work_dir="outputs/dna_derived_extension.csv" label="${tool.name} on ${on_string}: DNA-derived data"/>
+        <data name="emof_table" format="csv" from_work_dir="outputs/emof.csv" label="${tool.name} on ${on_string}: eMoF">
+            <filter>emof['emof_select'] != 'none'</filter>
+        </data>
+        <data name="event_core" format="csv" from_work_dir="outputs/event_core.csv" label="${tool.name} on ${on_string}: event core">
+            <filter>core_type == 'event'</filter>
+        </data>
+        <data name="eml_xml" format="xml" from_work_dir="outputs/eml.xml" label="${tool.name} on ${on_string}: eml.xml">
+            <filter>eml['eml_select'] != 'none'</filter>
+        </data>
+        <data name="taxa_mapping" format="tabular" from_work_dir="outputs/taxa_mapping.tsv" label="${tool.name} on ${on_string}: taxa mapping"/>
+        <data name="report" format="html" from_work_dir="outputs/report.html" label="${tool.name} on ${on_string}: report"/>
+        <data name="config" format="yaml" from_work_dir="outputs/config.yaml" label="${tool.name} on ${on_string}: config"/>
+        <data name="log" format="txt" label="${tool.name} on ${on_string}: log"/>
+    </outputs>
+    <tests>
+        <!-- All tests run offline: the taxonomy comes from mapping tables made for the tests. -->
+        <!-- FAIRe-ator layout, two assays, samp_name columns, WoRMS mapping by assay, custom eMoF template, EML from the form -->
+        <test expect_num_outputs="9">
+            <param name="input_file" value="faire_two_assays.xlsx"/>
+            <repeat name="analyses">
+                <param name="assay_name" value="ssu16sv4v5-emp"/>
+                <param name="run_name" value="gomecc4_16s"/>
+                <param name="taxonomy" value="gomecc_16s_taxonomy.xlsx" ftype="xlsx"/>
+                <param name="abundance" value="gomecc_16s_abundance.tsv" ftype="tabular"/>
+            </repeat>
+            <repeat name="analyses">
+                <param name="assay_name" value="ssu18sv9-emp"/>
+                <param name="taxonomy" value="gomecc_18s_taxonomy.tsv" ftype="tabular"/>
+                <param name="abundance" value="gomecc_18s_abundance.csv" ftype="csv"/>
+            </repeat>
+            <conditional name="taxa">
+                <param name="source" value="mapping"/>
+                <param name="mapping_file" value="test_mapping_worms_made_for_test.tsv" ftype="tabular"/>
+            </conditional>
+            <conditional name="emof">
+                <param name="emof_select" value="custom"/>
+                <param name="emof_template" value="emof_template_sample_fields.tsv" ftype="tabular"/>
+            </conditional>
+            <conditional name="eml">
+                <param name="eml_select" value="form"/>
+                <param name="abstract" value="Cut-down GOMECC-4 example for testing. Contact: test.person@example.org"/>
+                <param name="given_name" value="Test"/>
+                <param name="surname" value="Person"/>
+                <param name="organisation" value="Example Organisation"/>
+                <param name="email" value="test.person@example.org"/>
+                <param name="orcid" value="0000-0002-1825-0097"/>
+                <param name="licence" value="CC-BY"/>
+            </conditional>
+            <output name="archive" ftype="zip">
+                <assert_contents>
+                    <has_archive_member path="meta.xml"/>
+                    <has_archive_member path="occurrence_core_worms.csv"/>
+                    <has_archive_member path="dna_derived_extension.csv"/>
+                    <has_archive_member path="eMoF.csv"/>
+                    <has_archive_member path="eml.xml"/>
+                    <has_archive_member path="meta.xml">
+                        <has_text text="occurrence_core_worms.csv"/>
+                        <has_text text="metadata=&quot;eml.xml&quot;"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="occurrence" ftype="csv">
+                <assert_contents>
+                    <has_n_lines n="23"/>
+                    <has_text text="noaa-aoml-gomecc4:gomecc4_16s:GOMECC16S_Plate4_46_occ_e9f376c867c2a1506d5b0996f9839a20,GOMECC16S_Plate4_46,GOMECC4_27N_Sta1_DCM_B"/>
+                    <has_text text="noaa-aoml-gomecc4:ssu18sv9-emp:GOMECC18S_Plate1_37_occ_"/>
+                    <has_text text="Prochlorococcus,Genus,urn:lsid:example.org:made-for-test:1"/>
+                    <has_text text="incertae sedis"/>
+                    <has_text text="2021-09-14T11:00:00"/>
+                    <not_has_text text="Synechococcales,Order"/>
+                    <not_has_text text="NegativeControl"/>
+                    <not_has_text text="GOMECC16S_Neg1"/>
+                </assert_contents>
+            </output>
+            <output name="dna_derived" ftype="csv">
+                <assert_contents>
+                    <has_n_lines n="23"/>
+                    <has_text text="16S rRNA"/>
+                    <has_text text="18S rRNA"/>
+                </assert_contents>
+            </output>
+            <output name="emof_table" ftype="csv">
+                <assert_contents>
+                    <has_n_lines n="89"/>
+                    <has_text text="Water temperature"/>
+                    <has_text text="degree Celsius"/>
+                </assert_contents>
+            </output>
+            <output name="eml_xml" ftype="xml">
+                <assert_contents>
+                    <is_valid_xml/>
+                    <has_text text="eDNA from Gulf of Mexico Ecosystems and Carbon Cruise 2021 (GOMECC-4)"/>
+                    <has_text text="&lt;surName&gt;Person&lt;/surName&gt;"/>
+                    <has_text text="test.person@example.org"/>
+                    <has_text text="0000-0002-1825-0097"/>
+                    <has_text text="CC-BY-4.0"/>
+                </assert_contents>
+            </output>
+            <output name="taxa_mapping" ftype="tabular">
+                <assert_contents>
+                    <has_text text="Synechococcales"/>
+                    <has_text text="made_for_test_not_from_WoRMS"/>
+                </assert_contents>
+            </output>
+            <output name="report" ftype="html">
+                <assert_contents>
+                    <has_text text="edna2obis Processing Report"/>
+                </assert_contents>
+            </output>
+            <output name="config" ftype="yaml">
+                <assert_contents>
+                    <has_text text="The taxonomy came from a reviewed mapping table"/>
+                    <has_text text="gomecc4_16s:"/>
+                    <has_text text="metadata_format: GENERIC"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="relabelled as 'ssu16sv4v5-emp'"/>
+                    <has_text text="3 column(s) named by samp_name renamed to the lib_id of their run"/>
+                    <has_text text="field names on row 3"/>
+                    <has_text text="12 names with a selected WoRMS match, by assay"/>
+                    <has_text text="occurrence core: 22 rows; 9 taxa; 1 rows 'incertae sedis'"/>
+                    <not_has_text text="Usage"/>
+                    <not_has_text text="[green]"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- FAIRe-NOAA layout with analysisMetadata sheets, GBIF mapping without assay_name, Event core, edna2obis's eMoF template, EML from YAML -->
+        <test expect_num_outputs="10">
+            <param name="input_file" value="faire_noaa_analysis_sheets.xlsx"/>
+            <param name="text_dates" value="mdy"/>
+            <repeat name="analyses">
+                <param name="assay_name" value="Fish-12S-MiFish-Miya-Stoeckle"/>
+                <param name="taxonomy" value="gu1901_mifish_taxonomy.tsv" ftype="tabular"/>
+                <param name="abundance" value="gu1901_mifish_abundance.tsv" ftype="tabular"/>
+            </repeat>
+            <repeat name="analyses">
+                <param name="assay_name" value="Fish-12S-Riaz"/>
+                <param name="run_name" value="rosel-ctd-riaz-addMFtrawlJfish-241001"/>
+                <param name="taxonomy" value="gu1901_riaz_taxonomy.tsv" ftype="tabular"/>
+                <param name="abundance" value="gu1901_riaz_abundance.tsv" ftype="tabular"/>
+            </repeat>
+            <conditional name="taxa">
+                <param name="source" value="mapping"/>
+                <param name="mapping_file" value="test_mapping_gbif_made_for_test.tsv" ftype="tabular"/>
+            </conditional>
+            <param name="core_type" value="event"/>
+            <conditional name="eml">
+                <param name="eml_select" value="yaml"/>
+                <param name="eml_yaml" value="eml_config_test.yaml" ftype="yaml"/>
+                <param name="contacts_yaml" value="contacts_test.yaml" ftype="yaml"/>
+            </conditional>
+            <output name="archive" ftype="zip">
+                <assert_contents>
+                    <has_archive_member path="event_core.csv"/>
+                    <has_archive_member path="occurrence_core_gbif.csv"/>
+                    <has_archive_member path="eMoF.csv"/>
+                    <has_archive_member path="meta.xml">
+                        <has_text text="rowType=&quot;http://rs.tdwg.org/dwc/terms/Event&quot;"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="event_core" ftype="csv">
+                <assert_contents>
+                    <has_n_lines n="10"/>
+                    <has_line_matching expression="^GU190706-CTD11-220,,sample,.*"/>
+                    <has_line_matching expression="^GU190706-CTD11-220_Riaz_S1,GU190706-CTD11-220,library,.*"/>
+                </assert_contents>
+            </output>
+            <output name="occurrence" ftype="csv">
+                <assert_contents>
+                    <has_n_lines n="22"/>
+                    <has_text text="noaa-sefsc-gu1901:rosel-ctd-mifish-addMFtrawlJfish-241001:GU190706-CTD11-220_MiFish_S30_occ_d18090749dc47011111f31aaa8416190"/>
+                    <has_text text="Thunnini,gbif:made-for-test-6,tribe"/>
+                    <not_has_text text="Scombridae,family"/>
+                    <not_has_text text="Control9"/>
+                    <not_has_text text="PCRNeg"/>
+                </assert_contents>
+            </output>
+            <output name="dna_derived" ftype="csv">
+                <assert_contents>
+                    <has_n_lines n="22"/>
+                </assert_contents>
+            </output>
+            <output name="emof_table" ftype="csv">
+                <assert_contents>
+                    <has_text text="Input sequence read count"/>
+                </assert_contents>
+            </output>
+            <output name="eml_xml" ftype="xml">
+                <assert_contents>
+                    <is_valid_xml/>
+                    <has_text text="Test dataset: fish eDNA from GU19-01"/>
+                    <has_text text="&lt;givenName&gt;Alex&lt;/givenName&gt;"/>
+                    <has_text text="alex.example@example.org"/>
+                    <has_text text="&lt;pubDate&gt;2026-11-03&lt;/pubDate&gt;"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="already has assay columns named by assay_name"/>
+                    <has_text text="analysis run 'rosel-ctd-mifish-addMFtrawlJfish-241001' from the workbook's analysisMetadata sheet"/>
+                    <has_text text="FAIRe-NOAA with analysisMetadata sheets"/>
+                    <has_text text="ignored contacts_path in the EML YAML file"/>
+                    <has_text text="running edna2obis (GBIF, event core)"/>
+                    <has_text text="occurrence core: 21 rows; 7 taxa; 0 rows 'incertae sedis'"/>
+                    <has_text text="read 4 eventDate value(s) month first and wrote them as ISO 8601, for example 7/6/19 as 2019-07-06"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Single assay in project_level, Excel date cell, no eMoF, no eml.xml -->
+        <test expect_num_outputs="7">
+            <param name="input_file" value="faire_single_assay.xlsx"/>
+            <repeat name="analyses">
+                <param name="assay_name" value="ssu16sv4v5-emp"/>
+                <param name="taxonomy" value="gomecc_16s_taxonomy.xlsx" ftype="xlsx"/>
+                <param name="abundance" value="gomecc_16s_abundance.tsv" ftype="tabular"/>
+            </repeat>
+            <conditional name="taxa">
+                <param name="source" value="mapping"/>
+                <param name="mapping_file" value="test_mapping_worms_made_for_test.tsv" ftype="tabular"/>
+            </conditional>
+            <conditional name="emof">
+                <param name="emof_select" value="none"/>
+            </conditional>
+            <conditional name="eml">
+                <param name="eml_select" value="none"/>
+            </conditional>
+            <output name="archive" ftype="zip">
+                <assert_contents>
+                    <has_archive_member path="meta.xml">
+                        <not_has_text text="eml.xml"/>
+                        <not_has_text text="eMoF"/>
+                    </has_archive_member>
+                    <has_archive_member path="occurrence_core_worms.csv"/>
+                </assert_contents>
+            </output>
+            <output name="occurrence" ftype="csv">
+                <assert_contents>
+                    <has_n_lines n="13"/>
+                    <has_text text="noaa-aoml-gomecc4:ssu16sv4v5-emp:GOMECC16S_Plate4_53_occ_"/>
+                    <has_text text="2021-09-14T11:00:00"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="single assay 'ssu16sv4v5-emp': copied project_level values to an assay column"/>
+                    <has_text text="wrote 1 eventDate Excel date cell(s) as ISO 8601 text"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- edna2obis's eMoF template with lib_id values shared between assays: stops with an explanation -->
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="input_file" value="faire_two_assays.xlsx"/>
+            <repeat name="analyses">
+                <param name="assay_name" value="ssu16sv4v5-emp"/>
+                <param name="taxonomy" value="gomecc_16s_taxonomy.xlsx" ftype="xlsx"/>
+                <param name="abundance" value="gomecc_16s_abundance.tsv" ftype="tabular"/>
+            </repeat>
+            <repeat name="analyses">
+                <param name="assay_name" value="ssu18sv9-emp"/>
+                <param name="taxonomy" value="gomecc_18s_taxonomy.tsv" ftype="tabular"/>
+                <param name="abundance" value="gomecc_18s_abundance.csv" ftype="csv"/>
+            </repeat>
+            <conditional name="taxa">
+                <param name="source" value="mapping"/>
+                <param name="mapping_file" value="test_mapping_worms_made_for_test.tsv" ftype="tabular"/>
+            </conditional>
+            <conditional name="eml">
+                <param name="eml_select" value="none"/>
+            </conditional>
+            <assert_stderr>
+                <has_text text="Internal alignment error for source field 'input_read_count'"/>
+                <has_text text="lib_id value(s) are used in more than one experimentRunMetadata row"/>
+                <has_text text="GOMECC16S_Plate4_46"/>
+            </assert_stderr>
+        </test>
+        <!-- Mapping table without the names of these tables -->
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="input_file" value="faire_noaa_analysis_sheets.xlsx"/>
+            <param name="text_dates" value="mdy"/>
+            <repeat name="analyses">
+                <param name="assay_name" value="Fish-12S-Riaz"/>
+                <param name="taxonomy" value="gu1901_riaz_taxonomy.tsv" ftype="tabular"/>
+                <param name="abundance" value="gu1901_riaz_abundance.tsv" ftype="tabular"/>
+            </repeat>
+            <conditional name="taxa">
+                <param name="source" value="mapping"/>
+                <param name="mapping_file" value="test_mapping_worms_made_for_test.tsv" ftype="tabular"/>
+            </conditional>
+            <conditional name="eml">
+                <param name="eml_select" value="none"/>
+            </conditional>
+            <assert_stderr>
+                <has_text text="5 name(s) are not in the mapping table"/>
+                <has_text text="'Eukaryota;Chordata;Mammalia;Artiodactyla;Delphinidae;Tursiops;Tursiops truncatus' (Fish-12S-Riaz)"/>
+                <not_has_text text="Traceback"/>
+            </assert_stderr>
+        </test>
+        <!-- Two selected rows with different taxa for one name; and an assay that is not in the workbook -->
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="input_file" value="faire_single_assay.xlsx"/>
+            <repeat name="analyses">
+                <param name="assay_name" value="ssu16sv4v5-emp"/>
+                <param name="taxonomy" value="gomecc_16s_taxonomy.xlsx" ftype="xlsx"/>
+                <param name="abundance" value="gomecc_16s_abundance.tsv" ftype="tabular"/>
+            </repeat>
+            <conditional name="taxa">
+                <param name="source" value="mapping"/>
+                <param name="mapping_file" value="test_mapping_two_selected.tsv" ftype="tabular"/>
+            </conditional>
+            <conditional name="eml">
+                <param name="eml_select" value="none"/>
+            </conditional>
+            <assert_stderr>
+                <has_text text="1 name(s) have more than one row marked selected_match = True with different taxa"/>
+                <has_text text="g__Prochlorococcus_MIT9313' (ssu16sv4v5-emp)"/>
+            </assert_stderr>
+        </test>
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="input_file" value="faire_single_assay.xlsx"/>
+            <repeat name="analyses">
+                <param name="assay_name" value="ssu18sv9-emp"/>
+                <param name="taxonomy" value="gomecc_18s_taxonomy.tsv" ftype="tabular"/>
+                <param name="abundance" value="gomecc_18s_abundance.csv" ftype="csv"/>
+            </repeat>
+            <conditional name="taxa">
+                <param name="source" value="mapping"/>
+                <param name="mapping_file" value="test_mapping_worms_made_for_test.tsv" ftype="tabular"/>
+            </conditional>
+            <conditional name="eml">
+                <param name="eml_select" value="none"/>
+            </conditional>
+            <assert_stderr>
+                <has_text text="assay 'ssu18sv9-emp' has no column in projectMetadata (its assays are: ssu16sv4v5-emp)"/>
+            </assert_stderr>
+        </test>
+        <!-- eventDate written month first (US example data), default setting: stops and lists the values -->
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="input_file" value="faire_noaa_analysis_sheets.xlsx"/>
+            <repeat name="analyses">
+                <param name="assay_name" value="Fish-12S-Riaz"/>
+                <param name="taxonomy" value="gu1901_riaz_taxonomy.tsv" ftype="tabular"/>
+                <param name="abundance" value="gu1901_riaz_abundance.tsv" ftype="tabular"/>
+            </repeat>
+            <conditional name="taxa">
+                <param name="source" value="mapping"/>
+                <param name="mapping_file" value="test_mapping_gbif_made_for_test.tsv" ftype="tabular"/>
+            </conditional>
+            <conditional name="eml">
+                <param name="eml_select" value="none"/>
+            </conditional>
+            <assert_stderr>
+                <has_text text="4 eventDate value(s) in sampleMetadata are written day or month first"/>
+                <has_text text="'GU190706-CTD11-220': 7/6/19"/>
+                <has_text text="choose how to read them under 'Text dates in eventDate'"/>
+            </assert_stderr>
+        </test>
+        <!-- The same dates read day first: 7/15/19 is not a date -->
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="input_file" value="faire_noaa_analysis_sheets.xlsx"/>
+            <param name="text_dates" value="dmy"/>
+            <repeat name="analyses">
+                <param name="assay_name" value="Fish-12S-Riaz"/>
+                <param name="taxonomy" value="gu1901_riaz_taxonomy.tsv" ftype="tabular"/>
+                <param name="abundance" value="gu1901_riaz_abundance.tsv" ftype="tabular"/>
+            </repeat>
+            <conditional name="taxa">
+                <param name="source" value="mapping"/>
+                <param name="mapping_file" value="test_mapping_gbif_made_for_test.tsv" ftype="tabular"/>
+            </conditional>
+            <conditional name="eml">
+                <param name="eml_select" value="none"/>
+            </conditional>
+            <assert_stderr>
+                <has_text text="read day first, 1 eventDate value(s) are not valid dates: 'Control9_20190715': 7/15/19"/>
+                <has_text text="Check whether the dates are written month first"/>
+            </assert_stderr>
+        </test>
+        <!-- Text values kept as written: text starting with '=' and N/A in station_id reach locationID, IDs written as text keep their zeros (upstream reads 001 as 1), and N/A in env_medium survives upstream's final file check -->
+        <test expect_num_outputs="7">
+            <param name="input_file" value="faire_text_values.xlsx"/>
+            <param name="na_text" value="keep"/>
+            <repeat name="analyses">
+                <param name="assay_name" value="ssu16sv4v5-emp"/>
+                <param name="run_name" value="gomecc4_16s"/>
+                <param name="taxonomy" value="gomecc_16s_taxonomy.xlsx" ftype="xlsx"/>
+                <param name="abundance" value="gomecc_16s_abundance.tsv" ftype="tabular"/>
+            </repeat>
+            <repeat name="analyses">
+                <param name="assay_name" value="ssu18sv9-emp"/>
+                <param name="taxonomy" value="gomecc_18s_taxonomy.tsv" ftype="tabular"/>
+                <param name="abundance" value="gomecc_18s_abundance.csv" ftype="csv"/>
+            </repeat>
+            <conditional name="taxa">
+                <param name="source" value="mapping"/>
+                <param name="mapping_file" value="test_mapping_worms_made_for_test.tsv" ftype="tabular"/>
+            </conditional>
+            <conditional name="emof">
+                <param name="emof_select" value="none"/>
+            </conditional>
+            <conditional name="eml">
+                <param name="eml_select" value="none"/>
+            </conditional>
+            <output name="occurrence" ftype="csv">
+                <assert_contents>
+                    <has_text text="27N_=Sta1"/>
+                    <has_text text="27N_N/A"/>
+                    <has_text text=",001,"/>
+                </assert_contents>
+            </output>
+            <output name="dna_derived" ftype="csv">
+                <assert_contents>
+                    <has_text text="N/A"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="sampleMetadata: 2 cell(s) hold text such as NA or N/A, kept as written"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Text such as NA or N/A replaced with a FAIRe missing-value term, by default 'missing: not provided' -->
+        <test expect_num_outputs="7">
+            <param name="input_file" value="faire_text_values.xlsx"/>
+            <repeat name="analyses">
+                <param name="assay_name" value="ssu16sv4v5-emp"/>
+                <param name="run_name" value="gomecc4_16s"/>
+                <param name="taxonomy" value="gomecc_16s_taxonomy.xlsx" ftype="xlsx"/>
+                <param name="abundance" value="gomecc_16s_abundance.tsv" ftype="tabular"/>
+            </repeat>
+            <repeat name="analyses">
+                <param name="assay_name" value="ssu18sv9-emp"/>
+                <param name="taxonomy" value="gomecc_18s_taxonomy.tsv" ftype="tabular"/>
+                <param name="abundance" value="gomecc_18s_abundance.csv" ftype="csv"/>
+            </repeat>
+            <conditional name="taxa">
+                <param name="source" value="mapping"/>
+                <param name="mapping_file" value="test_mapping_worms_made_for_test.tsv" ftype="tabular"/>
+            </conditional>
+            <conditional name="emof">
+                <param name="emof_select" value="none"/>
+            </conditional>
+            <conditional name="eml">
+                <param name="eml_select" value="none"/>
+            </conditional>
+            <output name="occurrence" ftype="csv">
+                <assert_contents>
+                    <has_text text="27N_missing: not provided"/>
+                    <not_has_text text="N/A"/>
+                </assert_contents>
+            </output>
+            <output name="dna_derived" ftype="csv">
+                <assert_contents>
+                    <has_text text="missing: not provided"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="replaced 2 cell(s) of text such as NA or N/A with 'missing: not provided'"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Or stop and list the cells -->
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="input_file" value="faire_text_values.xlsx"/>
+            <param name="na_text" value="stop"/>
+            <repeat name="analyses">
+                <param name="assay_name" value="ssu16sv4v5-emp"/>
+                <param name="run_name" value="gomecc4_16s"/>
+                <param name="taxonomy" value="gomecc_16s_taxonomy.xlsx" ftype="xlsx"/>
+                <param name="abundance" value="gomecc_16s_abundance.tsv" ftype="tabular"/>
+            </repeat>
+            <repeat name="analyses">
+                <param name="assay_name" value="ssu18sv9-emp"/>
+                <param name="taxonomy" value="gomecc_18s_taxonomy.tsv" ftype="tabular"/>
+                <param name="abundance" value="gomecc_18s_abundance.csv" ftype="csv"/>
+            </repeat>
+            <conditional name="taxa">
+                <param name="source" value="mapping"/>
+                <param name="mapping_file" value="test_mapping_worms_made_for_test.tsv" ftype="tabular"/>
+            </conditional>
+            <conditional name="emof">
+                <param name="emof_select" value="none"/>
+            </conditional>
+            <conditional name="eml">
+                <param name="eml_select" value="none"/>
+            </conditional>
+            <assert_stderr>
+                <has_text text="2 cell(s) in the workbook hold text such as NA or N/A"/>
+                <has_text text="GOMECC4_27N_Sta1_DCM_B"/>
+            </assert_stderr>
+        </test>
+    </tests>
+    <help><![CDATA[
+**What it does**
+
+This tool turns eDNA metabarcoding results into the Darwin Core tables that OBIS and GBIF publish,
+using `edna2obis <https://github.com/aomlomics/edna2obis>`_. It writes:
+
+- an **occurrence** table, with one row for each ASV in each library that has reads, leaving out
+  the control samples;
+- the **DNA-derived data** extension, which gives the primers, target gene, sequence and methods for
+  each occurrence;
+- if you ask for them, an **extended Measurement Or Fact (eMoF)** extension and an **Event core**;
+- the **eml.xml** dataset metadata and **meta.xml**, zipped with the tables as a Darwin Core archive
+  that you can load into an IPT (Integrated Publishing Toolkit) for OBIS or GBIF.
+
+-----
+
+**Inputs**
+
+- A **FAIRe workbook** (.xlsx) with projectMetadata, sampleMetadata and experimentRunMetadata
+  sheets.
+- For each assay, and each analysis of it, a **taxonomy table** and an **abundance table**, as
+  Tourmaline writes them or as in the FAIRe taxaRaw and otuRaw templates.
+- The **taxonomy**. You can give a reviewed mapping table from **edna2obis: match taxa**, which we
+  recommend, because you can check the matches first and the tool then needs no internet access.
+  Or the tool can look the names up in WoRMS or GBIF during the run.
+
+**Outputs**
+
+- **Darwin Core archive** (.zip): meta.xml, the tables it lists, and eml.xml.
+- The tables on their own (CSV): **occurrence**, **DNA-derived data**, **eMoF** and **event core**.
+- **eml.xml**.
+- **taxa mapping**: the candidate matches for each name and the one selected, as edna2obis writes
+  it.
+- **report**: edna2obis's HTML report, with previews of each step and all the warnings. Galaxy may
+  remove the report's sample map, because it loads a script from the internet.
+- **config**: the edna2obis config.yaml that was used, so you can repeat the run outside Galaxy.
+- **log**: what the tool and edna2obis did, with all the warnings.
+
+-----
+
+**What the tool adds to edna2obis**
+
+- Workbooks from FAIRe-ator work as they are, including single-assay workbooks with the assay
+  details in project_level. The tool first relabels the assay columns by their assay_name.
+- **eventDate is never misread.** Excel date cells and year-first text (2019-06-07) pass through as
+  ISO 8601. On its own, edna2obis reads 7/6/19 as 6 July but 13/6/19 as 13 June, so a day-first
+  column comes out partly swapped. The tool stops on such dates and lists them, unless you say on
+  the form whether they are written day first (as in Australia) or month first (as in the USA).
+  FAIRe missing-value terms such as *not applicable* are kept.
+- **Text such as NA or N/A** is replaced with one of FAIRe's missing-value terms, by default
+  *missing: not provided*, and the log lists the fields changed. You can keep it as written, as
+  edna2obis does, or stop and list the cells.
+- **Values reach the tables as written.** On its own, edna2obis reads a column of IDs such as 001,
+  002 as numbers (1, 2), and its final check of the output tables empties text such as NA. The tool
+  replaces these two reads while edna2obis runs, and stops if edna2obis no longer reads that way.
+- Abundance tables may have the two FAIRe header rows above the field names, and columns named by
+  samp_name. The tool renames these columns to the lib_id of the sample's run, so that control
+  samples are left out as they should be.
+- eventDate Excel date cells are written as ISO 8601 text.
+- When edna2obis reports an error (for example in the eMoF or EML step), when a name is missing
+  from the mapping table, or when a request to WoRMS or GBIF fails, the tool stops with a message,
+  so it never writes incomplete files.
+
+@HELP_MAPPING_COLUMNS@
+
+@HELP_MATCHING@
+
+-----
+
+**occurrenceID**
+
+edna2obis builds each occurrenceID as ``project_id:analysis run name:lib_id_occ_featureid``. Keep
+the analysis run names the same when you publish a new version of the dataset, so that the IDs stay
+stable.
+
+**eMoF template**
+
+edna2obis's template lists FAIRe fields such as temp, salinity, diss_oxygen and input_read_count,
+with NERC vocabulary terms and units. Fields missing from the workbook are skipped. A unit of
+``provided`` takes the unit from the matching ``_unit`` field (for example diss_oxygen_unit). The
+template's first row (expedition_id = GU19-01) is specific to NOAA's example and matches nothing in
+other datasets. The eMoF step joins runs by lib_id only, so it fails when one lib_id is used in two
+assays. In that case, use a template without experimentRunMetadata fields.
+
+@HELP_FAIRE_GUIDE@
+
+@HELP_FOOTER@
+    ]]></help>
+    <expand macro="citations"/>
+</tool>

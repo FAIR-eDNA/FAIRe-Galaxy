@@ -1,0 +1,22 @@
+# curie_map:
+#   FAIRe: https://github.com/FAIR-eDNA/FAIRe_checklist#
+#   local: 'urn:faire-mapper:local:'
+#   skos: http://www.w3.org/2004/02/skos/core#
+#   semapv: https://w3id.org/semapv/vocab/
+# mapping_set_id: urn:faire-mapper:apply_reef_controls.csv
+# license: https://creativecommons.org/publicdomain/zero/1.0/
+# comment: a reviewed crosswalk, written for the tests
+subject_id	subject_label	predicate_id	object_id	object_label	mapping_justification	confidence	comment	combine_order	value_part
+local:Sample_ID	Sample ID	skos:exactMatch	FAIRe:samp_name	samp_name	semapv:ManualMappingCuration	1.0	confirmed		
+local:Country	Country	skos:exactMatch	FAIRe:geo_loc_name	geo_loc_name	semapv:ManualMappingCuration	1.0	confirmed	1	
+local:Reef	Reef	skos:exactMatch	FAIRe:geo_loc_name	geo_loc_name	semapv:ManualMappingCuration	1.0	confirmed	2	
+local:Site	Site	skos:exactMatch	FAIRe:geo_loc_name	geo_loc_name	semapv:ManualMappingCuration	1.0	confirmed	3	
+local:Volume_filtered	Volume filtered	skos:exactMatch	FAIRe:samp_size	samp_size	semapv:ManualMappingCuration	1.0	confirmed		number
+local:Volume_filtered	Volume filtered	skos:exactMatch	FAIRe:samp_size_unit	samp_size_unit	semapv:ManualMappingCuration	1.0	confirmed		unit
+local:Pore_size	Pore size	skos:exactMatch	FAIRe:size_frac	size_frac	semapv:ManualMappingCuration	1.0	confirmed		
+local:Collected	Collected	skos:exactMatch	FAIRe:eventDate	eventDate	semapv:ManualMappingCuration	1.0	confirmed		
+local:Days_frozen	Days frozen	skos:exactMatch	FAIRe:samp_store_dur	samp_store_dur	semapv:ManualMappingCuration	1.0	confirmed		
+local:Depth__m_	Depth (m)	skos:exactMatch	FAIRe:tot_depth_water_col	tot_depth_water_col	semapv:ManualMappingCuration	1.0	confirmed		
+local:Latitude	Latitude	skos:exactMatch	FAIRe:decimalLatitude	decimalLatitude	semapv:ManualMappingCuration	1.0	confirmed		
+local:Longitude	Longitude	skos:exactMatch	FAIRe:decimalLongitude	decimalLongitude	semapv:ManualMappingCuration	1.0	confirmed		
+local:Sample_type	Sample type	skos:exactMatch	FAIRe:samp_category	samp_category	semapv:ManualMappingCuration	0.5	review		

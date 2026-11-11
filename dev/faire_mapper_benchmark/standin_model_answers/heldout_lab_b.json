@@ -1,0 +1,127 @@
+[
+ {
+  "column": "Invoice number",
+  "term": null,
+  "reason": "Invoice number is an admin field."
+ },
+ {
+  "column": "qa_checked",
+  "term": null,
+  "reason": "QA checked flag is an admin field with vehicle-name values."
+ },
+ {
+  "column": "Turnaround time (business days)",
+  "term": null,
+  "reason": "Turnaround time is an admin field."
+ },
+ {
+  "column": "is_artificial",
+  "term": "habitat_natural_artificial_0_1",
+  "reason": "0/1 flag for whether the habitat is artificial."
+ },
+ {
+  "column": "extraction_sop",
+  "term": "nucl_acid_ext",
+  "reason": "Value links to the DNA extraction protocol."
+ },
+ {
+  "column": "Quote reference",
+  "term": null,
+  "reason": "Quote reference is an admin field."
+ },
+ {
+  "column": "Purchase order number",
+  "term": null,
+  "reason": "Purchase order number is an admin field."
+ },
+ {
+  "column": "Price per sample (excl. GST)",
+  "term": null,
+  "reason": "Price per sample is an admin field."
+ },
+ {
+  "column": "Courier consignment number",
+  "term": null,
+  "reason": "Courier consignment number is a logistics field."
+ },
+ {
+  "column": "Number of eskies",
+  "term": null,
+  "reason": "Number of eskies is a logistics field."
+ },
+ {
+  "column": "Cost centre",
+  "term": null,
+  "reason": "Cost centre is an admin field."
+ },
+ {
+  "column": "prefilter_um",
+  "term": "size_frac_low",
+  "reason": "Header gives the prefilter mesh size in µm; value records that none was used."
+ },
+ {
+  "column": "wtemp_c",
+  "term": null,
+  "reason": "Water temperature values, but no sample temperature term is among the candidates."
+ },
+ {
+  "column": "sample_class",
+  "term": "samp_category",
+  "reason": "Values are sample categories from the allowed list."
+ },
+ {
+  "column": "pore_um",
+  "term": "size_frac",
+  "reason": "Constant 0.22 µm is the filter pore size."
+ },
+ {
+  "column": "Field sheet scanned",
+  "term": null,
+  "reason": "Field sheet scanned is an admin tracking field."
+ },
+ {
+  "column": "processing_steps",
+  "term": null,
+  "reason": "Processing description, but no processing term is among the candidates."
+ },
+ {
+  "column": "freezer_sample",
+  "term": "samp_store_loc",
+  "reason": "Freezer location where the sample was stored."
+ },
+ {
+  "column": "vol_collected",
+  "term": "samp_size",
+  "reason": "Volume of water collected from the environment."
+ },
+ {
+  "column": "primerR",
+  "term": "pcr_primer_name_reverse",
+  "reason": "926R is a reverse primer name."
+ },
+ {
+  "column": "collection_protocol",
+  "term": "samp_collect_method",
+  "reason": "Value links to the sampling protocol."
+ },
+ {
+  "column": "storage_days",
+  "term": "samp_store_dur",
+  "reason": "ISO 8601 duration of sample storage."
+ },
+ {
+  "column": "primerF",
+  "term": "pcr_primer_name_forward",
+  "reason": "515F-Y is a forward primer name."
+ },
+ {
+  "column": "db_upload_status",
+  "term": null,
+  "reason": "Database upload status is an admin field."
+ },
+ {
+  "column": "datetime_collected",
+  "term": "eventDate",
+  "reason": "ISO 8601 date-times of sample collection."
+ }
+]

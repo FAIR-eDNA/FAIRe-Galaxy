@@ -1,0 +1,96 @@
+column	term
+sample_code	samp_name
+sample_class	samp_category
+field_sample_id	materialSampleID
+lon_dd	decimalLongitude
+lat_dec	decimalLatitude
+locality_name	geo_loc_name
+datetime_collected	eventDate
+biome	env_broad_scale
+local_habitat	env_local_scale
+substrate	env_medium
+is_artificial	habitat_natural_artificial_0_1
+collection_protocol	samp_collect_method
+sampler	samp_collect_device
+vol_collected	samp_size
+vol_collected_unit	samp_size_unit
+store_temp_c	samp_store_temp
+preservative	samp_store_sol
+storage_days	samp_store_dur
+freezer_sample	samp_store_loc
+freezer_dna	dna_store_loc
+processing_steps	samp_mat_process
+prefilter_um	size_frac_low
+pore_um	size_frac
+membrane	filter_material
+filter_product	filter_name
+precip_reagents	precip_chem_prep
+centrifuge_g	precip_force_prep
+precip_min	precip_time_prep
+precip_temp_c	precip_temp_prep
+ext_input_amount	samp_vol_we_dna_ext
+ext_input_unit	samp_vol_we_dna_ext_unit
+lysis_type	nucl_acid_ext_lysis
+purification	nucl_acid_ext_sep
+extraction_sop	nucl_acid_ext
+dna_kit	nucl_acid_ext_kit
+depth_min_m	minimumDepthInMeters
+depth_max_m	maximumDepthInMeters
+bottom_depth	tot_depth_water_col
+wtemp_c	temp
+chla	chlorophyll
+ph_field	ph
+sal_psu	salinity
+dic	diss_inorg_carb
+dic_unit	diss_inorg_carb_unit
+do_conc	diss_oxygen
+do_unit	diss_oxygen_unit
+no3	nitrate
+no3_unit	nitrate_unit
+no2	nitrite
+no2_unit	nitrite_unit
+blank_type	neg_cont_type
+assay_id	assay_name
+pcr_plate	pcr_plate_id
+library_id	lib_id
+run_id	seq_run_id
+fwd_tag	mid_forward
+rev_tag	mid_reverse
+fastq_r1	filename
+fastq_r2	filename2
+sra_accession	associatedSequences
+n_reads_raw	input_read_count
+marker	target_gene
+subregion	target_subfragment
+primer_f_seq	pcr_primer_forward
+primer_r_seq	pcr_primer_reverse
+primerF	pcr_primer_name_forward
+primerR	pcr_primer_name_reverse
+seq_platform	platform
+sequencer	instrument
+proj_code	project_id
+Vehicle registration	
+Odometer start (km)	
+Kilometres travelled	
+Boat hours	
+Fuel cost ($)	
+Number of eskies	
+Ice bricks packed	
+Gate key returned (Y/N)	
+Field sheet scanned	
+Courier consignment number	
+Freight charge (AUD)	
+Purchase order number	
+Invoice number	
+Cost centre	
+GST applicable	
+Service tier (Standard / Express)	
+Quote reference	
+Turnaround time (business days)	
+Travel allowance claimed	
+Overtime hours	
+qa_checked	
+db_upload_status	
+sheet_version	
+Calibration log page	
+Price per sample (excl. GST)	

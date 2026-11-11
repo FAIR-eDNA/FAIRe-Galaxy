@@ -1,0 +1,72 @@
+FAIRe mapper: apply mapping 0.4.0
+
+## Inputs
+
+- table: LI_sampling_metadata.csv, 72 rows and 14 columns; read as cp1252 text
+- crosswalk: crosswalk.sssom.tsv, 12 rows; applied: skos:exactMatch and skos:closeMatch
+- assay type metabarcoding; sample types Water; project ID lizard_island_2019; assays Fish16S,CoralITS2,CoralITS2_acro
+
+## Columns written
+
+- 'Sample ID' to samp_name (sampleMetadata)
+- 'Amount filtered ' to samp_size (the number) (sampleMetadata): number taken from each cell (L), e.g. '1 L' as '1'
+- 'Amount filtered ' to samp_size_unit (the unit) (sampleMetadata): unit taken from each cell (L), e.g. '1 L' as 'L'
+- 'Filter size' to size_frac (sampleMetadata): number taken from each cell (µm), e.g. '0.2 micron' as '0.2'
+- 'Sample processing' to recordedBy (projectMetadata)
+- 'Sampling country' + 'Reef Location' + 'Sampling Location' to geo_loc_name (sampleMetadata), combined in this order, e.g. 'Australia: Great Barrier Reef, Lizard Island (Big Vicky's Reef)'
+- 'Latitude' to decimalLatitude (sampleMetadata): trailing zeros (-13.99230) are shown by the cell format but dropped from the stored number, so FAIRe-fier may count fewer decimal places
+- 'Longitude' to decimalLongitude (sampleMetadata): trailing zeros (-13.99230) are shown by the cell format but dropped from the stored number, so FAIRe-fier may count fewer decimal places
+- 'Sampling Date' to eventDate (sampleMetadata): two-digit years read as 1969 to 2068, e.g. '12-Feb-19' as '2019-02-12'
+- 'Days frozen' to samp_store_dur (sampleMetadata): numbers read as days (from the header) and written as ISO 8601 durations, e.g. '0' as 'P0D'
+- kept as user-defined fields in sampleMetadata: 'EMu registration number' as EMu_registration_number, 'Exposed or Sheltered' as Exposed_or_Sheltered, 'Lunar Cycle' as Lunar_Cycle
+
+## Project values
+
+- sterilise_method = Sampling bottles were sterilised in 10% bleach solution before use; filtration e (projectMetadata)
+- neg_cont_0_1 = 1 (projectMetadata)
+- env_medium = sea water [ENVO:00002149] (every sample)
+- samp_store_temp = -20 (every sample)
+- filter_material = cellulose (every sample)
+- nucl_acid_ext_kit = DNeasy Blood and Tissue Kit (QIAGEN) (every sample)
+- pcr_0_1 = 1 (projectMetadata)
+- targetTaxonomicAssay = bony fish | scleractinian coral (projectMetadata)
+- custom_mm = 1X AmpliTaq Gold PCR buffer (Life Technologies), 2 mM MgCl2 (Fisher Biotec), 0.4 (projectMetadata)
+- pcr_dna_vol = 2 (projectMetadata)
+- pcr_rep = 2 (projectMetadata)
+- pcr_cond = initial denaturation:95_5;annealing:52-55_0.5;elongation:72_0.75;final elongatio (projectMetadata)
+- pcr_cycles = 40 (projectMetadata)
+- barcoding_pcr_appr = one-step PCR (projectMetadata)
+- platform = ILLUMINA (projectMetadata)
+- lib_screen = The two libraries were size-selected using a Pippin-Prep (Sage Science), purifie (projectMetadata)
+- otu_db = NCBI GenBank nucleotide database (accessed September 2020) (projectMetadata)
+- otu_seq_comp_appr = BLASTn (projectMetadata)
+- screen_contam_method = ASVs detected in extraction blanks with a read count > 10 were removed across th (projectMetadata)
+- assay_name = Fish16S | CoralITS2 | CoralITS2_acro (every sample)
+
+## OTU and taxonomy tables
+
+- none
+
+## Left out
+
+- project value samp_size = 1: a column of the table gives this term
+- project value samp_size_unit = L: a column of the table gives this term
+- project values with status discarded, not applied: size_frac
+- project values with status review, not applied: tax_assign_cat, pcr_primer_forward (4), pcr_primer_reverse (4), pcr_primer_name_forward (4), pcr_primer_name_reverse (4), pcr_primer_reference_forward (4), pcr_primer_reference_reverse (4), target_gene (4), target_subfragment (2), ampliconSize (4)
+
+## Warnings
+
+- several assays: values for the whole project are in project_level; move any that differ between assays to the assay columns
+- checkls_ver is written as FAIRe-ator writes it (FAIRe_checklist_v1.0.2.xlsx); FAIRe-fier reports this as an error until the FAIRe authors settle the format
+
+## Mandatory terms with no value
+
+- project_contact (projectMetadata)
+- pcr_primer_forward (projectMetadata; mandatory if pcr_0_1 is 1)
+- pcr_primer_reverse (projectMetadata; mandatory if pcr_0_1 is 1)
+- samp_category (sampleMetadata)
+- neg_cont_type (sampleMetadata; mandatory if samp_category = negative control)
+- pos_cont_type (sampleMetadata; mandatory if samp_category = positive control)
+- env_broad_scale (sampleMetadata; mandatory unless samp_category = negative control, positive control, or PCR standard)
+- env_local_scale (sampleMetadata; mandatory unless samp_category = negative control, positive control, or PCR standard)
+- experimentRunMetadata has no rows: no column of the table is a library or run term (lib_id, seq_run_id, filename ...)

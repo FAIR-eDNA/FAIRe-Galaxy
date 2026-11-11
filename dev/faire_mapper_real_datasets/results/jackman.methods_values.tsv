@@ -1,0 +1,13 @@
+term	level	value	status	problem	stated	quote
+neg_cont_0_1	project	1	supported		True	At the start of each sampling period, a field blank was collected, totalling four field blanks overall.
+neg_cont_type	sample	field negative | extraction negative | PCR negative	supported		True	(including 41 water samples, four field blanks, two extraction blanks, four PCR negative controls)
+sterilise_method	project	Disposable collection bottles and syringes were used to avoid the risk of contamination.	supported		True	disposable collection bottles and syringes were used to avoid the risk of contamination
+samp_size	sample	500	review	no value for samp_size_unit	True	using 500 ml water bottles
+size_frac	sample	0.45	supported		True	Sterivex enclosed filters (0.45μm, Merck Millipore)
+nucl_acid_ext	sample	Sales et al. (2021)	supported		True	following the procedure described in Sales et al. (2021)
+pcr_0_1	project	1	supported		True	amplification of the 12S rRNA fragment using the MiFish primer set
+targetTaxonomicAssay	project	fish	supported		True	widely used in fish eDNA metabarcoding studies
+target_gene	project	12S rRNA (SSU mitochondria)	supported		True	amplification of the 12S rRNA fragment using the MiFish primer set
+platform	project	ILLUMINA	review	inferred, not stated	False	Illumina MiSeq - V2 2x150bp kit
+instrument	project	Illumina MiSeq [OBI_0002003]	review	inferred, not stated	False	Illumina MiSeq - V2 2x150bp kit
+seq_kit	project	V2 2x150bp kit	supported		True	Illumina MiSeq - V2 2x150bp kit

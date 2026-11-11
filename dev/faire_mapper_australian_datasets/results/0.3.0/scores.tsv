@@ -1,0 +1,5 @@
+run	table	columns	with_term	top1_correct	top1_ok	in_shortlist	accepted	accepted_ok	no_term	no_term_left	wrong	missed
+mapper	dibattista	14	9	4	4	6	6	5	5	3	4	2
+mapper	kimberley	9	5	5	5	5	6	6	4	1	1	0
+with_model	dibattista	14	9	5	5	6	7	5	5	3	3	2
+with_model	kimberley	9	5	5	5	5	7	7	4	1	1	0

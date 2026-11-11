@@ -1,0 +1,8 @@
+column	term	also_acceptable	note
+Sample	samp_name		Unique sample code (DK01-DK47), also used in PCR_CODES.
+Location	geo_loc_name	samp_category;neg_cont_type	Stream or site name; format as 'Brazil: Amazonas, Reserva Ducke, Acara L4'; 'BLANK_' prefix marks field and extraction blanks.
+Distance			Position along the stream transect (0, 25, 50 m); no FAIRe term.
+Side			Position across the stream (Left, Centre, Right); no FAIRe term.
+Date Collection	eventDate	verbatimEventDate	dd.mm.yy (17.01.19); convert to ISO 2019-01-17; NA for extraction blanks and Solimoes samples.
+Date Extraction	date_ext		dd.mm.yy (17.04.19); convert to ISO 2019-04-17.
+DNA []	concentration		DNA concentration after extraction; unit not stated (likely ng/uL, record in concentration_unit); some negative values.

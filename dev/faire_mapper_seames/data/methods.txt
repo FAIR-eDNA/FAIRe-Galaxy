@@ -1,0 +1,249 @@
+Methods sections 3.2.1-3.2.3 and 4.2.1-4.2.3 of: Deagle BE, Jayasinghe SA, Bessey C, Bodrossy L, West KM (2025)
+Environmental DNA for measuring offshore marine biodiversity: what can DNA in water collected from the RV
+Investigator tell us? Report to the National Environmental Science Program. CSIRO, Hobart, Australia.
+CC BY 4.0. Text extracted with pdftotext; page headers removed; Table 3-1 kept as extracted (its cells are
+out of order).
+
+3.2. Methods
+3.2.1. CTD water sampling
+Samples of eDNA were collected from 62 CTDs during Voyage 1 and 80 CTDs during
+Voyage 2. For each sample, 10 L of water was collected from a 12 L Niskin bottle attached
+to a 36-bottle CTD rosette.
+Due to limitations in the number of water samples that could be processed, and to obtain
+samples relevant to questions being addressed, three combinations of the water column
+were sampled depending on the local timing of CTD deployment:
+(i) Night: Two replicate 10 L water samples were collected from the seafloor at night to
+coincide with the deployment of the deep tow camera. These samples were primarily
+used in Section 4 of the report for comparison with eDNA collected by the deep tow
+camera mounted sampler.
+
+(ii) Morning: One 10 L sample from the bottom depth and one 10 L sample from the
+surface in the morning before trawl operations.
+(iii) Afternoon: Two replicate 10 L samples from the bottom depth, one 10 L sample from
+the deep-chlorophyll maximum (DCM) layer (identified on the downward CTD trace)
+and a 10 L sample from the surface in the afternoon. This provided more samples for
+comparison with the afternoon trawl operation.
+Collected water samples were stored at 4°C and filtered within 12 hours of collection. Water
+samples were filtered using a Masterflex L/S console pump system (Cole-Parmer, USA)
+through 47 mm, 0.45 µm pore size mixed cellulose ester (MCE) filter membranes (MerckMillipore, USA), and immediately stored at -80°C. Filtration and sampling equipment was
+soaked in 10% bleach solution for at least 6 hours between each filtration run or sampling.
+Prior to filtering, filtration lines were primed with 10% bleach solution for 15 minutes and then
+flushed thrice with Mili-Q water. Field filtration controls consisted of 5 L samples of Mili-Q
+water. The total number of samples collected is provided in Appendix 1.
+
+3.2.2. Laboratory Processing of eDNA
+For the 10 L filtered water samples DNA extraction and PCR amplification were conducted
+following methods previously outlined in West et al. (2024). DNA was extracted in a
+dedicated pre-PCR room (CSIRO, Hobart) from filter membranes using the DNeasy Blood
+and Tissue Kit (Qiagen) with a slightly modified protocol. The filter paper was cut into small
+pieces, then digested in 540 μL of ATL lysis buffer and 60 μL of Proteinase K for 3 hours at
+56°C with gentle shaking of the tubes. After digestion 300 μL of the solution was combined
+with 300 μL of buffer AL and 300 μL of ethanol, and the standard protocol followed. The
+eDNA was eluted in 100 μL of buffer AE. Extraction blanks were processed in parallel to
+detect any cross-contamination.
+A 16S mtDNA metabarcoding assay (see Table 3-1) was employed to amplify a marker from
+fish (teleosts and elasmobranchs) eDNA in the samples. We also processed the same eDNA
+samples using a broader metazoan marker (COI Leray). Only results from results the fish
+marker are reported here; data from the COI marker is available for future investigations
+(Appendix 1).
+Quantitative PCR (qPCR) was performed in a two-step library preparation protocol. In the
+first-stage qPCR, respective primer sequences were flanked by a unique (dual) index (6 bp
+in length) and a Nextera-style overhang sequence (Forward overhang P5-tag:5′
+TCGTCGGCAGCGTCAGATGTGTATAAGAGACAG-[locus-specific sequence] 3′; Reverse
+overhang P7-tag:5′ GTCTCGTGGGCTCGGAGATGTGTATAAGAGACAG-[locus-specific
+sequence] 3′). First-stage qPCR reactions were prepared in a dedicated pre-PCR room
+(CSIRO, Hobart) in 25 μL volumes containing: 1× QIAGEN Multiplex PCR MasterMix, 0.4
+μM of each primers (Integrated DNA Technologies),1× EvaGreen Dye (Biotium), 2 μL of
+eDNA template (neat), and made to volume with Ultrapure Distilled Water
+(LifeTechnologies). Each qPCR was performed on a QuantStudio5 Real-Time PCR System
+(Thermo Fisher Scientific) with the following protocol: initial denaturation at 95°C for 15 min,
+followed by 40 cycles of 95°C for 30 s, 54°C for 1 min 30 s, and 72 °C for 1 min 30 s, with a
+final extension for 10 min at 72 °C. First-stage amplicons were sent to the Australian
+Genome Research Facility (AGRF) for second-stage PCR. In this step Nextera-style index
+primers (containing overhang, dual 8 bp index tag [i5 and i7], and P5 and P7 regions that
+bind to the Illumina flowcell) were added. Second-stage amplicons were then cleaned,
+
+pooled, and normalized prior to sequencing on an Illumina NextSeq 2000 platform (PI flow
+cell: 600 cycle, 2 × 300 bp) at AGRF.
+
+Table 3-1 PCR assay information for eDNA metabarcoding of the 10L samples. These assays were also used to
+process samples from the deep-towed camera sampler described in Section 4.
+
+PCR
+assay
+16S
+Fish
+
+Target
+taxa
+Fish
+
+COI
+Leray
+
+Metazoa
+
+Primer
+name
+
+Sequence (5′-3′)
+
+Target
+length
+
+Annealing
+(°C)
+
+Reference
+
+16SF/D
+
+GACCCTATGGAGCTTTAGAC
+
+~180–
+230 bp
+
+54
+
+Berry et al.
+(2017)
+
+16S2Rdegenerate
+mlCOIintF
+
+CGCTGTTATCCCTADRGTAACT
+
+jgHCO2198
+
+TAIACYTCIGGRTGICCRAARAAYCA
+
+GGWACWGGWTGAACWGTWTAYCC
+YCC
+
+Deagle et
+al. (2007)
+313 bp
+
+46
+
+Leray et al.
+(2013)
+
+3.2.3. Bioinformatic analysis
+Sequencing reads were demultiplexed into their respective samples and trimmed using a
+custom R script. Sample data were then quality filtered (minimum sequence length = 100 bp,
+maximum expected errors = 2, no ambiguous nucleotides), denoised, filtered for chimeras,
+and dereplicated (pool = “pseudo”) using the DADA2 package (Callahan et al. 2016) in R
+(v4.2.1; R Core Team 2024). This generated an amplicon sequence variant (ASV) fasta file
+and count table; the former was queried against NCBI's GenBank nucleotide database
+(accessed in August 2023) using BLASTn (minimum percentage identity of 85%, query
+coverage (qCov) of 96%, maximum target sequences of 20) using Petrichor, a HPC cluster
+based at the CSIRO. Taxonomic assignment of ASVs was performed using the lowest
+common ancestor (LCA) Python script in eDNAFlow (Mousavi-Derazmahalleh et al. 2021).
+In this pipeline, BLAST matches required a threshold qCov of 96%, a minimum percentage
+identity of 85%, and a difference (Diff) of 1. A species-level assignment required a minimum
+percentage identity of 98% with a qCov of 100%. In cases where an ASV had multiple top
+hits within 1% similarity of each other, the assigned taxonomy was collapsed back to the
+lowest common ancestor.
+In metabarcoding analyses, the taxonomic assignment is a crucial step but is challenging to
+fully automate. We carried out several manual curation steps of the taxonomically assigned
+fish ASV data to check accuracy of the assignments. First the geographic distribution of
+species was checked (https://fishesofaustralia.net.au/) to ensure that the species potentially
+occurred in the Southeast Australia – if not the taxa was assigned at genus level or higher
+based on related species in the area. BLAST matches with < 98.5% identity and assignment
+to species level were reviewed and changed to genus level if congeneric species with no
+reference sequence were present in the region. BLAST matches with a good match (>97%)
+and poor taxonomic resolution were checked to see if errors in the reference database was
+the cause. In some cases, there were large numbers of ASVs assigned at family-level (e.g.
+Myctophidae) or to a genus (e.g. Urolophus). Rather than collapsing these, we extracted all
+sequences from the group and constructed a distance-based tree to see if multiple unnamed
+clusters that differed by >2% were present. If so, each distinct cluster was assigned a
+distinct name (e.g. Urolophus Sp1 and Urolophus Sp2) to capture the ASV diversity that
+likely corresponded to distinct fish species. In our curation process no fish taxonomic
+
+assignments were nonsensical (i.e. we had no assignments to fish outside the region that
+could not be explained by a potential match to a local related species). The only ASVs that
+were removed were chimeric sequences or rare variants close to common ASVs. Some
+curation was subjective and relied on expert knowledge of fish in the region and DNA
+reference database coverage. Once taxonomic assignment was completed the data was
+collapsed based on scientific name using the summarise function in the R package dplyr.
+
+4.2. Methods
+4.2.1. Sample collection
+Paired sampling was conducted at 15 sites in the southeast waters of Australia from the
+research vessel RSV Investigator (IN2024_V03) during the month of May 2024 (Figure 4-1).
+Two deployment methods were used to obtain water samples at each site; Niskin bottles in a
+CTD rosette opened approximately 10m above the seafloor, and the Open-Close Device
+(OCD) eDNA sampler (Bessey et al. 2025) attached to the deep tow camera system which
+was opened for the duration of a transect at approximately one meter above the sea floor
+(Figure 4-2). Since CTD water sampling gear and the OCD deep tow camera system are
+deployed at different times, the paired sites were conducted as close as possible given
+logistical constraints at the time of sampling for each site. Therefore, paired sites were
+approximately 1000m apart (minimum=236m and maximum=3541m). Full details regarding
+CTD deployment are outlined in Section 3.2.1 and we provide a comprehensive description
+of the OCD deployment following the description of the water samples obtained by both
+deployment methods.
+Water samples obtained from CTD deployments (“Active” samples) included three replicate
+1L samples and duplicate 10L samples. The corresponding OCD samples combined the 1L
+of water remaining in the OCD sampler with 1L of deionized water used to dislodge any
+remaining eDNA that could be embedded on the 100µm mesh net used within the internal
+component of the OCD sampler. All water samples were filtered using a peristaltic pump. All
+small volume samples (1L) were filtered using a 0.45µm nylon filter, while large volume
+samples (10L) were filtered using an 0.45µm cellulose ester filter. Nylon filter membranes
+were used to potentially increase eDNA capture efficiency (Jeunen et al. 2022, Zaiko et al.
+2022), while cellulose ester membranes were used with large volume samples to follow
+standard, previously used, operating protocols.
+The OCD sampler was designed and tested during a previous RV Investigator voyage in the
+northwest of Australia (Bessey et al. 2025). The sampler is a 300 x 100 x 100 mm
+mountable open-ended box that attaches to the frame of a preexisting deep tow camera
+system. The sampler was developed to leverage existing survey technology and capture an
+integrated eDNA sample over the length of a transect. Theoretically, the idea is that towing
+the open sampler over the length of the transect would result in eDNA becoming enmeshed
+in the collection material used within the internal chamber. We used a 100µm mesh net
+within the internal chamber of the sampler, which was in the shape of a mini-bongo net held
+open by a plastic filter holder cartridge (Figure 4-2). The large (100 µm) mesh size was used
+to ensure the continual flow of water through the system without clogging up the capture
+material, which can happen in waters that contain high rates of particulate matter. The OCD
+sampler was loaded with a sterile mesh net and plastic cartridge prior to each deployment,
+filled with deionized water ensuring no air bubbles remained, and the lid was then secured.
+The OCD sampler was then installed on the back of the deep tow camera frame and the
+power cable attached. The vessel crew deployed the deep tow camera system using the
+vessel A-frame, winch system, and lowered the system down to approximately 1m above the
+
+sea floor where it was piloted along the transect. Upon reaching the seafloor, the OCD was
+then opened for the duration of the tow which ranged from 1.3km to 4km depending on the
+site. Upon completion of the transect, the OCD was closed prior to ascent, and the deep tow
+camera system retrieved. The OCD was stored in a 4°C fridge upon retrieval and the sample
+was filtered within four hours of retrieval. All equipment was sterilized in 10% bleach water
+for 30 minutes and rinsed with deionized water between deployments.
+
+4.2.2. OCD and Laboratory Controls
+In-situ field controls of the OCD sampler were deployed in both the central (Site N8; 4km tow
+to a maximum depth of 550m) and northern sampling area (Site N30; 4km tow to a maximum
+depth of 190m) to evaluate contamination or leakage issues during the deployment process
+(Figure 4-1; red waypoints). The OCD was deployed as outlined above except the sampler
+remained closed for the duration of the deployment. We found no evidence of any
+contamination with both deployments resulting in zero fish reads.
+Laboratory controls throughout the voyage consisted of filtered 1 L of the 10% bleach water
+being used to sterilize all the equipment and was conducted three times over the trip
+(20/05/2024, 24/05/2025 and at the end of the trip 30/05/2024). As well, 1 L of the deionized water used to prepare the OCD sampler was also filtered to test for contamination.
+All samples resulted in zero fish reads, except for the final bleach water which contained
+12950 reads of an unidentified Ariidae species which was not found in any other sample
+used for our deep tow camera sampling comparisons. A PCR plate control was also included
+during molecular laboratory processing of OCD samples which also resulted in zero fish
+reads.
+
+
+
+4.2.3. Sample processing
+Sample processing and bioinformatics are detailed in Section 3.2.2 and 3.2.3. Briefly, DNA
+was extracted from all filters using a QIAGEN DNeasy Blood and Tissue kit following
+standard protocols outlined by the manufacturer, with the exception that filters were digested
+in 540 μL of ATL lysis buffer and 60μL of Proteinase K for 3 hours at 56°C on rotation
+(300rpm). These extractions were performed in dedicated eDNA laboratories of the CSIRO
+in both Perth and Hobart. All resulting DNA was shipped to the CSIRO Hobart laboratory
+where it was amplified using a 16S mtDNA metabarcoding assay for fish (Section 3.2.2).
+DNA libraries were prepared and sequenced on an Illumina NextSeq 2000 platform (Section
+3.2.2). The resulting sequencing data was demultiplexed into their respective samples,
+quality controlled, and assigned to taxa as outlined in Section 3.2.3. Taxa with only one read
+in a sample (singletons) were removed prior to any statistical analyses.

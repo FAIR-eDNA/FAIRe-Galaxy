@@ -1,0 +1,451 @@
+{
+ "headers": [
+  {
+   "term": "samp_name",
+   "lab_a": "Sample ID",
+   "lab_b": "sample_code",
+   "lab_c": "Client sample name (must be unique)"
+  },
+  {
+   "term": "samp_category",
+   "lab_a": "Sample type (field sample or control)",
+   "lab_b": "sample_class",
+   "lab_c": "Sample category (Sample / Negative control / Positive control)"
+  },
+  {
+   "term": "materialSampleID",
+   "lab_a": "Field bottle number",
+   "lab_b": "field_sample_id",
+   "lab_c": "Physical specimen identifier (e.g. bottle or tube barcode)"
+  },
+  {
+   "term": "decimalLongitude",
+   "lab_a": "Longitude (decimal degrees)",
+   "lab_b": "lon_dd",
+   "lab_c": "Longitude (WGS84, decimal degrees east)"
+  },
+  {
+   "term": "decimalLatitude",
+   "lab_a": "Latitude (decimal degrees)",
+   "lab_b": "lat_dec",
+   "lab_c": "Latitude (WGS84, decimal; south is negative)"
+  },
+  {
+   "term": "geo_loc_name",
+   "lab_a": "Location name (region, locality)",
+   "lab_b": "locality_name",
+   "lab_c": "Geographic location (Country: State, Locality)"
+  },
+  {
+   "term": "eventDate",
+   "lab_a": "Date and time sampled",
+   "lab_b": "datetime_collected",
+   "lab_c": "Collection date/time (ISO 8601, include time zone)"
+  },
+  {
+   "term": "env_broad_scale",
+   "lab_a": "Broad habitat (biome)",
+   "lab_b": "biome",
+   "lab_c": "Broad-scale environmental context (ENVO biome term)"
+  },
+  {
+   "term": "env_local_scale",
+   "lab_a": "Local habitat feature",
+   "lab_b": "local_habitat",
+   "lab_c": "Local environmental context (ENVO term)"
+  },
+  {
+   "term": "env_medium",
+   "lab_a": "Sample medium (water, sediment, etc.)",
+   "lab_b": "substrate",
+   "lab_c": "Environmental medium sampled (e.g. fresh water, sediment, soil)"
+  },
+  {
+   "term": "habitat_natural_artificial_0_1",
+   "lab_a": "Artificial waterbody? (0 = natural, 1 = artificial)",
+   "lab_b": "is_artificial",
+   "lab_c": "Habitat type: natural (0) or artificial/controlled (1)"
+  },
+  {
+   "term": "samp_collect_method",
+   "lab_a": "Sampling method",
+   "lab_b": "collection_protocol",
+   "lab_c": "Collection method / SOP reference (URL if available)"
+  },
+  {
+   "term": "samp_collect_device",
+   "lab_a": "Sampling equipment",
+   "lab_b": "sampler",
+   "lab_c": "Collection device (e.g. Niskin bottle, grab, syringe)"
+  },
+  {
+   "term": "samp_size",
+   "lab_a": "Sample volume collected",
+   "lab_b": "vol_collected",
+   "lab_c": "Total sample amount collected (volume, mass or area)"
+  },
+  {
+   "term": "samp_size_unit",
+   "lab_a": "Volume collected units",
+   "lab_b": "vol_collected_unit",
+   "lab_c": "Unit of sample amount (L, mL, g, cm2)"
+  },
+  {
+   "term": "samp_store_temp",
+   "lab_a": "Storage temperature (°C)",
+   "lab_b": "store_temp_c",
+   "lab_c": "Sample storage temperature prior to processing (°C)"
+  },
+  {
+   "term": "samp_store_sol",
+   "lab_a": "Preservative added",
+   "lab_b": "preservative",
+   "lab_c": "Storage solution / preservative (e.g. none, ethanol, Longmire's)"
+  },
+  {
+   "term": "samp_store_dur",
+   "lab_a": "Time in storage before extraction",
+   "lab_b": "storage_days",
+   "lab_c": "Storage duration before DNA extraction (ISO 8601, e.g. P14D)"
+  },
+  {
+   "term": "samp_store_loc",
+   "lab_a": "Sample storage location",
+   "lab_b": "freezer_sample",
+   "lab_c": "Storage facility / freezer for samples"
+  },
+  {
+   "term": "dna_store_loc",
+   "lab_a": "DNA extract storage location",
+   "lab_b": "freezer_dna",
+   "lab_c": "Storage location of DNA extracts (building, freezer, rack)"
+  },
+  {
+   "term": "samp_mat_process",
+   "lab_a": "Sample processing description",
+   "lab_b": "processing_steps",
+   "lab_c": "Sample pre-processing performed (e.g. prefiltration, sieving, homogenisation)"
+  },
+  {
+   "term": "size_frac_low",
+   "lab_a": "Prefilter mesh size (µm)",
+   "lab_b": "prefilter_um",
+   "lab_c": "Pre-filtration size cut-off (µm), if used"
+  },
+  {
+   "term": "size_frac",
+   "lab_a": "Filter pore size (µm)",
+   "lab_b": "pore_um",
+   "lab_c": "Membrane pore size (µm)"
+  },
+  {
+   "term": "filter_material",
+   "lab_a": "Filter membrane type",
+   "lab_b": "membrane",
+   "lab_c": "Filter membrane material (e.g. PES, MCE, nylon)"
+  },
+  {
+   "term": "filter_name",
+   "lab_a": "Filter brand and model",
+   "lab_b": "filter_product",
+   "lab_c": "Filter product name / manufacturer"
+  },
+  {
+   "term": "precip_chem_prep",
+   "lab_a": "Precipitation chemicals",
+   "lab_b": "precip_reagents",
+   "lab_c": "Precipitation reagents used (if precipitated rather than filtered)"
+  },
+  {
+   "term": "precip_force_prep",
+   "lab_a": "Centrifuge speed (x g)",
+   "lab_b": "centrifuge_g",
+   "lab_c": "Centrifugation force for precipitation (× g)"
+  },
+  {
+   "term": "precip_time_prep",
+   "lab_a": "Precipitation time (minutes)",
+   "lab_b": "precip_min",
+   "lab_c": "Centrifugation duration for precipitation (min)"
+  },
+  {
+   "term": "precip_temp_prep",
+   "lab_a": "Precipitation temperature (°C)",
+   "lab_b": "precip_temp_c",
+   "lab_c": "Centrifuge temperature during precipitation (°C)"
+  },
+  {
+   "term": "samp_vol_we_dna_ext",
+   "lab_a": "Volume used for extraction",
+   "lab_b": "ext_input_amount",
+   "lab_c": "Amount of sample used for DNA extraction"
+  },
+  {
+   "term": "samp_vol_we_dna_ext_unit",
+   "lab_a": "Extraction volume units",
+   "lab_b": "ext_input_unit",
+   "lab_c": "Unit for amount used in extraction (mL, mg, g)"
+  },
+  {
+   "term": "nucl_acid_ext_lysis",
+   "lab_a": "Lysis method",
+   "lab_b": "lysis_type",
+   "lab_c": "Cell lysis approach (e.g. bead beating, enzymatic, freeze-thaw)"
+  },
+  {
+   "term": "nucl_acid_ext_sep",
+   "lab_a": "DNA separation method",
+   "lab_b": "purification",
+   "lab_c": "DNA purification approach (column, magnetic bead, phenol-chloroform)"
+  },
+  {
+   "term": "nucl_acid_ext",
+   "lab_a": "DNA extraction method reference",
+   "lab_b": "extraction_sop",
+   "lab_c": "Extraction protocol (link to SOP or publication)"
+  },
+  {
+   "term": "nucl_acid_ext_kit",
+   "lab_a": "Extraction kit used",
+   "lab_b": "dna_kit",
+   "lab_c": "Commercial extraction kit (name and manufacturer)"
+  },
+  {
+   "term": "minimumDepthInMeters",
+   "lab_a": "Sample depth from (m)",
+   "lab_b": "depth_min_m",
+   "lab_c": "Minimum sampling depth (m below surface)"
+  },
+  {
+   "term": "maximumDepthInMeters",
+   "lab_a": "Sample depth to (m)",
+   "lab_b": "depth_max_m",
+   "lab_c": "Maximum sampling depth (m below surface)"
+  },
+  {
+   "term": "tot_depth_water_col",
+   "lab_a": "Total water depth at site (m)",
+   "lab_b": "bottom_depth",
+   "lab_c": "Water column depth at sampling location (m)"
+  },
+  {
+   "term": "temp",
+   "lab_a": "Water temperature (°C)",
+   "lab_b": "wtemp_c",
+   "lab_c": "In situ temperature at collection (°C)"
+  },
+  {
+   "term": "chlorophyll",
+   "lab_a": "Chlorophyll a (mg/m3)",
+   "lab_b": "chla",
+   "lab_c": "Chlorophyll concentration (mg/m³)"
+  },
+  {
+   "term": "ph",
+   "lab_a": "pH (pH units)",
+   "lab_b": "ph_field",
+   "lab_c": "pH at time of collection"
+  },
+  {
+   "term": "salinity",
+   "lab_a": "Salinity (PSU)",
+   "lab_b": "sal_psu",
+   "lab_c": "Salinity (practical salinity units)"
+  },
+  {
+   "term": "diss_inorg_carb",
+   "lab_a": "Dissolved inorganic carbon",
+   "lab_b": "dic",
+   "lab_c": "DIC concentration (report unit separately)"
+  },
+  {
+   "term": "diss_inorg_carb_unit",
+   "lab_a": "Dissolved inorganic carbon units",
+   "lab_b": "dic_unit",
+   "lab_c": "DIC unit (e.g. µmol/kg)"
+  },
+  {
+   "term": "diss_oxygen",
+   "lab_a": "Dissolved oxygen",
+   "lab_b": "do_conc",
+   "lab_c": "Dissolved O2 concentration"
+  },
+  {
+   "term": "diss_oxygen_unit",
+   "lab_a": "Dissolved oxygen units (mg/L or % sat)",
+   "lab_b": "do_unit",
+   "lab_c": "Unit for dissolved O2 (mg/L, µmol/kg)"
+  },
+  {
+   "term": "nitrate",
+   "lab_a": "Nitrate (as N)",
+   "lab_b": "no3",
+   "lab_c": "Nitrate concentration"
+  },
+  {
+   "term": "nitrate_unit",
+   "lab_a": "Nitrate units",
+   "lab_b": "no3_unit",
+   "lab_c": "Unit for nitrate concentration"
+  },
+  {
+   "term": "nitrite",
+   "lab_a": "Nitrite (as N)",
+   "lab_b": "no2",
+   "lab_c": "Nitrite concentration"
+  },
+  {
+   "term": "nitrite_unit",
+   "lab_a": "Nitrite units",
+   "lab_b": "no2_unit",
+   "lab_c": "Unit for nitrite concentration"
+  },
+  {
+   "term": "neg_cont_type",
+   "lab_a": "Type of blank (field, extraction or PCR)",
+   "lab_b": "blank_type",
+   "lab_c": "Negative control type (field blank / extraction blank / PCR no-template)"
+  },
+  {
+   "term": "assay_name",
+   "lab_a": "Assay (target group)",
+   "lab_b": "assay_id",
+   "lab_c": "Assay / marker name (e.g. MiFish-U, 16S Fish)"
+  },
+  {
+   "term": "pcr_plate_id",
+   "lab_a": "PCR plate number",
+   "lab_b": "pcr_plate",
+   "lab_c": "PCR plate identifier"
+  },
+  {
+   "term": "lib_id",
+   "lab_a": "Library number",
+   "lab_b": "library_id",
+   "lab_c": "Sequencing library identifier"
+  },
+  {
+   "term": "seq_run_id",
+   "lab_a": "Sequencing run number",
+   "lab_b": "run_id",
+   "lab_c": "Sequencing run identifier (assigned by facility)"
+  },
+  {
+   "term": "mid_forward",
+   "lab_a": "Forward index sequence",
+   "lab_b": "fwd_tag",
+   "lab_c": "Forward barcode / MID sequence (5'-3')"
+  },
+  {
+   "term": "mid_reverse",
+   "lab_a": "Reverse index sequence",
+   "lab_b": "rev_tag",
+   "lab_c": "Reverse barcode / MID sequence (5'-3')"
+  },
+  {
+   "term": "filename",
+   "lab_a": "Forward read file",
+   "lab_b": "fastq_r1",
+   "lab_c": "Raw data file name (R1)"
+  },
+  {
+   "term": "filename2",
+   "lab_a": "Reverse read file",
+   "lab_b": "fastq_r2",
+   "lab_c": "Raw data file name (R2, paired-end only)"
+  },
+  {
+   "term": "associatedSequences",
+   "lab_a": "Sequence archive links",
+   "lab_b": "sra_accession",
+   "lab_c": "Public repository accession(s) (SRA/ENA BioSample, separate with |)"
+  },
+  {
+   "term": "input_read_count",
+   "lab_a": "Number of raw reads",
+   "lab_b": "n_reads_raw",
+   "lab_c": "Total raw read count per sample"
+  },
+  {
+   "term": "target_gene",
+   "lab_a": "Gene region targeted",
+   "lab_b": "marker",
+   "lab_c": "Target gene / locus (e.g. 12S, 16S, COI)"
+  },
+  {
+   "term": "target_subfragment",
+   "lab_a": "Gene subregion",
+   "lab_b": "subregion",
+   "lab_c": "Target sub-fragment or variable region (e.g. V4)"
+  },
+  {
+   "term": "pcr_primer_forward",
+   "lab_a": "Forward primer sequence",
+   "lab_b": "primer_f_seq",
+   "lab_c": "Forward primer sequence (5'-3', no adapters)"
+  },
+  {
+   "term": "pcr_primer_reverse",
+   "lab_a": "Reverse primer sequence",
+   "lab_b": "primer_r_seq",
+   "lab_c": "Reverse primer sequence (5'-3', no adapters)"
+  },
+  {
+   "term": "pcr_primer_name_forward",
+   "lab_a": "Forward primer name",
+   "lab_b": "primerF",
+   "lab_c": "Forward primer name as published"
+  },
+  {
+   "term": "pcr_primer_name_reverse",
+   "lab_a": "Reverse primer name",
+   "lab_b": "primerR",
+   "lab_c": "Reverse primer name as published"
+  },
+  {
+   "term": "platform",
+   "lab_a": "Sequencing platform",
+   "lab_b": "seq_platform",
+   "lab_c": "Sequencing technology (Illumina, ONT, PacBio, Ion Torrent)"
+  },
+  {
+   "term": "instrument",
+   "lab_a": "Sequencer model",
+   "lab_b": "sequencer",
+   "lab_c": "Sequencing instrument make and model"
+  },
+  {
+   "term": "project_id",
+   "lab_a": "Monitoring program code",
+   "lab_b": "proj_code",
+   "lab_c": "Client project code (no spaces)"
+  }
+ ],
+ "distractors": [
+  "Vehicle registration",
+  "Odometer start (km)",
+  "Kilometres travelled",
+  "Boat hours",
+  "Fuel cost ($)",
+  "Number of eskies",
+  "Ice bricks packed",
+  "Gate key returned (Y/N)",
+  "Field sheet scanned",
+  "Courier consignment number",
+  "Freight charge (AUD)",
+  "Purchase order number",
+  "Invoice number",
+  "Cost centre",
+  "GST applicable",
+  "Service tier (Standard / Express)",
+  "Quote reference",
+  "Turnaround time (business days)",
+  "Travel allowance claimed",
+  "Overtime hours",
+  "qa_checked",
+  "db_upload_status",
+  "sheet_version",
+  "Calibration log page",
+  "Price per sample (excl. GST)"
+ ]
+}

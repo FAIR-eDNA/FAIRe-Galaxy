@@ -1,0 +1,39 @@
+# Values for the whole project for the 18S data. From the data record's ReadMe: the assay, gene and
+# region. From the 10 L BioSample sheet (file 1), where they are the same for every sample: the three
+# ENVO terms. Every sample in the 18S table is a field sample, so samp_category is sample. From the
+# methods (methods_consolidated.txt, sections 2 and 4): the rest, except the instrument, which is from
+# the SRA run table (NextSeq 1000; B. Deagle, 6 November 2026). Details that differ between the 2 L
+# and 10 L samples (filter, processing, extraction) are columns of the sample table instead.
+term	value
+project_name	Environmental DNA for measuring offshore marine biodiversity (SEA-MES, NESP Marine and Coastal Hub Project 4.23)
+targetTaxonomicAssay	Eukaryotes
+target_gene	18S rRNA (SSU eukaryote)
+target_subfragment	V4
+pcr_primer_name_forward	TAReuk454FWD1
+pcr_primer_name_reverse	TAReuk-Rev3 (modified)
+pcr_primer_forward	CCAGCASCYGCGGTAATTCC
+pcr_primer_reverse	ACTTTCGTTCTTGATYRATGA
+nucl_acid_amp	Australian Microbiome protocol meth_5.1
+sequencing_location	Ramaciotti Centre for Genomics
+platform	ILLUMINA
+instrument	Illumina NextSeq 1000 [OBI_0003606]
+pcr_0_1	1
+project_contact	Bruce Deagle (Bruce.Deagle@csiro.au)
+samp_category	sample
+samp_collect_device	12 L Niskin bottle on a 36-bottle CTD rosette
+filter_passive_active_0_1	1
+samp_store_temp	-80
+sterilise_method	Sampling and filtration equipment was soaked in 10% bleach for at least 6 hours between runs; lines were primed with 10% bleach for 15 minutes and flushed three times with Milli-Q water.
+env_broad_scale	Marine biome [ENVO:01000020]
+env_local_scale	Neritic Pelagic Zone Biome [ENVO:01000032]|Oceanic Pelagic Zone Biome [ENVO:01000033]|Marine Neritic Benthic Zone Biome [ENVO:01000025]|Neritic Pelagic Zone Biome [ENVO:01000032]
+env_medium	Seawater [ENVO:00002149]
+trim_method	Seqtk trimfq
+merge_tool	FLASH
+error_rate_tool	Mothur screen.seqs: reads with ambiguous bases or homopolymers longer than 8 bases removed
+otu_clust_tool	USEARCH 64-bit v10.0.240, zero-radius OTUs (zOTUs)
+chimera_check_method	USEARCH 64-bit v10.0.240: zOTUs are chimera-free
+otu_db	SILVA v138.1 | PR2 v5.0.0
+tax_assign_cat	probabilistic
+otu_seq_comp_appr	Wang classifier
+tax_class_other	Bayesian probability cut-off of 60%
+screen_nontarget_method	Reads not classified as eukaryotes at phylum level in SILVA or domain level in PR2 were removed

@@ -1,0 +1,96 @@
+column	term
+Client sample name (must be unique)	samp_name
+Sample category (Sample / Negative control / Positive control)	samp_category
+Physical specimen identifier (e.g. bottle or tube barcode)	materialSampleID
+Longitude (WGS84, decimal degrees east)	decimalLongitude
+Latitude (WGS84, decimal; south is negative)	decimalLatitude
+Geographic location (Country: State, Locality)	geo_loc_name
+Collection date/time (ISO 8601, include time zone)	eventDate
+Broad-scale environmental context (ENVO biome term)	env_broad_scale
+Local environmental context (ENVO term)	env_local_scale
+Environmental medium sampled (e.g. fresh water, sediment, soil)	env_medium
+Habitat type: natural (0) or artificial/controlled (1)	habitat_natural_artificial_0_1
+Collection method / SOP reference (URL if available)	samp_collect_method
+Collection device (e.g. Niskin bottle, grab, syringe)	samp_collect_device
+Total sample amount collected (volume, mass or area)	samp_size
+Unit of sample amount (L, mL, g, cm2)	samp_size_unit
+Sample storage temperature prior to processing (°C)	samp_store_temp
+Storage solution / preservative (e.g. none, ethanol, Longmire's)	samp_store_sol
+Storage duration before DNA extraction (ISO 8601, e.g. P14D)	samp_store_dur
+Storage facility / freezer for samples	samp_store_loc
+Storage location of DNA extracts (building, freezer, rack)	dna_store_loc
+Sample pre-processing performed (e.g. prefiltration, sieving, homogenisation)	samp_mat_process
+Pre-filtration size cut-off (µm), if used	size_frac_low
+Membrane pore size (µm)	size_frac
+Filter membrane material (e.g. PES, MCE, nylon)	filter_material
+Filter product name / manufacturer	filter_name
+Precipitation reagents used (if precipitated rather than filtered)	precip_chem_prep
+Centrifugation force for precipitation (× g)	precip_force_prep
+Centrifugation duration for precipitation (min)	precip_time_prep
+Centrifuge temperature during precipitation (°C)	precip_temp_prep
+Amount of sample used for DNA extraction	samp_vol_we_dna_ext
+Unit for amount used in extraction (mL, mg, g)	samp_vol_we_dna_ext_unit
+Cell lysis approach (e.g. bead beating, enzymatic, freeze-thaw)	nucl_acid_ext_lysis
+DNA purification approach (column, magnetic bead, phenol-chloroform)	nucl_acid_ext_sep
+Extraction protocol (link to SOP or publication)	nucl_acid_ext
+Commercial extraction kit (name and manufacturer)	nucl_acid_ext_kit
+Minimum sampling depth (m below surface)	minimumDepthInMeters
+Maximum sampling depth (m below surface)	maximumDepthInMeters
+Water column depth at sampling location (m)	tot_depth_water_col
+In situ temperature at collection (°C)	temp
+Chlorophyll concentration (mg/m³)	chlorophyll
+pH at time of collection	ph
+Salinity (practical salinity units)	salinity
+DIC concentration (report unit separately)	diss_inorg_carb
+DIC unit (e.g. µmol/kg)	diss_inorg_carb_unit
+Dissolved O2 concentration	diss_oxygen
+Unit for dissolved O2 (mg/L, µmol/kg)	diss_oxygen_unit
+Nitrate concentration	nitrate
+Unit for nitrate concentration	nitrate_unit
+Nitrite concentration	nitrite
+Unit for nitrite concentration	nitrite_unit
+Negative control type (field blank / extraction blank / PCR no-template)	neg_cont_type
+Assay / marker name (e.g. MiFish-U, 16S Fish)	assay_name
+PCR plate identifier	pcr_plate_id
+Sequencing library identifier	lib_id
+Sequencing run identifier (assigned by facility)	seq_run_id
+Forward barcode / MID sequence (5'-3')	mid_forward
+Reverse barcode / MID sequence (5'-3')	mid_reverse
+Raw data file name (R1)	filename
+Raw data file name (R2, paired-end only)	filename2
+Public repository accession(s) (SRA/ENA BioSample, separate with |)	associatedSequences
+Total raw read count per sample	input_read_count
+Target gene / locus (e.g. 12S, 16S, COI)	target_gene
+Target sub-fragment or variable region (e.g. V4)	target_subfragment
+Forward primer sequence (5'-3', no adapters)	pcr_primer_forward
+Reverse primer sequence (5'-3', no adapters)	pcr_primer_reverse
+Forward primer name as published	pcr_primer_name_forward
+Reverse primer name as published	pcr_primer_name_reverse
+Sequencing technology (Illumina, ONT, PacBio, Ion Torrent)	platform
+Sequencing instrument make and model	instrument
+Client project code (no spaces)	project_id
+Vehicle registration	
+Odometer start (km)	
+Kilometres travelled	
+Boat hours	
+Fuel cost ($)	
+Number of eskies	
+Ice bricks packed	
+Gate key returned (Y/N)	
+Field sheet scanned	
+Courier consignment number	
+Freight charge (AUD)	
+Purchase order number	
+Invoice number	
+Cost centre	
+GST applicable	
+Service tier (Standard / Express)	
+Quote reference	
+Turnaround time (business days)	
+Travel allowance claimed	
+Overtime hours	
+qa_checked	
+db_upload_status	
+sheet_version	
+Calibration log page	
+Price per sample (excl. GST)	

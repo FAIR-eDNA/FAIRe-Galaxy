@@ -1,0 +1,6 @@
+OTU,Sequence,Percent_identity,Query_coverage,domain,phylum,class,order,family,genus,species,LIZ_01,LIZ_02,LIZ_03,LIZ_FB,New_Name
+ASV_1,GACCCTATGGAGCTTTAGACACTAGGTTAACCGAATCTAACCGT,100,100,Eukaryota,Chordata,Actinopteri,Clupeiformes,Clupeidae,Sardinops,,900,40,0,0,Sardinops sagax
+ASV_2,GACCCTATGGAGCTTTAGACGCTAAGGTAGCCCAACCAGTTTCA,99.5,100,Eukaryota,Chordata,Actinopteri,Carangiformes,Carangidae,Trachurus,Trachurus novaezelandiae,0,310,25,0,Trachurus Sp
+ASV_3,GACCCTATGGAGCTTTAGACACTAGGTTAACCGAATCTAACCAT,99.1,100,Eukaryota,Chordata,Actinopteri,Clupeiformes,Clupeidae,Sardinops,Sardinops sagax,60,0,12,0,Sardinops sagax
+ASV_4,GACCCTATGGAGCTTTAGATATTGGGCTAACCCAATCTTTCCGA,97.2,100,Eukaryota,Chordata,Actinopteri,Myctophiformes,Myctophidae,Diaphus,,0,0,48,5,Diaphus Sp1
+ASV_5,AGAGTTTGATCCTGGCTCAGAACGAACGCTGGCGGCATGCCTAA,98.0,100,Bacteria,Pseudomonadota,Alphaproteobacteria,,,,,3,0,0,7,

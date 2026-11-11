@@ -1,0 +1,40 @@
+- doc: A reef sample table, its reviewed crosswalk, values from the methods and an ASV table
+  job:
+    sample_table:
+      class: File
+      path: test-data/apply_reef.csv
+      filetype: csv
+    crosswalk:
+      class: File
+      path: test-data/apply_reef.sssom.tsv
+      filetype: tabular
+    project_values:
+      class: File
+      path: test-data/apply_project_values.tsv
+      filetype: tabular
+    otu_table:
+      class: File
+      path: test-data/otu_asv_table.tsv
+      filetype: tabular
+    project_id: lizard_test
+    assay_name: COIElasmo
+  outputs:
+    faire_workbook:
+      asserts:
+        has_archive_member:
+          path: xl/workbook.xml
+          asserts:
+            has_text:
+              text: "name=\"otuFinal\""
+    apply_log:
+      asserts:
+        has_text:
+          text: "otu_asv_table.tsv: samples as columns; 4 sequences or taxa, 4 samples"
+    fairefier_summary:
+      asserts:
+        has_text:
+          text: sampleMetadata
+    fairefier_issues:
+      asserts:
+        has_text:
+          text: projectMetadata

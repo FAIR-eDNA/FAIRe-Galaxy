@@ -1,0 +1,27 @@
+term	level	value	status	problem	stated	quote
+sterilise_method	project	All equipment was sterilized between bores in 10% bleach for 10 min and rinsed in RO water, and disposable gloves were used at each bore hole to prevent contamination.	supported		True	All equipment was sterilized between bores in 10% bleach for 10 min and rinsed in RO water, and disposable gloves were used at each bore hole to prevent contamination.
+neg_cont_0_1	project	1	supported		True	samples of the RO water used for rinsing equipment (i.e. field controls) were collected to assess sources of contamination
+pos_cont_0_1	project	1	supported		True	All PCR plates included a negative control and a positive control of chicken DNA.
+neg_cont_type	sample	field negative | extraction negative | PCR negative	review	inferred, not stated	False	A total of seven DNA extraction controls, containing the solutions and plastics supplied in the extraction kit
+pos_cont_type	sample	PCR positive of chicken DNA	review	inferred, not stated	False	a positive control of chicken DNA
+samp_store_temp	sample	4	supported		True	transferred to a 4°C refrigerator at the end of the collecting day
+size_frac	sample	0.45	supported		True	across 0.45 μm Supor polyethersulfone membranes
+filter_material	sample	polyethersulfone	supported		True	across 0.45 μm Supor polyethersulfone membranes
+nucl_acid_ext_kit	sample	DNeasy Blood and Tissue Kit (Qiagen)	supported		True	DNA was extracted from filter membranes within 1 month of collection and filtering using a DNeasy Blood and Tissue Kit (Qiagen)
+pcr_0_1	project	1	supported		True	Fusion PCRs were done in duplicate to minimize PCR stochasticity
+pcr_rep	project	2	supported		True	Fusion PCRs were done in duplicate to minimize PCR stochasticity
+targetTaxonomicAssay	project	eukaryotes	review	inferred, not stated	False	universal eukaryote18S assay
+target_gene	project	18S rRNA (SSU eukaryote)	review	inferred, not stated	False	universal eukaryote18S assay
+custom_mm	project	1X AmpliTaq Gold PCR buffer (Life Technologies), 2.5 mM MgCl2, 0.25 mM dNTPs, 0.4 μM each of forward and reverse primers (Integrated DNA Technologies), 0.4 mg/mL BSA (Fisher Biotec), 0.6 μl of 5X SYBR Green (Life Technologies), 1 U AmpliTaq Gold DNA Polymerase (Life Technologies), 2 μl of genomic DNA template, made to volume with Ultrapure Distilled Water (Life Technologies)	supported		True	Each PCR reaction for the 18S universal assay was carried out with the same master mix as described above.
+pcr_dna_vol	project	2	supported		True	2 μl of genomic DNA template
+pcr_cond	project	initial denaturation:95_5;annealing:52_0.5;elongation:72_0.75;final elongation:72_10;45	review	inferred, not stated	False	followed by 45 cycles of 95° C for 30 s, annealing at 52° C for 30 s, 72° C for 45 s
+annealingTemp	project	52	supported		True	annealing at 52° C for 30 s
+pcr_cycles	project	45	supported		True	followed by 45 cycles of 95° C for 30 s, annealing
+barcoding_pcr_appr	project	one-step PCR	review	inferred, not stated	False	These MID tags were incorporated into fusion tagged primers
+platform	project	ILLUMINA	review	inferred, not stated	False	Sequencing was performed on the Illumina MiSeq platform
+instrument	project	Illumina MiSeq [OBI_0002003]	review	inferred, not stated	False	Sequencing was performed on the Illumina MiSeq platform
+seq_kit	project	500 cycle paired-end V2	supported		True	using the 500 cycle paired-end V2 as per manufacturer's instructions
+lib_screen	project	Size selection (250-600bp) using a PippinPrep 2% ethidium bromide cassette; libraries cleaned with a QIAquick PCR Purification Kit (Qiagen)	supported		True	Size selection was performed (250-600bp) using a PippinPrep 2% ethidium bromide cassette
+otu_db	project	custom | GenBank (NCBI)	supported		True	queried against a custom barcode reference library for stygofauna and GenBank (NCBI)
+tax_assign_cat	project	sequence similarity	review	inferred, not stated	False	using blastn with the following parameters
+otu_seq_comp_appr	project	blastn	supported		True	using blastn with the following parameters

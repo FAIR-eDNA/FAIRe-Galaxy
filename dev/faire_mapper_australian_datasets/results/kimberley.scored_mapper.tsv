@@ -1,0 +1,10 @@
+column	route	proposed	gold	outcome	gold_in_shortlist
+Site No.	review	samp_name		acceptable	False
+Latitude	accept	decimalLatitude	decimalLatitude	correct	True
+Longitude	accept	decimalLongitude	decimalLongitude	correct	True
+Location	accept	geo_loc_name		acceptable	False
+Bioregion	no match			right to leave	False
+Subregion	accept	geo_loc_name		acceptable	False
+Habitat	accept	env_local_scale	env_local_scale	correct	True
+Site Depth (m)	accept	tot_depth_water_col	tot_depth_water_col	correct	True
+Date Collected	accept	eventDate	eventDate	correct	True

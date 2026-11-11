@@ -1,0 +1,3 @@
+primer_pair_id	assay_name	target_group	target_gene	target_subfragment	pcr_primer_name_forward	pcr_primer_forward	pcr_primer_reference_forward	pcr_primer_name_reverse	pcr_primer_reverse	pcr_primer_reference_reverse	ampliconSize	other_names	notes	source
+	TestAssay	Test group	12S		TestAssay-F	ACGTACGTACGTACGTAC	Example lab 2026	TestAssay-R	TTGCATGCATGCATGCAA	Example lab 2026	150	lab01	made-up pair for the tool tests	
+	BadRow	Test group	12S		Bad-F	ACGTXXACGT		Bad-R	ACGTACGTAC					

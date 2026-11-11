@@ -1,0 +1,3 @@
+subject_id	subject_label	predicate_id	object_id	object_label	mapping_justification	confidence	comment
+local:sample	sample	skos:exactMatch	FAIRe:samp_name	samp_name	semapv:ManualMappingCuration	1.0	confirmed
+local:date	date	skos:exactMatch	FAIRe:eventDate	eventDate	semapv:ManualMappingCuration	1.0	confirmed

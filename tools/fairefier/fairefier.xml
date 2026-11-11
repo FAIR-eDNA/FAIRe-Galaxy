@@ -1,0 +1,220 @@
+<tool id="fairefier" name="FAIRe-fier" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="23.0" license="MIT">
+    <description>check FAIRe eDNA metadata against the FAIRe checklist</description>
+    <macros>
+        <!-- Upstream has no tagged releases. The version is the date of the pinned
+             commit (csiro/FAIRe-fier 183505d). -->
+        <token name="@TOOL_VERSION@">2026.06.30</token>
+        <token name="@VERSION_SUFFIX@">0</token>
+        <import>faire_guide.xml</import>
+    </macros>
+    <creator>
+        <person givenName="Suk Yee" familyName="Yong" email="sukyee.yong@csiro.au"/>
+        <organization name="CSIRO" url="https://github.com/csiro/FAIRe-fier"/>
+        <person givenName="Oliver" familyName="Berry"/>
+    </creator>
+    <requirements>
+        <requirement type="package" version="3.12">python</requirement>
+        <requirement type="package" version="2.2.3">pandas</requirement>
+        <requirement type="package" version="3.1.5">openpyxl</requirement>
+        <requirement type="package" version="2.7.0">pydantic</requirement>
+        <requirement type="package" version="3.1.6">jinja2</requirement>
+    </requirements>
+    <version_command>echo '@TOOL_VERSION@'</version_command>
+    <command detect_errors="exit_code"><![CDATA[
+set -o pipefail;
+ln -s '$input_file' input.xlsx &&
+mkdir out &&
+python '$__tool_directory__/fairefier_cli.py' input.xlsx
+    --outdir out
+    --checklist_dir '$__tool_directory__/checklist'
+    --checklist_version '$checklist_version'
+    $strict
+| tee '$log'
+    ]]></command>
+    <inputs>
+        <param name="input_file" type="data" format="xlsx" label="FAIRe metadata workbook"
+            help="An Excel workbook with projectMetadata and sampleMetadata worksheets, for example a filled-in FAIRe-ator template. You can also give the fairefier_warn_error workbook from an earlier run after correcting its _revise worksheets."/>
+        <param name="checklist_version" type="select" label="FAIRe checklist version">
+            <option value="auto" selected="true">Use the version recorded in checkls_ver (latest if not recorded)</option>
+            <option value="v1.0.2">v1.0.2</option>
+            <option value="v1.0">v1.0</option>
+        </param>
+        <param name="strict" type="boolean" truevalue="--strict" falsevalue="" checked="false"
+            label="Stop with an error if validation fails"
+            help="Useful in workflows, so later steps only run on valid metadata. The reports are still written."/>
+    </inputs>
+    <outputs>
+        <data name="summary" format="json" from_work_dir="out/fairefier_summary.json" label="${tool.name} on ${on_string}: summary"/>
+        <data name="issues" format="tabular" from_work_dir="out/fairefier_issues.tsv" label="${tool.name} on ${on_string}: warnings and errors"/>
+        <collection name="workbooks" type="list" label="${tool.name} on ${on_string}: workbooks">
+            <discover_datasets pattern="(?P&lt;designation&gt;fairefier_(metadata|warn_error))\.xlsx" directory="out" format="xlsx"/>
+        </collection>
+        <data name="log" format="txt" label="${tool.name} on ${on_string}: log"/>
+    </outputs>
+    <tests>
+        <!-- Valid workbook made from a FAIRe-ator template -->
+        <test expect_num_outputs="4">
+            <param name="input_file" value="faire_valid.xlsx"/>
+            <output name="summary">
+                <assert_contents>
+                    <has_json_property_with_value property="valid" value="true"/>
+                    <has_json_property_with_value property="checklist_version" value="&quot;v1.0.2&quot;"/>
+                </assert_contents>
+            </output>
+            <output name="issues">
+                <assert_contents>
+                    <has_n_lines n="1"/>
+                    <has_line line="worksheet&#009;level&#009;record&#009;term&#009;input&#009;type&#009;message&#009;suggested"/>
+                </assert_contents>
+            </output>
+            <output_collection name="workbooks" type="list" count="1">
+                <element name="fairefier_metadata">
+                    <assert_contents>
+                        <has_archive_member path="xl/workbook.xml">
+                            <has_text text="name=&quot;projectMetadata&quot;"/>
+                            <has_text text="name=&quot;sampleMetadata&quot;"/>
+                        </has_archive_member>
+                    </assert_contents>
+                </element>
+            </output_collection>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="For projectMetadata: Success!"/>
+                    <has_text text="For sampleMetadata: Success!"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Invalid workbook; checklist version read from checkls_ver -->
+        <test expect_num_outputs="4">
+            <param name="input_file" value="faire_invalid.xlsx"/>
+            <output name="summary">
+                <assert_contents>
+                    <has_json_property_with_value property="valid" value="false"/>
+                    <has_text text="taken from checkls_ver (FAIRe_checklist_v1.0.2.xlsx)"/>
+                </assert_contents>
+            </output>
+            <output name="issues">
+                <assert_contents>
+                    <has_n_lines n="6"/>
+                    <has_line_matching expression="^sampleMetadata\terror\tRI01_2\tenv_medium\tsea water\t.*termLabel \[termID\].*"/>
+                    <has_line_matching expression="^sampleMetadata\twarning\tRI01_1\tsamp_category\tsmaple\t.*\tsample$"/>
+                    <has_line_matching expression="^projectMetadata\terror\tALL\tcheckls_ver\t.*"/>
+                </assert_contents>
+            </output>
+            <output_collection name="workbooks" type="list" count="1">
+                <element name="fairefier_warn_error">
+                    <assert_contents>
+                        <has_archive_member path="xl/workbook.xml">
+                            <has_text text="name=&quot;projectMetadata_error&quot;"/>
+                            <has_text text="name=&quot;sampleMetadata_revise&quot;"/>
+                        </has_archive_member>
+                    </assert_contents>
+                </element>
+            </output_collection>
+        </test>
+        <!-- Checklist chosen by the user -->
+        <test expect_num_outputs="4">
+            <param name="input_file" value="faire_invalid.xlsx"/>
+            <param name="checklist_version" value="v1.0"/>
+            <output name="summary">
+                <assert_contents>
+                    <has_json_property_with_value property="checklist_version" value="&quot;v1.0&quot;"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Re-submitting the corrected _revise worksheets from an earlier run -->
+        <test expect_num_outputs="4">
+            <param name="input_file" value="faire_revise.xlsx"/>
+            <param name="checklist_version" value="v1.0.2"/>
+            <output name="issues">
+                <assert_contents>
+                    <has_n_lines n="6"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Strict mode stops the job when validation fails -->
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="input_file" value="faire_invalid.xlsx"/>
+            <param name="strict" value="true"/>
+        </test>
+        <!-- Duplicate sample names cannot be validated -->
+        <test expect_exit_code="2" expect_failure="true">
+            <param name="input_file" value="faire_duplicate.xlsx"/>
+            <assert_stderr>
+                <has_text text="Duplicate samp_name in sampleMetadata worksheet: 'RI01_1'"/>
+            </assert_stderr>
+        </test>
+    </tests>
+    <help><![CDATA[
+**What it does**
+
+This tool checks the projectMetadata and sampleMetadata worksheets of a FAIRe workbook against the
+`FAIR eDNA (FAIRe) <https://fair-edna.github.io/>`_ checklist. It checks that the mandatory fields
+are filled in, that values have the right type and format (numbers, dates, ENVO terms, durations),
+and that fields with a controlled vocabulary use allowed values. Where a value is close to an
+allowed one, it suggests the correct value.
+
+These are the same checks as in the `FAIRe-fier web app <https://shiny.csiro.au/FAIRe-fier/>`_,
+taken from its public code on GitHub (`csiro/FAIRe-fier <https://github.com/csiro/FAIRe-fier>`_,
+version of 30 June 2026), and the tool writes the same output files. If the web app is updated
+after that version, the two may differ until this tool is updated too.
+
+-----
+
+**Inputs**
+
+- **A FAIRe workbook** (.xlsx), with the field names in sampleMetadata on row 3, as in FAIRe
+  templates. You can also give the *fairefier_warn_error* workbook from an earlier run, once you
+  have corrected its *_revise* worksheets.
+- **The checklist version.** By default, the tool uses the version recorded in the *checkls_ver*
+  field of projectMetadata, or the latest bundled version if none is recorded.
+
+**Outputs**
+
+- **summary** (JSON): whether each worksheet passed, the number of errors and warnings, and the
+  checklist version used.
+- **warnings and errors** (tabular): one row for each problem, giving the worksheet, the sample or
+  project column it is in (ALL if it applies to every one), the field, the value found, the message
+  and any suggested value.
+- **workbooks** (collection):
+
+  - *fairefier_metadata*: the checked metadata, written when the worksheets pass.
+  - *fairefier_warn_error*: the warnings and errors, plus *_revise* copies of your worksheets with
+    the problem cells highlighted, red for errors and yellow for warnings.
+
+- **log**: a record of the run.
+
+-----
+
+**Notes**
+
+- An error in any one sample stops sampleMetadata from passing, and the same applies to
+  projectMetadata.
+- The checklist defines *checkls_ver* as a number (for example 1), but FAIRe-ator templates fill it
+  with the checklist file name, which FAIRe-fier reports as an error. Replace it with a number until
+  the two tools agree.
+- Warnings about extra terms (fields not in the checklist) may appear in a different order from one
+  run to the next.
+
+@HELP_FAIRE_GUIDE@
+
+-----
+
+**Credits**
+
+FAIRe-fier was developed at CSIRO by Suk Yee Yong (BSD 3-Clause licence). This Galaxy tool runs
+its validation code through a command-line front end that reproduces the web app's outputs. The
+FAIRe checklist is described in Takahashi et al. (2025) *Environmental DNA* 7: e70100. The Galaxy tool was written by Oliver Berry (CSIRO), with Claude (Anthropic).
+    ]]></help>
+    <citations>
+        <citation type="bibtex">@misc{fairefier,
+  author = {Yong, Suk Yee},
+  title = {FAIRe-fier},
+  year = {2026},
+  publisher = {CSIRO},
+  note = {Software, v1},
+  url = {http://hdl.handle.net/102.100.100/734538}
+}</citation>
+        <citation type="doi">10.1002/edn3.70100</citation>
+    </citations>
+</tool>

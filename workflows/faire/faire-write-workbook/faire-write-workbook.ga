@@ -1,0 +1,249 @@
+{
+    "name": "FAIRe mapper: write and check a FAIRe workbook",
+    "a_galaxy_workflow": "true",
+    "format-version": "0.1",
+    "annotation": "The second step from a lab's own tables to FAIRe. Writes a FAIRe workbook, in the layout\nFAIRe-ator makes, from the sample table and its reviewed crosswalk (from \"FAIRe mapper: propose\na mapping\"), values for the whole project and an OTU or ASV table, then checks it with\nFAIRe-fier. For library tables, a raw and a final OTU table, or several assays, run the apply\nmapping tool on its own.\n",
+    "tags": [],
+    "license": "MIT",
+    "release": "0.1",
+    "uuid": "4b93d86b-5451-4866-9404-ff48d36b064c",
+    "creator": [
+        {
+            "name": "FAIRe Galaxy project contributors",
+            "class": "Organization"
+        }
+    ],
+    "comments": [],
+    "steps": {
+        "0": {
+            "id": 0,
+            "name": "sample_table",
+            "type": "data_input",
+            "label": "sample_table",
+            "annotation": "The same sample table given to \"propose a mapping\".",
+            "tool_state": "{\"name\": \"sample_table\", \"format\": [\"csv\", \"tabular\", \"xlsx\", \"txt\"]}",
+            "position": {
+                "top": 0,
+                "left": 0
+            },
+            "input_connections": {},
+            "inputs": [
+                {
+                    "name": "sample_table",
+                    "description": ""
+                }
+            ],
+            "outputs": [],
+            "workflow_outputs": [],
+            "post_job_actions": {}
+        },
+        "1": {
+            "id": 1,
+            "name": "crosswalk",
+            "type": "data_input",
+            "label": "crosswalk",
+            "annotation": "The reviewed crosswalk (SSSOM).",
+            "tool_state": "{\"name\": \"crosswalk\", \"format\": [\"tabular\", \"csv\", \"xlsx\"]}",
+            "position": {
+                "top": 10,
+                "left": 10
+            },
+            "input_connections": {},
+            "inputs": [
+                {
+                    "name": "crosswalk",
+                    "description": ""
+                }
+            ],
+            "outputs": [],
+            "workflow_outputs": [],
+            "post_job_actions": {}
+        },
+        "2": {
+            "id": 2,
+            "name": "project_values",
+            "type": "data_input",
+            "label": "project_values",
+            "annotation": "Values for the whole project (term, value, and optionally status and assay).",
+            "tool_state": "{\"name\": \"project_values\", \"optional\": true, \"format\": [\"tabular\", \"csv\", \"xlsx\", \"txt\"]}",
+            "position": {
+                "top": 20,
+                "left": 20
+            },
+            "input_connections": {},
+            "inputs": [
+                {
+                    "name": "project_values",
+                    "description": ""
+                }
+            ],
+            "outputs": [],
+            "workflow_outputs": [],
+            "post_job_actions": {}
+        },
+        "3": {
+            "id": 3,
+            "name": "otu_table",
+            "type": "data_input",
+            "label": "otu_table",
+            "annotation": "The OTU or ASV table (reads per sequence or taxon and sample), with its taxonomy.",
+            "tool_state": "{\"name\": \"otu_table\", \"format\": [\"tabular\", \"csv\", \"xlsx\", \"txt\"]}",
+            "position": {
+                "top": 30,
+                "left": 30
+            },
+            "input_connections": {},
+            "inputs": [
+                {
+                    "name": "otu_table",
+                    "description": ""
+                }
+            ],
+            "outputs": [],
+            "workflow_outputs": [],
+            "post_job_actions": {}
+        },
+        "4": {
+            "id": 4,
+            "name": "project_id",
+            "type": "parameter_input",
+            "label": "project_id",
+            "annotation": "A short ID for the project (letters, digits, _ and -).",
+            "tool_state": "{\"name\": \"project_id\", \"parameter_type\": \"text\"}",
+            "position": {
+                "top": 40,
+                "left": 40
+            },
+            "input_connections": {},
+            "inputs": [
+                {
+                    "name": "project_id",
+                    "description": ""
+                }
+            ],
+            "outputs": [],
+            "workflow_outputs": [],
+            "post_job_actions": {}
+        },
+        "5": {
+            "id": 5,
+            "name": "assay_name",
+            "type": "parameter_input",
+            "label": "assay_name",
+            "annotation": "The assay name, as used in the lab (for example COILeray).",
+            "tool_state": "{\"name\": \"assay_name\", \"parameter_type\": \"text\"}",
+            "position": {
+                "top": 50,
+                "left": 50
+            },
+            "input_connections": {},
+            "inputs": [
+                {
+                    "name": "assay_name",
+                    "description": ""
+                }
+            ],
+            "outputs": [],
+            "workflow_outputs": [],
+            "post_job_actions": {}
+        },
+        "6": {
+            "id": 6,
+            "name": "faire_mapper_apply",
+            "type": "tool",
+            "label": "apply",
+            "annotation": "The FAIRe workbook, with the OTU table as otuFinal and taxaFinal; set the sample types on the run form.",
+            "tool_state": "{\"__page__\": 0, \"otu_tables\": [{\"otu_stage\": \"final\"}], \"sample_types\": {\"__class__\": \"RuntimeValue\"}}",
+            "tool_id": "faire_mapper_apply",
+            "position": {
+                "top": 60,
+                "left": 60
+            },
+            "input_connections": {
+                "table": [
+                    {
+                        "id": 0,
+                        "output_name": "output"
+                    }
+                ],
+                "crosswalk": [
+                    {
+                        "id": 1,
+                        "output_name": "output"
+                    }
+                ],
+                "project_values": [
+                    {
+                        "id": 2,
+                        "output_name": "output"
+                    }
+                ],
+                "project_id": [
+                    {
+                        "id": 4,
+                        "output_name": "output"
+                    }
+                ],
+                "assay_name": [
+                    {
+                        "id": 5,
+                        "output_name": "output"
+                    }
+                ],
+                "otu_tables_0|otu": [
+                    {
+                        "id": 3,
+                        "output_name": "output"
+                    }
+                ]
+            },
+            "inputs": [],
+            "outputs": [],
+            "workflow_outputs": [
+                {
+                    "label": "faire_workbook",
+                    "output_name": "workbook"
+                },
+                {
+                    "label": "apply_log",
+                    "output_name": "log"
+                }
+            ],
+            "post_job_actions": {}
+        },
+        "7": {
+            "id": 7,
+            "name": "fairefier",
+            "type": "tool",
+            "label": "check",
+            "annotation": "FAIRe-fier: errors and warnings against the FAIRe checklist.",
+            "tool_state": "{\"__page__\": 0}",
+            "tool_id": "fairefier",
+            "position": {
+                "top": 70,
+                "left": 70
+            },
+            "input_connections": {
+                "input_file": [
+                    {
+                        "id": 6,
+                        "output_name": "workbook"
+                    }
+                ]
+            },
+            "inputs": [],
+            "outputs": [],
+            "workflow_outputs": [
+                {
+                    "label": "fairefier_issues",
+                    "output_name": "issues"
+                },
+                {
+                    "label": "fairefier_summary",
+                    "output_name": "summary"
+                }
+            ],
+            "post_job_actions": {}
+        }
+    }
+}

@@ -1,0 +1,2372 @@
+#!/usr/bin/env python3
+"""
+edna2obis Main Script
+Converts eDNA sequence data from FAIRe NOAA format to Darwin Core for OBIS and GBIF submission
+"""
+
+import os
+import sys
+import csv
+from pathlib import Path
+import yaml
+import traceback
+import warnings
+import xml.etree.ElementTree as ET
+
+# Add the src-v3 directory to Python path for imports
+sys.path.insert(0, "src-v3")
+
+# CLI UI
+from cli_output.cli_ui import (
+    console, print_header, print_usage, print_separator,
+    silence_output, silence_stdout, silence_stdouterr
+)
+
+# Import required libraries
+import numpy as np
+import pandas as pd
+import io
+
+# Import custom modules from src-v3
+from html_reporter import HTMLReporter
+from run_performance_log import performance_log_for_config
+
+# Default FAIRe Excel wide metadata layout: rows 1–2 are preamble; row 3 is headers.
+
+# Intentional missing-data placeholders (FAIRe / MIxS style). Report guidance; use exact wording in the sheet.
+_FAIRE_PLACEHOLDER_TERMS_ALL_FIELDS = [
+    "missing",
+    "not applicable",
+    "not collected",
+    "not provided",
+    "restricted access",
+]
+_FAIRE_PLACEHOLDER_TERMS_EVENTDATE_AND_GEO_LOC_ONLY = [
+    "missing: control sample",
+    "missing: sample group",
+    "missing: synthetic construct",
+    "missing: lab stock",
+    "missing: third party data",
+    "missing: data agreement established pre-2023",
+    "missing: endangered species",
+    "missing: human-identifiable",
+]
+
+
+def read_text_file_cross_platform(filepath, sep='\t', **kwargs):
+    """
+    Read a text file (TSV/CSV) with cross-platform line ending normalization.
+    
+    This function handles the Mac vs Windows line ending issue by:
+    1. Reading the file in binary mode
+    2. Normalizing ALL line endings to \n (LF)
+    3. Feeding the normalized content to pandas
+    
+    This ensures identical behavior on Windows, Mac, and Linux regardless of
+    how the file was created or what line endings it contains.
+    
+    Args:
+        filepath: Path to the text file
+        sep: Delimiter (default '\t' for TSV)
+        **kwargs: Additional arguments passed to pd.read_csv
+        
+    Returns:
+        pandas DataFrame
+    """
+    # Read file in binary mode to get raw bytes
+    with open(filepath, 'rb') as f:
+        content = f.read()
+    
+    # Normalize line endings: CRLF -> LF, lone CR -> LF
+    content = content.replace(b'\r\n', b'\n').replace(b'\r', b'\n')
+    
+    # Decode to string (try utf-8 first, fall back to latin-1)
+    try:
+        text = content.decode('utf-8')
+    except UnicodeDecodeError:
+        text = content.decode('latin-1')
+    
+    # Feed to pandas via StringIO
+    return pd.read_csv(io.StringIO(text), sep=sep, **kwargs)
+
+
+def read_metadata_tsv(filepath, header_row_1_based=1, long_fieldnames_column_1_based=None):
+    """Read metadata TSVs with configurable header row or long-format key/value columns."""
+    try:
+        header_row_1_based = int(header_row_1_based)
+    except (TypeError, ValueError):
+        raise ValueError(f"header_row_1_based must be a positive integer for '{filepath}'")
+    if header_row_1_based < 1:
+        raise ValueError(f"header_row_1_based must be >= 1 for '{filepath}'")
+
+    if long_fieldnames_column_1_based is not None:
+        try:
+            long_fieldnames_column_1_based = int(long_fieldnames_column_1_based)
+        except (TypeError, ValueError):
+            raise ValueError(f"long_fieldnames_column_1_based must be a positive integer for '{filepath}'")
+        if long_fieldnames_column_1_based < 1:
+            raise ValueError(f"long_fieldnames_column_1_based must be >= 1 for '{filepath}'")
+
+    with open(filepath, 'rb') as f:
+        content = f.read()
+
+    content = content.replace(b'\r\n', b'\n').replace(b'\r', b'\n')
+    try:
+        text = content.decode('utf-8')
+    except UnicodeDecodeError:
+        text = content.decode('latin-1')
+
+    # Parse every physical line; header_row_1_based is the literal line number of the
+    # field-name row (preamble rows above it are simply everything before that line).
+    all_rows = list(csv.reader(io.StringIO(text), delimiter='\t'))
+    header_idx = header_row_1_based - 1
+
+    _LONG_TERM_LABELS = {'term_name', 'term name', 'field_name', 'field name'}
+    _LONG_VALUE_LABELS = {'values', 'value', 'field_value', 'field value'}
+
+    # --- LONG format: field names in one column, values in the next column ---
+    if long_fieldnames_column_1_based is not None:
+        field_idx = long_fieldnames_column_1_based - 1
+        value_idx = field_idx + 1
+        records = []
+        for offset, row in enumerate(all_rows[header_idx:]):
+            field_value = row[field_idx] if len(row) > field_idx else ""
+            data_value = row[value_idx] if len(row) > value_idx else ""
+            field_value_str = str(field_value).strip()
+            data_value_str = str(data_value).strip()
+
+            # Skip a field-name/value label row if it sits on the first read line.
+            if (
+                offset == 0
+                and field_value_str.lower() in _LONG_TERM_LABELS
+                and data_value_str.lower() in _LONG_VALUE_LABELS
+            ):
+                continue
+
+            if field_value_str:
+                records.append([field_value_str, data_value_str if data_value_str else pd.NA])
+
+        if not records:
+            return pd.DataFrame(columns=['term_name', 'values'])
+        return pd.DataFrame(records, columns=['term_name', 'values']).replace('', pd.NA)
+
+    # --- WIDE format: field names on header_row, data on the lines below ---
+    if header_idx >= len(all_rows):
+        raise ValueError(
+            f"Metadata TSV '{filepath}' has no row at field_name_row={header_row_1_based} "
+            f"(file only has {len(all_rows)} lines)."
+        )
+
+    header = all_rows[header_idx]
+    expected_cols = len(header)
+    data_rows = []
+    for line_number, row in enumerate(all_rows[header_idx + 1:], start=header_row_1_based + 1):
+        # Skip fully blank lines (avoids ghost rows from trailing newlines / CRLF issues).
+        if not row or all(str(cell).strip() == '' for cell in row):
+            continue
+
+        if len(row) > expected_cols:
+            extra_values = row[expected_cols:]
+            if all(str(value).strip() == '' for value in extra_values):
+                row = row[:expected_cols]
+            else:
+                raise ValueError(
+                    f"Metadata TSV '{filepath}' has {len(row)} fields on line {line_number}, "
+                    f"but the header has {expected_cols}. Extra non-empty values: {extra_values}"
+                )
+        elif len(row) < expected_cols:
+            row = row + [''] * (expected_cols - len(row))
+
+        data_rows.append(row)
+
+    return pd.DataFrame(data_rows, columns=header).replace('', pd.NA)
+
+
+def extract_long_format_pairs(raw_df, source_label, field_col_1_based=1, start_row_1_based=1):
+    """Extract long-format term/value pairs from adjacent columns."""
+    if raw_df is None or raw_df.empty:
+        return pd.DataFrame(columns=['term_name', 'values'])
+    if field_col_1_based < 1 or start_row_1_based < 1:
+        raise ValueError(
+            f"Invalid long-format settings for '{source_label}'. "
+            f"field_col_1_based={field_col_1_based}, start_row_1_based={start_row_1_based}"
+        )
+
+    field_idx = field_col_1_based - 1
+    value_idx = field_idx + 1
+    start_idx = start_row_1_based - 1
+    records = []
+
+    for row_idx in range(start_idx, len(raw_df)):
+        field_value = raw_df.iat[row_idx, field_idx] if raw_df.shape[1] > field_idx else pd.NA
+        data_value = raw_df.iat[row_idx, value_idx] if raw_df.shape[1] > value_idx else pd.NA
+
+        field_str = "" if pd.isna(field_value) else str(field_value).strip()
+        if not field_str:
+            continue
+
+        value_str = "" if pd.isna(data_value) else str(data_value).strip()
+        if (
+            row_idx == start_idx
+            and field_str.lower() in {'term_name', 'term name', 'field_name', 'field name'}
+            and value_str.lower() in {'values', 'value', 'field_value', 'field value'}
+        ):
+            continue
+
+        records.append({
+            'term_name': field_str,
+            'values': value_str if value_str else pd.NA
+        })
+
+    return pd.DataFrame(records, columns=['term_name', 'values'])
+
+
+def normalize_analysis_metadata(analysis_df, source_label, reporter):
+    """Validate and normalize a NOAA-style analysisMetadata table."""
+    if 'term_name' not in analysis_df.columns:
+        reporter.add_warning(f"analysisMetadata '{source_label}' missing 'term_name' column. Found columns: {list(analysis_df.columns)}")
+        return None
+
+    value_col = None
+    for col in ['values', 'value', 'Values', 'Value']:
+        if col in analysis_df.columns:
+            value_col = col
+            break
+
+    if not value_col:
+        reporter.add_warning(f"analysisMetadata '{source_label}' missing 'values' column. Found columns: {list(analysis_df.columns)}")
+        return None
+
+    if value_col != 'values':
+        analysis_df = analysis_df.rename(columns={value_col: 'values'})
+
+    return analysis_df
+
+
+def get_analysis_metadata_value(analysis_df, term_name):
+    """Read a value from an analysisMetadata table by term_name."""
+    if analysis_df is None or 'term_name' not in analysis_df.columns or 'values' not in analysis_df.columns:
+        return None
+
+    term_values = analysis_df['term_name'].astype(str).str.strip()
+    matches = analysis_df.loc[term_values == term_name, 'values']
+    if matches.empty:
+        return None
+
+    value = matches.iloc[0]
+    if pd.isna(value) or str(value).strip() == "":
+        return None
+    return str(value).strip()
+
+# Import modules from subdirectories
+from create_occurrence_core.occurrence_builder import create_occurrence_core
+from create_dna_derived_extension.extension_builder import create_dna_derived_extension
+from taxonomic_alignment.taxa_assignment_manager import assign_taxonomy
+from create_eMoF.eMoF_builder import create_emof_table
+from create_meta_xml.meta_xml_builder import create_meta_xml
+from create_event_core.event_builder import create_event_core
+# from create_EML.EML_builder import create_eml_file
+
+
+def load_config(config_path="config.yaml"):
+    """Load configuration from YAML file and convert to params dict structure"""
+    try:
+        if not os.path.exists(config_path):
+            raise FileNotFoundError(f"Config file not found: {config_path}")
+        
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+        
+        params = {}
+
+        def _read_positive_int_value(setting_name, raw_val):
+            try:
+                parsed = int(raw_val)
+            except (TypeError, ValueError):
+                raise ValueError(f"'{setting_name}' must be a positive integer. Got: {raw_val}")
+            if parsed < 1:
+                raise ValueError(f"'{setting_name}' must be >= 1. Got: {raw_val}")
+            return parsed
+
+        def _read_non_negative_int_value(setting_name, raw_val):
+            try:
+                parsed = int(raw_val)
+            except (TypeError, ValueError):
+                raise ValueError(f"'{setting_name}' must be a non-negative integer. Got: {raw_val}")
+            if parsed < 0:
+                raise ValueError(f"'{setting_name}' must be >= 0. Got: {raw_val}")
+            return parsed
+
+        # Metadata source: one boolean chooses which paths to use.
+        # true = read from single Excel file (excel_file + sheet names)
+        # false = read from separate TSV files (sampleMetadata_file, experimentRunMetadata_file, projectMetadata_file)
+        # You can have both sets of paths in the config; this parameter decides which is used.
+        combined_metadata_file = config.get('combined_metadata_file', True)
+        params['use_excel'] = bool(combined_metadata_file)
+        field_name_row_raw = config.get(
+            'field_name_row',
+            config.get(
+                'wide_fieldnames_row',
+                config.get('metadata_wide_fieldnames_row', 3 if params['use_excel'] else 1)
+            )
+        )
+        params['field_name_row'] = _read_positive_int_value('field_name_row', field_name_row_raw)
+
+        long_skip_raw = config.get('project_and_analysis_header_rows_to_skip')
+        if long_skip_raw is None:
+            long_skip_raw = config.get('long_rows_to_skip')
+        if long_skip_raw is None:
+            legacy_long_row = config.get('long_fieldnames_row')
+            if legacy_long_row is not None:
+                long_skip_raw = _read_positive_int_value('long_fieldnames_row', legacy_long_row) - 1
+            else:
+                long_skip_raw = 0
+        params['project_and_analysis_header_rows_to_skip'] = _read_non_negative_int_value(
+            'project_and_analysis_header_rows_to_skip',
+            long_skip_raw
+        )
+
+        field_name_column_raw = config.get(
+            'field_name_column',
+            config.get('long_field_name_column', config.get('long_fieldnames_column', 1))
+        )
+        params['field_name_column'] = _read_positive_int_value('field_name_column', field_name_column_raw)
+
+        raw_wide_row_raw = config.get(
+            'raw_wide_header_row',
+            config.get('raw_wide_fieldnames_row', 1)
+        )
+        if raw_wide_row_raw in [None, "", "auto", "AUTO", "Auto"]:
+            raw_wide_row_raw = 1
+        asv_row_raw = config.get('field_names_row_asv', raw_wide_row_raw)
+        table_row_raw = config.get('field_names_row_table', raw_wide_row_raw)
+        params['field_names_row_asv'] = _read_positive_int_value(
+            'field_names_row_asv',
+            asv_row_raw
+        )
+        params['field_names_row_table'] = _read_positive_int_value(
+            'field_names_row_table',
+            table_row_raw
+        )
+        
+        if params['use_excel']:
+            params['excel_file'] = config.get('excel_file')
+            params['sampleMetadata'] = config.get('sampleMetadata', 'sampleMetadata')
+            params['experimentRunMetadata'] = config.get('experimentRunMetadata', 'experimentRunMetadata')
+            params['projectMetadata'] = config.get('projectMetadata', 'projectMetadata')
+            if not params['excel_file']:
+                raise ValueError(
+                    "combined_metadata_file is true but 'excel_file' is missing or empty. "
+                    "Provide excel_file path, or set combined_metadata_file: false and provide TSV paths."
+                )
+        else:
+            params['sampleMetadata_file'] = config.get('sampleMetadata_file')
+            params['experimentRunMetadata_file'] = config.get('experimentRunMetadata_file')
+            params['projectMetadata_file'] = config.get('projectMetadata_file')
+            missing = [k for k, v in [
+                ('sampleMetadata_file', params['sampleMetadata_file']),
+                ('experimentRunMetadata_file', params['experimentRunMetadata_file']),
+                ('projectMetadata_file', params['projectMetadata_file']),
+            ] if not v]
+            if missing:
+                raise ValueError(
+                    f"combined_metadata_file is false but required paths are missing: {missing}. "
+                    "Provide sampleMetadata_file, experimentRunMetadata_file, and projectMetadata_file."
+                )
+        
+        params['FAIRe_NOAA_checklist'] = config.get('FAIRe_NOAA_checklist') # Made optional
+        params['datafiles'] = config['datafiles']
+        params['skip_columns'] = config.get('skip_columns', [])
+        
+        # Handle locationID components
+        params['locationID_components'] = config.get('locationID_components', ['line_id', 'station_id'])
+
+        # Handle control sample detection
+        if 'control_sample_detection' in config and config['control_sample_detection']:
+            params['control_sample_column'] = config['control_sample_detection'].get('column_name', 'samp_category')
+            params['control_sample_values'] = config['control_sample_detection'].get('control_values', [])
+            params['skip_sample_types'] = config['control_sample_detection'].get('control_values', [])
+        else:
+            params['control_sample_column'] = 'samp_category'
+            params['skip_sample_types'] = config.get('skip_sample_types', [])
+            params['control_sample_values'] = config.get('skip_sample_types', [])
+        
+        params['taxonomic_api_source'] = config['taxonomic_api_source']
+        params['assays_to_skip_species_match'] = config.get('assays_to_skip_species_match', []) # Made optional
+        
+        # Optional parameters with defaults
+        params['worms_n_proc'] = config.get('worms_n_proc', 0)
+        params['gbif_n_proc'] = config.get('gbif_n_proc', 0)
+        params['gbif_match_limit'] = config.get('gbif_match_limit', 3)
+        params['gbif_use_assignment_score_for_selection'] = config.get('gbif_use_assignment_score_for_selection', False)
+        params['gbif_return_higher_classification'] = config.get('gbif_return_higher_classification', False)
+        params['output_dir'] = config.get('output_dir', "processed-v3/")
+        
+        # eMoF options
+        params['emof_enabled'] = config.get('emof_enabled', True)
+        params['emof_template_path'] = config.get('emof_template_path', 'raw-v3/eMoF Fields edna2obis .xlsx')
+        
+        # EML options (metadata loaded separately from EML_config.yaml)
+        params['eml_enabled'] = config.get('eml_enabled', False)
+        params['eml_config_path'] = config.get('eml_config_path', 'EML_config.yaml')
+        params['contacts_path'] = config.get('contacts_path', 'contacts.yaml')
+        # Local reference database parameters  
+        params['use_local_reference_database'] = config.get('use_local_reference_database', False)
+        params['local_reference_database_path'] = config.get('local_reference_database_path', '')
+        
+        # Output splitting by short_name (cruise/expedition)
+        params['split_output_by_short_name'] = config.get('split_output_by_short_name', False)
+
+        # Darwin Core archive core type: "occurrence" (default, unchanged) or "event".
+        params['dwc_core_type'] = str(config.get('dwc_core_type', 'occurrence')).strip().lower()
+        if params['dwc_core_type'] not in ('occurrence', 'event'):
+            raise ValueError(
+                f"dwc_core_type must be 'occurrence' or 'event'. Got: {config.get('dwc_core_type')}"
+            )
+
+        params['include_performance_metrics_in_output'] = config.get(
+            'include_performance_metrics_in_output', False
+        )
+        
+        # --- NEW: Metadata format switcher ---
+        params['metadata_format'] = config.get('metadata_format', 'NOAA').upper()
+        
+        # --- NEW: Run name for config saving and report naming ---
+        params['edna2obis_run_name'] = config.get('edna2obis_run_name', 'unnamed_run')
+
+        # WoRMS walk-up matching controls (WoRMS only)
+        params['worms_min_ranks_matched'] = config.get('worms_min_ranks_matched', 1)
+        params['worms_max_walkup_steps'] = config.get('worms_max_walkup_steps', None)
+        params['worms_return_all_matches'] = config.get('worms_return_all_matches', False)
+        params['worms_return_higher_classification'] = config.get('worms_return_higher_classification', False)
+        params['worms_consider_unaccepted_for_selection'] = config.get('worms_consider_unaccepted_for_selection', False)
+
+        # Put all outputs for a run into a single folder.
+        base_output_dir = params.get('output_dir', "processed-v3/")
+        run_name = str(params.get('edna2obis_run_name', 'unnamed_run')).strip() or "unnamed_run"
+        invalid = '<>:"/\\|?*'
+        safe_run_name = ''.join(('_' if c in invalid else c) for c in run_name).strip()
+        if not safe_run_name:
+            safe_run_name = "unnamed_run"
+        params['output_dir'] = os.path.join(base_output_dir, safe_run_name)
+
+        return params
+        
+    except Exception as e:
+        raise Exception(f"Error loading config: {str(e)}")
+
+
+def setup_pandas_display():
+    """Set pandas display options"""
+    pd.set_option('display.max_colwidth', 150)
+    pd.set_option('display.max_columns', 50)
+
+
+def save_config_for_run(params, reporter, config_path):
+    """Save the config file used for this run with the run name"""
+    try:
+        run_name = params.get('edna2obis_run_name', 'unnamed_run')
+        output_dir = params.get('output_dir', "processed-v3/")
+        
+        # Create the output directory if it doesn't exist
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # Define the config filename with the run name
+        config_filename = f"config_{run_name}.yaml"
+        config_path_to_save = os.path.join(output_dir, config_filename)
+        
+        # Read the original config file that was used for the run
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config_content = f.read()
+        
+        # Write the config to the output directory with the run name
+        with open(config_path_to_save, 'w', encoding='utf-8') as f:
+            f.write(config_content)
+        
+        reporter.add_success(f"Configuration file saved as: {config_filename}")
+        reporter.add_text(f"Saved config file: {config_path_to_save}")
+        
+        return config_path_to_save
+        
+    except Exception as e:
+        error_msg = f"Failed to save config file: {str(e)}"
+        reporter.add_warning(error_msg)
+        return None
+
+
+def slim_occurrence_for_event_mode(params, reporter, occurrence_filename):
+    """
+    In Event Core mode, remove duplicate event/sample-level columns from the
+    Occurrence file (which becomes an extension) after Event Core has been built.
+    """
+    output_dir = params.get('output_dir', 'processed-v3/')
+    occ_path = os.path.join(output_dir, occurrence_filename)
+    if not os.path.exists(occ_path):
+        raise FileNotFoundError(f"Occurrence file not found for Event-mode slimming: {occ_path}")
+
+    with open('data_mapper.yaml', 'r', encoding='utf-8') as f:
+        mapper = yaml.safe_load(f) or {}
+
+    format_prefix = "generic_" if str(params.get('metadata_format', 'NOAA')).upper() == "GENERIC" else ""
+    occurrence_key = f"{format_prefix}occurrence_core"
+    event_key = f"{format_prefix}event_core"
+
+    occurrence_map = mapper.get(occurrence_key, {})
+    event_map = mapper.get(event_key) or mapper.get('event_core', {})
+
+    if not occurrence_map or not event_map:
+        reporter.add_warning(
+            "Skipping Event-mode occurrence slimming: missing occurrence_core/event_core mappings in data_mapper.yaml."
+        )
+        return
+
+    occ_df = pd.read_csv(occ_path, dtype=str, keep_default_na=False)
+    if occ_df.empty:
+        return
+
+    # Keep link keys so the occurrence extension remains easy to validate and split.
+    keep_overlap = {"eventID", "parentEventID"}
+    event_terms = set(event_map.keys())
+    overlap_to_drop = sorted((event_terms & set(occ_df.columns)) - keep_overlap)
+
+    if not overlap_to_drop:
+        reporter.add_text("Event-mode occurrence slimming: no overlapping event/sample columns found to remove.")
+        return
+
+    slimmed_df = occ_df.drop(columns=overlap_to_drop, errors='ignore')
+    slimmed_df.to_csv(occ_path, index=False, na_rep='')
+
+    reporter.add_text(
+        f"Event-mode occurrence slimming removed {len(overlap_to_drop)} duplicated event/sample column(s) "
+        f"from '{occurrence_filename}'."
+    )
+    reporter.add_list(overlap_to_drop, "Removed from occurrence extension:")
+
+
+def split_output_files_by_short_name(params, data, reporter):
+    """
+    Split output files into separate subfolders based on the 'short_name' column in sampleMetadata.
+    
+    This allows users to submit data cruise-by-cruise to databases that require separate submissions
+    connected by a parent project.
+    
+    Creates:
+        - {output_dir}/{short_name}/ subfolder for each unique short_name
+        - Filtered files with suffix: occurrence_core_{api}_{short_name}.csv, etc.
+    
+    Splits: occurrence_core, dna_derived_extension, eMoF, eml.xml, meta.xml
+    Does NOT split: HTML report, taxa_mapping_INFO, config file
+
+    Recommended: each short_name should start with project_id (projectMetadata project_id /
+    Darwin Core datasetID) so occurrenceID prefixes stay namespaced. When splitting is disabled,
+    occurrenceID uses project_id for that segment only; short_name is ignored for IDs.
+    """
+    reporter.add_section("Splitting Output Files by short_name", level=2)
+    
+    try:
+        output_dir = params.get('output_dir', 'processed-v3/')
+        api_choice = params.get('taxonomic_api_source', 'WoRMS').lower()
+        core_type = str(params.get('dwc_core_type', 'occurrence')).strip().lower()
+        
+        # Check if short_name column exists in sampleMetadata
+        if 'sampleMetadata' not in data or data['sampleMetadata'].empty:
+            reporter.add_error("Cannot split by short_name: sampleMetadata is missing or empty.")
+            raise ValueError("sampleMetadata is missing or empty")
+        
+        sm_df = data['sampleMetadata']
+        
+        if 'short_name' not in sm_df.columns:
+            reporter.add_error(
+                "Cannot split by short_name: The 'short_name' column was not found in sampleMetadata. "
+                "Please add a 'short_name' column to your sampleMetadata sheet, or set 'split_output_by_short_name: false' in your config."
+            )
+            raise ValueError("'short_name' column not found in sampleMetadata")
+        
+        # Check for missing short_name values
+        missing_short_name = sm_df['short_name'].isna() | (sm_df['short_name'].astype(str).str.strip() == '')
+        if missing_short_name.any():
+            missing_samples = sm_df.loc[missing_short_name, 'samp_name'].tolist()
+            reporter.add_error(
+                f"Cannot split by short_name: {len(missing_samples)} sample(s) have missing or empty 'short_name' values. "
+                f"All samples must have a short_name when 'split_output_by_short_name' is enabled."
+            )
+            reporter.add_list(missing_samples[:20], "Samples with missing short_name (first 20):")
+            raise ValueError(f"{len(missing_samples)} samples have missing short_name values")
+        
+        # Get unique short_names
+        unique_short_names = sm_df['short_name'].astype(str).str.strip().unique().tolist()
+        reporter.add_text(f"Found {len(unique_short_names)} unique short_name value(s): {', '.join(unique_short_names)}")
+        
+        # Build lookup: samp_name -> short_name
+        samp_to_short_name = dict(zip(
+            sm_df['samp_name'].astype(str).str.strip(),
+            sm_df['short_name'].astype(str).str.strip()
+        ))
+
+        # Also build: short_name -> set(samp_name) for robust filtering via parentEventID
+        short_to_samp_names = {}
+        try:
+            tmp = sm_df[['samp_name', 'short_name']].copy()
+            tmp['samp_name'] = tmp['samp_name'].astype(str).str.strip()
+            tmp['short_name'] = tmp['short_name'].astype(str).str.strip()
+            for sn, grp in tmp.groupby('short_name'):
+                short_to_samp_names[str(sn).strip()] = set(grp['samp_name'].dropna().astype(str).str.strip().tolist())
+        except Exception as _e:
+            short_to_samp_names = {sn: set() for sn in unique_short_names}
+            reporter.add_warning(f"Could not build short_name -> samp_name map for splitting: {_e}")
+        
+        # Build lookup: lib_id (eventID) -> short_name via experimentRunMetadata
+        # NOTE: This is a fallback strategy only. lib_id/eventID may not be globally unique across cruises.
+        event_to_short_name = {}
+        if 'experimentRunMetadata' in data and not data['experimentRunMetadata'].empty:
+            erm_df = data['experimentRunMetadata']
+            if 'lib_id' in erm_df.columns and 'samp_name' in erm_df.columns:
+                for _, row in erm_df.iterrows():
+                    lib_id = str(row['lib_id']).strip()
+                    samp_name = str(row['samp_name']).strip()
+                    if samp_name in samp_to_short_name:
+                        event_to_short_name[lib_id] = samp_to_short_name[samp_name]
+        # In Event Core mode, sample events use eventID=samp_name.
+        if core_type == 'event':
+            for samp_name, sn in samp_to_short_name.items():
+                event_to_short_name[str(samp_name).strip()] = str(sn).strip()
+        
+        reporter.add_text(f"Built eventID -> short_name lookup with {len(event_to_short_name)} entries.")
+
+        # Load occurrence core to build a reliable occurrenceID -> short_name mapping.
+        # This avoids issues when lib_id/eventID values are duplicated across cruises.
+        occurrence_to_short_name = {}
+        try:
+            occ_path = os.path.join(output_dir, f'occurrence_core_{api_choice}.csv')
+            if os.path.exists(occ_path):
+                occ_df = pd.read_csv(occ_path, low_memory=False)
+                # Prefer parentEventID (samp_name) if present, since samp_name maps directly to short_name via sampleMetadata.
+                parent_key_col = 'parentEventID' if 'parentEventID' in occ_df.columns else ('samp_name' if 'samp_name' in occ_df.columns else None)
+                if parent_key_col and 'occurrenceID' in occ_df.columns:
+                    occ_df[parent_key_col] = occ_df[parent_key_col].astype(str).str.strip()
+                    occ_df['occurrenceID'] = occ_df['occurrenceID'].astype(str).str.strip()
+                    mapped = occ_df[parent_key_col].map(samp_to_short_name)
+                    occ_df['_short_name_split'] = mapped
+                    unmapped = int(occ_df['_short_name_split'].isna().sum())
+                    if unmapped > 0:
+                        reporter.add_warning(
+                            f"{unmapped} occurrence row(s) could not be mapped to a short_name via {parent_key_col} -> sampleMetadata.samp_name. "
+                            f"Those rows will not appear in any split subfolder."
+                        )
+                    occurrence_to_short_name = dict(zip(occ_df['occurrenceID'], occ_df['_short_name_split']))
+                    reporter.add_text(f"Built occurrenceID -> short_name lookup with {len(occurrence_to_short_name)} entries from occurrence core.")
+                else:
+                    reporter.add_warning(
+                        f"Could not build occurrenceID -> short_name mapping from '{occ_path}' (missing columns). "
+                        f"Will fall back to eventID-based splitting."
+                    )
+            else:
+                reporter.add_warning(
+                    f"Occurrence core file not found at '{occ_path}'. Will fall back to eventID-based splitting."
+                )
+        except Exception as _occ_e:
+            reporter.add_warning(f"Could not load occurrence core for splitting diagnostics: {_occ_e}. Will fall back to eventID-based splitting.")
+            occurrence_to_short_name = {}
+        
+        # In Event Core mode, ensure event_core.csv exists before splitting.
+        if core_type == 'event':
+            try:
+                create_event_core(params, reporter, occurrence_filename=f'occurrence_core_{api_choice}.csv')
+                slim_occurrence_for_event_mode(params, reporter, occurrence_filename=f'occurrence_core_{api_choice}.csv')
+            except Exception as _event_core_err:
+                reporter.add_error(f"Failed to create Event Core before splitting: {_event_core_err}")
+                raise
+
+        # Define files to split
+        files_to_split = []
+        if core_type == 'event':
+            files_to_split.append(('event_core.csv', 'eventID'))
+        files_to_split.extend([
+            (f'occurrence_core_{api_choice}.csv', 'eventID'),
+            ('dna_derived_extension.csv', 'eventID'),
+        ])
+        
+        # Add eMoF if it exists
+        emof_path = os.path.join(output_dir, 'eMoF.csv')
+        if os.path.exists(emof_path):
+            files_to_split.append(('eMoF.csv', 'eventID'))
+        
+        short_name_dirs = {}
+        split_occurrence_path_for_eml_by_short_name = {}
+        for short_name in unique_short_names:
+            short_name_clean = str(short_name).strip()
+            short_name_dir = os.path.join(output_dir, short_name_clean)
+            os.makedirs(short_name_dir, exist_ok=True)
+            short_name_dirs[short_name_clean] = short_name_dir
+            event_ids_for_short_name = {
+                event_id for event_id, sn in event_to_short_name.items()
+                if str(sn).strip() == short_name_clean
+            }
+            reporter.add_text(f"<h4>Processing short_name: '{short_name_clean}'</h4>")
+            reporter.add_text(f"Created subfolder: {short_name_dir}")
+            reporter.add_text(f"Found {len(event_ids_for_short_name)} eventID(s) for this short_name.")
+
+        for filename, filter_column in files_to_split:
+            source_path = os.path.join(output_dir, filename)
+            if not os.path.exists(source_path):
+                reporter.add_text(f"  Skipping {filename}: file not found")
+                continue
+            try:
+                base_name, ext = os.path.splitext(filename)
+                output_paths = {
+                    sn: os.path.join(short_name_dirs[sn], f"{base_name}_{sn}{ext}")
+                    for sn in short_name_dirs
+                }
+                row_counts = {sn: 0 for sn in short_name_dirs}
+                total_rows = 0
+                writers = {}
+                files = {}
+                try:
+                    with open(source_path, 'r', newline='', encoding='utf-8-sig') as src_f:
+                        reader = csv.DictReader(src_f)
+                        fieldnames = [str(c).lstrip('\ufeff') if c is not None else '' for c in (reader.fieldnames or [])]
+                        reader.fieldnames = fieldnames
+
+                        if core_type == 'event' and filename == 'eMoF.csv' and 'eventID' in fieldnames:
+                            # Event Core eMoF can contain event-level rows with blank occurrenceID;
+                            # splitting by eventID preserves both event- and occurrence-linked rows.
+                            key_mode = 'eventID'
+                        elif core_type == 'event' and filename == 'event_core.csv' and 'eventID' in fieldnames:
+                            key_mode = 'eventID'
+                        elif occurrence_to_short_name and 'occurrenceID' in fieldnames:
+                            key_mode = 'occurrenceID'
+                        elif 'parentEventID' in fieldnames:
+                            key_mode = 'parentEventID'
+                        elif filter_column in fieldnames:
+                            key_mode = filter_column
+                        else:
+                            reporter.add_warning(f"  Skipping {filename}: no usable split key found (expected '{filter_column}', 'parentEventID', or 'occurrenceID').")
+                            continue
+
+                        for sn in short_name_dirs:
+                            f_out = open(output_paths[sn], 'w', newline='', encoding='utf-8-sig')
+                            files[sn] = f_out
+                            w = csv.DictWriter(f_out, fieldnames=fieldnames)
+                            w.writeheader()
+                            writers[sn] = w
+
+                        for row in reader:
+                            total_rows += 1
+                            if key_mode == 'occurrenceID':
+                                key = str(row.get('occurrenceID', '')).strip()
+                                short_name = occurrence_to_short_name.get(key, '')
+                            elif key_mode == 'parentEventID':
+                                key = str(row.get('parentEventID', '')).strip()
+                                short_name = samp_to_short_name.get(key, '')
+                            else:
+                                key = str(row.get(filter_column, '')).strip()
+                                short_name = event_to_short_name.get(key, '')
+                            short_name_clean = str(short_name).strip()
+                            if short_name_clean in writers:
+                                writers[short_name_clean].writerow(row)
+                                row_counts[short_name_clean] += 1
+                finally:
+                    for f_out in files.values():
+                        f_out.close()
+
+                for sn in short_name_dirs:
+                    output_filename = os.path.basename(output_paths[sn])
+                    reporter.add_text(f"  {output_filename}: {row_counts[sn]:,} rows (from {total_rows:,} total)")
+                    if filename == f'occurrence_core_{api_choice}.csv':
+                        split_occurrence_path_for_eml_by_short_name[sn] = output_paths[sn]
+            except Exception as e:
+                reporter.add_warning(f"  Error processing {filename}: {str(e)}")
+
+        for short_name in unique_short_names:
+            short_name_clean = str(short_name).strip()
+            short_name_dir = short_name_dirs[short_name_clean]
+            split_occurrence_path_for_eml = split_occurrence_path_for_eml_by_short_name.get(short_name_clean)
+            filtered_occurrence_df_for_eml = None
+
+            # Create split EML file (optional) using the filtered occurrence core for accurate coverage calculations
+            if params.get('eml_enabled', False):
+                # Prefer using the actual split occurrence file on disk (what the user will publish),
+                # falling back to in-memory filtered df only if needed.
+                if (filtered_occurrence_df_for_eml is None or filtered_occurrence_df_for_eml.empty) and split_occurrence_path_for_eml and os.path.exists(split_occurrence_path_for_eml):
+                    try:
+                        filtered_occurrence_df_for_eml = pd.read_csv(split_occurrence_path_for_eml, low_memory=False)
+                    except Exception as _eml_read_e:
+                        reporter.add_warning(
+                            f"  Could not reload split occurrence file for EML generation ('{split_occurrence_path_for_eml}'): {_eml_read_e}"
+                        )
+
+                if filtered_occurrence_df_for_eml is None or filtered_occurrence_df_for_eml.empty:
+                    reporter.add_warning(
+                        f"  Skipping split EML for short_name '{short_name_clean}': no occurrence rows after filtering."
+                    )
+                else:
+                    reporter.add_text("  Creating split EML (eml.xml) for this short_name...")
+                    try:
+                        from create_EML.EML_builder import create_eml_file
+                        params_for_eml = dict(params)
+                        params_for_eml['output_dir'] = short_name_dir
+                        params_for_eml['eml_short_name'] = short_name_clean
+                        data_for_eml = dict(data)
+                        # The EML builder will prefer this in-memory occurrence DataFrame and skip disk-loading.
+                        data_for_eml['occurrence'] = filtered_occurrence_df_for_eml
+                        eml_path = create_eml_file(params_for_eml, data_for_eml, reporter)
+                        reporter.add_text(f"  Split EML saved to: {eml_path}")
+                    except Exception as e:
+                        reporter.add_warning(f"  Split EML creation failed for short_name '{short_name_clean}': {e}")
+            else:
+                reporter.add_text("  Skipping split EML creation per config (eml_enabled=false)")
+
+            # Create Darwin Core Archive meta.xml for this short_name folder (submission-ready)
+            try:
+                if core_type == 'event':
+                    core_fn = f"event_core_{short_name_clean}.csv"
+                    ext_fns = [
+                        f"occurrence_core_{api_choice}_{short_name_clean}.csv",
+                        f"dna_derived_extension_{short_name_clean}.csv",
+                    ]
+                else:
+                    core_fn = f"occurrence_core_{api_choice}_{short_name_clean}.csv"
+                    ext_fns = [f"dna_derived_extension_{short_name_clean}.csv"]
+                emof_candidate = os.path.join(short_name_dir, f"eMoF_{short_name_clean}.csv")
+                if os.path.exists(emof_candidate):
+                    ext_fns.append(f"eMoF_{short_name_clean}.csv")
+                if core_type == 'event':
+                    create_meta_xml(
+                        output_dir=short_name_dir,
+                        core_filename=core_fn,
+                        extension_filenames=ext_fns,
+                        metadata_filename="eml.xml" if params.get("eml_enabled", False) else None,
+                        reporter=reporter,
+                        core_row_type="Event",
+                        core_id_term="eventID",
+                    )
+                else:
+                    create_meta_xml(
+                        output_dir=short_name_dir,
+                        core_filename=core_fn,
+                        extension_filenames=ext_fns,
+                        metadata_filename="eml.xml" if params.get("eml_enabled", False) else None,
+                        reporter=reporter,
+                    )
+            except Exception as e:
+                reporter.add_warning(f"  meta.xml creation failed for short_name '{short_name_clean}': {e}")
+
+            # Event Core split validation: extensions must only reference eventIDs in split Event Core.
+            if core_type == 'event':
+                try:
+                    event_core_split_path = os.path.join(short_name_dir, f"event_core_{short_name_clean}.csv")
+                    if not os.path.exists(event_core_split_path):
+                        reporter.add_warning(f"  Event Core split file missing for '{short_name_clean}', skipping orphan check.")
+                    else:
+                        ev_df = pd.read_csv(event_core_split_path, dtype=str, keep_default_na=False)
+                        event_ids = set(ev_df.get('eventID', pd.Series(dtype=str)).astype(str).str.strip())
+                        files_to_check = [
+                            os.path.join(short_name_dir, f"occurrence_core_{api_choice}_{short_name_clean}.csv"),
+                            os.path.join(short_name_dir, f"dna_derived_extension_{short_name_clean}.csv"),
+                            os.path.join(short_name_dir, f"eMoF_{short_name_clean}.csv"),
+                        ]
+                        orphan_total = 0
+                        for fp in files_to_check:
+                            if not os.path.exists(fp):
+                                continue
+                            cdf = pd.read_csv(fp, dtype=str, keep_default_na=False)
+                            if 'eventID' not in cdf.columns:
+                                continue
+                            ext_event_ids = cdf['eventID'].astype(str).str.strip()
+                            orphan_ct = int(((ext_event_ids != '') & (~ext_event_ids.isin(event_ids))).sum())
+                            orphan_total += orphan_ct
+                            if orphan_ct > 0:
+                                reporter.add_warning(
+                                    f"  Orphan check warning in '{os.path.basename(fp)}': {orphan_ct} row(s) reference eventID not in split Event Core."
+                                )
+                        if orphan_total == 0:
+                            reporter.add_text("  Event Core orphan check passed (no extension rows with missing core eventID).")
+                except Exception as _orphan_err:
+                    reporter.add_warning(f"  Could not run Event Core orphan check for '{short_name_clean}': {_orphan_err}")
+        
+        reporter.add_success(f"Successfully split output files into {len(unique_short_names)} subfolder(s).")
+        
+        # Summary
+        summary_items = []
+        for short_name in unique_short_names:
+            short_name_dir = os.path.join(output_dir, short_name)
+            if os.path.exists(short_name_dir):
+                files_in_dir = [f for f in os.listdir(short_name_dir) if f.endswith('.csv') or f.endswith('.xml')]
+                summary_items.append(f"<strong>{short_name}/</strong>: {len(files_in_dir)} file(s)")
+        reporter.add_list(summary_items, "Output folders created:")
+        
+    except Exception as e:
+        reporter.add_error(f"Failed to split output files by short_name: {str(e)}")
+        raise
+
+
+def load_project_data(params, reporter):
+    """Load project, sample, experimentRun, and analysis data from FAIRe Excel file or TSV files"""
+    reporter.add_section("Loading Project Data", level=2)
+    
+    try:
+        use_excel = params.get('use_excel', True)
+        analysis_data_by_assay = {}
+        
+        if use_excel:
+            # --- EXCEL FORMAT (original implementation) ---
+            # Discover all sheets in the Excel file
+            excel = pd.ExcelFile(params['excel_file'])
+            all_sheets = excel.sheet_names
+            reporter.add_text(f"Found {len(all_sheets)} sheets in Excel file: {', '.join(all_sheets)}")
+
+            # --- Auto-detect metadata format if misconfigured ---
+            try:
+                has_analysis_sheets = any(str(s).startswith('analysisMetadata') for s in all_sheets)
+                current_fmt = params.get('metadata_format', 'NOAA')
+                if has_analysis_sheets and current_fmt != 'NOAA':
+                    reporter.add_warning("Detected 'analysisMetadata' sheets in Excel. Switching metadata_format to 'NOAA' for this run.")
+                    params['metadata_format'] = 'NOAA'
+                elif (not has_analysis_sheets) and current_fmt == 'NOAA':
+                    reporter.add_warning("No 'analysisMetadata' sheets detected. Switching metadata_format to 'GENERIC' for this run.")
+                    params['metadata_format'] = 'GENERIC'
+            except Exception as _fmt_e:
+                reporter.add_warning(f"Could not auto-detect metadata format: {_fmt_e}")
+
+            # --- FAIRe-NOAA FORMAT ---
+            # Uses separate analysisMetadata sheets for each run.
+            if params['metadata_format'] == 'NOAA':
+                analysis_sheets = [sheet for sheet in all_sheets if sheet.startswith('analysisMetadata')]
+                reporter.add_text(f"Found {len(analysis_sheets)} analysis metadata sheets: {', '.join(analysis_sheets)}")
+
+                for sheet_name in analysis_sheets:
+                    analysis_raw_df = pd.read_excel(
+                        params['excel_file'],
+                        sheet_name,
+                        header=None,
+                        index_col=None,
+                        na_values=[""],
+                        keep_default_na=False,
+                    )
+                    analysis_df = extract_long_format_pairs(
+                        analysis_raw_df,
+                        source_label=sheet_name,
+                        field_col_1_based=params.get('field_name_column', 1),
+                        start_row_1_based=params.get('project_and_analysis_header_rows_to_skip', 0) + 1
+                    )
+                    analysis_df = normalize_analysis_metadata(analysis_df, sheet_name, reporter)
+                    if analysis_df is None:
+                        continue
+
+                    assay_name = get_analysis_metadata_value(analysis_df, 'assay_name')
+                    analysis_run_name = get_analysis_metadata_value(analysis_df, 'analysis_run_name')
+                    if not assay_name or not analysis_run_name:
+                        reporter.add_warning(
+                            f"Skipping sheet '{sheet_name}': expected term_name rows for "
+                            "'assay_name' and 'analysis_run_name'."
+                        )
+                        continue
+                    
+                    reporter.add_text(f"Processing sheet '{sheet_name}': assay '{assay_name}', run '{analysis_run_name}'")
+                    
+                    if assay_name not in analysis_data_by_assay:
+                        analysis_data_by_assay[assay_name] = {}
+                    analysis_data_by_assay[assay_name][analysis_run_name] = analysis_df
+
+            # --- GENERIC FAIRe FORMAT ---
+            # Synthesizes analysis metadata from projectMetadata sheet.
+            elif params['metadata_format'] == 'GENERIC':
+                reporter.add_text("Using GENERIC FAIRe format. Synthesizing analysis metadata from projectMetadata.")
+                
+                project_meta_df = pd.read_excel(
+                    params['excel_file'],
+                    params['projectMetadata'],
+                    header=params.get('project_and_analysis_header_rows_to_skip', 0),
+                    index_col=None,
+                    na_values=[""],
+                    keep_default_na=False,
+                )
+                
+                # --- Build a map from assay_name to its column header (e.g., 'ssu16s...': 'assay1') ---
+                assay_map = {}
+                assay_name_row = project_meta_df[project_meta_df['term_name'] == 'assay_name']
+                if not assay_name_row.empty:
+                    assay_name_series = assay_name_row.iloc[0]
+                    for col_name, assay_name_val in assay_name_series.items():
+                        if col_name in ['term_name', 'project_level'] or pd.isna(assay_name_val):
+                            continue
+                        assay_map[assay_name_val] = col_name
+                
+                reporter.add_text(f"Built assay-to-column map from projectMetadata: {assay_map}")
+
+                for run_name, run_details in params['datafiles'].items():
+                    assay_name = run_details.get('assay_name')
+                    if not assay_name:
+                        reporter.add_warning(f"For analysis run '{run_name}', 'assay_name' is missing in config.yaml. Cannot process analysis-specific metadata.")
+                        continue
+
+                    # --- Use the map to find the correct column name ---
+                    if assay_name not in assay_map:
+                        reporter.add_warning(f"Assay '{assay_name}' for run '{run_name}' not found in the 'assay_name' row of projectMetadata. Please check for typos. Available assays found: {list(assay_map.keys())}")
+                        continue
+                    
+                    # Get the actual column name (e.g., 'assay1')
+                    original_assay_col_name = assay_map[assay_name]
+                    
+                    # Synthesize the analysis DF
+                    rows = []
+                    for _, row in project_meta_df.iterrows():
+                        term_name = row['term_name']
+                        # Assay-specific value takes precedence over project-level value
+                        assay_specific_value = row[original_assay_col_name]
+                        project_level_value = row['project_level']
+                        
+                        final_value = assay_specific_value if pd.notna(assay_specific_value) else project_level_value
+                        rows.append({'term_name': term_name, 'values': final_value})
+                    
+                    synthesized_df = pd.DataFrame(rows)
+                    
+                    # Build the nested dictionary structure
+                    if assay_name not in analysis_data_by_assay:
+                        analysis_data_by_assay[assay_name] = {}
+                    analysis_data_by_assay[assay_name][run_name] = synthesized_df
+                    reporter.add_text(f"Synthesized analysis metadata for run '{run_name}' using assay '{assay_name}'.")
+
+            # Load the main data sheets (do not use read_excel(comment='#') — '#' inside a cell truncates the rest of that row)
+            _xlsx_kw = dict(index_col=None, na_values=[""], keep_default_na=False)
+            excel_path = params['excel_file']
+            pm_sheet = params['projectMetadata']
+            sm_sheet = params['sampleMetadata']
+            erm_sheet = params['experimentRunMetadata']
+            data = {
+                'projectMetadata': pd.read_excel(
+                    excel_path,
+                    pm_sheet,
+                    header=params.get('project_and_analysis_header_rows_to_skip', 0),
+                    **_xlsx_kw
+                ),
+                'sampleMetadata': pd.read_excel(
+                    excel_path, sm_sheet, header=params['field_name_row'] - 1, **_xlsx_kw
+                ),
+                'experimentRunMetadata': pd.read_excel(
+                    excel_path, erm_sheet, header=params['field_name_row'] - 1, **_xlsx_kw
+                ),
+            }
+            
+            # For backward compatibility
+            if params['metadata_format'] == 'NOAA':
+                analysis_sheets = [sheet for sheet in all_sheets if sheet.startswith('analysisMetadata')]
+                if analysis_sheets:
+                    first_analysis_raw_df = pd.read_excel(
+                        params['excel_file'],
+                        analysis_sheets[0],
+                        header=None,
+                        index_col=None,
+                        na_values=[""],
+                        keep_default_na=False,
+                    )
+                    first_analysis_df = extract_long_format_pairs(
+                        first_analysis_raw_df,
+                        source_label=analysis_sheets[0],
+                        field_col_1_based=params.get('field_name_column', 1),
+                        start_row_1_based=params.get('project_and_analysis_header_rows_to_skip', 0) + 1
+                    )
+                    first_analysis_df = normalize_analysis_metadata(first_analysis_df, analysis_sheets[0], reporter)
+                    if first_analysis_df is not None:
+                        data['analysisMetadata'] = first_analysis_df
+        
+        else:
+            # --- TSV FORMAT (new implementation) ---
+            reporter.add_text("Using TSV file format. Loading separate TSV files for each metadata sheet.")
+            
+            # Load main metadata sheets from TSV files
+            data = {}
+            
+            # Load projectMetadata
+            project_meta_path = params['projectMetadata_file']
+            reporter.add_text(f"Loading projectMetadata from: {project_meta_path}")
+            data['projectMetadata'] = read_metadata_tsv(
+                project_meta_path,
+                header_row_1_based=params.get('project_and_analysis_header_rows_to_skip', 0) + 1
+            )
+            
+            # Load sampleMetadata
+            sample_meta_path = params['sampleMetadata_file']
+            reporter.add_text(f"Loading sampleMetadata from: {sample_meta_path}")
+            data['sampleMetadata'] = read_metadata_tsv(
+                sample_meta_path,
+                header_row_1_based=params.get('field_name_row', 1)
+            )
+            
+            # Load experimentRunMetadata
+            exp_run_meta_path = params['experimentRunMetadata_file']
+            reporter.add_text(f"Loading experimentRunMetadata from: {exp_run_meta_path}")
+            data['experimentRunMetadata'] = read_metadata_tsv(
+                exp_run_meta_path,
+                header_row_1_based=params.get('field_name_row', 1)
+            )
+
+            # Normalize key identifier columns to prevent join/splitting mismatches like 123 vs 123.0
+            # (common when numeric IDs are read as floats due to missing values)
+            try:
+                def _normalize_key_col(df, col_name):
+                    if col_name in df.columns:
+                        s = df[col_name].astype('string').str.strip()
+                        s = s.str.replace(r'^(\d+)\.0$', r'\1', regex=True)
+                        df[col_name] = s
+
+                _normalize_key_col(data['sampleMetadata'], 'samp_name')
+                _normalize_key_col(data['sampleMetadata'], 'short_name')
+                _normalize_key_col(data['experimentRunMetadata'], 'samp_name')
+                _normalize_key_col(data['experimentRunMetadata'], 'lib_id')
+                _normalize_key_col(data['experimentRunMetadata'], 'assay_name')
+            except Exception as _norm_e:
+                reporter.add_warning(f"Could not normalize identifier columns in TSV metadata: {_norm_e}")
+            
+            # Handle analysis metadata based on format
+            if params['metadata_format'] == 'NOAA':
+                # For NOAA format with TSV, expect analysisMetadata_file in each datafiles entry
+                reporter.add_text("Using NOAA format with TSV files. Loading analysisMetadata from separate TSV files.")
+                
+                for run_name, run_details in params['datafiles'].items():
+                    assay_name = run_details.get('assay_name')
+                    analysis_meta_file = run_details.get('analysisMetadata_file')
+                    
+                    if not assay_name:
+                        reporter.add_warning(f"For analysis run '{run_name}', 'assay_name' is missing in config.yaml. Skipping analysis metadata.")
+                        continue
+                    
+                    if not analysis_meta_file:
+                        reporter.add_warning(f"For analysis run '{run_name}', 'analysisMetadata_file' is missing in config.yaml. Skipping analysis metadata for this run.")
+                        continue
+                    
+                    reporter.add_text(f"Loading analysisMetadata for run '{run_name}' (assay: '{assay_name}') from: {analysis_meta_file}")
+                    
+                    # Read the TSV file - TSV format should have term_name and values columns
+                    analysis_df = read_metadata_tsv(
+                        analysis_meta_file,
+                        header_row_1_based=params.get('project_and_analysis_header_rows_to_skip', 0) + 1,
+                        long_fieldnames_column_1_based=params.get('field_name_column', 1)
+                    )
+                    
+                    analysis_df = normalize_analysis_metadata(analysis_df, analysis_meta_file, reporter)
+                    if analysis_df is None:
+                        continue
+                    
+                    if assay_name not in analysis_data_by_assay:
+                        analysis_data_by_assay[assay_name] = {}
+                    analysis_data_by_assay[assay_name][run_name] = analysis_df
+                    reporter.add_text(f"Successfully loaded analysisMetadata for run '{run_name}' (assay: '{assay_name}')")
+            
+            elif params['metadata_format'] == 'GENERIC':
+                # For GENERIC format with TSV, synthesize from projectMetadata (same as Excel)
+                reporter.add_text("Using GENERIC FAIRe format with TSV files. Synthesizing analysis metadata from projectMetadata.")
+                
+                project_meta_df = data['projectMetadata']
+                
+                # --- Build a map from assay_name to its column header (e.g., 'ssu16s...': 'assay1') ---
+                assay_map = {}
+                assay_name_row = project_meta_df[project_meta_df['term_name'] == 'assay_name']
+                if not assay_name_row.empty:
+                    assay_name_series = assay_name_row.iloc[0]
+                    for col_name, assay_name_val in assay_name_series.items():
+                        if col_name in ['term_name', 'project_level'] or pd.isna(assay_name_val):
+                            continue
+                        assay_map[assay_name_val] = col_name
+                
+                reporter.add_text(f"Built assay-to-column map from projectMetadata: {assay_map}")
+
+                for run_name, run_details in params['datafiles'].items():
+                    assay_name = run_details.get('assay_name')
+                    if not assay_name:
+                        reporter.add_warning(f"For analysis run '{run_name}', 'assay_name' is missing in config.yaml. Cannot process analysis-specific metadata.")
+                        continue
+
+                    # --- Use the map to find the correct column name ---
+                    if assay_name not in assay_map:
+                        reporter.add_warning(f"Assay '{assay_name}' for run '{run_name}' not found in the 'assay_name' row of projectMetadata. Please check for typos. Available assays found: {list(assay_map.keys())}")
+                        continue
+                    
+                    # Get the actual column name (e.g., 'assay1')
+                    original_assay_col_name = assay_map[assay_name]
+                    
+                    # Synthesize the analysis DF
+                    rows = []
+                    for _, row in project_meta_df.iterrows():
+                        term_name = row['term_name']
+                        # Assay-specific value takes precedence over project-level value
+                        assay_specific_value = row[original_assay_col_name]
+                        project_level_value = row['project_level']
+                        
+                        final_value = assay_specific_value if pd.notna(assay_specific_value) else project_level_value
+                        rows.append({'term_name': term_name, 'values': final_value})
+                    
+                    synthesized_df = pd.DataFrame(rows)
+                    
+                    # Build the nested dictionary structure
+                    if assay_name not in analysis_data_by_assay:
+                        analysis_data_by_assay[assay_name] = {}
+                    analysis_data_by_assay[assay_name][run_name] = synthesized_df
+                    reporter.add_text(f"Synthesized analysis metadata for run '{run_name}' using assay '{assay_name}'.")
+        
+        # Add analysis data to main data dictionary (common for both formats)
+        data['analysis_data_by_assay'] = analysis_data_by_assay
+        
+        # Report summary
+        reporter.add_success(f"Successfully loaded project data:")
+        reporter.add_list([
+            f"Sample metadata: {len(data['sampleMetadata'])} rows",
+            f"Experiment run metadata: {len(data['experimentRunMetadata'])} rows", 
+            f"Project metadata: {len(data['projectMetadata'])} rows",
+            f"Analysis assays: {len(analysis_data_by_assay)}"
+        ])
+        
+        # Show sample of data
+        reporter.add_text("<h4>sampleMetadata preview:</h4>")
+        reporter.add_text("Contextual data about the samples collected, such as when it was collected, where it was collected from, what kind of sample it is, and what were the properties of the environment or experimental condition from which the sample was taken. Each row is a distinct sample, or Event. Most of this information is recorded during sample collection. This sheet contains terms from the FAIRe NOAA data template.")
+        reporter.add_dataframe(data['sampleMetadata'], "sampleMetadata (first 5 rows)", max_rows=5)
+        
+        reporter.add_text("<h4>experimentRunMetadata preview:</h4>")
+        reporter.add_text("Contextual data about how the samples were prepared for sequencing. Includes how they were extracted, what amplicon was targeted, how they were sequenced. Each row is a separate sequencing library preparation, distinguished by a unique lib_id.")
+        reporter.add_dataframe(data['experimentRunMetadata'], "experimentRunMetadata (first 2 rows)", max_rows=2)
+        
+        return data
+        
+    except Exception as e:
+        error_msg = f"Failed to load project data: {str(e)}"
+        reporter.add_error(error_msg)
+        raise Exception(error_msg)
+
+
+def load_asv_data(params, reporter):
+    """Load ASV data for each analysis run"""
+    reporter.add_section("Loading ASV Data", level=2)
+    
+    raw_data_tables = {}
+    
+    try:
+        for analysis_run_name, file_paths in params['datafiles'].items():
+            reporter.add_text(f"Processing analysis run: {analysis_run_name}")
+            raw_data_tables[analysis_run_name] = {}
+            
+            # Load taxonomy file
+            if 'taxonomy_file' in file_paths:
+                tax_path = file_paths['taxonomy_file']
+                try:
+                    tax_df = pd.DataFrame()
+                    file_extension = os.path.splitext(tax_path)[1].lower()
+                    configured_raw_header_row = params.get('field_names_row_asv')
+                    configured_raw_header_idx = configured_raw_header_row - 1
+
+                    if file_extension == '.xlsx':
+                        # Heuristic sheet detection: choose the sheet with expected taxonomy columns
+                        xls = pd.ExcelFile(tax_path)
+                        candidate_sheets = xls.sheet_names
+                        # Avoid obviously non-data sheets by name
+                        blacklist = {'readme', 'instructions', 'checklist', 'metadata', 'requirements'}
+                        expected_cols = {
+                            'seq_id', 'featureid', 'feature id', 'otu id', '#otuid',
+                            'taxonomy', 'taxon', 'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'scientificname', 'scientificnameauthorship',
+                            'dna_sequence', 'sequence', 'verbatimidentification', 'taxonrank', 'taxonid'
+                        }
+                        best_sheet = None
+                        best_score = -1
+                        best_header_row = configured_raw_header_idx
+                        
+                        # Find the best sheet by checking all candidate sheets
+                        for sheet in candidate_sheets:
+                            sheet_l = str(sheet).lower().strip()
+                            if any(b in sheet_l for b in blacklist):
+                                continue
+                            try:
+                                tmp = pd.read_excel(tax_path, sheet_name=sheet, nrows=50, header=None)
+                            except Exception:
+                                continue
+                            if 0 <= configured_raw_header_idx < len(tmp):
+                                row_vals = [str(v).lower().strip() for v in tmp.iloc[configured_raw_header_idx].tolist()]
+                                row_set = set(row_vals)
+                                score = len(row_set & expected_cols)
+                                if score > best_score:
+                                    best_sheet = sheet
+                                    best_header_row = configured_raw_header_idx
+                                    best_score = score
+                        
+                        # If no sheet was found, use the first sheet
+                        if best_sheet is None:
+                            best_sheet = candidate_sheets[0]
+                            best_header_row = configured_raw_header_idx
+                        
+                        # Read the Excel file with the determined sheet and header row
+                        tax_df = pd.read_excel(tax_path, sheet_name=best_sheet, header=best_header_row)
+                        # Drop any completely empty columns that may have been created by reading
+                        tax_df = tax_df.loc[:, ~tax_df.columns.astype(str).str.match(r'^Unnamed', na=False)]
+                        reporter.add_text(
+                            f"Note: Reading '{tax_path}' sheet '{best_sheet}' using configured "
+                            f"field_names_row_asv={configured_raw_header_row}."
+                        )
+                    
+                    else:
+                        # Logic for text-based files (.txt, .tsv, .csv)
+                        # Use cross-platform reader that normalizes line endings (fixes Mac vs Windows issues)
+                        separator = ',' if file_extension == '.csv' else '\t'
+                        
+                        skiprows = configured_raw_header_idx
+                        reporter.add_text(
+                            f"Note: Using configured field_names_row_asv={configured_raw_header_row} "
+                            f"for taxonomy file '{tax_path}'."
+                        )
+                        
+                        # Load the data using cross-platform reader (handles CRLF/LF issues)
+                        tax_df = read_text_file_cross_platform(
+                            tax_path,
+                            sep=separator,
+                            skiprows=skiprows,
+                            low_memory=False,
+                            skip_blank_lines=True
+                        )
+
+                    # --- Perform essential input normalization ---
+                    
+                    # 1. Standardize the feature ID column name (prefer explicit matches)
+                    # Create a mapping of lowercased column names (with spaces and underscores removed) to original names
+                    cols_lower = {str(c).lower().replace('_', '').replace(' ', '').replace('-', ''): c for c in tax_df.columns if isinstance(c, str)}
+                    
+                    # Look for feature ID column
+                    if 'featureid' not in [str(c).lower() for c in tax_df.columns]:
+                        # Try to find a column that matches common feature ID names
+                        if 'seqid' in cols_lower:
+                            tax_df.rename(columns={cols_lower['seqid']: 'featureid'}, inplace=True)
+                        elif 'featureid' in cols_lower:
+                            tax_df.rename(columns={cols_lower['featureid']: 'featureid'}, inplace=True)
+                        elif 'otuid' in cols_lower:
+                            tax_df.rename(columns={cols_lower['otuid']: 'featureid'}, inplace=True)
+                        elif '#otuid' in cols_lower:
+                            tax_df.rename(columns={cols_lower['#otuid']: 'featureid'}, inplace=True)
+                        # If still not found, downstream will attempt to detect
+                    
+                    # 2. Ensure verbatimIdentification column for taxonomy
+                    # Prefer explicit 'verbatimIdentification'; fallback to 'taxonomy', then 'taxon'
+                    if 'verbatimIdentification' not in tax_df.columns:
+                        cols_lower_exact = {str(c).lower(): c for c in tax_df.columns if isinstance(c, str)}
+                        if 'verbatimidentification' in cols_lower_exact:
+                            tax_df.rename(columns={cols_lower_exact['verbatimidentification']: 'verbatimIdentification'}, inplace=True)
+                        elif 'taxonomy' in cols_lower_exact:
+                            tax_df.rename(columns={cols_lower_exact['taxonomy']: 'verbatimIdentification'}, inplace=True)
+                        elif 'taxon' in cols_lower_exact:
+                            tax_df.rename(columns={cols_lower_exact['taxon']: 'verbatimIdentification'}, inplace=True)
+                    
+                    # 3. Standardize DNA sequence column
+                    if 'dna_sequence' not in [str(c).lower() for c in tax_df.columns]:
+                        cols_lower_exact = {str(c).lower(): c for c in tax_df.columns if isinstance(c, str)}
+                        if 'sequence' in cols_lower_exact and 'dna_sequence' not in tax_df.columns:
+                            tax_df.rename(columns={cols_lower_exact['sequence']: 'dna_sequence'}, inplace=True)
+                    
+                    # 4. Standardize species/scientific name column for downstream matching
+                    if 'scientificName' not in tax_df.columns:
+                        cols_lower_exact = {str(c).lower(): c for c in tax_df.columns if isinstance(c, str)}
+                        if 'species' in cols_lower_exact and 'scientificname' not in cols_lower_exact:
+                            tax_df.rename(columns={cols_lower_exact['species']: 'scientificName'}, inplace=True)
+
+                    # 5. Normalize featureid values for safe joins
+                    # CRITICAL: Also remove \r characters from CRLF line endings
+                    # that may not be properly handled on cross-platform file transfers (Mac <-> Windows)
+                    if 'featureid' in tax_df.columns:
+                        tax_df['featureid'] = tax_df['featureid'].astype(str).str.replace('\r', '', regex=False).str.strip()
+                        
+                        # --- CROSS-PLATFORM FIX: Drop rows with empty/NaN featureids ---
+                        # This handles "ghost" rows caused by line ending mismatches (CRLF vs LF)
+                        # when files created on Mac are opened on Windows, or vice versa.
+                        rows_before = len(tax_df)
+                        tax_df = tax_df[
+                            (tax_df['featureid'].notna()) & 
+                            (tax_df['featureid'] != '') & 
+                            (tax_df['featureid'].str.lower() != 'nan') &
+                            (~tax_df['featureid'].str.match(r'^\s*$', na=False))  # Also catch whitespace-only strings
+                        ]
+                        rows_dropped = rows_before - len(tax_df)
+                        if rows_dropped > 0:
+                            reporter.add_text(f"  Note: Dropped {rows_dropped} empty/invalid rows from taxonomy table (likely due to cross-platform line endings).")
+
+                    raw_data_tables[analysis_run_name]['taxonomy'] = tax_df
+                    tax_shape = tax_df.shape
+                    reporter.add_success(f"Loaded taxonomy file: {tax_path} (shape: {tax_shape})")
+                    try:
+                        reporter.add_text(f"Taxonomy columns detected: {list(tax_df.columns)[:20]}")
+                    except Exception:
+                        pass
+
+                except Exception as e:
+                    reporter.add_error(f"Failed to load taxonomy file {tax_path}: {e}")
+                    raise
+            
+            # Load abundance table file  
+            # --- Robustly get the path for the abundance table, checking for all possible keys ---
+            abundance_key = None
+            possible_keys = ['abundance_table', 'occurrence_file', 'abundance_file']
+            for key in possible_keys:
+                if key in file_paths:
+                    abundance_key = key
+                    break
+            
+            if abundance_key:
+                abundance_path = file_paths[abundance_key]
+                try:
+                    df_abundance = pd.DataFrame()
+                    file_extension = os.path.splitext(abundance_path)[1].lower()
+                    configured_raw_header_row = params.get('field_names_row_table')
+                    configured_raw_header_idx = configured_raw_header_row - 1
+
+                    if file_extension == '.xlsx':
+                        abundance_header = configured_raw_header_idx
+                        df_abundance = pd.read_excel(abundance_path, sheet_name=0, header=abundance_header)
+                        reporter.add_text(
+                            f"Note: Reading '{abundance_path}' as an Excel file using configured "
+                            f"field_names_row_table={configured_raw_header_row}."
+                        )
+                    else:
+                        # Logic for text-based files (.txt, .tsv, .csv)
+                        # Use cross-platform reader that normalizes line endings (fixes Mac vs Windows issues)
+                        separator = ',' if file_extension == '.csv' else '\t'
+
+                        rows_to_skip = configured_raw_header_idx
+                        reporter.add_text(
+                            f"Note: Using configured field_names_row_table={configured_raw_header_row} "
+                            f"for abundance file '{abundance_path}'."
+                        )
+
+                        # Load the table using cross-platform reader (handles CRLF/LF issues)
+                        df_abundance = read_text_file_cross_platform(
+                            abundance_path,
+                            sep=separator,
+                            skiprows=rows_to_skip,
+                            header=0,
+                            low_memory=False,
+                            skip_blank_lines=True
+                        )
+                    
+                    # Standardize the first column to 'featureid' (accepts featureid or #OTU ID, etc.).
+                    if len(df_abundance.columns) > 0:
+                        first_col_name = df_abundance.columns[0]
+                        if isinstance(first_col_name, str) and first_col_name.startswith('#'):
+                            clean_col_name = first_col_name[1:].strip()
+                            df_abundance.rename(columns={first_col_name: clean_col_name}, inplace=True)
+                            first_col_name = clean_col_name
+                        # Unconditionally rename first column to 'featureid'
+                        df_abundance.rename(columns={first_col_name: 'featureid'}, inplace=True)
+                        # Normalize keys - CRITICAL: Also remove \r characters from CRLF line endings
+                        # that may not be properly handled on cross-platform file transfers (Mac <-> Windows)
+                        df_abundance['featureid'] = df_abundance['featureid'].astype(str).str.replace('\r', '', regex=False).str.strip()
+
+                        # --- CROSS-PLATFORM FIX: Drop rows with empty/NaN featureids ---
+                        # This handles "ghost" rows caused by line ending mismatches (CRLF vs LF)
+                        # when files created on Mac are opened on Windows, or vice versa.
+                        rows_before = len(df_abundance)
+                        df_abundance = df_abundance[
+                            (df_abundance['featureid'].notna()) & 
+                            (df_abundance['featureid'] != '') & 
+                            (df_abundance['featureid'].str.lower() != 'nan') &
+                            (~df_abundance['featureid'].str.match(r'^\s*$', na=False))  # Also catch whitespace-only strings
+                        ]
+                        rows_dropped = rows_before - len(df_abundance)
+                        if rows_dropped > 0:
+                            reporter.add_text(f"  Note: Dropped {rows_dropped} empty/invalid rows from abundance table (likely due to cross-platform line endings).")
+
+                        # --- NEW CRITICAL FIX: Clean and normalize ALL sample name headers ---
+                        # This prevents join failures caused by whitespace or type issues from different file formats (.xlsx, .txt)
+                        header_rename_map = {col: str(col).strip() for col in df_abundance.columns if col != 'featureid'}
+                        df_abundance.rename(columns=header_rename_map, inplace=True)
+
+                    raw_data_tables[analysis_run_name]['occurrence'] = df_abundance
+                    abundance_shape = df_abundance.shape
+                    reporter.add_success(f"Loaded abundance table file: {abundance_path} (shape: {abundance_shape})")
+                except Exception as e:
+                    reporter.add_error(f"Failed to load abundance table file {abundance_path}: {e}")
+                    raise
+        
+        # Show preview of abundance data
+        # Choose the first analysis run to inspect
+        if raw_data_tables:
+            first_analysis = list(raw_data_tables.keys())[0]
+            if 'occurrence' in raw_data_tables[first_analysis]:
+                # Show first 5 rows and first 20 columns like in notebook
+                preview_df = raw_data_tables[first_analysis]['occurrence'].iloc[:5, :20]
+                reporter.add_dataframe(preview_df, f"Preview of Abundance Table for '{first_analysis}'")
+        
+        reporter.add_success(f"Successfully loaded ASV data for {len(raw_data_tables)} analysis runs")
+        return raw_data_tables
+        
+    except Exception as e:
+        error_msg = f"Failed to load ASV data: {str(e)}"
+        reporter.add_error(error_msg)
+        raise Exception(error_msg)
+
+
+def remove_control_samples(data, raw_data_tables, params, reporter):
+    """Remove control/blank samples from all datasets"""
+    reporter.add_section("Removing Control Samples", level=2)
+    
+    try:
+        # Get control detection configuration
+        control_column = params.get('control_sample_column', 'samp_category')
+        control_values = params.get('control_sample_values', [])
+        
+        if not control_values:
+            reporter.add_text("No control sample values specified - skipping control sample removal")
+            return data, raw_data_tables
+        
+        # Check if the specified column exists
+        if control_column not in data['sampleMetadata'].columns:
+            reporter.add_text(f"Warning: Control detection column '{control_column}' not found in sampleMetadata. Available columns: {list(data['sampleMetadata'].columns)}")
+            reporter.add_text("Skipping control sample removal")
+            return data, raw_data_tables
+        
+        # Identify samples to remove
+        samps_to_remove = data['sampleMetadata'][control_column].isin(control_values)
+        samples_to_drop = data['sampleMetadata']['samp_name'][samps_to_remove].astype(str).str.strip().tolist()
+        
+        reporter.add_text(f"Using column '{control_column}' to detect control samples")
+        reporter.add_text(f"Looking for these control values: {control_values}")
+        reporter.add_text(f"Found {len(samples_to_drop)} control/blank samples to remove")
+        
+        # Show the complete list of samples to be dropped
+        if samples_to_drop:
+            reporter.add_text("You can view the list of samples to be dropped below:")
+            reporter.add_list(samples_to_drop, "Complete list of samples being removed:")
+        
+        # Remove from sampleMetadata
+        data['sampleMetadata'] = data['sampleMetadata'][~samps_to_remove]
+        reporter.add_text(f"Sample metadata shape after removal: {data['sampleMetadata'].shape}")
+        
+        # Check remaining sample categories
+        remaining_categories = data['sampleMetadata'][control_column].unique()
+        reporter.add_text(f"Check the {control_column} values left in your sampleMetadata.")
+        reporter.add_text(f"Remaining {control_column} values: {', '.join(map(str, remaining_categories))}")
+        
+        # Get lib_ids to drop from experimentRunMetadata BEFORE removing from ERM
+        # (abundance table columns are now lib_id, not samp_name)
+        lib_ids_to_drop = set()
+        if 'experimentRunMetadata' in data and not data['experimentRunMetadata'].empty:
+            if 'lib_id' in data['experimentRunMetadata'].columns:
+                # Get lib_ids for control samples
+                control_erm_rows = data['experimentRunMetadata']['samp_name'].isin(samples_to_drop)
+                lib_ids_to_drop = set(data['experimentRunMetadata'].loc[control_erm_rows, 'lib_id'].astype(str).str.strip().unique())
+                if lib_ids_to_drop:
+                    reporter.add_text(f"Found {len(lib_ids_to_drop)} lib_id(s) corresponding to control samples to remove from abundance tables")
+                    reporter.add_text(f"Control lib_ids to remove: {list(lib_ids_to_drop)[:10]}{'...' if len(lib_ids_to_drop) > 10 else ''}")
+        
+        # Remove from experimentRunMetadata
+        prep_samps_to_remove = data['experimentRunMetadata']['samp_name'].isin(samples_to_drop)
+        data['experimentRunMetadata'] = data['experimentRunMetadata'][~prep_samps_to_remove]
+        reporter.add_text(f"Experiment run metadata shape after removal: {data['experimentRunMetadata'].shape}")
+        
+        # Remove from ASV abundance tables (columns are now lib_id, not samp_name)
+        for analysis_run_name, tables_dict in raw_data_tables.items():
+            if 'occurrence' in tables_dict:
+                abundance_df = tables_dict['occurrence']
+                original_cols = len(abundance_df.columns)
+                
+                # Drop columns where column name (lib_id) is in lib_ids_to_drop
+                cols_to_remove = [col for col in lib_ids_to_drop if str(col).strip() in abundance_df.columns]
+                if cols_to_remove:
+                    raw_data_tables[analysis_run_name]['occurrence'] = abundance_df.drop(columns=cols_to_remove)
+                    new_cols = len(raw_data_tables[analysis_run_name]['occurrence'].columns)
+                    reporter.add_text(f"Analysis '{analysis_run_name}': removed {len(cols_to_remove)} control columns ({original_cols} → {new_cols})")
+        
+        reporter.add_success("Successfully removed control samples from all datasets")
+        return data, raw_data_tables
+        
+    except Exception as e:
+        error_msg = f"Failed to remove control samples: {str(e)}"
+        reporter.add_error(error_msg)
+        raise Exception(error_msg)
+
+
+def drop_all_na_columns(data, reporter):
+    """Drop columns with all NAs - EXACT code from notebook cell 16-18"""
+    reporter.add_section("Drop columns with all NAs", level=2)
+    
+    try:
+        dropped = pd.DataFrame()
+
+        for sheet_name in ['sampleMetadata', 'experimentRunMetadata']:
+            # Safety check: ensure the sheet exists in data and is not empty
+            if sheet_name in data and not data[sheet_name].empty:
+                all_na_cols = data[sheet_name].columns[data[sheet_name].isnull().all(axis=0)]
+                res = pd.Series(all_na_cols, name=sheet_name)
+                dropped = pd.concat([dropped, res], axis=1)
+            elif sheet_name not in data:
+                reporter.add_text(f"FYI: Sheet '{sheet_name}' not found in 'data' dictionary. Cannot check for all-NA columns.")
+            else: # In data but empty
+                reporter.add_text(f"FYI: Sheet '{sheet_name}' is empty. Cannot check for all-NA columns.")
+        
+        # Show which columns have only NA values
+        reporter.add_text("Which columns in each sheet have only NA values?")
+        reporter.add_dataframe(dropped, "Columns with all NAs by sheet")
+        
+        # Drops all-NA columns from 'sampleMetadata' and 'experimentRunMetadata'
+        # based on the 'dropped' DataFrame.
+        sheets_to_clean = ['sampleMetadata', 'experimentRunMetadata']
+
+        for sheet_name in sheets_to_clean:
+            # Check if 'dropped' has a column for this sheet AND if that column lists any actual columns to drop
+            if sheet_name in dropped.columns and not dropped[sheet_name].dropna().empty:
+                cols_to_drop = list(dropped[sheet_name].dropna())
+                
+                if sheet_name in data:
+                    reporter.add_text(f"Dropping from data['{sheet_name}']: {cols_to_drop}")
+                    data[sheet_name].drop(columns=cols_to_drop, inplace=True, errors='ignore')
+        
+        reporter.add_success("Successfully dropped all-NA columns")
+        return data
+        
+    except Exception as e:
+        error_msg = f"Failed to drop all-NA columns: {str(e)}"
+        reporter.add_error(error_msg)
+        raise Exception(error_msg)
+
+
+def drop_empty_analysis_rows(data, reporter):
+    """Drop NA rows of each analysisMetadata sheet"""
+    reporter.add_section("Now lets drop NA rows of each analysisMetadata sheet", level=2)
+    
+    try:
+        # Identify and report rows with empty 'values' in analysisMetadata sheets
+        analysis_rows_to_drop_info = {} 
+        expected_value_col_name = 'values' # As per the FAIRe NOAA Excel sheet (column D header)
+
+        reporter.add_text(f"Identifying rows with empty '{expected_value_col_name}' column in analysisMetadata sheets...")
+
+        if 'analysis_data_by_assay' in data and data['analysis_data_by_assay']:
+            for assay_name, analyses_dict in data['analysis_data_by_assay'].items():
+                if not isinstance(analyses_dict, dict): continue
+                for run_name, analysis_df in analyses_dict.items():
+                    if not isinstance(analysis_df, pd.DataFrame) or analysis_df.empty: continue
+
+                    # Ensure the 'values' column exists
+                    if expected_value_col_name not in analysis_df.columns:
+                        reporter.add_text(f"  Warning: Column '{expected_value_col_name}' not found in Assay: '{assay_name}', Run: '{run_name}'. Skipping.")
+                        continue
+                    
+                    # Identify rows where the 'values' column is NA
+                    empty_values_mask = analysis_df[expected_value_col_name].isnull()
+                    rows_to_drop_indices = analysis_df[empty_values_mask].index.tolist()
+
+                    if rows_to_drop_indices:
+                        # Get the list of term names for the empty rows
+                        terms_to_drop = analysis_df.loc[rows_to_drop_indices, 'term_name'].tolist() if 'term_name' in analysis_df.columns else []
+                        
+                        analysis_rows_to_drop_info[(assay_name, run_name)] = rows_to_drop_indices
+
+                        reporter.add_text(f"For Analysis (Assay: '{assay_name}', Run: '{run_name}'), found {len(terms_to_drop)} empty rows:")
+                        reporter.add_text(f"  {terms_to_drop}")
+
+        if not analysis_rows_to_drop_info:
+            reporter.add_text(f"No rows with an empty '{expected_value_col_name}' column were found in any analysisMetadata sheet.")
+        else:
+            reporter.add_text("Summary: The terms listed above will be dropped from their respective sheets.")
+            
+            # Perform the deletion of rows with empty 'values' from analysisMetadata sheets
+            reporter.add_text(f"Removing identified rows with empty 'values' from analysisMetadata sheets...")
+            for (assay_name, run_name), indices_to_drop in analysis_rows_to_drop_info.items():
+                if indices_to_drop: 
+                    try:
+                        original_count = len(data['analysis_data_by_assay'][assay_name][run_name])
+                        data['analysis_data_by_assay'][assay_name][run_name].drop(index=indices_to_drop, inplace=True)
+                        new_count = len(data['analysis_data_by_assay'][assay_name][run_name])
+                        reporter.add_text(f"  For Assay: '{assay_name}', Run: '{run_name}': Removed {original_count - new_count} row(s).")
+                    except Exception as e:
+                        reporter.add_text(f"  An error occurred while dropping rows for Assay: '{assay_name}', Run: '{run_name}': {e}")
+            reporter.add_text("Finished removing rows with empty 'values' from analysisMetadata sheets.")
+        
+        reporter.add_success("Finished removing rows with empty 'values' from analysisMetadata sheets")
+        return data
+        
+    except Exception as e:
+        error_msg = f"Failed to drop empty analysis rows: {str(e)}"
+        reporter.add_error(error_msg)
+        raise Exception(error_msg)
+
+
+def drop_some_na_columns(data, reporter):
+    """Now lets check for columns or rows with SOME missing values"""
+    reporter.add_section("Now lets check for columns or rows with SOME missing values", level=2)
+    
+    try:
+        reporter.add_text(
+            "Now let's check which columns have missing values in some of the rows. "
+            "Where data are intentionally absent, use one of the accepted placeholder terms below instead of leaving cells blank. "
+            "Alternatively, you can drop the column if it is not needed for submission to OBIS."
+        )
+        reporter.add_list(
+            _FAIRE_PLACEHOLDER_TERMS_ALL_FIELDS,
+            title="Accepted placeholder terms for all FAIRe fields",
+        )
+        reporter.add_list(
+            _FAIRE_PLACEHOLDER_TERMS_EVENTDATE_AND_GEO_LOC_ONLY,
+            title="Additional terms accepted only for eventDate and geo_loc_name (do not use these for other columns)",
+        )
+        
+        some = pd.DataFrame()
+
+        # Sheets to check for columns with *some* NAs
+        sheets_to_examine_for_some_na = ['sampleMetadata', 'experimentRunMetadata']
+
+        for sheet_name in sheets_to_examine_for_some_na:
+            if sheet_name in data and not data[sheet_name].empty:
+                cols_with_some_na = data[sheet_name].columns[data[sheet_name].isnull().any(axis=0)]
+                res = pd.Series(cols_with_some_na.tolist(), name=sheet_name) # .tolist() for cleaner Series
+                some = pd.concat([some, res], axis=1)
+
+        reporter.add_text("Columns with some NAs:")
+        reporter.add_dataframe(some, "Columns with some missing values")
+        
+        reporter.add_text("Here I'm going to drop all the columns with some missing data, as I don't need them for submission to OBIS.")
+        
+        # Drop columns with some missing values, but preserve any column referenced in data_mapper.yaml
+        sheets_to_clean = ['sampleMetadata', 'experimentRunMetadata']
+
+        # Build set of columns to preserve from mapper
+        try:
+            preserve_cols = set()
+            import yaml as _yaml_loader
+            with open('data_mapper.yaml','r', encoding='utf-8') as f:
+                mapper = _yaml_loader.safe_load(f) or {}
+            # Consider both generic and default keys
+            mapping_keys = []
+            # We don't know the format here; load both sections if present
+            mapping_keys.extend(['occurrence_core','dna_derived_extension','generic_occurrence_core','generic_dna_derived_extension'])
+            for key in mapping_keys:
+                section = mapper.get(key, {}) or {}
+                for _dwc, info in section.items():
+                    if isinstance(info, dict):
+                        ft = info.get('faire_term')
+                        src = info.get('source')
+                        if ft and src in ['sampleMetadata','experimentRunMetadata']:
+                            preserve_cols.add(str(ft).strip())
+                            preserve_cols.add(f"{str(ft).strip()}_unit")
+        except Exception:
+            preserve_cols = set()
+
+        for sheet_name in sheets_to_clean:
+            if sheet_name in data and not data[sheet_name].empty: # Check if DataFrame exists and is not empty
+                original_columns = data[sheet_name].columns.tolist() # Get column names before dropping
+
+                # Compute droppable columns (some NAs) excluding preserved
+                cols_with_some_na = data[sheet_name].columns[data[sheet_name].isnull().any(axis=0)]
+                cols_to_drop = [c for c in cols_with_some_na if c not in preserve_cols]
+
+                if cols_to_drop:
+                    data[sheet_name].drop(columns=cols_to_drop, inplace=True, errors='ignore')
+                
+                current_columns = data[sheet_name].columns.tolist() # Get column names after dropping
+                dropped_column_names = [col for col in original_columns if col not in current_columns]
+                
+                if dropped_column_names:
+                    reporter.add_text(f"From data['{sheet_name}']: Dropped columns: {dropped_column_names}")
+                else: # Optional: if no columns were dropped
+                    reporter.add_text(f"No columns dropped from data['{sheet_name}']")
+            elif sheet_name not in data:
+                reporter.add_text(f"FYI: Sheet '{sheet_name}' not found in 'data'. No columns dropped.")
+            else: # Sheet is in data but empty
+                reporter.add_text(f"FYI: Sheet '{sheet_name}' is empty. No columns dropped.")
+        
+        reporter.add_success("Successfully dropped columns with some missing values")
+        return data
+        
+    except Exception as e:
+        error_msg = f"Failed to drop columns with some NAs: {str(e)}"
+        reporter.add_error(error_msg)
+        raise Exception(error_msg)
+
+
+def load_darwin_core_mappings(params, reporter):
+    """Load data dictionary Excel file - EXACT code from notebook cell 23"""
+    reporter.add_section("Load data dictionary Excel file", level=2)
+    
+    try:
+        reporter.add_text("Attempting to load Darwin Core mappings from data_mapper.yaml (preferred). If not found, will fall back to the FAIRe NOAA checklist.")
+
+        dwc_data = {}
+        checklist_df = pd.DataFrame()
+
+        # 1) Preferred: YAML-based mappings
+        yaml_mapper_path = 'data_mapper.yaml'
+        try:
+            if os.path.exists(yaml_mapper_path):
+                import yaml as _yaml_loader
+                with open(yaml_mapper_path, 'r', encoding='utf-8') as f:
+                    mapper = _yaml_loader.safe_load(f) or {}
+
+                # --- NEW: Select mapping based on metadata_format ---
+                format_prefix = "generic_" if params.get('metadata_format') == 'GENERIC' else ""
+                occurrence_key = f"{format_prefix}occurrence_core"
+                dna_derived_key = f"{format_prefix}dna_derived_extension"
+                
+                reporter.add_text(f"Loading mappings for '{params.get('metadata_format')}' format from keys: {occurrence_key}, {dna_derived_key}")
+
+                # Extract sections based on the selected format
+                occ_map_raw = mapper.get(occurrence_key, {}) or {}
+                dna_map_raw = mapper.get(dna_derived_key, {}) or {}
+
+                def _build_df_from_mapping(mapping_dict):
+                    rows = []
+                    for dwc_term, mapping_details in mapping_dict.items():
+                        # Skip if the entry is not a dictionary (e.g., a comment)
+                        if not isinstance(mapping_details, dict):
+                            continue
+                        
+                        faire_term = mapping_details.get('faire_term')
+                        
+                        # Skip blanks/nulls to allow "omit if unmapped"
+                        if faire_term is None:
+                            continue
+                        
+                        faire_str = str(faire_term).strip()
+                        if not faire_str:
+                            continue
+                        rows.append({'DwC_term': str(dwc_term).strip(), 'FAIRe_term': faire_str})
+                    if rows:
+                        return pd.DataFrame(rows).drop_duplicates().set_index('DwC_term')
+                    else:
+                        return pd.DataFrame(columns=['FAIRe_term']).set_index(pd.Index([], name='DwC_term'))
+
+                dwc_data['occurrence'] = _build_df_from_mapping(occ_map_raw)
+                dwc_data['dnaDerived'] = _build_df_from_mapping(dna_map_raw)
+
+                reporter.add_text(f"Loaded Darwin Core mappings from {yaml_mapper_path}")
+                reporter.add_text(f"Occurrence mappings: {len(dwc_data['occurrence'])}; DNA Derived mappings: {len(dwc_data['dnaDerived'])}")
+
+                reporter.add_dataframe(
+                    dwc_data['occurrence'].reset_index(),
+                    "Darwin Core Occurrence Mappings",
+                    max_rows=len(dwc_data['occurrence'])
+                )
+                reporter.add_dataframe(
+                    dwc_data['dnaDerived'].reset_index(),
+                    "DNA Derived Data Mappings",
+                    max_rows=len(dwc_data['dnaDerived'])
+                )
+
+                reporter.add_success("Loaded Darwin Core mappings")
+                return dwc_data, checklist_df
+        except Exception as e_yaml:
+            reporter.add_warning(f"Could not load YAML mappings ({yaml_mapper_path}): {e_yaml}. Will attempt NOAA checklist.")
+
+        # 2) Fallback: FAIRe NOAA checklist
+     #   reporter.add_text("Falling back to FAIRe NOAA checklist for mappings...")
+
+        try:
+            checklist_df = pd.read_excel(
+                params['FAIRe_NOAA_checklist'],
+                sheet_name='checklist',
+                na_values=[""]
+            )
+        except Exception as e:
+            reporter.add_text(f"Error loading 'checklist' sheet: {e}")
+
+        # Define helper columns for edna2obis from your checklist
+        col_faire_term = 'term_name'
+        col_output_spec = 'edna2obis_output_file'
+        col_dwc_mapping = 'dwc_term'
+
+        occurrence_maps = []
+        dna_derived_maps = []
+
+        # Process the checklist if it loaded successfully and has the required columns
+        if not checklist_df.empty and all(col in checklist_df.columns for col in [col_faire_term, col_output_spec, col_dwc_mapping]):
+            for _, row in checklist_df.iterrows():
+                faire_term = row[col_faire_term]
+                output_file = str(row[col_output_spec]).lower() # Convert to string and lowercase
+                dwc_term = row[col_dwc_mapping]
+
+                # Add to lists if terms are valid
+                if pd.notna(faire_term) and pd.notna(dwc_term) and str(faire_term).strip() and str(dwc_term).strip():
+                    if 'occurrence' in output_file:
+                        occurrence_maps.append({'DwC_term': dwc_term, 'FAIRe_term': faire_term})
+                    if 'dnaderived' in output_file:
+                        dna_derived_maps.append({'DwC_term': dwc_term, 'FAIRe_term': faire_term})
+            
+            # Create DataFrames, using DwC_term as index
+            dwc_data['occurrence'] = pd.DataFrame(occurrence_maps).drop_duplicates().set_index('DwC_term') if occurrence_maps else \
+                                     pd.DataFrame(columns=['FAIRe_term']).set_index(pd.Index([], name='DwC_term'))
+            
+            dwc_data['dnaDerived'] = pd.DataFrame(dna_derived_maps).drop_duplicates().set_index('DwC_term') if dna_derived_maps else \
+                                     pd.DataFrame(columns=['FAIRe_term']).set_index(pd.Index([], name='DwC_term'))
+        else:
+            # If checklist is empty or missing columns, create empty structures for dwc_data
+            if checklist_df.empty and 'FAIRe_NOAA_checklist' in params: # Avoid double error message if file load failed
+                reporter.add_text(f"Checklist DataFrame is empty or required columns are missing. Creating empty DwC mappings.")
+            dwc_data['occurrence'] = pd.DataFrame(columns=['FAIRe_term']).set_index(pd.Index([], name='DwC_term'))
+            dwc_data['dnaDerived'] = pd.DataFrame(columns=['FAIRe_term']).set_index(pd.Index([], name='DwC_term'))
+
+        # Print summary
+        reporter.add_text(f"Darwin Core term mapping created: \n   Occurrence Core mappings: {len(dwc_data['occurrence'])} \n   DNA Derived Extension mappings: {len(dwc_data['dnaDerived'])}")
+        
+        # Show the mappings (display full tables, not just a preview)
+        reporter.add_dataframe(
+            dwc_data['occurrence'].reset_index(),
+            "Darwin Core Occurrence Mappings",
+            max_rows=len(dwc_data['occurrence'])
+        )
+        reporter.add_dataframe(
+            dwc_data['dnaDerived'].reset_index(),
+            "DNA Derived Data Mappings",
+            max_rows=len(dwc_data['dnaDerived'])
+        )
+        
+        reporter.add_success("Loaded Darwin Core mappings")
+        return dwc_data, checklist_df
+        
+    except Exception as e:
+        error_msg = f"Failed to load Darwin Core mappings: {str(e)}"
+        reporter.add_error(error_msg)
+        raise Exception(error_msg)
+
+
+def main():
+    """Main execution function"""
+    # --- Load config first to get params for reporter initialization ---
+    print_header()
+    print_usage()
+    print_separator("Starting Conversion")
+
+    # Always load the default config file first to check for a custom path
+    default_config_path = "config.yaml"
+    final_config_path = default_config_path
+    
+    try:
+        with open(default_config_path, 'r', encoding='utf-8') as f:
+            initial_config = yaml.safe_load(f)
+
+        # Check if a different config file is specified within the default config
+        if 'run_config_path' in initial_config and initial_config['run_config_path'] and initial_config['run_config_path'] != default_config_path:
+            final_config_path = initial_config['run_config_path']
+            console.print(f"Using config file: {final_config_path}")
+
+        # Load the final configuration
+        params = load_config(final_config_path)
+
+    except Exception as e:
+        console.print(f"[bold red]CRITICAL ERROR[/]: Could not load configuration file. {e}")
+        # We can't create a report if config fails, so exit.
+        return
+
+    # --- Initialize HTML reporter with a dynamic name ---
+    global reporter
+    output_dir = params.get('output_dir', "processed-v3/")
+    api_choice = params.get('taxonomic_api_source', 'unknown')
+    run_name = params.get('edna2obis_run_name', 'unnamed_run')
+    report_filename = f"edna2obis_report_{api_choice}_{run_name}.html"
+    os.makedirs(output_dir, exist_ok=True)
+    report_path = os.path.join(output_dir, report_filename)
+    reporter = HTMLReporter(report_path, run_name)
+    reporter.dwc_core_type = params.get('dwc_core_type', 'occurrence')
+    perf_log = performance_log_for_config(
+        bool(params.get('include_performance_metrics_in_output', False)),
+        output_dir,
+        run_name,
+    )
+
+    try:
+        reporter.add_section("Data Cleaning", level=1)
+        reporter.add_text_with_submission_logos("Starting initial data cleaning of eDNA metadata and raw data from FAIRe NOAA format to Darwin Core for OBIS and GBIF submission")
+        
+        # --- Report on the loaded configuration ---
+        console.print("Loading and cleaning data...")
+        reporter.add_section("Loading Configuration", level=2)
+        reporter.add_success("Configuration loaded successfully")
+        
+        # Save the config file used for this run
+        save_config_for_run(params, reporter, final_config_path)
+        
+        config_summary = [
+            f"Run Name: {params.get('edna2obis_run_name', 'unnamed_run')}",
+            f"API Source: {params['taxonomic_api_source']}",
+        ]
+        
+        # Add file format information
+        if params.get('use_excel', True):
+            config_summary.append(f"Excel file: {params['excel_file']}")
+        else:
+            config_summary.append(f"Metadata format: TSV files")
+            config_summary.append(f"  - projectMetadata: {params.get('projectMetadata_file', 'N/A')}")
+            config_summary.append(f"  - sampleMetadata: {params.get('sampleMetadata_file', 'N/A')}")
+            config_summary.append(f"  - experimentRunMetadata: {params.get('experimentRunMetadata_file', 'N/A')}")
+        
+        config_summary.extend([
+            f"Number of analysis runs: {len(params['datafiles'])}",
+            f"Output directory: {params['output_dir']}",
+            f"Local reference database: {params.get('use_local_reference_database', False)}"
+        ])
+        
+        reporter.add_list(config_summary, "Configuration Summary:")
+        
+        # Set up pandas display options
+        setup_pandas_display()
+        perf_log.set_pre_pipeline_metrics(params)
+
+        # Load project data
+        console.print("Loading project data and metadata...")
+        with perf_log.step("load_project_data"):
+            data = load_project_data(params, reporter)
+
+        # Load ASV data
+        console.print("Loading ASV data...")
+        with perf_log.step("load_asv_data"):
+            raw_data_tables = load_asv_data(params, reporter)
+
+        # Remove control samples
+        console.print("Removing control samples...")
+        with perf_log.step("remove_control_samples"):
+            data, raw_data_tables = remove_control_samples(data, raw_data_tables, params, reporter)
+
+        # Drop columns with all NAs
+        console.print("Dropping columns with all NAs...")
+        with perf_log.step("drop_all_na_columns"):
+            data = drop_all_na_columns(data, reporter)
+
+        # Drop NA rows of each analysisMetadata sheet
+        console.print("Dropping empty analysis metadata rows...")
+        with perf_log.step("drop_empty_analysis_rows"):
+            data = drop_empty_analysis_rows(data, reporter)
+
+        # Optional: drop columns with some missing values (quiet)
+        with perf_log.step("drop_some_na_columns"):
+            data = drop_some_na_columns(data, reporter)
+
+        perf_log.set_post_prep_table_metrics(params, raw_data_tables)
+
+        # Load Darwin Core mappings
+        console.print("Loading Darwin Core mappings...")
+        with perf_log.step("load_darwin_core_mappings"):
+            dwc_data, checklist_df = load_darwin_core_mappings(params, reporter)
+
+        # Create occurrence core
+        console.print("Creating Occurrence Core...")
+        with perf_log.step("create_occurrence_core"):
+            occurrence_core, all_processed_occurrence_dfs = create_occurrence_core(data, raw_data_tables, params, dwc_data, reporter)
+        
+        # Perform taxonomic mapping
+        api_for_mapping_msg = params.get('taxonomic_api_source', 'WoRMS')
+        console.print(f"[bold]Starting Taxonomic Mapping to {api_for_mapping_msg}...[/]")
+        with perf_log.step("assign_taxonomy"):
+            with console.status(f"Running Taxonomic Mapping to {api_for_mapping_msg}...", spinner="dots"):
+                # Suppress logs/errors but leave stdout for spinner
+                with silence_output():
+                    assign_taxonomy(params, data, raw_data_tables, reporter)
+        console.print(f"[green]Finished Taxonomic Mapping to {api_for_mapping_msg}.[/]")
+        if params.get('taxonomic_api_source') == 'WoRMS':
+            stats = params.get('worms_walkup_stats')
+            if isinstance(stats, dict) and stats:
+                console.print(
+                    "WoRMS walk-up summary: "
+                    f"min_ranks_matched={stats.get('min_ranks_matched')}, "
+                    f"max_walkup_steps={stats.get('max_walkup_steps')}, "
+                    f"considered_terms={stats.get('considered_terms')}, "
+                    f"rejected_terms={stats.get('rejected_terms')}, "
+                    f"accepted_matches={stats.get('accepted_matches')}, "
+                    f"walked_up_matches={stats.get('walked_up_matches')}, "
+                    f"max_step_used={stats.get('max_step_used')}, "
+                    f"no_acceptable_term_found={stats.get('no_acceptable_term_found')}"
+                )
+
+        with perf_log.step("taxa_assignment_postprocess"):
+            # Create taxa mapping info file
+            from taxonomic_alignment.taxa_assignment_manager import create_taxa_assignment_info
+            with silence_output():
+                create_taxa_assignment_info(params, reporter)
+
+            # After creating the GBIF info file, remove any duplicate rows
+            if params.get('taxonomic_api_source') == 'GBIF':
+                from taxonomic_alignment.remove_GBIF_duplicates import remove_duplicates_from_gbif_taxa_info
+                with silence_output():
+                    remove_duplicates_from_gbif_taxa_info(params, reporter)
+
+                from taxonomic_alignment.mark_selected_gbif_match import mark_selected_gbif_matches
+                with silence_output():
+                    mark_selected_gbif_matches(params, reporter)
+
+            elif params.get('taxonomic_api_source') == 'WoRMS':
+                from taxonomic_alignment.mark_selected_worms_match import mark_selected_worms_matches
+                # Suppress internal prints while keeping spinner visible (spinner already ended here)
+                with silence_output():
+                    mark_selected_worms_matches(params, reporter)
+
+        with perf_log.step("occurrence_core_postprocess"):
+            # Remove match_type_debug from final occurrence file (keep it only in taxa_mapping_INFO.xlsx)
+            api_source = params.get('taxonomic_api_source', 'WoRMS').lower()
+            final_occurrence_path = os.path.join(params.get('output_dir', 'processed-v3/'), f'occurrence_core_{api_source}.csv')
+            try:
+                if os.path.exists(final_occurrence_path):
+                    # Read the file, remove match_type_debug column, and save back
+                    final_df = pd.read_csv(final_occurrence_path)
+                    if 'match_type_debug' in final_df.columns:
+                        final_df = final_df.drop(columns=['match_type_debug'])
+                        final_df.to_csv(final_occurrence_path, index=False, na_rep='')
+                        reporter.add_text("Removed match_type_debug from final occurrence file (kept in taxa_mapping_INFO.xlsx)")
+            except Exception as e:
+                reporter.add_text(f"Warning: Could not remove match_type_debug from final file: {e}")
+
+            # Delete intermediate occurrence.csv file
+            intermediate_occurrence_path = os.path.join(params.get('output_dir', 'processed-v3/'), 'occurrence.csv')
+            try:
+                if os.path.exists(intermediate_occurrence_path):
+                    os.remove(intermediate_occurrence_path)
+                    reporter.add_text(f"Deleted intermediate file: {intermediate_occurrence_path}")
+            except Exception as e:
+                reporter.add_text(f"Warning: Could not delete intermediate occurrence.csv: {e}")
+
+        # Create DNA derived extension
+        console.print("Creating DNA derived extension...")
+        with perf_log.step("create_dna_derived_extension"):
+            with silence_output():
+                create_dna_derived_extension(params, data, raw_data_tables, dwc_data, occurrence_core, all_processed_occurrence_dfs, checklist_df, reporter)
+        
+        # Create eMoF file (optional)
+        if params.get('emof_enabled', True):
+            console.print("Creating eMoF (extendedMeasurementOrFact)...")
+            with perf_log.step("create_emof_table"):
+                try:
+                    with silence_output():
+                        emof_path = create_emof_table(params, occurrence_core, data, reporter)
+                    reporter.add_text(f"eMoF saved to: {emof_path}")
+                except Exception as e:
+                    reporter.add_warning(f"eMoF creation failed: {e}")
+        else:
+            with perf_log.step("create_emof_table_skipped"):
+                reporter.add_text("Skipping eMoF creation per config (emof_enabled=false)")
+
+        # Create EML file (optional). When splitting by short_name, EML is only written inside each
+        # cruise subfolder (with eml_short_name / alternateIdentifier); skip aggregate root eml.xml.
+        if params.get('eml_enabled', False):
+            if params.get('split_output_by_short_name', False):
+                with perf_log.step("create_eml_file_skipped"):
+                    reporter.add_text(
+                        "Skipping root eml.xml because split_output_by_short_name is true — "
+                        "use the eml.xml inside each {short_name}/ folder for IPT."
+                    )
+            else:
+                console.print("Creating EML (Ecological Metadata Language) file...")
+                with perf_log.step("create_eml_file"):
+                    try:
+                        from create_EML.EML_builder import create_eml_file
+                        with silence_output():
+                            eml_path = create_eml_file(params, data, reporter)
+                        reporter.add_text(f"EML saved to: {eml_path}")
+                    except Exception as e:
+                        reporter.add_warning(f"EML creation failed: {e}")
+        else:
+            with perf_log.step("create_eml_file_skipped"):
+                reporter.add_text("Skipping EML creation per config (eml_enabled=false)")
+        
+        # --- Final File Validation ---
+        with perf_log.step("final_output_validation"):
+            reporter.add_section("Final File Validation", level=3)
+            output_dir = params.get('output_dir', 'processed-v3/')
+            api_choice = params.get("taxonomic_api_source", "worms")
+
+            files_to_validate = [
+                f'occurrence_core_{api_choice.lower()}.csv',
+                f'taxa_mapping_INFO_{api_choice}.xlsx',
+                'dna_derived_extension.csv'
+            ]
+            if params.get('emof_enabled', True):
+                files_to_validate.append('eMoF.csv')
+            if params.get('eml_enabled', False) and not params.get('split_output_by_short_name', False):
+                files_to_validate.append('eml.xml')
+            if not params.get('split_output_by_short_name', False):
+                files_to_validate.append('meta.xml')
+
+            all_empty_columns_summary = []
+            removed_columns_summary = []
+            for filename in files_to_validate:
+                filepath = os.path.join(output_dir, filename)
+                if os.path.exists(filepath):
+                    try:
+                        if filename.lower().endswith('.xml'):
+                            # Validate XML structure instead of reading as CSV
+                            ET.parse(filepath)
+                        elif filename.lower().endswith('.xlsx'):
+                            from taxonomic_alignment.taxa_assignment_info_export import (
+                                read_taxa_assignment_info_dataframe,
+                                write_taxa_assignment_info_xlsx,
+                            )
+                            df = read_taxa_assignment_info_dataframe(filepath)
+                            empty_columns = [col for col in df.columns if df[col].isna().all()]
+                            if empty_columns:
+                                for col in empty_columns:
+                                    reporter.add_warning(f"In output file <strong>'{filename}'</strong>, the column <strong>'{col}'</strong> was found to be completely empty.")
+                                    all_empty_columns_summary.append(f"File: <code>{filename}</code>, Column: <code>{col}</code>")
+                            if empty_columns:
+                                df.drop(columns=empty_columns, inplace=True)
+                                write_taxa_assignment_info_xlsx(df, filepath)
+                                for col in empty_columns:
+                                    removed_columns_summary.append(f"File: <code>{filename}</code>, Removed Column: <code>{col}</code>")
+                        else:
+                            sep = '\t' if filename.lower().endswith('.tsv') else ','
+                            df = pd.read_csv(filepath, sep=sep, low_memory=False)
+
+                            # Existing empty column check (for reporting)
+                            empty_columns = [col for col in df.columns if df[col].isna().all()]
+                            if empty_columns:
+                                for col in empty_columns:
+                                    reporter.add_warning(f"In output file <strong>'{filename}'</strong>, the column <strong>'{col}'</strong> was found to be completely empty.")
+                                    all_empty_columns_summary.append(f"File: <code>{filename}</code>, Column: <code>{col}</code>")
+
+                            # --- NEW: Remove empty columns and overwrite file ---
+                            if empty_columns:
+                                df.drop(columns=empty_columns, inplace=True)
+                                df.to_csv(filepath, index=False, sep=sep, encoding='utf-8-sig')
+                                for col in empty_columns:
+                                    removed_columns_summary.append(f"File: <code>{filename}</code>, Removed Column: <code>{col}</code>")
+
+                    except Exception as e:
+                        reporter.add_warning(f"Could not validate or clean file '{filename}': {e}")
+
+            if not all_empty_columns_summary:
+                reporter.add_success("Validation complete: No empty columns found in final output files.")
+            else:
+                # This report section now serves as a pre-cleanup warning
+                reporter.add_list(all_empty_columns_summary, "<h4>Summary of All Empty Columns Found (and subsequently removed):</h4>")
+
+            # --- Report on removed columns ---
+            if removed_columns_summary:
+                reporter.add_section("Empty Column Cleanup", level=3)
+                reporter.add_success("Removed completely empty columns from the final output files.")
+                reporter.add_list(removed_columns_summary, "<h4>Summary of Removed Columns:</h4>")
+
+        # --- Split output files by short_name (cruise/expedition) if enabled ---
+        if params.get('split_output_by_short_name', False):
+            console.print("Splitting output files by short_name (cruise/expedition)...")
+            try:
+                with perf_log.step("split_output_files_by_short_name"):
+                    split_output_files_by_short_name(params, data, reporter)
+                console.print("[green]Output files split successfully![/]")
+            except Exception as e:
+                console.print(f"[bold red]Failed to split output files: {e}[/]")
+                reporter.add_error(f"Failed to split output files by short_name: {e}")
+                # Re-raise to stop the pipeline since user explicitly requested splitting
+                raise
+        else:
+            with perf_log.step("create_meta_xml"):
+                console.print("Skipping output file splitting (split_output_by_short_name=false)")
+                reporter.add_text("Skipping output file splitting (split_output_by_short_name=false)")
+                # Create Darwin Core Archive meta.xml in the run output folder (submission-ready)
+                try:
+                    occ_fn = f"occurrence_core_{api_choice.lower()}.csv"
+                    emof_present = params.get("emof_enabled", True) and os.path.exists(os.path.join(output_dir, "eMoF.csv"))
+                    metadata_fn = "eml.xml" if params.get("eml_enabled", False) else None
+                    if params.get("dwc_core_type", "occurrence") == "event":
+                        # Event Core: the Occurrence Core becomes an extension and event_core.csv is the core.
+                        create_event_core(params, reporter, occurrence_filename=occ_fn)
+                        slim_occurrence_for_event_mode(params, reporter, occurrence_filename=occ_fn)
+                        ext_fns = [occ_fn, "dna_derived_extension.csv"]
+                        if emof_present:
+                            ext_fns.append("eMoF.csv")
+                        create_meta_xml(
+                            output_dir=output_dir,
+                            core_filename="event_core.csv",
+                            extension_filenames=ext_fns,
+                            metadata_filename=metadata_fn,
+                            reporter=reporter,
+                            core_row_type="Event",
+                            core_id_term="eventID",
+                        )
+                    else:
+                        ext_fns = ["dna_derived_extension.csv"]
+                        if emof_present:
+                            ext_fns.append("eMoF.csv")
+                        create_meta_xml(
+                            output_dir=output_dir,
+                            core_filename=occ_fn,
+                            extension_filenames=ext_fns,
+                            metadata_filename=metadata_fn,
+                            reporter=reporter,
+                        )
+                except Exception as e:
+                    reporter.add_warning(f"meta.xml creation failed: {e}")
+
+        perf_log.set_output_file_metrics(params)
+        perf_path = perf_log.write(success=True)
+        if perf_path:
+            console.print(f"Run performance log: {perf_path}")
+
+        # --- Final Status Check ---
+        # If any warnings were logged during the run, set the final status to WARNING
+        if reporter.warnings:
+            reporter.set_warning()
+        else:
+            reporter.set_success()
+            
+        # Generate final report
+        console.print("\n[bold green]Process completed.[/]")
+        console.print("Generating HTML report...")
+        
+        reporter.add_section("Process Completion")
+        reporter.add_success("All steps completed successfully!")
+        reporter.add_text("Files generated:")
+        
+        output_dir = params.get('output_dir', '../processed-v3/')
+        api_choice = params.get("taxonomic_api_source", "worms")
+        
+        # Define the list of expected final files
+        files = [
+            f'occurrence_core_{api_choice.lower()}.csv', 
+            f'taxa_mapping_INFO_{api_choice}.xlsx',
+            'dna_derived_extension.csv'
+        ]
+        
+        # Add optional files based on configuration
+        if params.get('emof_enabled', True):
+            files.append('eMoF.csv')
+        if params.get('eml_enabled', False):
+            files.append('eml.xml')
+        if not params.get('split_output_by_short_name', False):
+            files.append('meta.xml')
+        
+        # Add the saved config file
+        run_name = params.get('edna2obis_run_name', 'unnamed_run')
+        files.append(f'config_{run_name}.yaml')
+        
+        files.append(report_filename)  # Use the dynamic report filename
+        
+        for filename in files:
+            filepath = os.path.join(output_dir, filename)
+            if os.path.exists(filepath):
+                size_mb = os.path.getsize(filepath) / (1024*1024)
+                reporter.add_text(f"{filename} ({size_mb:.2f} MB)")
+                # Clean CLI success messages for final outputs
+                if filename.startswith("occurrence_core_"):
+                    console.print(f"[green]Created Occurrence Core:[/] {filepath}")
+                elif filename == "dna_derived_extension.csv":
+                    console.print(f"[green]Created DNA Derived Extension:[/] {filepath}")
+                elif filename == "eMoF.csv":
+                    console.print(f"[green]Created eMoF:[/] {filepath}")
+                elif filename.endswith(".html"):
+                    console.print(f"[green]HTML report:[/] {filepath}")
+                elif filename.endswith(".xml"):
+                    console.print(f"[green]EML generated:[/] {filepath}")
+            else:
+                reporter.add_text(f"{filename} (not found)")
+        
+    except Exception as e:
+        console.print(f"\n[bold red]Error during processing:[/] {str(e)}")
+        error_msg = f"Pipeline failed: {str(e)}"
+        reporter.add_error(error_msg)
+        reporter.add_text("Full traceback:")
+        import traceback
+        reporter.add_text(traceback.format_exc())
+        reporter.set_status("FAILED", error_msg)
+        try:
+            perf_log.set_output_file_metrics(params)
+        except Exception:
+            pass
+        perf_path = perf_log.write(success=False, error_message=str(e))
+        if perf_path:
+            console.print(f"Run performance log: {perf_path}")
+        raise
+    
+    finally:
+        # Save the report
+        reporter.save()
+        console.print("\nedna2obis conversion complete.")
+        reporter.open_in_browser()
+
+
+if __name__ == "__main__":
+    main() 

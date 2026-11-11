@@ -1,0 +1,302 @@
+<tool id="faire2ena_run" name="FAIRe2ENA: experiments and runs" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="@PROFILE@" license="MIT">
+    <description>convert FAIRe run metadata to ENA EXPERIMENT and RUN XML</description>
+    <macros>
+        <import>macros.xml</import>
+        <import>faire_guide.xml</import>
+    </macros>
+    <expand macro="creator"/>
+    <expand macro="requirements"/>
+    <version_command>echo '@TOOL_VERSION@'</version_command>
+    <command detect_errors="exit_code"><![CDATA[
+set -o pipefail;
+@LINK_INPUT@
+python '$__tool_directory__/faire2ena_galaxy.py' run
+    --input_file input.xlsx
+    --receipt_file '$receipt_file'
+    --study_accession '$study_accession'
+    --center_name '$center_name'
+    --instrument_model '$instrument_model'
+    #if str($assay.assay_select) == 'one':
+        --assay_name '$assay.assay_name'
+        $assay.add_assay_suffix
+    #end if
+    #if str($seq_runs).strip():
+        --seq_run_id '$seq_runs'
+    #end if
+    #if str($ftp_subdir).strip():
+        --ftp_subdir '$ftp_subdir'
+    #end if
+    --experiment_output '$experiments_xml'
+    --run_output '$runs_xml'
+    --submission_file '$submission_xml'
+| tee '$log'
+    ]]></command>
+    <inputs>
+        <expand macro="faire_input"/>
+        <param name="receipt_file" type="data" format="xml" label="ENA sample receipt"
+            help="The receipt XML that ENA returned when you submitted the samples. It links each samp_name to its ENA sample accession."/>
+        <param name="study_accession" type="text" label="ENA study accession"
+            help="The accession of the ENA study (project) the runs belong to, for example PRJEB12345.">
+            <validator type="regex" message="Enter an ENA study accession such as PRJEB12345 or ERP123456">^(PRJEB[0-9]+|ERP[0-9]+)$</validator>
+        </param>
+        <expand macro="center_name"/>
+        <param name="instrument_model" type="select" label="Sequencing instrument"
+            help="Values from the ENA controlled list for the Illumina platform.">
+            <option value="Illumina MiSeq">Illumina MiSeq</option>
+            <option value="Illumina iSeq 100">Illumina iSeq 100</option>
+            <option value="Illumina MiniSeq">Illumina MiniSeq</option>
+            <option value="NextSeq 500">NextSeq 500</option>
+            <option value="NextSeq 550">NextSeq 550</option>
+            <option value="NextSeq 1000">NextSeq 1000</option>
+            <option value="NextSeq 2000">NextSeq 2000</option>
+            <option value="Illumina NovaSeq 6000" selected="true">Illumina NovaSeq 6000</option>
+            <option value="Illumina NovaSeq X">Illumina NovaSeq X</option>
+            <option value="Illumina HiSeq 2500">Illumina HiSeq 2500</option>
+            <option value="Illumina HiSeq 4000">Illumina HiSeq 4000</option>
+        </param>
+        <conditional name="assay">
+            <param name="assay_select" type="select" label="Assays to include"
+                help="A library that holds several assays (the same sample and files on each row) gets one experiment and run. If a library ID (lib_id) is used for more than one assay with different files, give each row its own lib_id, or submit each assay separately.">
+                <option value="all">All assays</option>
+                <option value="one">One assay</option>
+            </param>
+            <when value="all"/>
+            <when value="one">
+                <param name="assay_name" type="text" label="assay_name"
+                    help="As written in the assay_name column of experimentRunMetadata, for example MiFish or ssu16sv4v5-emp.">
+                    <validator type="empty_field"/>
+                </param>
+                <param name="add_assay_suffix" type="boolean" truevalue="--add_assay_suffix" falsevalue="" checked="true"
+                    label="Add the assay name to experiment and run aliases"
+                    help="Keeps aliases unique when the same lib_id was sequenced for several assays."/>
+            </when>
+        </conditional>
+        <param name="seq_runs" type="text" value="" optional="true" label="Sequencing runs to include (optional)"
+            help="seq_run_id values from experimentRunMetadata, comma-separated, for example RUN01,RUN02. Leave empty for all runs. Use it when the same lib_id was sequenced in more than one run: each run then goes in its own submission, as ENA needs a unique alias per library.">
+            <validator type="regex" message="Enter seq_run_id values separated by commas">^([^,'\t]+( *, *[^,'\t]+)*)?$</validator>
+        </param>
+        <param name="ftp_subdir" type="text" value="" optional="true" label="FTP sub-directory of the read files"
+            help="If you uploaded the fastq files into a folder in your Webin upload area, give its name here. It is added in front of each file name. Leave empty if the files are at the top level.">
+            <validator type="regex" message="Use letters, digits, '.', '_', '-' and '/' only">^[A-Za-z0-9._/-]*$</validator>
+        </param>
+    </inputs>
+    <outputs>
+        <data name="experiments_xml" format="xml" label="${tool.name} on ${on_string}: EXPERIMENT XML"/>
+        <data name="runs_xml" format="xml" label="${tool.name} on ${on_string}: RUN XML"/>
+        <data name="submission_xml" format="xml" label="${tool.name} on ${on_string}: SUBMISSION XML"/>
+        <data name="log" format="txt" label="${tool.name} on ${on_string}: log"/>
+    </outputs>
+    <tests>
+        <!-- One assay, suffix on, files in an FTP folder; the control has no accession and is skipped -->
+        <test expect_num_outputs="4">
+            <param name="input_file" value="faire_two_assays.xlsx"/>
+            <param name="receipt_file" value="ena_sample_receipt.xml"/>
+            <param name="study_accession" value="PRJEB99999"/>
+            <param name="center_name" value="CSIRO"/>
+            <param name="instrument_model" value="Illumina MiSeq"/>
+            <conditional name="assay">
+                <param name="assay_select" value="one"/>
+                <param name="assay_name" value="ssu16sv4v5-emp"/>
+            </conditional>
+            <param name="ftp_subdir" value="gomecc4"/>
+            <output name="experiments_xml">
+                <assert_contents>
+                    <is_valid_xml/>
+                    <has_n_elements_with_path path="./EXPERIMENT" n="3"/>
+                    <has_element_with_path path="./EXPERIMENT[@alias='GOMECC16S_Plate4_46_ssu16sv4v5-emp']"/>
+                    <has_element_with_path path="./EXPERIMENT/DESIGN/SAMPLE_DESCRIPTOR[@accession='ERS9999901']"/>
+                    <has_element_with_path path="./EXPERIMENT/STUDY_REF[@accession='PRJEB99999']"/>
+                    <has_text text="&lt;INSTRUMENT_MODEL&gt;Illumina MiSeq&lt;/INSTRUMENT_MODEL&gt;"/>
+                </assert_contents>
+            </output>
+            <output name="runs_xml">
+                <assert_contents>
+                    <is_valid_xml/>
+                    <has_n_elements_with_path path="./RUN" n="3"/>
+                    <has_n_elements_with_path path="./RUN/DATA_BLOCK/FILES/FILE" n="6"/>
+                    <has_text text="filename=&quot;gomecc4/GOMECC16S_Plate4_46_S334_L001_R1_001.fastq.gz&quot;"/>
+                    <not_has_text text="nan"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="Skipped 1 samples without accessions"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- All assays: each library holds both assays (the same lib_id, sample and files), so one experiment each -->
+        <test expect_num_outputs="4">
+            <param name="input_file" value="faire_shared_library.xlsx"/>
+            <param name="receipt_file" value="ena_sample_receipt.xml"/>
+            <param name="study_accession" value="PRJEB99999"/>
+            <param name="center_name" value="CSIRO"/>
+            <param name="instrument_model" value="Illumina MiSeq"/>
+            <output name="experiments_xml">
+                <assert_contents>
+                    <is_valid_xml/>
+                    <has_n_elements_with_path path="./EXPERIMENT" n="3"/>
+                    <has_element_with_path path="./EXPERIMENT[@alias='GOMECC16S_Plate4_46']"/>
+                </assert_contents>
+            </output>
+            <output name="runs_xml">
+                <assert_contents>
+                    <has_n_elements_with_path path="./RUN" n="3"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="joined the rows of 4 libraries that hold several assays (ssu16sv4v5-emp and ssu18sv9-emp)"/>
+                    <has_text text="4 lib_ids name several assays (e.g. GOMECC16S_Neg1); FAIRe takes a library to be one amplicon of a sample"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- The same libraries with one lib_id per amplicon (library, assay and run, as the FAIRe mapper
+             writes them): joined by their files, with the library's own name as the aliases -->
+        <test expect_num_outputs="4">
+            <param name="input_file" value="faire_amplicon_libraries.xlsx"/>
+            <param name="receipt_file" value="ena_sample_receipt.xml"/>
+            <param name="study_accession" value="PRJEB99999"/>
+            <param name="center_name" value="CSIRO"/>
+            <param name="instrument_model" value="Illumina MiSeq"/>
+            <output name="experiments_xml">
+                <assert_contents>
+                    <is_valid_xml/>
+                    <has_n_elements_with_path path="./EXPERIMENT" n="3"/>
+                    <has_element_with_path path="./EXPERIMENT[@alias='GOMECC16S_Plate4_46']"/>
+                </assert_contents>
+            </output>
+            <output name="runs_xml">
+                <assert_contents>
+                    <has_n_elements_with_path path="./RUN" n="3"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="the experiment and run aliases are each library's own name: the lib_id without its assay_name and seq_run_id (e.g. GOMECC16S_Neg1_ssu16sv4v5-emp_20220613_Amplicon_PE250 -> GOMECC16S_Neg1)"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- All assays: this example reuses lib_ids across assays with different files, so the tool stops with advice -->
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="input_file" value="faire_two_assays.xlsx"/>
+            <param name="receipt_file" value="ena_sample_receipt.xml"/>
+            <param name="study_accession" value="PRJEB99999"/>
+            <param name="center_name" value="CSIRO"/>
+            <assert_stderr>
+                <has_text text="appear more than once"/>
+            </assert_stderr>
+        </test>
+        <!-- One sequencing run, all assays: the control has no accession and is skipped -->
+        <test expect_num_outputs="4">
+            <param name="input_file" value="faire_two_assays.xlsx"/>
+            <param name="receipt_file" value="ena_sample_receipt.xml"/>
+            <param name="study_accession" value="PRJEB99999"/>
+            <param name="center_name" value="CSIRO"/>
+            <param name="instrument_model" value="Illumina MiSeq"/>
+            <param name="seq_runs" value="20220613_Amplicon_PE250"/>
+            <output name="experiments_xml">
+                <assert_contents>
+                    <is_valid_xml/>
+                    <has_n_elements_with_path path="./EXPERIMENT" n="2"/>
+                    <has_element_with_path path="./EXPERIMENT[@alias='GOMECC16S_Plate4_46']"/>
+                    <not_has_text text="GOMECC18S_Plate1_37"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="kept 3 row(s) with seq_run_id in: 20220613_Amplicon_PE250"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- An unknown sequencing run -->
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="input_file" value="faire_two_assays.xlsx"/>
+            <param name="receipt_file" value="ena_sample_receipt.xml"/>
+            <param name="study_accession" value="PRJEB99999"/>
+            <param name="center_name" value="CSIRO"/>
+            <param name="seq_runs" value="RUN99"/>
+            <assert_stderr>
+                <has_text text="no runs with seq_run_id 'RUN99'. Sequencing runs in the workbook: 20220613_Amplicon_PE250, 20220718_18S-Amplicon_PE250, 20220831_16S-Amplicon_PE250"/>
+            </assert_stderr>
+        </test>
+        <!-- Unknown assay name -->
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="input_file" value="faire_two_assays.xlsx"/>
+            <param name="receipt_file" value="ena_sample_receipt.xml"/>
+            <param name="study_accession" value="PRJEB99999"/>
+            <param name="center_name" value="CSIRO"/>
+            <conditional name="assay">
+                <param name="assay_select" value="one"/>
+                <param name="assay_name" value="MiFish"/>
+            </conditional>
+            <assert_stderr>
+                <has_text text="Assays in the workbook: ssu16sv4v5-emp, ssu18sv9-emp"/>
+            </assert_stderr>
+        </test>
+    </tests>
+    <help><![CDATA[
+**What it does**
+
+This tool converts the **experimentRunMetadata** sheet of a FAIRe workbook into ENA EXPERIMENT and
+RUN XML files. It is the second of two steps: first run **FAIRe2ENA: samples**, submit the samples
+to ENA, and upload the receipt that ENA returns.
+
+The tool converts only the rows whose samp_name appears in the receipt, so that each run is linked
+to its ENA sample accession. Other rows, for example controls you did not register, are skipped and
+listed in the log.
+
+-----
+
+**Inputs**
+
+- **The same FAIRe workbook** you used for the samples. experimentRunMetadata needs samp_name,
+  assay_name, lib_id, filename, filename2, checksum_filename and checksum_filename2 (the MD5 of
+  each fastq.gz file).
+- **The ENA sample receipt** (XML).
+- **The ENA study accession** (PRJEB... or ERP...).
+- **Your centre name and the sequencing instrument.**
+- **Optionally**, one assay to include, the sequencing runs to include (seq_run_id), and the FTP
+  folder that holds the read files.
+
+**Outputs**
+
+- **EXPERIMENT XML**: one experiment for each sequencing library, with the library's own name as
+  its alias (plus the assay name, if you choose).
+- **RUN XML**: the forward and reverse fastq files and their MD5 checksums.
+- **SUBMISSION XML** (action ADD) and a **log**.
+
+FAIRe defines a library as "an amplicon of a sample with unique MIDs". This means a library that
+holds several assays, such as amplicons pooled before indexing, has a row for each assay with the
+same sample and files, and the tool gives it one experiment and one run. The FAIRe mapper writes
+lib_id as the library name, assay_name and seq_run_id (M097_16SFish_LerayCOI_Fish16S_AGRF_2024-12),
+and the tool takes the assay and run off again for the aliases (M097_16SFish_LerayCOI). Where names
+would then repeat, it keeps the run, or failing that the whole lib_id.
+
+-----
+
+**Checks before conversion**
+
+The tool stops, with a list of the problems, if any included row has an empty file name, a missing
+or malformed MD5 checksum, or a lib_id that is not unique, because ENA would reject these.
+
+**Limitations**
+
+- The tool writes only paired-end Illumina amplicon libraries (LIBRARY_STRATEGY AMPLICON,
+  LIBRARY_SOURCE METAGENOMIC, LIBRARY_SELECTION PCR).
+- It does not upload the read files themselves. Upload them to your Webin upload area first, using
+  ENA's FTP or Aspera instructions, then submit these XML files with the Webin REST service, for
+  example::
+
+    curl --proto-default https -u Webin-XXXXX:PASSWORD -F "SUBMISSION=@submission.xml" \
+        -F "EXPERIMENT=@experiments.xml" -F "RUN=@runs.xml" \
+        wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/
+
+  This address is ENA's test server. For the real submission, use www.ebi.ac.uk in place of
+  wwwdev.ebi.ac.uk.
+
+@HELP_FAIRE_GUIDE@
+
+@HELP_FOOTER@
+    ]]></help>
+    <expand macro="citations"/>
+</tool>

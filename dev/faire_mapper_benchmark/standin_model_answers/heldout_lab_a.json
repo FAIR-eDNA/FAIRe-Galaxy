@@ -1,0 +1,117 @@
+[
+ {
+  "column": "DNA extract storage location",
+  "term": "dna_store_loc",
+  "reason": "Header and value describe where extracted DNA was stored."
+ },
+ {
+  "column": "Price per sample (excl. GST)",
+  "term": null,
+  "reason": "Pricing is an admin field and the values are vehicle names, not metadata."
+ },
+ {
+  "column": "Filter brand and model",
+  "term": "filter_name",
+  "reason": "Value is a commercial filter brand and product name."
+ },
+ {
+  "column": "Cost centre",
+  "term": null,
+  "reason": "Cost centre is an admin field, not sample metadata."
+ },
+ {
+  "column": "db_upload_status",
+  "term": null,
+  "reason": "Database upload status is an admin field, not metadata."
+ },
+ {
+  "column": "Courier consignment number",
+  "term": null,
+  "reason": "Courier consignment number is a logistics field."
+ },
+ {
+  "column": "Turnaround time (business days)",
+  "term": null,
+  "reason": "Turnaround time is an admin field and the values are vehicle names."
+ },
+ {
+  "column": "Sequence archive links",
+  "term": "associatedSequences",
+  "reason": "Values are lists of SRA, BioSample and BioProject links."
+ },
+ {
+  "column": "Prefilter mesh size (µm)",
+  "term": null,
+  "reason": "Prefilter mesh size is not prefilter material, and no candidate holds mesh size."
+ },
+ {
+  "column": "Purchase order number",
+  "term": null,
+  "reason": "Purchase order number is an admin field."
+ },
+ {
+  "column": "Field bottle number",
+  "term": "materialSampleID",
+  "reason": "Values identify the physical field water samples (station and depth)."
+ },
+ {
+  "column": "Field sheet scanned",
+  "term": null,
+  "reason": "Field sheet scanned is an admin tracking field."
+ },
+ {
+  "column": "Sample processing description",
+  "term": "samp_mat_process",
+  "reason": "Value describes filtering applied to the sample after collection."
+ },
+ {
+  "column": "Library number",
+  "term": "lib_id",
+  "reason": "Values are unique library identifiers."
+ },
+ {
+  "column": "Number of eskies",
+  "term": null,
+  "reason": "Number of eskies is a logistics field."
+ },
+ {
+  "column": "qa_checked",
+  "term": null,
+  "reason": "QA checked flag is an admin field with vehicle-name values."
+ },
+ {
+  "column": "Monitoring program code",
+  "term": "project_id",
+  "reason": "Constant short programme code identifies the project."
+ },
+ {
+  "column": "Quote reference",
+  "term": null,
+  "reason": "Quote reference is an admin field."
+ },
+ {
+  "column": "Sample depth from (m)",
+  "term": "minimumDepthInMeters",
+  "reason": "Depth 'from' is the lesser depth of the sampled range in metres."
+ },
+ {
+  "column": "Sampling equipment",
+  "term": null,
+  "reason": "Sampling equipment is a collection device, and no device term is a candidate."
+ },
+ {
+  "column": "DNA extraction method reference",
+  "term": "nucl_acid_ext",
+  "reason": "Value links to the DNA extraction protocol."
+ },
+ {
+  "column": "Invoice number",
+  "term": null,
+  "reason": "Invoice number is an admin field."
+ },
+ {
+  "column": "Artificial waterbody? (0 = natural, 1 = artificial)",
+  "term": "habitat_natural_artificial_0_1",
+  "reason": "0/1 flag for natural versus artificial habitat."
+ }
+]

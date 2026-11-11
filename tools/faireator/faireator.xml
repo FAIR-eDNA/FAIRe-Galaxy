@@ -1,0 +1,238 @@
+<tool id="faireator" name="FAIRe-ator" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="23.0" license="MIT">
+    <description>make a FAIRe eDNA metadata template for your study</description>
+    <macros>
+        <!-- Upstream has no tagged releases. The version is the date of the pinned
+             commit (FAIR-eDNA/FAIRe-ator dcb9323). The bundled checklist is FAIRe v1.0.2
+             (FAIR-eDNA/FAIRe_checklist 061d8b6). -->
+        <token name="@TOOL_VERSION@">2026.09.24</token>
+        <token name="@VERSION_SUFFIX@">0</token>
+        <token name="@NAME_LIST_RE@">^\s*[A-Za-z0-9_-]+(\s*,\s*[A-Za-z0-9_-]+)*\s*$</token>
+        <token name="@FIELD_LIST_RE@">^\s*([A-Za-z][A-Za-z0-9_]*(\s*,\s*[A-Za-z][A-Za-z0-9_]*)*)?\s*$</token>
+        <import>faire_guide.xml</import>
+    </macros>
+    <creator>
+        <organization name="FAIR eDNA (FAIRe) collaboration, FAIRe-ator developers" url="https://github.com/FAIR-eDNA/FAIRe-ator"/>
+        <person givenName="Oliver" familyName="Berry"/>
+    </creator>
+    <requirements>
+        <requirement type="package" version="4.4.3">r-base</requirement>
+        <requirement type="package" version="1.6.0">r-readxl</requirement>
+        <requirement type="package" version="4.2.9">r-openxlsx</requirement>
+        <requirement type="package" version="1.2.1">r-dplyr</requirement>
+        <requirement type="package" version="1.1_3">r-rcolorbrewer</requirement>
+        <requirement type="package" version="1.0.2">r-here</requirement>
+    </requirements>
+    <version_command>echo '@TOOL_VERSION@'</version_command>
+    <command detect_errors="exit_code"><![CDATA[
+ln -s '$__tool_directory__/checklist/FAIRe_checklist_v1.0.2.xlsx' . &&
+ln -s '$__tool_directory__/checklist/FAIRe_checklist_v1.0.2_FULLtemplate.xlsx' . &&
+Rscript --vanilla '$r_script' &&
+mv 'template_${project_id}/${project_id}.xlsx' '$template'
+    ]]></command>
+    <configfiles>
+        <configfile name="r_script"><![CDATA[
+#def rvec($text)
+#set $items = [i.strip() for i in str($text).split(',') if i.strip() and i.strip() != 'None']
+c(#echo ', '.join(["'" + i + "'" for i in $items])#)#slurp
+#end def
+#set $levels = 'M,' + str($req_lev)
+## Upstream crashes when sample_type 'other' is combined with several targeted assays.
+## Listing all seven sample types gives the same fields, so use that in place of 'other'.
+#set $stypes = str($sample_type)
+#if 'other' in $stypes.split(',')
+#set $stypes = 'Water,Soil,Sediment,Air,HostAssociated,MicrobialMatBiofilm,SymbiontAssociated'
+#end if
+suppressPackageStartupMessages(source('$__tool_directory__/FAIReator.R'))
+suppressPackageStartupMessages(FAIReator(
+    req_lev = $rvec($levels),
+    sample_type = $rvec($stypes),
+    assay_type = '$assay_type',
+    project_id = '$project_id',
+    assay_name = $rvec($assay_name)
+#if str($project_fields).strip()
+    , projectMetadata_user = $rvec($project_fields)
+#end if
+#if str($sample_fields).strip()
+    , sampleMetadata_user = $rvec($sample_fields)
+#end if
+))
+]]></configfile>
+    </configfiles>
+    <inputs>
+        <param name="project_id" type="text" label="Project ID"
+            help="A short identifier with no spaces, for example gbr2022. It is used to name your data files.">
+            <validator type="regex" message="Use letters, digits, '_' and '-' only, with no spaces">^[A-Za-z0-9_-]+$</validator>
+        </param>
+        <param name="assay_type" type="select" label="Assay type">
+            <option value="metabarcoding" selected="true">Metabarcoding</option>
+            <option value="targeted">Targeted (qPCR or ddPCR detection of particular taxa)</option>
+        </param>
+        <param name="assay_name" type="text" label="Assay name(s)"
+            help="One or more short names with no spaces, separated by commas, for example MiFish, crust16S. Each assay gets its own column in projectMetadata.">
+            <validator type="regex" message="Give one or more names made of letters, digits, '_' and '-', separated by commas">@NAME_LIST_RE@</validator>
+        </param>
+        <param name="sample_type" type="select" multiple="true" display="checkboxes" label="Sample type(s)"
+            help="Fields specific to the chosen sample types are added to sampleMetadata. 'All sample types' adds the specific fields for every type.">
+            <option value="Water" selected="true">Water</option>
+            <option value="Soil">Soil</option>
+            <option value="Sediment">Sediment</option>
+            <option value="Air">Air</option>
+            <option value="HostAssociated">Host-associated</option>
+            <option value="MicrobialMatBiofilm">Microbial mat or biofilm</option>
+            <option value="SymbiontAssociated">Symbiont-associated</option>
+            <option value="other">All sample types</option>
+        </param>
+        <param name="req_lev" type="select" multiple="true" optional="true" display="checkboxes"
+            label="Fields to include as well as mandatory ones"
+            help="Mandatory fields are always included.">
+            <option value="HR" selected="true">Highly recommended</option>
+            <option value="R" selected="true">Recommended</option>
+            <option value="O" selected="true">Optional</option>
+        </param>
+        <param name="project_fields" type="text" value="" optional="true" label="Extra projectMetadata fields (optional)"
+            help="Fields of your own that are not in the FAIRe checklist, separated by commas, for example funder, permit_number. They are added at the end of projectMetadata.">
+            <validator type="regex" message="Field names start with a letter and use letters, digits and '_' only, separated by commas">@FIELD_LIST_RE@</validator>
+        </param>
+        <param name="sample_fields" type="text" value="" optional="true" label="Extra sampleMetadata fields (optional)"
+            help="Fields of your own, separated by commas, for example plot_id, burn_age. They are added at the end of sampleMetadata.">
+            <validator type="regex" message="Field names start with a letter and use letters, digits and '_' only, separated by commas">@FIELD_LIST_RE@</validator>
+        </param>
+    </inputs>
+    <outputs>
+        <data name="template" format="xlsx" label="FAIRe template for ${project_id}"/>
+    </outputs>
+    <tests>
+        <!-- Metabarcoding, two sample types, two assays, all requirement levels -->
+        <test expect_num_outputs="1">
+            <param name="project_id" value="gbr2022"/>
+            <param name="assay_type" value="metabarcoding"/>
+            <param name="assay_name" value="MiFish, crust16S"/>
+            <param name="sample_type" value="Water,Sediment"/>
+            <output name="template">
+                <assert_contents>
+                    <has_archive_member path="xl/workbook.xml">
+                        <has_text text="name=&quot;README&quot;"/>
+                        <has_text text="name=&quot;projectMetadata&quot;"/>
+                        <has_text text="name=&quot;sampleMetadata&quot;"/>
+                        <has_text text="name=&quot;experimentRunMetadata&quot;"/>
+                        <has_text text="name=&quot;taxaRaw&quot;"/>
+                        <has_text text="name=&quot;taxaFinal&quot;"/>
+                        <has_text text="name=&quot;Drop-down values&quot;"/>
+                        <not_has_text text="name=&quot;ampData&quot;"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/sharedStrings.xml">
+                        <has_text text="&gt;gbr2022&lt;"/>
+                        <has_text text="&gt;assay1&lt;"/>
+                        <has_text text="&gt;MiFish&lt;"/>
+                        <has_text text="&gt;crust16S&lt;"/>
+                        <has_text text="req_lev = M | HR | R | O"/>
+                        <has_text text="sample_type = Water | Sediment"/>
+                        <has_text text="FAIRe_checklist_v1.0.2.xlsx"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Targeted, one assay, mandatory and highly recommended only, extra fields of the user's own -->
+        <test expect_num_outputs="1">
+            <param name="project_id" value="soil_q"/>
+            <param name="assay_type" value="targeted"/>
+            <param name="assay_name" value="CaneToad"/>
+            <param name="sample_type" value="Soil"/>
+            <param name="req_lev" value="HR"/>
+            <param name="project_fields" value="funder"/>
+            <param name="sample_fields" value="plot_id, burn_age"/>
+            <output name="template">
+                <assert_contents>
+                    <has_archive_member path="xl/workbook.xml">
+                        <has_text text="name=&quot;stdData&quot;"/>
+                        <has_text text="name=&quot;eLowQuantData&quot;"/>
+                        <has_text text="name=&quot;ampData&quot;"/>
+                        <not_has_text text="name=&quot;experimentRunMetadata&quot;"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/sharedStrings.xml">
+                        <has_text text="req_lev = M | HR"/>
+                        <has_text text="&gt;CaneToad&lt;"/>
+                        <has_text text="&gt;funder&lt;"/>
+                        <has_text text="&gt;plot_id&lt;"/>
+                        <has_text text="&gt;burn_age&lt;"/>
+                        <not_has_text text="&gt;assay1&lt;"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- All sample types, targeted with two assays: one detection column per assay -->
+        <test expect_num_outputs="1">
+            <param name="project_id" value="all-types"/>
+            <param name="assay_type" value="targeted"/>
+            <param name="assay_name" value="CaneToad,Gambusia"/>
+            <param name="sample_type" value="other"/>
+            <output name="template">
+                <assert_contents>
+                    <has_archive_member path="xl/sharedStrings.xml">
+                        <has_text text="sample_type = Water | Soil | Sediment | Air | HostAssociated | MicrobialMatBiofilm | SymbiontAssociated"/>
+                        <has_text text="&gt;detected_notDetected_CaneToad&lt;"/>
+                        <has_text text="&gt;detected_notDetected_Gambusia&lt;"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+        </test>
+    </tests>
+    <help><![CDATA[
+**What it does**
+
+This tool makes a blank Excel template for recording the metadata of an eDNA study in the
+`FAIR eDNA (FAIRe) <https://fair-edna.github.io/>`_ format. The template is tailored to your study,
+so it holds only the fields that apply to your sample types, your assay type and the requirement
+levels you choose.
+
+Fill in the template with your data, then use it with the other FAIRe tools, for example to
+prepare submissions to ENA or to make QIIME 2 metadata.
+
+-----
+
+**Options**
+
+- **Project ID** and **assay name(s)**: short names with no spaces. The tool writes them into the
+  template and uses them in the data file names it suggests.
+- **Assay type**: *metabarcoding* adds the experimentRunMetadata, taxaRaw and taxaFinal sheets.
+  *Targeted* adds the stdData, eLowQuantData and ampData sheets, and one detected/not detected
+  column for each assay.
+- **Sample type(s)**: the fields specific to these sample types are added to sampleMetadata.
+  *All sample types* adds the specific fields for every type, and the README sheet then lists all
+  seven types.
+- **Requirement levels**: mandatory fields are always included. Untick highly recommended,
+  recommended or optional to leave those fields out.
+- **Extra fields**: fields of your own that the checklist does not have. The tool marks them
+  *User defined*.
+
+**Output**
+
+The output is an Excel workbook (.xlsx) with a README sheet, projectMetadata, sampleMetadata, the
+sheets for your assay type and a Drop-down values sheet. The requirement levels are colour coded:
+orange for mandatory, yellow for highly recommended, pale yellow for recommended and green for
+optional. Each field name has a comment with its description, an example and its format, and
+fields with a controlled vocabulary have drop-down lists.
+
+With one assay, its details go in the *project_level* column of projectMetadata. With several
+assays, each one gets its own column (assay1, assay2 ...), with its name in the *assay_name* row.
+
+-----
+
+**Checklist version**
+
+The template follows version **1.0.2** of the FAIRe checklist, which comes with this tool.
+
+@HELP_FAIRE_GUIDE@
+
+-----
+
+**Credits**
+
+This tool runs `FAIRe-ator <https://github.com/FAIR-eDNA/FAIRe-ator>`_ from the FAIR eDNA
+collaboration. The FAIRe checklist is described in Takahashi et al. (2025) *Environmental DNA* 7:
+e70100. The Galaxy tool was written by Oliver Berry (CSIRO), with Claude (Anthropic).
+    ]]></help>
+    <citations>
+        <citation type="doi">10.1002/edn3.70100</citation>
+    </citations>
+</tool>

@@ -1,0 +1,162 @@
+[
+ {
+  "column": "device",
+  "term": "samp_collect_device",
+  "reason": "Value names the device used to collect the sample."
+ },
+ {
+  "column": "Boat name",
+  "term": null,
+  "reason": "Boat name is a logistics field."
+ },
+ {
+  "column": "primerR",
+  "term": "pcr_primer_name_reverse",
+  "reason": "926R is a reverse primer name."
+ },
+ {
+  "column": "neg_ctrl",
+  "term": "neg_cont_type",
+  "reason": "Value is a negative control type from the allowed list."
+ },
+ {
+  "column": "Permit holder",
+  "term": null,
+  "reason": "Permit holder is an admin field."
+ },
+ {
+  "column": "Esky number",
+  "term": null,
+  "reason": "Esky number is a logistics field."
+ },
+ {
+  "column": "processing",
+  "term": "samp_mat_process",
+  "reason": "Value describes processing applied to the sample."
+ },
+ {
+  "column": "filt_unit",
+  "term": "samp_vol_we_dna_ext_unit",
+  "reason": "Unit of the volume filtered for DNA extraction."
+ },
+ {
+  "column": "Archived to drive",
+  "term": null,
+  "reason": "Archived to drive is an admin field."
+ },
+ {
+  "column": "Who filtered",
+  "term": null,
+  "reason": "Who filtered is an admin field naming staff."
+ },
+ {
+  "column": "Landowner contacted?",
+  "term": null,
+  "reason": "Landowner contact is an admin field."
+ },
+ {
+  "column": "Cost code",
+  "term": null,
+  "reason": "Cost code is an admin field."
+ },
+ {
+  "column": "DNA_box",
+  "term": "dna_store_loc",
+  "reason": "Storage location of the DNA extracts."
+ },
+ {
+  "column": "Thermos no.",
+  "term": null,
+  "reason": "Thermos number is a logistics field, not a thermocycler."
+ },
+ {
+  "column": "artificial_YN",
+  "term": "habitat_natural_artificial_0_1",
+  "reason": "0/1 flag for artificial habitat."
+ },
+ {
+  "column": "dep_max",
+  "term": "maximumDepthInMeters",
+  "reason": "Maximum sampling depth in metres."
+ },
+ {
+  "column": "Invoice no.",
+  "term": null,
+  "reason": "Invoice number is an admin field."
+ },
+ {
+  "column": "Field sheet page",
+  "term": null,
+  "reason": "Field sheet page is an admin field."
+ },
+ {
+  "column": "days_stored",
+  "term": "samp_store_dur",
+  "reason": "ISO 8601 duration of sample storage."
+ },
+ {
+  "column": "fld_id",
+  "term": "materialSampleID",
+  "reason": "Values identify the physical field samples by station and depth."
+ },
+ {
+  "column": "prefilt_um",
+  "term": "size_frac_low",
+  "reason": "Prefilter size in µm; value records that none was used."
+ },
+ {
+  "column": "pore_um",
+  "term": "size_frac",
+  "reason": "Constant 0.22 µm is the filter pore size."
+ },
+ {
+  "column": "Collector initials",
+  "term": "recordedBy",
+  "reason": "Initials of the sample collectors."
+ },
+ {
+  "column": "Data entered by",
+  "term": null,
+  "reason": "Data entered by is an admin field."
+ },
+ {
+  "column": "Photo ID",
+  "term": null,
+  "reason": "Photo file IDs are not sample identifiers."
+ },
+ {
+  "column": "DOunits",
+  "term": null,
+  "reason": "Dissolved oxygen unit, but no diss_oxygen_unit term is among the candidates."
+ },
+ {
+  "column": "ext_SOP",
+  "term": "nucl_acid_ext",
+  "reason": "Value links to the DNA extraction protocol."
+ },
+ {
+  "column": "Checked by",
+  "term": null,
+  "reason": "Checked by is an admin QA field."
+ },
+ {
+  "column": "primerF",
+  "term": "pcr_primer_name_forward",
+  "reason": "515F-Y is a forward primer name."
+ },
+ {
+  "column": "vol_coll",
+  "term": "samp_size",
+  "reason": "Volume of water collected."
+ },
+ {
+  "column": "sra_acc",
+  "term": "associatedSequences",
+  "reason": "Values are lists of SRA, BioSample and BioProject links."
+ },
+ {
+  "column": "Weather notes",
+  "term": "samp_weather",
+  "reason": "Notes describe weather on the sampling day."
+ }
+]

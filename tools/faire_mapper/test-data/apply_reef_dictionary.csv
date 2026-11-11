@@ -1,0 +1,8 @@
+Variable,Description,Units
+Sample ID,Unique code for each filter,
+Volume filtered,Volume of water pushed through each filter,L
+Pore size,Pore size of the filter membrane,micron
+Days frozen,How long the water was kept frozen before it was filtered,days
+Control,"yes for a field blank, otherwise no",
+Notes,Name of the person who filtered the sample,
+Not a column,This row names no column of the table,

@@ -1,0 +1,5 @@
+Sample ID,Country,Reef,Site,Volume filtered,Pore size,Collected,Days frozen,Depth (m),Latitude,Longitude,Control,Notes
+LIZ_01,Australia,Great Barrier Reef,Lizard Island,1 L,0.45 micron,06/09/2017,316,10,-14.68472,145.44247,no,calm
+LIZ_02,Australia,Great Barrier Reef,Lizard Island,1 L,0.45 micron,13/09/2017,0,12,-14.68390,145.44310,no,
+LIZ_03,Australia,Great Barrier Reef,Lizard Island,500 mL,0.45 micron,13/09/2017,2,11,-14.68211,145.44502,no,choppy
+LIZ_FB,Australia,Great Barrier Reef,Lizard Island,1 L,0.45 micron,13/09/2017,0,,,,yes,field blank

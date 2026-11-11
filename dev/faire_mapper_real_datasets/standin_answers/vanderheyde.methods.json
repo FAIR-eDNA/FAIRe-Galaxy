@@ -1,0 +1,160 @@
+{
+ "values": [
+  {
+   "term": "sterilise_method",
+   "value": "All equipment was sterilized between bores in 10% bleach for 10 min and rinsed in RO water, and disposable gloves were used at each bore hole to prevent contamination.",
+   "quote": "All equipment was sterilized between bores in 10% bleach for 10 min and rinsed in RO water, and disposable gloves were used at each bore hole to prevent contamination.",
+   "stated": true
+  },
+  {
+   "term": "neg_cont_0_1",
+   "value": "1",
+   "quote": "samples of the RO water used for rinsing equipment (i.e. field controls) were collected to assess sources of contamination",
+   "stated": true
+  },
+  {
+   "term": "pos_cont_0_1",
+   "value": "1",
+   "quote": "All PCR plates included a negative control and a positive control of chicken DNA.",
+   "stated": true
+  },
+  {
+   "term": "neg_cont_type",
+   "value": "field negative | extraction negative | PCR negative",
+   "quote": "A total of seven DNA extraction controls, containing the solutions and plastics supplied in the extraction kit",
+   "stated": false
+  },
+  {
+   "term": "pos_cont_type",
+   "value": "PCR positive of chicken DNA",
+   "quote": "a positive control of chicken DNA",
+   "stated": false
+  },
+  {
+   "term": "samp_store_temp",
+   "value": "4",
+   "quote": "transferred to a 4°C refrigerator at the end of the collecting day",
+   "stated": true
+  },
+  {
+   "term": "size_frac",
+   "value": "0.45",
+   "quote": "across 0.45 μm Supor polyethersulfone membranes",
+   "stated": true
+  },
+  {
+   "term": "filter_material",
+   "value": "polyethersulfone",
+   "quote": "across 0.45 μm Supor polyethersulfone membranes",
+   "stated": true
+  },
+  {
+   "term": "nucl_acid_ext_kit",
+   "value": "DNeasy Blood and Tissue Kit (Qiagen)",
+   "quote": "DNA was extracted from filter membranes within 1 month of collection and filtering using a DNeasy Blood and Tissue Kit (Qiagen)",
+   "stated": true
+  },
+  {
+   "term": "pcr_0_1",
+   "value": "1",
+   "quote": "Fusion PCRs were done in duplicate to minimize PCR stochasticity",
+   "stated": true
+  },
+  {
+   "term": "pcr_rep",
+   "value": "2",
+   "quote": "Fusion PCRs were done in duplicate to minimize PCR stochasticity",
+   "stated": true
+  },
+  {
+   "term": "targetTaxonomicAssay",
+   "value": "eukaryotes",
+   "quote": "universal eukaryote18S assay",
+   "stated": false
+  },
+  {
+   "term": "target_gene",
+   "value": "18S rRNA (SSU eukaryote)",
+   "quote": "universal eukaryote18S assay",
+   "stated": false
+  },
+  {
+   "term": "custom_mm",
+   "value": "1X AmpliTaq Gold PCR buffer (Life Technologies), 2.5 mM MgCl2, 0.25 mM dNTPs, 0.4 μM each of forward and reverse primers (Integrated DNA Technologies), 0.4 mg/mL BSA (Fisher Biotec), 0.6 μl of 5X SYBR Green (Life Technologies), 1 U AmpliTaq Gold DNA Polymerase (Life Technologies), 2 μl of genomic DNA template, made to volume with Ultrapure Distilled Water (Life Technologies)",
+   "quote": "Each PCR reaction for the 18S universal assay was carried out with the same master mix as described above.",
+   "stated": true
+  },
+  {
+   "term": "pcr_dna_vol",
+   "value": "2",
+   "quote": "2 μl of genomic DNA template",
+   "stated": true
+  },
+  {
+   "term": "pcr_cond",
+   "value": "initial denaturation:95_5;annealing:52_0.5;elongation:72_0.75;final elongation:72_10;45",
+   "quote": "followed by 45 cycles of 95° C for 30 s, annealing at 52° C for 30 s, 72° C for 45 s",
+   "stated": false
+  },
+  {
+   "term": "annealingTemp",
+   "value": "52",
+   "quote": "annealing at 52° C for 30 s",
+   "stated": true
+  },
+  {
+   "term": "pcr_cycles",
+   "value": "45",
+   "quote": "followed by 45 cycles of 95° C for 30 s, annealing",
+   "stated": true
+  },
+  {
+   "term": "barcoding_pcr_appr",
+   "value": "one-step PCR",
+   "quote": "These MID tags were incorporated into fusion tagged primers",
+   "stated": false
+  },
+  {
+   "term": "platform",
+   "value": "ILLUMINA",
+   "quote": "Sequencing was performed on the Illumina MiSeq platform",
+   "stated": false
+  },
+  {
+   "term": "instrument",
+   "value": "Illumina MiSeq [OBI_0002003]",
+   "quote": "Sequencing was performed on the Illumina MiSeq platform",
+   "stated": false
+  },
+  {
+   "term": "seq_kit",
+   "value": "500 cycle paired-end V2",
+   "quote": "using the 500 cycle paired-end V2 as per manufacturer's instructions",
+   "stated": true
+  },
+  {
+   "term": "lib_screen",
+   "value": "Size selection (250-600bp) using a PippinPrep 2% ethidium bromide cassette; libraries cleaned with a QIAquick PCR Purification Kit (Qiagen)",
+   "quote": "Size selection was performed (250-600bp) using a PippinPrep 2% ethidium bromide cassette",
+   "stated": true
+  },
+  {
+   "term": "otu_db",
+   "value": "custom | GenBank (NCBI)",
+   "quote": "queried against a custom barcode reference library for stygofauna and GenBank (NCBI)",
+   "stated": true
+  },
+  {
+   "term": "tax_assign_cat",
+   "value": "sequence similarity",
+   "quote": "using blastn with the following parameters",
+   "stated": false
+  },
+  {
+   "term": "otu_seq_comp_appr",
+   "value": "blastn",
+   "quote": "using blastn with the following parameters",
+   "stated": true
+  }
+ ]
+}

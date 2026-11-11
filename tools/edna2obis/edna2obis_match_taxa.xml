@@ -1,0 +1,146 @@
+<tool id="edna2obis_match_taxa" name="edna2obis: match taxa" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="@PROFILE@" license="MIT">
+    <description>look up eDNA taxonomy strings in WoRMS or GBIF for review</description>
+    <macros>
+        <import>macros.xml</import>
+        <import>faire_guide.xml</import>
+    </macros>
+    <expand macro="creator"/>
+    <expand macro="requirements"/>
+    <version_command>echo '@TOOL_VERSION@'</version_command>
+    <command detect_errors="exit_code"><![CDATA[
+set -o pipefail;
+python '$__tool_directory__/edna2obis_galaxy.py' match
+    --form '$form_json'
+    --mapping_out '$mapping'
+    < /dev/null
+| tee '$log'
+    ]]></command>
+    <expand macro="form_json"/>
+    <inputs>
+        <repeat name="analyses" title="Assay" min="1" default="1">
+            <expand macro="assay_name"/>
+            <expand macro="taxonomy_table"/>
+            <expand macro="skip_species"/>
+        </repeat>
+        <expand macro="api_conditional"/>
+        <param name="mapping_format" type="select" label="Mapping table format">
+            <option value="tabular" selected="true">Tabular (view and edit in Galaxy)</option>
+            <option value="xlsx">Excel workbook (edit in a spreadsheet program)</option>
+        </param>
+    </inputs>
+    <outputs>
+        <data name="mapping" format="tabular" label="${tool.name} on ${on_string}: ${api.api_select} mapping table">
+            <change_format>
+                <when input="mapping_format" value="xlsx" format="xlsx"/>
+            </change_format>
+        </data>
+        <data name="log" format="txt" label="${tool.name} on ${on_string}: log"/>
+    </outputs>
+    <tests>
+        <!-- These tests need internet access to WoRMS and GBIF. They cannot pass on a server without it. -->
+        <test expect_num_outputs="2">
+            <repeat name="analyses">
+                <param name="assay_name" value="ssu16sv4v5-emp"/>
+                <param name="taxonomy" value="gomecc_16s_taxonomy.xlsx" ftype="xlsx"/>
+                <param name="skip_species" value="true"/>
+            </repeat>
+            <repeat name="analyses">
+                <param name="assay_name" value="ssu18sv9-emp"/>
+                <param name="taxonomy" value="gomecc_18s_taxonomy.tsv" ftype="tabular"/>
+            </repeat>
+            <conditional name="api">
+                <param name="api_select" value="WoRMS"/>
+            </conditional>
+            <output name="mapping" ftype="tabular">
+                <assert_contents>
+                    <has_line_matching expression="^verbatimIdentification\tassay_name\tcleanedTaxonomy\t.*\tselected_match\t.*\tscientificNameID\t.*nameAccordingTo$"/>
+                    <has_text text="ssu16sv4v5-emp"/>
+                    <has_text text="ssu18sv9-emp"/>
+                    <has_text text="urn:lsid:marinespecies.org:taxname:"/>
+                    <has_text text="Clausocalanus"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="WoRMS API reachable (https://www.marinespecies.org/rest/)"/>
+                    <has_text text="assay 'ssu16sv4v5-emp': looking up 5 name(s) in WoRMS without the species level"/>
+                    <has_text text="assay 'ssu18sv9-emp': looking up 7 name(s) in WoRMS"/>
+                    <has_text text="wrote the mapping table"/>
+                </assert_contents>
+            </output>
+        </test>
+        <test expect_num_outputs="2">
+            <repeat name="analyses">
+                <param name="assay_name" value="Fish-12S-Riaz"/>
+                <param name="taxonomy" value="gu1901_riaz_taxonomy.tsv" ftype="tabular"/>
+            </repeat>
+            <conditional name="api">
+                <param name="api_select" value="GBIF"/>
+            </conditional>
+            <param name="mapping_format" value="xlsx"/>
+            <output name="mapping" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet1.xml"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="GBIF API reachable (https://api.gbif.org/v1/)"/>
+                    <has_text text="assay 'Fish-12S-Riaz': looking up 6 name(s) in GBIF"/>
+                    <has_text text="assay 'Fish-12S-Riaz': 6 name(s)"/>
+                </assert_contents>
+            </output>
+        </test>
+    </tests>
+    <help><![CDATA[
+**What it does**
+
+This tool looks up the taxonomy strings of eDNA metabarcoding results in WoRMS or the GBIF Backbone
+Taxonomy, using the matching step of edna2obis. The result is a **mapping table** that lists, for
+every taxonomy string, the candidate names found and the one edna2obis selected. Review the table
+and correct the selections where needed, then give it to **edna2obis: build Darwin Core tables**,
+which uses it so that it does not need to look the names up again.
+
+The tool needs internet access to www.marinespecies.org (WoRMS) or api.gbif.org (GBIF). It stops
+with a message if the service cannot be reached, or if any request fails during the run, because
+edna2obis would otherwise report those names as *incertae sedis*.
+
+-----
+
+**Inputs**
+
+For each assay, give:
+
+- the **assay name**, as in experimentRunMetadata. The mapping table records it, so the same string
+  can be matched differently for different assays;
+- the **taxonomy table**, with one row for each ASV or OTU and the full taxonomy string in
+  ``verbatimIdentification`` (or ``taxonomy``), as a tab-separated, comma-separated or Excel file;
+- whether to **ignore species-level names**.
+
+**Outputs**
+
+- **mapping table** (tabular or Excel).
+- **log**: what was looked up, and a summary for each assay (the names, the selected rows,
+  *incertae sedis*, and names with several candidates).
+
+-----
+
+**Reviewing the table**
+
+Sort or filter the table by ``verbatimIdentification``. For each name, check the row where
+``selected_match`` is True. To choose another candidate, set its ``selected_match`` to True and the
+old one's to False. To reject all the candidates, empty ``scientificName`` and ``scientificNameID``
+(or ``taxonID``) in the selected row, and edna2obis then records the name as *incertae sedis*. You
+can edit the rows in Galaxy (for example with the *Column Regex Find And Replace* tool) or in a
+spreadsheet program. Keep the column names, and save the table as tab-separated text or Excel.
+
+@HELP_MAPPING_COLUMNS@
+
+@HELP_MATCHING@
+
+@HELP_FAIRE_GUIDE@
+
+@HELP_FOOTER@
+    ]]></help>
+    <expand macro="citations"/>
+</tool>

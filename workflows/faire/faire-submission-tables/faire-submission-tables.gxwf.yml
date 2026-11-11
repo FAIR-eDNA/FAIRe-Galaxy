@@ -1,0 +1,71 @@
+class: GalaxyWorkflow
+label: "FAIRe: check a workbook and make submission tables"
+doc: |
+  From a filled-in FAIRe workbook (a FAIRe-ator template, or the output of "FAIRe mapper: write
+  and check a FAIRe workbook"): checks it with FAIRe-fier, and makes the NCBI BioSample and SRA
+  tables, the ENA sample XML and the QIIME 2 metadata and manifests. The ENA experiment and run
+  XML need the sample receipt ENA returns, so run "FAIRe2ENA: experiments and runs" afterwards.
+  Nothing is submitted.
+license: MIT
+creator:
+  - class: Organization
+    name: FAIRe Galaxy project contributors
+release: "0.1"
+inputs:
+  workbook:
+    type: data
+    format:
+      - xlsx
+    doc: A FAIRe workbook.
+  center_name:
+    type: text
+    doc: Your institution as registered with your ENA Webin account, for example CSIRO.
+outputs:
+  fairefier_issues:
+    outputSource: check/issues
+  fairefier_summary:
+    outputSource: check/summary
+  ncbi_biosample_table:
+    outputSource: biosample/biosample_table
+  ncbi_sra_table:
+    outputSource: sra/sra_table
+  ena_samples_xml:
+    outputSource: ena_samples/samples_xml
+  ena_submission_xml:
+    outputSource: ena_samples/submission_xml
+  qiime_metadata:
+    outputSource: qiime/metadata
+  qiime_manifests:
+    outputSource: qiime/manifest
+steps:
+  check:
+    tool_id: fairefier
+    doc: "FAIRe-fier: errors and warnings against the FAIRe checklist."
+    in:
+      input_file: workbook
+  biosample:
+    tool_id: faire2ncbi_biosample
+    doc: "The NCBI BioSample table (organism marine metagenome unless the workbook gives one; change it on the run form)."
+    in:
+      input_file: workbook
+  sra:
+    tool_id: faire2ncbi_sra
+    doc: "The NCBI SRA metadata table, with the instrument from the workbook."
+    in:
+      input_file: workbook
+  ena_samples:
+    tool_id: faire2ena_sample
+    doc: "ENA SAMPLE and SUBMISSION XML (marine metagenome, taxon 408172, unless changed)."
+    in:
+      input_file: workbook
+      center_name: center_name
+  qiime:
+    tool_id: faire2qiime
+    doc: "QIIME 2 sample metadata and manifests, one per assay."
+    in:
+      input_file: workbook
+    state:
+      sample_name_column: lib_id
+      manifests:
+        write_manifests: "yes"
+        absolute_path_sequences: /path/to/sequences

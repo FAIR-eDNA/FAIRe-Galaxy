@@ -1,0 +1,12 @@
+[
+ {
+  "column": "Sequence_ID",
+  "term": "lib_id",
+  "reason": "Unique identifiers for each sequenced entry fit a library identifier."
+ },
+ {
+  "column": "Description",
+  "term": null,
+  "reason": "Free-text sample descriptions do not match any candidate or its allowed values."
+ }
+]

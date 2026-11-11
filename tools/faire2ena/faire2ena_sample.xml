@@ -1,0 +1,179 @@
+<tool id="faire2ena_sample" name="FAIRe2ENA: samples" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="@PROFILE@" license="MIT">
+    <description>convert FAIRe sample metadata to ENA SAMPLE XML</description>
+    <macros>
+        <import>macros.xml</import>
+        <import>faire_guide.xml</import>
+    </macros>
+    <expand macro="creator"/>
+    <expand macro="requirements"/>
+    <version_command>echo '@TOOL_VERSION@'</version_command>
+    <command detect_errors="exit_code"><![CDATA[
+set -o pipefail;
+@LINK_INPUT@
+python '$__tool_directory__/faire2ena_galaxy.py' sample
+    --input_file input.xlsx
+    --center_name '$center_name'
+    #if $taxon.taxon_select == 'other':
+        --taxon_id $taxon.taxon_id
+    #else:
+        --taxon_id $taxon.taxon_select
+    #end if
+    #if not $convert_dates:
+        --no_date_conversion
+    #end if
+    --output_file '$samples_xml'
+    --submission_file '$submission_xml'
+| tee '$log'
+    ]]></command>
+    <inputs>
+        <expand macro="faire_input"/>
+        <expand macro="center_name"/>
+        <conditional name="taxon">
+            <param name="taxon_select" type="select" label="Sample taxon"
+                help="ENA records environmental samples under a metagenome taxon. Choose the one that matches your water samples.">
+                <option value="408172" selected="true">marine metagenome (408172)</option>
+                <option value="449393">freshwater metagenome (449393)</option>
+                <option value="1169740">aquatic metagenome (1169740)</option>
+                <option value="other">Other NCBI taxon ID</option>
+            </param>
+            <when value="408172"/>
+            <when value="449393"/>
+            <when value="1169740"/>
+            <when value="other">
+                <param name="taxon_id" type="integer" value="" min="1" label="NCBI taxon ID"
+                    help="For example a more specific metagenome such as estuary or seawater metagenome. Search for it at https://www.ncbi.nlm.nih.gov/taxonomy"/>
+            </when>
+        </conditional>
+        <param name="convert_dates" type="boolean" checked="true" label="Convert eventDate values to a form ENA accepts"
+            help="ENA rejects time zone offsets written as +hh:mm (e.g. 2021-09-14T11:00+08:00). With this on, such dates are converted to UTC (2021-09-14T03:00Z). With it off, the upstream script replaces them with 'not provided'."/>
+    </inputs>
+    <outputs>
+        <data name="samples_xml" format="xml" label="${tool.name} on ${on_string}: SAMPLE XML"/>
+        <data name="submission_xml" format="xml" label="${tool.name} on ${on_string}: SUBMISSION XML"/>
+        <data name="log" format="txt" label="${tool.name} on ${on_string}: log"/>
+    </outputs>
+    <tests>
+        <!-- Defaults: marine taxon, dates converted to UTC, one date stored as an Excel date -->
+        <test expect_num_outputs="3">
+            <param name="input_file" value="faire_two_assays.xlsx"/>
+            <param name="center_name" value="CSIRO"/>
+            <output name="samples_xml">
+                <assert_contents>
+                    <is_valid_xml/>
+                    <has_n_elements_with_path path="./SAMPLE" n="4"/>
+                    <has_element_with_path path="./SAMPLE[@alias='GOMECC4_27N_Sta1_DCM_A'][@center_name='CSIRO']"/>
+                    <has_text text="&lt;TAXON_ID&gt;408172&lt;/TAXON_ID&gt;"/>
+                    <has_text text="2021-09-14T15:00Z"/>
+                    <has_text text="2021-09-14T11:00&lt;"/>
+                    <has_text text="ERC000024"/>
+                </assert_contents>
+            </output>
+            <output name="submission_xml">
+                <assert_contents>
+                    <has_element_with_path path="./ACTIONS/ACTION/ADD"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="converted 3 eventDate value(s)"/>
+                    <has_text text="wrote 4 sample(s)"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Freshwater taxon, upstream date handling -->
+        <test expect_num_outputs="3">
+            <param name="input_file" value="faire_two_assays.xlsx"/>
+            <param name="center_name" value="CSIRO"/>
+            <conditional name="taxon">
+                <param name="taxon_select" value="449393"/>
+            </conditional>
+            <param name="convert_dates" value="false"/>
+            <output name="samples_xml">
+                <assert_contents>
+                    <has_text text="&lt;TAXON_ID&gt;449393&lt;/TAXON_ID&gt;"/>
+                    <not_has_text text="15:00Z"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="invalid date 2021-10-02T14:27-04:00"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Custom taxon -->
+        <test expect_num_outputs="3">
+            <param name="input_file" value="faire_two_assays.xlsx"/>
+            <param name="center_name" value="CSIRO"/>
+            <conditional name="taxon">
+                <param name="taxon_select" value="other"/>
+                <param name="taxon_id" value="1169740"/>
+            </conditional>
+            <output name="samples_xml">
+                <assert_contents>
+                    <has_text text="&lt;TAXON_ID&gt;1169740&lt;/TAXON_ID&gt;"/>
+                </assert_contents>
+            </output>
+        </test>
+    </tests>
+    <help><![CDATA[
+**What it does**
+
+This tool converts the **sampleMetadata** sheet of a FAIRe workbook into an ENA SAMPLE XML file,
+ready to register your samples with the
+`European Nucleotide Archive <https://www.ebi.ac.uk/ena>`_. It also writes the SUBMISSION XML
+(action ADD) that ENA needs alongside it.
+
+This is the first of two steps. Once ENA accepts the samples, it returns a **receipt** with an
+accession for each sample. Upload the receipt to Galaxy and use it in **FAIRe2ENA: experiments and
+runs**.
+
+-----
+
+**Inputs**
+
+- **A FAIRe workbook** (.xlsx) with **projectMetadata** and **sampleMetadata** sheets. In
+  sampleMetadata, the first two rows hold the requirement levels and sections, and row 3 holds the
+  field names. The project_id in projectMetadata becomes the ENA *project name*.
+- **Your centre name**, as registered with your ENA Webin account.
+- **The sample taxon.** ENA files environmental samples under a metagenome taxon, and marine
+  metagenome is the default.
+
+**Outputs**
+
+- **SAMPLE XML**: one SAMPLE for each row of sampleMetadata, with samp_name as its alias.
+- **SUBMISSION XML**: the action file to send with it.
+- **log**: messages from the conversion, including any fields that were filled with defaults.
+
+-----
+
+**Limitations**
+
+- Samples are written against the ENA **water checklist (ERC000024)**. Soil, sediment and other
+  sample types need a different checklist, and the tool does not support them yet.
+- Control samples (those whose samp_category is not *sample*) get "missing: control sample" for
+  any mandatory fields that are empty, and their collection date becomes "not provided".
+- If a mandatory field is empty for a real sample and the script has no default for it, the tool
+  stops and lists the samples and the FAIRe terms to fill in.
+
+-----
+
+**Submitting to ENA**
+
+Test your submission on the ENA test server first, which deletes submissions after 24 hours.
+Download both XML files and submit them with the
+`Webin REST service <https://ena-docs.readthedocs.io/en/latest/submit/general-guide/programmatic.html>`_,
+for example::
+
+    curl --proto-default https -u Webin-XXXXX:PASSWORD \
+        -F "SUBMISSION=@submission.xml" -F "SAMPLE=@samples.xml" \
+        wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/
+
+For the real submission, use www.ebi.ac.uk in place of wwwdev.ebi.ac.uk. Save the XML that ENA
+returns, as this is the receipt the next tool needs.
+
+@HELP_FAIRE_GUIDE@
+
+@HELP_FOOTER@
+    ]]></help>
+    <expand macro="citations"/>
+</tool>

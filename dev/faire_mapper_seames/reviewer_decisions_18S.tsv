@@ -1,0 +1,12 @@
+# A person's review of the crosswalk for the 18S sample table (make_2L_table.py), as the guide
+# describes: confirm a match, change its term, delete the row so the column is not matched, or add
+# a row for a column with none. action: confirm | delete | term:<FAIRe term> | add:<FAIRe term>
+column	action	reason
+Sample	delete	the fastq file name of each sample (S001_S13_L001), not the sampling device
+Sterivex Number	delete	the number of the filter cartridge, not a read count
+Sample ID	delete	a field label for each sample, as sample_title is in the 10 L table
+Location	delete	station codes (S2.1, N1.1), not place names; Locality gives geo_loc_name
+Filtration Date	delete	the date of filtering, not the date the record changed
+Filtered by	delete	who filtered; Collected by gives recordedBy
+Collected by	term:recordedBy	the people who collected the samples
+Nominal depth	delete	the planned sampling depth, not the depth of the water column

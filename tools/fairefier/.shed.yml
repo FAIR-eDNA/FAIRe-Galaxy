@@ -1,0 +1,13 @@
+name: fairefier
+owner: CHANGE_ME
+description: Check FAIRe eDNA metadata against the FAIRe checklist (FAIRe-fier)
+long_description: |
+  Galaxy wrapper for FAIRe-fier (https://github.com/csiro/FAIRe-fier), CSIRO's validator for FAIR
+  eDNA (FAIRe) metadata. Runs the FAIRe-fier validation code through a command-line front end that
+  gives the same outputs as the web app, plus a table of issues and a JSON summary for workflows.
+  Bundles FAIRe checklist versions v1.0 and v1.0.2.
+homepage_url: https://github.com/csiro/FAIRe-fier
+remote_repository_url: https://github.com/FAIR-eDNA/FAIRe-Galaxy/tree/main/tools/fairefier
+type: unrestricted
+categories:
+  - Ecology

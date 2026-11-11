@@ -1,0 +1,82 @@
+class: GalaxyWorkflow
+label: "FAIRe mapper: write and check a FAIRe workbook"
+doc: |
+  The second step from a lab's own tables to FAIRe. Writes a FAIRe workbook, in the layout
+  FAIRe-ator makes, from the sample table and its reviewed crosswalk (from "FAIRe mapper: propose
+  a mapping"), values for the whole project and an OTU or ASV table, then checks it with
+  FAIRe-fier. For library tables, a raw and a final OTU table, or several assays, run the apply
+  mapping tool on its own.
+license: MIT
+creator:
+  - class: Organization
+    name: FAIRe Galaxy project contributors
+release: "0.1"
+inputs:
+  sample_table:
+    type: data
+    format:
+      - csv
+      - tabular
+      - xlsx
+      - txt
+    doc: The same sample table given to "propose a mapping".
+  crosswalk:
+    type: data
+    format:
+      - tabular
+      - csv
+      - xlsx
+    doc: The reviewed crosswalk (SSSOM).
+  project_values:
+    type: data
+    format:
+      - tabular
+      - csv
+      - xlsx
+      - txt
+    optional: true
+    doc: Values for the whole project (term, value, and optionally status and assay).
+  otu_table:
+    type: data
+    format:
+      - tabular
+      - csv
+      - xlsx
+      - txt
+    doc: The OTU or ASV table (reads per sequence or taxon and sample), with its taxonomy.
+  project_id:
+    type: text
+    doc: A short ID for the project (letters, digits, _ and -).
+  assay_name:
+    type: text
+    doc: The assay name, as used in the lab (for example COILeray).
+outputs:
+  faire_workbook:
+    outputSource: apply/workbook
+  apply_log:
+    outputSource: apply/log
+  fairefier_issues:
+    outputSource: check/issues
+  fairefier_summary:
+    outputSource: check/summary
+steps:
+  apply:
+    tool_id: faire_mapper_apply
+    doc: "The FAIRe workbook, with the OTU table as otuFinal and taxaFinal; set the sample types on the run form."
+    in:
+      table: sample_table
+      crosswalk: crosswalk
+      project_values: project_values
+      project_id: project_id
+      assay_name: assay_name
+      otu_tables_0|otu: otu_table
+    state:
+      otu_tables:
+        - otu_stage: final
+    runtime_inputs:
+      - sample_types
+  check:
+    tool_id: fairefier
+    doc: "FAIRe-fier: errors and warnings against the FAIRe checklist."
+    in:
+      input_file: apply/workbook

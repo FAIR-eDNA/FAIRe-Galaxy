@@ -1,0 +1,6 @@
+code_echantillon;date;site_récif;latitude;longitude;volume_l;temperature;remarque
+SPY01;43280;Récif Nord;-17,4512;-149,8121;30;26,5;
+SPY02;43280;Récif Nord;-17,4518;-149,8130;30;26,4;filtre colmaté
+SPY03;43281;Passe Sud;-17,5021;-149,7802;28;26,9;
+SPY04;43282;Passe Sud;-17,5030;-149,7811;30;27,1;
+SPY05;43282;Lagon Est;-17,4733;-149,7650;25;27,4;témoin terrain

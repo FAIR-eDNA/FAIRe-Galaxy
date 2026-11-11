@@ -1,0 +1,81 @@
+[
+ {
+  "column": "marker",
+  "values": [
+   "16S",
+   "COI"
+  ],
+  "profile": "",
+  "proposed": "target_gene",
+  "candidates": [
+   {
+    "term": "target_gene",
+    "description": "Targeted gene or locus name for marker gene studies",
+    "type": "controlled vocabulary",
+    "allowed_values": [
+     "12S rRNA (SSU mitochondria)",
+     "16S rRNA (LSU mitochondria)",
+     "16S rRNA (SSU prokaryote)",
+     "23S rRNA (LSU prokaryote)",
+     "18S rRNA (SSU eukaryote)",
+     "28S rRNA (LSU eukaryote)",
+     "rbcL",
+     "CytB",
+     "COI",
+     "COII",
+     "COIII",
+     "nifH",
+     "ITS",
+     "ND1",
+     "ND2",
+     "ND3",
+     "ND4",
+     "ND5",
+     "ND6",
+     "amoA"
+    ],
+    "example": "COI",
+    "sheet": "projectMetadata"
+   },
+   {
+    "term": "env_broad_scale",
+    "description": "Major environmental system your sample came from. The systems identified should have a coarse spatial grain, to provide the general environmental context of where the sampling was done. Select from ENVO\u2019s biome class: http://purl.obolibrary.org/obo/ENVO_00000428. Examples include; estuarine biome [ENVO:01000020], tropical moist broadleaf forest biome [ENVO:01000228],",
+    "type": "fixed format",
+    "allowed_values": [
+     "http://purl.obolibrary.org/obo/ENVO_00000428"
+    ],
+    "example": "estuarine biome [ENVO:01000020]",
+    "sheet": "sampleMetadata"
+   },
+   {
+    "term": "env_local_scale",
+    "description": "The entity or entities which are in your sample or specimen\u2019s local vicinity and which you believe have significant causal influences on your sample. Select from ENVO's layer class: http://purl.obolibrary.org/obo/ENVO_01000281. Examples include;  marine pelagic zone [ENVO:00000208], estuarine coastal surface layer [ENVO:01001302], shrub layer [ENVO:01000336]",
+    "type": "fixed format",
+    "allowed_values": [
+     "http://purl.obolibrary.org/obo/ENVO_01000281"
+    ],
+    "example": "estuarine coastal surface layer [ENVO:01001302]",
+    "sheet": "sampleMetadata"
+   },
+   {
+    "term": "env_medium",
+    "description": "Environmental material or materials (pipe separated) immediately surrounded your sample prior to sampling. Select from ENVO's environmental material class (entity/ continuant/ independent continuant/ material entity/ environmental material): http://purl.obolibrary.org/obo/ENVO_00010483. Examples include; soil [ENVO:00001998], marine sediment [ENVO:03000033], air [ENVO:00002005], sea water [ENVO:00002149], fresh water [ENVO:00002011], tap water [ENVO:00003096], fecal material [ENVO:00002003], digestive tract environment [ENVO:2100002], intestine environment [ENVO:2100002], planktonic material [ENVO:01000063]",
+    "type": "fixed format",
+    "allowed_values": [
+     "http://purl.obolibrary.org/obo/ENVO_00010483"
+    ],
+    "example": "soil [ENVO:00001998]",
+    "sheet": "sampleMetadata"
+   },
+   {
+    "term": "geo_loc_name",
+    "description": "The geographical origin of the sample as defined by the country or sea name followed by regions and localities. Country or sea names should be chosen from the INSDC Geographic Location Name List INSDC country list (http://insdc.org/country.html). Fixed format following <country or sea names>:<region>,<locality>. E.g., \"USA: Maryland, Bethesda\" , \"Atlantic Ocean:Charlie Gibbs Fracture Zone\"",
+    "type": "fixed format",
+    "allowed_values": [],
+    "example": "USA: Maryland, Bethesda",
+    "sheet": "sampleMetadata"
+   }
+  ],
+  "instruction": "Choose the FAIRe term that this column holds, from the candidates only, or null if none fits. Use the values as well as the header. Several columns may share geo_loc_name when each holds one part of it (country, region or locality). Reply as JSON: {\"column\": ..., \"term\": <candidate or null>, \"reason\": ...}"
+ }
+]

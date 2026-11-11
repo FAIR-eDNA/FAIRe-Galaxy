@@ -1,0 +1,6 @@
+Lat,Long,date_collected,sample,fwd_primer_seq,rev_primer_seq,marker,habitat,platform,notes
+-32.05,115.74,2021-03-15,S001,GTGYCAGCMGCCGCGGTAA,GGACTACNVGGGTWTCTAAT,16S,marine pelagic,Illumina MiSeq,collected at dawn near jetty
+-31.98,115.80,2021-03-15,S002,GTGYCAGCMGCCGCGGTAA,GGACTACNVGGGTWTCTAAT,16S,coastal water,Illumina MiSeq,slight swell
+-32.10,115.69,2021-03-16,S003,GTGYCAGCMGCCGCGGTAA,GGACTACNVGGGTWTCTAAT,COI,estuary,Illumina MiSeq,turbid water
+-32.02,115.77,2021-03-16,S004,GTGYCAGCMGCCGCGGTAA,GGACTACNVGGGTWTCTAAT,COI,marine pelagic,Illumina MiSeq,
+-31.95,115.83,2021-03-17,S005,GTGYCAGCMGCCGCGGTAA,GGACTACNVGGGTWTCTAAT,16S,coastal water,Illumina MiSeq,calm conditions

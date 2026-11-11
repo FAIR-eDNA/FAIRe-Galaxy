@@ -1,0 +1,53 @@
+column	route	proposed	gold	outcome	gold_in_shortlist
+code_spygen	review	samp_name	samp_name	correct	True
+code_explo	review	lib_id	materialSampleID	wrong	False
+rep	review	biological_rep		wrong	False
+date	accept	eventDate	eventDate	correct	True
+station	review	stationed_sample_dur		wrong	False
+site_name	accept	geo_loc_name		part of a term	False
+province	no match			right to leave	False
+country	no match		geo_loc_name	missed	True
+project	review	project_id		wrong	False
+sample_type	accept	samp_category	samp_category	correct	True
+sample_method	accept	samp_collect_method	samp_collect_method	correct	True
+time_start	review	precip_time_prep	verbatimEventTime	wrong	True
+time_end	no match			right to leave	False
+duration_min	no match		eventDurationValue	missed	True
+volume	accept	samp_size	samp_size	correct	True
+depth	accept	minimumDepthInMeters	minimumDepthInMeters	correct	True
+temperature	accept	temp	temp	correct	True
+turbidity	accept	turbidity	turbidity	correct	True
+habitat	accept	env_local_scale	env_broad_scale	acceptable	True
+habitat_type	review	env_broad_scale		wrong	False
+gps_start	no match			right to leave	False
+latitude_start	no match		verbatimLatitude	missed	True
+longitude_start	no match		verbatimLongitude	missed	True
+gps_b	no match			right to leave	False
+lat_gps_b	no match			right to leave	False
+long_gps_b	no match			right to leave	False
+gps_c	no match			right to leave	False
+lat_gps_c	no match			right to leave	False
+long_gps_c	no match			right to leave	False
+gps_d	no match			right to leave	False
+lat_gps_d	no match			right to leave	False
+long_gps_d	no match			right to leave	False
+gps_half_turn	no match			right to leave	False
+latitude_turn	accept	decimalLatitude		wrong	False
+longitude_turn	accept	decimalLongitude		wrong	False
+gps_end	no match			right to leave	False
+latitude_end	no match			right to leave	False
+longitude_end	no match			right to leave	False
+filter	review	size_frac_low	size_frac	wrong	True
+data_manager	no match		recordedBy	missed	False
+gps_owner	no match			right to leave	False
+comment	no match			right to leave	False
+longitude_start_clean	no match		decimalLongitude	missed	True
+latitude_start_clean	no match		decimalLatitude	missed	True
+dist_to_coast	no match			right to leave	False
+site35	no match			right to leave	False
+site30	no match			right to leave	False
+site25	no match			right to leave	False
+site20	no match			right to leave	False
+site10	no match			right to leave	False
+site5	no match			right to leave	False
+dist_to_CT	no match			right to leave	False

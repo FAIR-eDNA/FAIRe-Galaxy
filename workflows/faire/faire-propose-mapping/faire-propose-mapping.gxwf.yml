@@ -1,0 +1,63 @@
+class: GalaxyWorkflow
+label: "FAIRe mapper: propose a mapping"
+doc: |
+  The first step from a lab's own sample table to a FAIRe workbook. Profiles the columns of the
+  sample table, proposes a FAIRe term for each (a crosswalk for review), lists the mandatory FAIRe
+  terms not yet covered, and finds the primer pairs a methods text names, cites or gives as
+  sequences. Review the crosswalk, then run "FAIRe mapper: write and check a FAIRe workbook".
+license: MIT
+creator:
+  - class: Organization
+    name: FAIRe Galaxy project contributors
+release: "0.1"
+inputs:
+  sample_table:
+    type: data
+    format:
+      - csv
+      - tabular
+      - xlsx
+      - txt
+    doc: A sample sheet or metadata table in your own format, one row per sample.
+  methods_text:
+    type: data
+    format:
+      - txt
+    doc: The methods of the study as plain text.
+outputs:
+  column_profile:
+    outputSource: profile/profile
+  mapping_report:
+    outputSource: propose/report
+  crosswalk:
+    outputSource: propose/crosswalk
+  mandatory_not_covered:
+    outputSource: propose/missing
+  primer_candidates:
+    outputSource: primers/candidates
+steps:
+  profile:
+    tool_id: faire_mapper_profile
+    doc: "What each column holds: types, ranges, formats."
+    in:
+      table: sample_table
+  propose:
+    tool_id: faire_mapper_map
+    doc: "A FAIRe term for each column, with a score and the evidence; set the sample types on the run form."
+    in:
+      table: sample_table
+    state:
+      assay_type: metabarcoding
+      shortlist: 5
+    runtime_inputs:
+      - sample_types
+  primers:
+    tool_id: faire_primers_find
+    doc: "Primer pairs the methods name, cite or give as sequences, from the bundled primer table."
+    in:
+      search|texts: methods_text
+    state:
+      search:
+        mode: text
+      table:
+        source: bundled

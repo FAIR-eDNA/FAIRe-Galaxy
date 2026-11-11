@@ -1,0 +1,27 @@
+- doc: A messy water metabarcoding sheet and a methods text with primer sequences
+  job:
+    sample_table:
+      class: File
+      path: test-data/messy_edna.csv
+      filetype: csv
+    methods_text:
+      class: File
+      path: test-data/primer_methods_sequences.txt
+      filetype: txt
+  outputs:
+    crosswalk:
+      asserts:
+        has_text:
+          text: decimalLatitude
+    mapping_report:
+      asserts:
+        has_line_matching:
+          expression: "^date_collected\teventDate\tsampleMetadata\taccept\t.*"
+    column_profile:
+      asserts:
+        has_text:
+          text: Lat
+    primer_candidates:
+      asserts:
+        has_text:
+          text: "18S V4 (Australian Microbiome)"

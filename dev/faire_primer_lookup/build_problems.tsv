@@ -1,0 +1,38 @@
+where	problem
+takahashi2023_tableS4.xlsx row 48	forward sequence is not a plain IUPAC sequence: TCAACCAACCACAAAGACATTGGCAC/ TCGACTAATCATAAAGATATCGGCAC
+takahashi2023_tableS4.xlsx row 48	reverse sequence is not a plain IUPAC sequence: ACTTCAGGGTGACCGAAGAATCAGAA/ CACCTCAGGGTGTCCGAARAAYCARAA
+takahashi2023_tableS3.xlsx row 167	reverse sequence is not a plain IUPAC sequence: CAACGATCTCCGGTTTACAACAX
+takahashi2023_tableS3.xlsx row 220	reverse sequence is not a plain IUPAC sequence: Â GGTCTGGTACTGGGAAATGG
+takahashi2023_tableS3.xlsx row 229	reverse sequence is not a plain IUPAC sequence: GAGCATGTCTGCTACrCAGGGAC3
+takahashi2023_tableS3.xlsx row 230	reverse sequence is not a plain IUPAC sequence: GTCTGCTACTAGGGTTCAGAATArGGAATAC3
+takahashi2023_tableS3.xlsx row 284	reverse sequence is not a plain IUPAC sequence: 5²-AAA TTG ATT GCC CCC AGG-3²
+takahashi2023_tableS3.xlsx row 298	forward sequence is not a plain IUPAC sequence: AATGATACGGCGACCACCGAGATCTACACXXXXXXXXACACTCTTTCCCTACACGACGCT
+takahashi2023_tableS3.xlsx row 298	reverse sequence is not a plain IUPAC sequence: CAAGCAGAAGACGGCATACGAGATXXXXXXXXGTGACTGGAGTTCAGACGTGTGCTCTTC
+takahashi2023_tableS3.xlsx row 472	reverse sequence is not a plain IUPAC sequence: GRCGGTATCTRATCGYCT/T
+takahashi2023_tableS3.xlsx row 498	reverse sequence is not a plain IUPAC sequence: GTGTTGTTGATGTAATTATGGrUTGTG/C3sp/
+metazoan_primers_FAIRe_aligned.xlsx targeted_assays row 165	reverse sequence is not a plain IUPAC sequence: CAACGATCTCCGGTTTACAACAX
+metazoan_primers_FAIRe_aligned.xlsx targeted_assays row 218	reverse sequence is not a plain IUPAC sequence: Â GGTCTGGTACTGGGAAATGG
+metazoan_primers_FAIRe_aligned.xlsx targeted_assays row 227	reverse sequence is not a plain IUPAC sequence: GAGCATGTCTGCTACrCAGGGAC3
+metazoan_primers_FAIRe_aligned.xlsx targeted_assays row 228	reverse sequence is not a plain IUPAC sequence: GTCTGCTACTAGGGTTCAGAATArGGAATAC3
+metazoan_primers_FAIRe_aligned.xlsx targeted_assays row 282	reverse sequence is not a plain IUPAC sequence: 5²-AAA TTG ATT GCC CCC AGG-3²
+metazoan_primers_FAIRe_aligned.xlsx targeted_assays row 296	forward sequence is not a plain IUPAC sequence: AATGATACGGCGACCACCGAGATCTACACXXXXXXXXACACTCTTTCCCTACACGACGCT
+metazoan_primers_FAIRe_aligned.xlsx targeted_assays row 296	reverse sequence is not a plain IUPAC sequence: CAAGCAGAAGACGGCATACGAGATXXXXXXXXGTGACTGGAGTTCAGACGTGTGCTCTTC
+metazoan_primers_FAIRe_aligned.xlsx targeted_assays row 461	reverse sequence is not a plain IUPAC sequence: GRCGGTATCTRATCGYCT/T
+metazoan_primers_FAIRe_aligned.xlsx targeted_assays row 487	reverse sequence is not a plain IUPAC sequence: GTGTTGTTGATGTAATTATGGrUTGTG/C3sp/
+metazoan_primers_FAIRe_aligned.xlsx metabarcoding_assays row 41	forward sequence is not a plain IUPAC sequence: TCAACCAACCACAAAGACATTGGCAC/ TCGACTAATCATAAAGATATCGGCAC
+metazoan_primers_FAIRe_aligned.xlsx metabarcoding_assays row 41	reverse sequence is not a plain IUPAC sequence: ACTTCAGGGTGACCGAAGAATCAGAA/ CACCTCAGGGTGTCCGAARAAYCARAA
+Curation 7 November 2026 (O. Berry): provenance and target could not be confirmed	removed pp_cc4b655777 (wilderlab_ZC: GGACGATAAGACCCTATAAADCTT / CGCTGTTATCCCTAAAGTAAYTT); wilderlab_ZP and wilderlab_ZC removed: the metazoan register attributes it to Wilkinson et al. 2024, but it is not there or in the Wilderlab assay list of 9 July 2026, and no other source for its sequences (GGACGATAAGACCCTATAAADCTT and CGCTGTTATCCCTAAAGTAAYTT) or its target was found. Add it back if Wilderlab confirms the assay
+Curation 7 November 2026 (O. Berry): provenance and target could not be confirmed	removed pp_925e50f29c (wilderlab_DG: TCTTCGGTTGGGGCGAC / GGATTGCGCTGTTATCCCT); wilderlab_DG removed: the metazoan register attributes it to Wilkinson et al. 2024, but it is not there or in the Wilderlab assay list of 9 July 2026, and no other source for its sequences (TCTTCGGTTGGGGCGAC and GGATTGCGCTGTTATCCCT) or its target was found. Add it back if Wilderlab confirms the assay
+Curation 7 November 2026 (O. Berry): provenance and target could not be confirmed	removed pp_32dafd52d4 (wilderlab_YG: CBGAYATCTCYACCGCYTTYTC / AAAGAAAGATGCGCCRTTRGCATG); wilderlab_YG removed: the metazoan register attributes it to Wilkinson et al. 2024, but it is not there or in the Wilderlab assay list of 9 July 2026, and no other source for its sequences (CBGAYATCTCYACCGCYTTYTC and AAAGAAAGATGCGCCRTTRGCATG) or its target was found. Add it back if Wilderlab confirms the assay
+Curation 3 November 2026: West et al. 2021 Table 1 (Diversity and Distributions, 10.1111/ddi.13228); Takahashi et al. 2023 Table S4 row 119	removed pp_6053001b3c (COI Elasmobranch: ACCAACCACAAAGANATNGGCAC / TCNACNAATCATAAAGATATCGGCAC); FishF1 and FishF2 are both forward primers (Ward et al. 2005); West et al. 2021 Table 1 uses them together with the reverse primer Shark COI-MINIR, which are pairs pp_50c76b5958 and pp_23461bd995
+Curation 3 November 2026: West et al. 2021 Table 1 (Diversity and Distributions, 10.1111/ddi.13228); Takahashi et al. 2023 Table S4 row 120	removed pp_b34cb6866f (COI Elasmobranch: GATTATTACNAAAGCNTGGGC / TCNACNAATCATAAAGATATCGGCAC); Shark COI-MINIR is the reverse primer (Fields et al. 2015) and FishF2 a forward primer; this row is pair pp_23461bd995 in the wrong orientation
+table	12S-V5-b and wilderlab_RV are the same primers in opposite orientations (TAGAACAGGCTCCTCTAG / TTAGATACCCCACTATGC)
+table	forward primer name 341f is used for 2 different sequences
+table	forward primer name 515f is used for 2 different sequences
+table	forward primer name 8f is used for 2 different sequences
+table	forward primer name forward is used for 14 different sequences
+table	reverse primer name 785r is used for 2 different sequences
+table	reverse primer name 806r is used for 3 different sequences
+table	reverse primer name gobycoir2d is used for 2 different sequences
+table	reverse primer name reverse is used for 14 different sequences
+table	reverse primer name uni18sr is used for 2 different sequences

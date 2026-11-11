@@ -1,0 +1,70 @@
+<!-- The same text is in every tool's help in Galaxy (@HELP_FAIRE_GUIDE@ in each tool folder's
+faire_guide.xml, copied from dev/faire_guide/faire_guide.xml by dev/faire_guide/sync.py). Edit
+both together. Reviewed by Oliver Berry, 4 November 2026; reworded in fuller sentences, 7 November 2026. -->
+
+# Using the FAIRe tools in Galaxy
+
+Each FAIRe tool in Galaxy does one step of the job: it makes the metadata workbook, checks it, or converts it into a format that suits where you are depositing your data. Where you start depends on what you already have:
+
+- **If you have no metadata yet**, or are planning a study, start with **FAIRe-ator**, which makes a blank template for you to fill in.
+- **If you have a sample table in your own format**, start with the **FAIRe mapper** tools, which build the workbook from it. A sample table is the spreadsheet you keep for your samples, with one row per sample or filter and columns such as site, date, coordinates, depth, volume filtered and which samples are controls. Your reads per ASV or taxon, and your taxon assignments, go to the mapper as separate OTU and taxonomy tables, even if you keep them in the same spreadsheet.
+- **If you already have a FAIRe workbook**, start with **FAIRe-fier**, which checks it.
+
+## The steps, in order
+
+1. **Make the FAIRe workbook**, in one of two ways:
+   - **FAIRe-ator** makes a blank Excel template for your study, from the project ID, assay names and sample types you give it. You fill it in outside Galaxy and upload it.
+   - The **FAIRe mapper** tools build a FAIRe workbook from your own sample table, with optional help from a language model, and add your OTU and taxonomy tables. FAIRe mapper has its own guide to the files it can work with.
+2. **Check the workbook with FAIRe-fier.** It lists missing mandatory fields and values in the wrong format, and suggests corrections. Fix the workbook and check it again until it passes.
+3. **Convert the checked workbook** to a format that suits where your data are going: a sequence archive (NCBI or ENA), a biodiversity database (GBIF or OBIS), or an analysis in QIIME 2. Each destination has its own tool, as the table under *Which tool for which destination* below shows.
+
+The tools are named here as they appear in Galaxy's tool panel. Search the panel for *FAIRe* or *edna2obis* to find them.
+
+## What inputs each tool needs
+
+FAIRe-fier and the conversion tools all take the FAIRe workbook (.xlsx), except edna2obis: match taxa, which needs only taxonomy tables. The entries below say what else each tool needs. Names such as sampleMetadata, otuFinal and taxaFinal are FAIRe's names for the sheets and tables of a FAIRe dataset, and names such as samp_name and lib_id are FAIRe fields (terms) within them.
+
+### Making and checking the workbook
+
+- **FAIRe-ator** needs nothing uploaded. On the form, give a project ID, the assay names (short, with no spaces), the assay type (metabarcoding or targeted), the sample types and the requirement levels to include.
+- **FAIRe mapper** needs your sample table, and can also use a data dictionary, methods text, values for the whole project, and OTU and taxonomy tables. Its own guide explains each of these.
+- **FAIRe-fier** needs the FAIRe workbook, laid out as FAIRe templates are (in sampleMetadata, the field names are on row 3). If it finds problems, it returns a workbook (*fairefier_warn_error*) with the sheets to fix. This holds a list of the errors and warnings, and a copy of each problem sheet with those cells highlighted, red for errors and yellow for warnings. Correct the copies and give that workbook back to check it again.
+
+### Depositing your FAIR eDNA data
+
+**For the sequence archives**
+
+- **FAIRe2NCBI: BioSample** needs the organism to use for your samples (for example *marine metagenome*), and your BioProject accession if you have one. You need an NCBI account to upload the table in the Submission Portal.
+- **FAIRe2NCBI: SRA** needs experimentRunMetadata filled in, with samp_name, assay_name, lib_id and the fastq file names. In the Submission Portal, upload the fastq files after the table.
+- **FAIRe2ENA: samples** needs your centre name, as registered with your ENA Webin account, and the sample taxon. You submit the XML files to ENA yourself, and ENA returns a receipt with the sample accessions.
+- **FAIRe2ENA: experiments and runs** needs the receipt from the samples step, the ENA study accession, your centre name, the sequencing instrument, and the MD5 checksum of each fastq file in experimentRunMetadata. Upload the fastq files to your Webin upload area first.
+
+**For the biodiversity databases**
+
+- **FAIRe2MDT** needs the OTU table (otuFinal) and taxonomy table (taxaFinal), either as sheets of the workbook or as separate files, plus the assay name and sequencing run ID. Run it once for each assay and sequencing run.
+- **edna2obis: match taxa** needs a taxonomy table for each assay. It looks the names up in WoRMS or GBIF, so it needs internet access.
+- **edna2obis: build Darwin Core tables** needs a taxonomy table and an abundance table for each assay, and the reviewed mapping table from *match taxa* (or it can look the names up during the run). It also takes the dataset details (title, contact, licence), which you can instead write later in the IPT. You need access to an IPT (Integrated Publishing Toolkit) to publish.
+
+### Analysis
+
+- **FAIRe2QIIME** needs target_gene for each assay in projectMetadata. To write manifests, it also needs the fastq file names in experimentRunMetadata, and the folder that holds the sequencing run folders on the computer where QIIME 2 runs.
+
+## Which tool for which destination
+
+The tools write the files, and you then upload them to the archive or database yourself, outside Galaxy.
+
+| Destination | Tools, in order | What they write | Where you upload it |
+| --- | --- | --- | --- |
+| NCBI (BioSample and SRA) | FAIRe2NCBI: BioSample, then FAIRe2NCBI: SRA | BioSample table, SRA table | NCBI Submission Portal, then the fastq files |
+| ENA | FAIRe2ENA: samples, then FAIRe2ENA: experiments and runs | Sample XML, then experiment and run XML | ENA's Webin REST service; fastq files to your Webin upload area first |
+| GBIF, through MDT | FAIRe2MDT, once for each assay and run | MDT workbook | GBIF's Metabarcoding Data Toolkit |
+| OBIS and GBIF, through an IPT | edna2obis: match taxa, then edna2obis: build Darwin Core tables | Darwin Core archive (.zip) | An IPT (Integrated Publishing Toolkit) |
+| QIIME 2 analysis | FAIRe2QIIME | Sample metadata and manifests | QIIME 2 (qiime tools import) |
+
+GBIF can take the same data by either route. MDT turns its own workbook into Darwin Core, while edna2obis writes the Darwin Core in Galaxy, and its output also suits OBIS.
+
+## Where to find more
+
+- **Each tool's help**, below its form in Galaxy, describes every field, the outputs, and the tool's limits.
+- **The upstream repositories**, linked under *Credits* in each tool's help, explain how the original scripts work and how to run them outside Galaxy.
+- **The FAIRe standard and checklist** are at [fair-edna.github.io](https://fair-edna.github.io/).

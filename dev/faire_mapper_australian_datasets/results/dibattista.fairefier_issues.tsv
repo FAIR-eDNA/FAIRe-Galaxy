@@ -1,0 +1,11 @@
+worksheet	level	record	term	input	type	message	suggested
+projectMetadata	error	ALL	checkls_ver	FAIRe_checklist_v1.0.2.xlsx	value_error	Value error, Require scientific notation to be in format '3x10+8' or '3e8'.	
+projectMetadata	error	ALL	pcr_primer_forward		string_type; float_type; int_type; datetime_type	Input should be a valid string; Input should be a valid number; Input should be a valid integer; Input should be a valid datetime	
+projectMetadata	error	ALL	pcr_primer_reverse		string_type; float_type; int_type; datetime_type	Input should be a valid string; Input should be a valid number; Input should be a valid integer; Input should be a valid datetime	
+projectMetadata	error	ALL	project_contact		string_type; float_type; int_type; datetime_type	Input should be a valid string; Input should be a valid number; Input should be a valid integer; Input should be a valid datetime	
+sampleMetadata	error	ALL	env_broad_scale		string_type; float_type; int_type; datetime_type	Input should be a valid string; Input should be a valid number; Input should be a valid integer; Input should be a valid datetime	
+sampleMetadata	error	ALL	env_local_scale		string_type; float_type; int_type; datetime_type	Input should be a valid string; Input should be a valid number; Input should be a valid integer; Input should be a valid datetime	
+sampleMetadata	error	ALL	samp_category		string_type; float_type; int_type; datetime_type	Input should be a valid string; Input should be a valid number; Input should be a valid integer; Input should be a valid datetime	
+sampleMetadata	warning	ALL	EMu_registration_number			Extra term found that is not defined in the model. Please review to confirm whether it should be included.	
+sampleMetadata	warning	ALL	Lunar_Cycle			Extra term found that is not defined in the model. Please review to confirm whether it should be included.	
+sampleMetadata	warning	ALL	Exposed_or_Sheltered			Extra term found that is not defined in the model. Please review to confirm whether it should be included.	

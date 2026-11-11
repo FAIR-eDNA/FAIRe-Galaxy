@@ -1,0 +1,5 @@
+#OTU ID	LIZ_01	LIZ_02	LIZ_03	LIZ_FB	taxonomy	Confidence
+asv_1	1520	88		0	k__Animalia; p__Chordata; c__Actinopteri; o__Perciformes; f__Lutjanidae; g__Lutjanus; s__Lutjanus_carponotatus	0.99
+asv_2	0	412	37		k__Animalia; p__Chordata; c__Actinopteri; o__Clupeiformes; f__Clupeidae; g__Sardinella; s__	0.93
+asv_3	5	0	0	12	k__Animalia; p__Chordata; c__Mammalia; o__Primates; f__Hominidae; g__Homo; s__Homo_sapiens	1.0
+asv_4	0	0	9	0	Unassigned	0.42

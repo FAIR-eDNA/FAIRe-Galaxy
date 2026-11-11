@@ -1,0 +1,142 @@
+{
+ "values": [
+  {
+   "term": "sterilise_method",
+   "value": "Sample bottles were bleach sterilised; filtration equipment was cleaned with 10% bleach (4% chlorine) and a one-litre filtration control was taken at the end of each sampling day",
+   "quote": "using bleach sterilized 1L Nalgene bottles",
+   "stated": true
+  },
+  {
+   "term": "neg_cont_0_1",
+   "value": "1",
+   "quote": "Extraction blank controls were processed in parallel with all samples",
+   "stated": true
+  },
+  {
+   "term": "env_medium",
+   "value": "sea water [ENVO:00002149]",
+   "quote": "were applied to all collected seawater samples",
+   "stated": true
+  },
+  {
+   "term": "samp_size",
+   "value": "1",
+   "quote": "Four one-litre water replicates",
+   "stated": true
+  },
+  {
+   "term": "samp_size_unit",
+   "value": "L",
+   "quote": "Four one-litre water replicates",
+   "stated": true
+  },
+  {
+   "term": "size_frac",
+   "value": "0.45",
+   "quote": "filtered across Pall 0.45",
+   "stated": true
+  },
+  {
+   "term": "filter_material",
+   "value": "polyethersulfone",
+   "quote": "Pall 0.45μm Supor® polyethersulphone membranes",
+   "stated": true
+  },
+  {
+   "term": "nucl_acid_ext_kit",
+   "value": "DNeasy Blood and Tissue Kit (Qiagen)",
+   "quote": "DNeasy Blood and Tissue Kit (Qiagen)",
+   "stated": true
+  },
+  {
+   "term": "pcr_0_1",
+   "value": "1",
+   "quote": "Three PCR metabarcoding assays were employed",
+   "stated": true
+  },
+  {
+   "term": "targetTaxonomicAssay",
+   "value": "bony fish | elasmobranchs | aquatic reptiles",
+   "quote": "to amplify bony fish, elasmobranchs and aquatic reptiles, respectively",
+   "stated": true
+  },
+  {
+   "term": "target_gene",
+   "value": "16S rRNA (LSU mitochondria) | COI",
+   "quote": "corresponding to the mitochondrial 16S rDNA and COI regions",
+   "stated": true
+  },
+  {
+   "term": "custom_mm",
+   "value": "1X AmpliTaq Gold PCR buffer (Life Technologies), 2 mM MgCl2, 0.25 mM dNTPs, 0.2 µM each of forward and reverse primers (Integrated DNA Technologies), 10 µg BSA (Fisher Biotec), 0.6 µl of 5X SYBR Green (Life Technologies), 1U AmpliTaq Gold DNA Polymerase (Life Technologies), 4 µl of eDNA template (neat), made to volume with Ultrapure Distilled Water (Life Technologies)",
+   "quote": "1X AmpliTaq Gold® PCR buffer (Life Technologies, Massachusetts, USA), 2mM MgCl2, 0.25mM dNTPs,",
+   "stated": true
+  },
+  {
+   "term": "pcr_dna_vol",
+   "value": "4",
+   "quote": "of eDNA template (neat)",
+   "stated": true
+  },
+  {
+   "term": "pcr_rep",
+   "value": "3",
+   "quote": "Each eDNA sample was amplified in triplicate PCRs",
+   "stated": true
+  },
+  {
+   "term": "pcr_cond",
+   "value": "initial denaturation:95_5;annealing:51-54_0.5;elongation:72_0.75;final elongation:72_10;50",
+   "quote": "initial denaturation at 95 °C for 5 min, followed by 50 cycles of 30 s at 95 °C, 51-54 °C for 30 s (see respective annealing temperatures in Table 1) and 45 s at 72 °C, with a final extension for 10 min at 72 °C",
+   "stated": true
+  },
+  {
+   "term": "pcr_cycles",
+   "value": "50",
+   "quote": "followed by 50 cycles of 30 s at 95 °C",
+   "stated": true
+  },
+  {
+   "term": "barcoding_pcr_appr",
+   "value": "one-step PCR",
+   "quote": "final qPCR was performed in a single step using fusion tagged primer architecture",
+   "stated": true
+  },
+  {
+   "term": "platform",
+   "value": "ILLUMINA",
+   "quote": "Sequencing was conducted on an Illumina MiSeq platform",
+   "stated": true
+  },
+  {
+   "term": "lib_screen",
+   "value": "Libraries were size-selected using a Pippin-Prep (Sage Science), purified using the Qiaquick PCR Purification Kit (Qiagen), quantified using a Qubit 4.0 Fluorometer (Invitrogen) and diluted to 2 nM if necessary before loading onto a 300 cycle MiSeq V2 Standard Flow Cell",
+   "quote": "Size-selected libraries were then purified using the Qiaquick PCR Purification Kit (Qiagen, Venlo, Netherlands), quantified using a Qubit 4.0 Fluorometer (Invitrogen, Carlsbad, USA) and if necessary, diluted to 2nM",
+   "stated": true
+  },
+  {
+   "term": "otu_db",
+   "value": "NCBI GenBank nucleotide database (accessed in 2018/19) | in-house 16S rRNA Western Australian fish database",
+   "quote": "queried against NCBI’s GenBank nucleotide database (accessed in 2018/19",
+   "stated": true
+  },
+  {
+   "term": "tax_assign_cat",
+   "value": "sequence similarity",
+   "quote": "using BLASTn (minimum percentage identity of 90",
+   "stated": false
+  },
+  {
+   "term": "otu_seq_comp_appr",
+   "value": "BLASTn",
+   "quote": "using BLASTn (minimum percentage identity of 90",
+   "stated": true
+  },
+  {
+   "term": "screen_contam_method",
+   "value": "ASVs detected in filtration and/or extraction blanks were entirely removed",
+   "quote": "ASVs detected in filtration and/or extraction blanks were entirely removed",
+   "stated": true
+  }
+ ]
+}

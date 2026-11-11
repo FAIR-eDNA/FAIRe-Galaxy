@@ -1,0 +1,106 @@
+<macros>
+    <!-- Upstream has no tagged releases. The version is the date of the pinned
+         commit (aomlomics/FAIRe2NCBI ef62f3da0281596d926b1aaa6c7c6c4c728d9d90). -->
+    <token name="@TOOL_VERSION@">2026.07.23</token>
+    <token name="@VERSION_SUFFIX@">2</token>
+    <token name="@PROFILE@">23.0</token>
+    <xml name="requirements">
+        <requirements>
+            <requirement type="package" version="3.12">python</requirement>
+            <requirement type="package" version="2.2.3">pandas</requirement>
+            <requirement type="package" version="3.1.5">openpyxl</requirement>
+            <requirement type="package" version="6.0.3">pyyaml</requirement>
+        </requirements>
+    </xml>
+    <token name="@LINK_INPUT@">ln -s '$input_file' input.xlsx &amp;&amp;</token>
+    <xml name="faire_input">
+        <param name="input_file" type="data" format="xlsx" label="FAIRe metadata workbook"
+            help="Excel workbook with projectMetadata, sampleMetadata and experimentRunMetadata sheets, for example a FAIRe-ator template filled in with your data. Field names must be on row 3 of the sample and run sheets. Both the FAIRe layout (assay1, assay2 ... columns, as FAIRe-ator writes) and the FAIRe-NOAA layout are accepted."/>
+    </xml>
+    <xml name="organism">
+        <conditional name="organism">
+            <param name="organism_select" type="select" label="Organism for samples with none in the workbook"
+                help="NCBI records environmental samples under a metagenome name. FAIRe has no organism field, so workbooks made by FAIRe-ator leave it out. Values already in an organism column are kept.">
+                <option value="marine metagenome" selected="true">marine metagenome</option>
+                <option value="seawater metagenome">seawater metagenome</option>
+                <option value="freshwater metagenome">freshwater metagenome</option>
+                <option value="aquatic metagenome">aquatic metagenome</option>
+                <option value="estuary metagenome">estuary metagenome</option>
+                <option value="marine sediment metagenome">marine sediment metagenome</option>
+                <option value="freshwater sediment metagenome">freshwater sediment metagenome</option>
+                <option value="soil metagenome">soil metagenome</option>
+                <option value="metagenome">metagenome</option>
+                <option value="other">Other NCBI organism name</option>
+            </param>
+            <when value="marine metagenome"/>
+            <when value="seawater metagenome"/>
+            <when value="freshwater metagenome"/>
+            <when value="aquatic metagenome"/>
+            <when value="estuary metagenome"/>
+            <when value="marine sediment metagenome"/>
+            <when value="freshwater sediment metagenome"/>
+            <when value="soil metagenome"/>
+            <when value="metagenome"/>
+            <when value="other">
+                <param name="organism_name" type="text" value="" label="Organism name"
+                    help="A scientific name from NCBI Taxonomy, for example 'lake water metagenome'. Search at https://www.ncbi.nlm.nih.gov/taxonomy">
+                    <validator type="regex" message="Use letters, digits, spaces, '.', '-' and '_' only">^[A-Za-z0-9][A-Za-z0-9 ._-]*$</validator>
+                </param>
+            </when>
+        </conditional>
+    </xml>
+    <token name="@ORGANISM@"><![CDATA[
+    #if $organism.organism_select == 'other':
+        --organism '$organism.organism_name'
+    #else:
+        --organism '$organism.organism_select'
+    #end if
+    ]]></token>
+    <xml name="runs_values" tokens="field,example">
+        <param name="runs_values" type="text" value="" label="@FIELD@ values"
+            help="Comma-separated, as written in experimentRunMetadata, for example @EXAMPLE@">
+            <validator type="regex" message="Enter one or more values separated by commas">^[^,\t]+( *, *[^,\t]+)*$</validator>
+        </param>
+    </xml>
+    <xml name="outputs_common">
+        <data name="config" format="yaml" label="${tool.name} on ${on_string}: config"/>
+        <data name="log" format="txt" label="${tool.name} on ${on_string}: log"/>
+    </xml>
+    <xml name="citations">
+        <citations>
+            <citation type="doi">10.1002/edn3.70100</citation>
+        </citations>
+    </xml>
+    <xml name="creator">
+        <creator>
+            <organization name="NOAA 'Omics, AOML (FAIRe2NCBI developers)" url="https://github.com/aomlomics/FAIRe2NCBI"/>
+            <person givenName="Oliver" familyName="Berry"/>
+        </creator>
+    </xml>
+    <token name="@HELP_LAYOUT@"><![CDATA[
+**Workbook layout**
+
+FAIRe2NCBI was written for the FAIRe-NOAA layout, where each assay has a projectMetadata column
+named after it. Workbooks from FAIRe-ator use columns called assay1, assay2 ... (or project_level
+for a single assay). The tool relabels those columns by their assay_name first, so both layouts
+work. The log records what was relabelled.
+    ]]></token>
+    <token name="@HELP_FOOTER@"><![CDATA[
+-----
+
+**Rerunning outside Galaxy**
+
+The **config** output holds every answer the tool gave to FAIRe2NCBI's questions. Run the upstream
+script with ``--config_file`` and the same answers are used. The comments at the top of the file
+list the changes the tool made to a copy of the workbook first; make the same changes for a local
+run to give the same result.
+
+-----
+
+**Credits**
+
+This tool runs `FAIRe2NCBI <https://github.com/aomlomics/FAIRe2NCBI>`_ (CC0) from NOAA 'Omics,
+AOML, through a small Galaxy driver that answers its questions from the form and checks the
+result. The FAIRe checklist is described in Takahashi et al. (2025) *Environmental DNA* 7: e70100. The Galaxy tool was written by Oliver Berry (CSIRO), with Claude (Anthropic).
+    ]]></token>
+</macros>

@@ -1,0 +1,518 @@
+"""
+Simple HTML Reporter for edna2obis
+Uses only built-in Python libraries for cross-platform compatibility
+"""
+import os
+import datetime
+import webbrowser
+from pathlib import Path
+
+
+def _normalize_message_key(message):
+    """Normalize message text so exact repeats can be safely deduplicated."""
+    return str(message).strip()
+
+
+def _logo_src_for_html(repo_root: Path, report_filename: str, image_basename: str) -> str:
+    """
+    Relative URL from the report file to images/ so the HTML works when opened from any
+    folder on any machine (same repo layout). Falls back to file:// if a relative path
+    cannot be formed (e.g. report and repo on different Windows drives).
+    """
+    logo_abs = (repo_root / "images" / image_basename).resolve()
+    report_dir = Path(report_filename).expanduser().resolve().parent
+    try:
+        rel = os.path.relpath(str(logo_abs), str(report_dir))
+    except ValueError:
+        return logo_abs.as_uri()
+    return rel.replace("\\", "/")
+
+
+class HTMLReporter:
+    def __init__(self, filename="edna2obis_report.html", run_name=None, dwc_core_type="occurrence"):
+        self.filename = filename
+        self.run_name = run_name
+        self.dwc_core_type = dwc_core_type
+        self.sections = []
+        self.status = "RUNNING"
+        self.start_time = datetime.datetime.now()
+        self.error_message = None
+        self.warnings = [] # To track warning messages
+        self._seen_warning_keys = set()
+        self._seen_error_keys = set()
+
+    def _core_type_value(self):
+        core = str(self.dwc_core_type or "occurrence").strip().lower()
+        if core == "event":
+            return "Event Core"
+        return "Occurrence Core"
+        
+    def _get_status_color(self):
+        if self.status == "SUCCESS":
+            return "#28a745"  # Green
+        elif self.status == "FAILED":
+            return "#dc3545"  # Red
+        elif self.status == "WARNING":
+            # Treat WARNING runs as overall success for header coloring
+            return "#28a745"  # Green
+        else:
+            return "#6c757d"  # Grey for running or other states
+    
+    def add_section(self, title, level=2):
+        """Add a section header"""
+        self.sections.append({
+            'type': 'section',
+            'content': f"<h{level}>{title}</h{level}>"
+        })
+    
+    def add_text(self, text):
+        """Add plain text"""
+        self.sections.append({
+            'type': 'text',
+            'content': f"<p>{text}</p>"
+        })
+    
+    def add_list(self, items, title=None):
+        """Add a list of items"""
+        content = ""
+        if title:
+            content += f"<h4>{title}</h4>"
+        content += "<ul>"
+        for item in items:
+            content += f"<li>{item}</li>"
+        content += "</ul>"
+        
+        self.sections.append({
+            'type': 'list',
+            'content': content
+        })
+    
+    def add_dataframe(self, df, title=None, max_rows=10):
+        """Add a pandas DataFrame as HTML table"""
+        content = ""
+        if title:
+            content += f"<h4>{title}</h4>"
+        
+        # Show shape info
+        content += f"<p><strong>Shape:</strong> {df.shape[0]:,} rows × {df.shape[1]} columns</p>"
+        
+        # Convert DataFrame to HTML, limiting rows
+        df_display = df.head(max_rows) if len(df) > max_rows else df
+        table_html = df_display.to_html(classes="table table-striped", escape=False)
+        
+        if len(df) > max_rows:
+            content += f"<p><em>Showing first {max_rows} rows of {len(df):,} total rows</em></p>"
+        
+        # Wrap table in scrollable container with scroll hint
+        scroll_hint = '<p><small><em>Tip: Scroll horizontally if table extends beyond view</em></small></p>' if df.shape[1] > 6 else ''
+        content += f'<div class="table-container">{table_html}</div>{scroll_hint}'
+        
+        self.sections.append({
+            'type': 'dataframe',
+            'content': content
+        })
+
+    def add_location_map(self, df, lat_col="decimalLatitude", lon_col="decimalLongitude"):
+        """
+        Preview unique sample coordinates on a Leaflet map.
+
+        Occurrence rows repeat the same station once per taxon, so points are
+        grouped by coordinate first. Leaflet and the cluster plugin are loaded
+        from a CDN when the report is opened, which keeps them out of this repo.
+        """
+        import json
+        import html as html_lib
+        import pandas as pd
+
+        if df is None or lat_col not in getattr(df, "columns", []) or lon_col not in df.columns:
+            self.add_text("Sample location map skipped: decimalLatitude and decimalLongitude were not both present.")
+            return
+
+        frame = pd.DataFrame({
+            lat_col: pd.to_numeric(df[lat_col], errors="coerce"),
+            lon_col: pd.to_numeric(df[lon_col], errors="coerce"),
+        })
+        if "locality" in df.columns:
+            frame["locality"] = df["locality"].values
+
+        frame = frame.dropna(subset=[lat_col, lon_col])
+        frame = frame[frame[lat_col].between(-90, 90) & frame[lon_col].between(-180, 180)]
+        if frame.empty:
+            self.add_text("Sample location map skipped: no usable decimalLatitude / decimalLongitude values.")
+            return
+
+        if "locality" in frame.columns:
+            grouped = frame.groupby([lat_col, lon_col], as_index=False).agg(
+                n=(lat_col, "size"),
+                locality=("locality", "first"),
+            )
+        else:
+            grouped = frame.groupby([lat_col, lon_col], as_index=False).agg(n=(lat_col, "size"))
+
+        points = []
+        for row in grouped.itertuples(index=False):
+            point = {
+                "lat": round(float(getattr(row, lat_col)), 6),
+                "lon": round(float(getattr(row, lon_col)), 6),
+                "n": int(row.n),
+            }
+            if "locality" in grouped.columns:
+                loc = getattr(row, "locality")
+                if pd.notna(loc) and str(loc).strip():
+                    point["locality"] = html_lib.escape(str(loc).strip())
+            points.append(point)
+
+        n_places = len(points)
+        n_records = int(grouped["n"].sum())
+        place_word = "location" if n_places == 1 else "locations"
+        record_word = "occurrence record" if n_records == 1 else "occurrence records"
+        summary = f"{n_places} unique {place_word} across {n_records:,} {record_word}."
+        # json.dumps handles quotes; escaping "<" keeps a locality from closing the script tag.
+        payload = json.dumps(points).replace("<", "\\u003c")
+        map_id = f"edna-location-map-{len(self.sections)}"
+        # Plain string, not an f-string: the JavaScript below has its own braces.
+        content = """
+<h4>Sample locations</h4>
+<p>__SUMMARY__ A single station is drawn as a circle of 1, and nearby stations group into larger circles as you zoom out. The ocean basemap loads when this report is opened with internet access.</p>
+<div id="__MAP_ID__" style="height: 420px; margin: 10px 0 16px 0; border: 1px solid #ddd; border-radius: 4px;"></div>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script>
+window.addEventListener("load", function () {
+  if (typeof L === "undefined" || typeof L.markerClusterGroup !== "function") {
+    var el = document.getElementById("__MAP_ID__");
+    if (el) el.textContent = "Map could not load. Open this report with internet access to fetch the basemap.";
+    return;
+  }
+  var points = __POINTS__;
+  var map = L.map("__MAP_ID__", { maxZoom: 13 });
+  // Esri tile order is row/column, so this is {z}/{y}/{x}, not the OSM {z}/{x}/{y}.
+  // The reference layer adds sea names and depth labels on top of the bathymetry.
+  L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}", {
+    maxZoom: 13,
+    attribution: "Esri, Garmin, GEBCO, NOAA NGDC, and other contributors"
+  }).addTo(map);
+  L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}", {
+    maxZoom: 13
+  }).addTo(map);
+  // singleMarkerMode draws a lone station with the same circle as a cluster, labeled 1.
+  var markers = L.markerClusterGroup({ singleMarkerMode: true });
+  points.forEach(function (p) {
+    var marker = L.marker([p.lat, p.lon]);
+    var label = p.n + " occurrence record" + (p.n === 1 ? "" : "s");
+    if (p.locality) label = p.locality + "<br>" + label;
+    label += "<br>" + p.lat + ", " + p.lon;
+    marker.bindPopup(label);
+    markers.addLayer(marker);
+  });
+  map.addLayer(markers);
+  map.fitBounds(markers.getBounds().pad(0.2), {maxZoom: 8, padding: [20, 20]});
+});
+</script>
+""".replace("__POINTS__", payload).replace("__MAP_ID__", map_id).replace("__SUMMARY__", summary)
+
+        self.sections.append({
+            'type': 'map',
+            'content': content
+        })
+    
+    def add_success(self, message):
+        """Add a success message"""
+        self.sections.append({
+            'type': 'success',
+            'content': f'<div class="alert alert-success">{message}</div>'
+        })
+    
+    def add_warning(self, message):
+        """Add a warning message and track it"""
+        warning_key = _normalize_message_key(message)
+        if warning_key in self._seen_warning_keys:
+            return
+        self._seen_warning_keys.add(warning_key)
+        self.warnings.append(message)
+        self.sections.append({
+            'type': 'warning',
+            'content': f'<div class="alert alert-warning"><strong>WARNING:</strong> {message}</div>'
+        })
+    
+    def add_error(self, message):
+        """Add an error message and automatically set report status to FAILED"""
+        self.status = "FAILED"  # Automatically mark the report as failed
+        error_key = _normalize_message_key(message)
+        if error_key in self._seen_error_keys:
+            return
+        self._seen_error_keys.add(error_key)
+        self.error_message = message
+        self.sections.append({
+            'type': 'error',
+            'content': f'<div class="alert alert-danger"><strong>ERROR:</strong> {message}</div>'
+        })
+    
+    def add_text_with_submission_logos(self, text):
+        """Add text (logos are now in header, so this just adds styled text)"""
+        content = f"""
+        <p style="font-size: 18px; color: #495057; margin-bottom: 25px; font-weight: 500;">{text}</p>
+        """
+        self.sections.append({
+            'type': 'text_with_logos',
+            'content': content
+        })
+    
+    def update_dataframe_from_file(self, title_identifier, filepath):
+        """
+        Find a previously added dataframe by its title and update it by re-reading from a file.
+        This is crucial for refreshing data in the report after it's been modified on disk.
+        """
+        import pandas as pd
+        
+        found_and_updated = False
+        for section in self.sections:
+            # Check if the section is a dataframe and if its title contains the identifier
+            if section['type'] == 'dataframe' and title_identifier in section.get('content', ''):
+                
+                print(f"Found dataframe section '{title_identifier}' in report. Re-reading from {filepath}...")
+                
+                # Re-read the dataframe from the provided filepath
+                try:
+                    if filepath.lower().endswith('.xlsx'):
+                        from taxonomic_alignment.taxa_assignment_info_export import SHEET_DATA
+                        df = pd.read_excel(
+                            filepath, sheet_name=SHEET_DATA, engine='openpyxl'
+                        )
+                    else:
+                        df = pd.read_csv(filepath)
+                    
+                    # Re-create the HTML content for this section, just like in add_dataframe
+                    # This assumes the title is in an h4 tag from the original add_dataframe call
+                    title_html = section['content'].split("</h4>")[0] + "</h4>"
+                    
+                    new_content = title_html
+                    new_content += f"<p><strong>Shape:</strong> {df.shape[0]:,} rows × {df.shape[1]} columns</p>"
+                    
+                    # Always limit to 20 rows maximum for display
+                    if len(df) > 20:
+                        df_display = df.head(20)
+                        table_html = df_display.to_html(classes="table table-striped", escape=False)
+                        new_content += f"<p><em>Showing first 20 rows of {len(df):,} total rows</em></p>"
+                    else:
+                        table_html = df.to_html(classes="table table-striped", escape=False)
+                    
+                    scroll_hint = '<p><small><em>Tip: Scroll horizontally if table extends beyond view</em></small></p>' if df.shape[1] > 6 else ''
+                    new_content += f'<div class="table-container">{table_html}</div>{scroll_hint}'
+                    
+                    # Update the section's content in place
+                    section['content'] = new_content
+                    print(f"Successfully updated report section for '{title_identifier}'.")
+                    found_and_updated = True
+                    break # Stop after finding and updating the first match
+                
+                except Exception as e:
+                    # If re-reading fails, add a warning in the report instead of crashing
+                    error_html = f'<div class="alert alert-danger"><strong>ERROR:</strong> Could not re-read and update report for {title_identifier}. Error: {e}</div>'
+                    section['content'] += error_html
+                    print(f"Failed to update report section: {e}")
+
+        if not found_and_updated:
+            print(f"Warning: Did not find a report section to update for '{title_identifier}'.")
+
+    def set_success(self):
+        """Mark the report as successful (only if not already failed)"""
+        if self.status != "FAILED":
+            self.status = "SUCCESS"
+            
+    def set_warning(self):
+        """Mark the report with a warning status (only if not already failed)"""
+        if self.status != "FAILED":
+            self.status = "WARNING"
+    
+    def set_failed(self, error_message=None):
+        """Mark the report as failed"""
+        self.status = "FAILED"
+        if error_message:
+            self.error_message = error_message
+    
+    def set_status(self, status, error_message=None):
+        """Set the status (SUCCESS or FAILED) with optional error message"""
+        # Don't allow overriding FAILED status with SUCCESS or WARNING
+        if self.status == "FAILED" and status in ["SUCCESS", "WARNING"]:
+            return # Keep the FAILED status
+            
+        self.status = status
+        if error_message:
+            self.error_message = error_message
+            self.add_error(error_message)
+    
+    def open_in_browser(self):
+        """Open the HTML report in browser (writes file first)"""
+        self._write_html()
+        self._open_in_browser()
+    
+    def write_html(self):
+        """Public method to write HTML (calls private method)"""
+        self._write_html()
+    
+    def save_and_open(self):
+        """Save the HTML file and open it in browser"""
+        self._write_html()
+        self._open_in_browser()
+    
+    def save(self):
+        """Just save the HTML file without opening"""
+        self._write_html()
+    
+    def _write_html(self):
+        """Write the complete HTML file"""
+        end_time = datetime.datetime.now()
+        duration = end_time - self.start_time
+        repo_root = Path(__file__).resolve().parents[1]
+        aoml_logo = _logo_src_for_html(repo_root, self.filename, "aoml_logo.png")
+        noaa_omics_logo = _logo_src_for_html(repo_root, self.filename, "noaa_omics_logo.png")
+        obis_logo = _logo_src_for_html(repo_root, self.filename, "obis_logo.png")
+        gbif_logo = _logo_src_for_html(repo_root, self.filename, "gbif_logo.png")
+        
+        # Build status header HTML
+        if self.status == "WARNING":
+            # Show a green success bar with a separate centered yellow badge for warnings
+            warning_count = len(self.warnings)
+            status_html = (
+                '<div class="status">'
+                'SUCCESS'
+                '</div>'
+                f'<div style="text-align:center;margin:10px 0;"><div class="alert alert-warning" style="display:inline-block;width:auto;padding:12px 24px;font-size:20px;font-weight:bold;">with WARNINGS ({warning_count})</div></div>'
+            )
+        else:
+            status_html = f"<div class=\"status\">{self.status}</div>"
+
+        html_content = f"""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>edna2obis Report</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; margin: 20px; background-color: #f8f9fa; }}
+        .container {{ max-width: 1200px; margin: 0 auto; background-color: white; padding: 40px; border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); border: 1px solid #e9ecef; }}
+        .status {{ padding: 20px; margin-bottom: 20px; border-radius: 5px; text-align: center; font-size: 24px; font-weight: bold; color: white; background-color: {self._get_status_color()}; }}
+        .alert {{ padding: 15px; margin: 10px 0; border-radius: 4px; }}
+        .alert-success {{ background-color: #d4edda; border-color: #c3e6cb; color: #155724; }}
+        .alert-warning {{ background-color: #fff3cd; border-color: #ffeaa7; color: #856404; }}
+        .alert-danger {{ background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }}
+        .table-container {{ overflow-x: auto; margin: 10px 0; max-width: 100%; border: 1px solid #ddd; border-radius: 4px; }}
+        .table-container::-webkit-scrollbar {{ height: 8px; }}
+        .table-container::-webkit-scrollbar-track {{ background: #f1f1f1; border-radius: 4px; }}
+        .table-container::-webkit-scrollbar-thumb {{ background: #c1c1c1; border-radius: 4px; }}
+        .table-container::-webkit-scrollbar-thumb:hover {{ background: #a8a8a8; }}
+        .table {{ width: 100%; border-collapse: collapse; margin: 0; min-width: 600px; }}
+        .table th, .table td {{ padding: 8px 12px; text-align: left; border: 1px solid #ddd; white-space: nowrap; }}
+        .table-striped tr:nth-child(even) {{ background-color: #f2f2f2; }}
+        .table th {{ background-color: #e9ecef; font-weight: bold; }}
+        .metadata {{ background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; }}
+        h1 {{ color: #212529; font-size: 2.5rem; font-weight: 700; text-align: center; margin: 30px 0 20px 0; text-shadow: 0 1px 2px rgba(0,0,0,0.1); }}
+        h2, h3, h4 {{ color: #343a40; }}
+        pre {{ background-color: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }}
+        .header-section {{ text-align: center; margin: 30px 0 50px 0; }}
+        .logo-bar {{ display: flex; justify-content: center; align-items: center; gap: 40px; margin: 25px 0; opacity: 0.8; }}
+        .logo-bar img {{ height: 60px; object-fit: contain; }}
+        .run-name-display {{ margin: 14px 0; }}
+        .run-name-display h2 {{ margin: 0; font-size: 2.25rem; font-weight: 400; color: #343a40; }}
+        .run-name-display h2 strong {{ font-weight: 700; }}
+        .warnings-top {{ margin: 20px 0 30px 0; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        {status_html}
+        
+        <div class="header-section">
+            <h1>edna2obis Processing Report</h1>
+            <div class="logo-bar">
+                <img src="{aoml_logo}" alt="AOML">
+                <img src="{noaa_omics_logo}" alt="NOAA Omics">
+                <img src="{obis_logo}" alt="OBIS">
+                <img src="{gbif_logo}" alt="GBIF">
+            </div>
+        </div>
+        
+        <div class="metadata">
+            <h3>Run Information</h3>
+            <div class="run-name-display"><h2>Darwin Core Archive type: <strong>{self._core_type_value()}</strong></h2></div>
+            {f'<div class="run-name-display"><h2>Run name: <strong>{self.run_name}</strong></h2></div>' if self.run_name else ''}
+            <p>Start Time: <strong>{self.start_time.strftime('%Y-%m-%d %H:%M:%S')}</strong></p>
+            <p>End Time: <strong>{end_time.strftime('%Y-%m-%d %H:%M:%S')}</strong></p>
+            <p>Duration: <strong>{str(duration).split('.')[0]}</strong></p>
+            <p>Report File: <strong>{self.filename}</strong></p>
+        </div>
+"""
+        
+        # Insert aggregated warnings near the top (before other sections)
+        if self.warnings:
+            html_content += """
+        <div class="warnings-top">
+            <h3>Warnings</h3>
+"""
+            for w in self.warnings:
+                html_content += f"            <div class=\"alert alert-warning\"><strong>WARNING:</strong> {w}</div>\n"
+            html_content += """
+        </div>
+"""
+        
+        # Add all sections
+        for section in self.sections:
+            html_content += section['content'] + "\n"
+        
+        html_content += """
+    </div>
+</body>
+</html>
+"""
+        
+        with open(self.filename, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+    
+    def _open_in_browser(self):
+        """Open the HTML file in the default browser"""
+        try:
+            # Convert to absolute path for cross-platform compatibility
+            file_path = Path(self.filename).resolve()
+            webbrowser.open(f"file://{file_path}")
+        except Exception as e:
+            print(f"Could not open browser automatically: {e}")
+            print(f"Please open {self.filename} manually in your browser")
+
+
+# Simple test function
+def test_reporter():
+    """Test the HTML reporter with sample content"""
+    reporter = HTMLReporter("test_report.html")
+    
+    reporter.add_section("Testing HTML Reporter", level=1)
+    reporter.add_text("This is a test of the HTML reporting system.")
+    
+    # Test with a sample DataFrame
+    import pandas as pd
+    test_df = pd.DataFrame({
+        'column1': ['A', 'B', 'C', 'D', 'E'],
+        'column2': [1, 2, 3, 4, 5],
+        'column3': ['test', 'data', 'for', 'html', 'display']
+    })
+    
+    reporter.add_dataframe(test_df, "Sample DataFrame")
+    
+    # Test different message types
+    reporter.add_success("This is a success message")
+    reporter.add_warning("This is a warning message")
+    
+    # Test list
+    reporter.add_list(['Item 1', 'Item 2', 'Item 3'], "Sample List")
+    
+    reporter.set_success()
+    reporter.save_and_open()
+    print("Test report created: test_report.html")
+
+
+if __name__ == "__main__":
+    test_reporter() 

@@ -1,0 +1,5 @@
+verbatimMeasurementType	measurementType	measurementValue	measurementUnit	measurementTypeID	measurementValueID	measurementUnitID	measurementRemarks
+temp	Water temperature		degree Celsius	http://vocab.nerc.ac.uk/collection/P07/current/CFSN0335/		https://vocab.nerc.ac.uk/collection/P06/current/UPAA/	
+chlorophyll	Chlorophyll fluorescence		micrograms per litre	http://vocab.nerc.ac.uk/collection/P01/current/CPHLMOD2/		http://vocab.nerc.ac.uk/collection/P06/current/UGPL/	Collected by WetLabs WetStar Fluorometer
+salinity	Salinity		psu	http://vocab.nerc.ac.uk/collection/P01/current/ODSDM021/		http://vocab.nerc.ac.uk/collection/P06/current/PSUX/	
+diss_oxygen	Dissolved oxygen		provided			http://vocab.nerc.ac.uk/collection/P06/current/UMGL/	

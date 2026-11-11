@@ -1,0 +1,12 @@
+[
+ {
+  "column": "Site No.",
+  "term": "samp_name",
+  "reason": "Each row has a unique site number that identifies the sample."
+ },
+ {
+  "column": "Subregion",
+  "term": "geo_loc_name",
+  "reason": "The values are regional place names where samples were collected."
+ }
+]

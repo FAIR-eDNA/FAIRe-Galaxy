@@ -1,0 +1,162 @@
+[
+ {
+  "column": "code_spygen",
+  "term": "samp_name",
+  "reason": "Unique codes per row identify each sample."
+ },
+ {
+  "column": "code_explo",
+  "term": null,
+  "reason": "Short exploration codes are not clearly a sample or library identifier."
+ },
+ {
+  "column": "station",
+  "term": null,
+  "reason": "Station names are not a duration or any listed environmental term."
+ },
+ {
+  "column": "country",
+  "term": "geo_loc_name",
+  "reason": "Country names give the geographic origin of the sample."
+ },
+ {
+  "column": "time_start",
+  "term": "verbatimEventTime",
+  "reason": "Fractions of a day are the local time of collection."
+ },
+ {
+  "column": "time_end",
+  "term": null,
+  "reason": "End time of the event; no candidate holds an end time."
+ },
+ {
+  "column": "duration_min",
+  "term": "eventDurationValue",
+  "reason": "Numbers of minutes give the duration of the sampling event."
+ },
+ {
+  "column": "gps_start",
+  "term": null,
+  "reason": "These look like GPS waypoint numbers, which no candidate holds."
+ },
+ {
+  "column": "latitude_start",
+  "term": "decimalLatitude",
+  "reason": "Decimal degrees of latitude."
+ },
+ {
+  "column": "longitude_start",
+  "term": "decimalLongitude",
+  "reason": "Decimal degrees of longitude."
+ },
+ {
+  "column": "gps_b",
+  "term": null,
+  "reason": "GPS unit waypoint codes match no candidate."
+ },
+ {
+  "column": "lat_gps_b",
+  "term": null,
+  "reason": "Secondary GPS unit latitude with corrupted signs; not the main sample coordinate."
+ },
+ {
+  "column": "long_gps_b",
+  "term": null,
+  "reason": "Secondary GPS unit longitude with corrupted signs; not the main sample coordinate."
+ },
+ {
+  "column": "gps_c",
+  "term": null,
+  "reason": "GPS unit waypoint codes match no candidate."
+ },
+ {
+  "column": "lat_gps_c",
+  "term": null,
+  "reason": "Secondary GPS unit latitude with corrupted signs; not the main sample coordinate."
+ },
+ {
+  "column": "long_gps_c",
+  "term": null,
+  "reason": "Secondary GPS unit longitude with corrupted signs; not the main sample coordinate."
+ },
+ {
+  "column": "gps_d",
+  "term": null,
+  "reason": "GPS unit waypoint codes match no candidate."
+ },
+ {
+  "column": "lat_gps_d",
+  "term": null,
+  "reason": "Secondary GPS unit latitude with corrupted signs; not the main sample coordinate."
+ },
+ {
+  "column": "long_gps_d",
+  "term": null,
+  "reason": "Secondary GPS unit longitude with corrupted signs; not the main sample coordinate."
+ },
+ {
+  "column": "gps_end",
+  "term": null,
+  "reason": "These look like GPS waypoint numbers, which no candidate holds."
+ },
+ {
+  "column": "latitude_end",
+  "term": null,
+  "reason": "End-of-sampling latitude is not the sample location term."
+ },
+ {
+  "column": "longitude_end",
+  "term": null,
+  "reason": "End-of-sampling longitude is not the sample location term."
+ },
+ {
+  "column": "filter",
+  "term": "size_frac",
+  "reason": "Values of 0.2 to 0.45 are filter pore sizes in micrometres."
+ },
+ {
+  "column": "gps_owner",
+  "term": null,
+  "reason": "Names of the GPS owner match no candidate."
+ },
+ {
+  "column": "longitude_start_clean",
+  "term": "decimalLongitude",
+  "reason": "Cleaned decimal degrees of longitude."
+ },
+ {
+  "column": "latitude_start_clean",
+  "term": "decimalLatitude",
+  "reason": "Cleaned decimal degrees of latitude."
+ },
+ {
+  "column": "site35",
+  "term": null,
+  "reason": "Site labels do not match any candidate."
+ },
+ {
+  "column": "site30",
+  "term": null,
+  "reason": "Site labels do not match any candidate."
+ },
+ {
+  "column": "site25",
+  "term": null,
+  "reason": "Site labels do not match any candidate."
+ },
+ {
+  "column": "site20",
+  "term": null,
+  "reason": "Site labels do not match any candidate."
+ },
+ {
+  "column": "site10",
+  "term": null,
+  "reason": "Site labels do not match any candidate."
+ },
+ {
+  "column": "site5",
+  "term": null,
+  "reason": "Site labels do not match any candidate."
+ }
+]

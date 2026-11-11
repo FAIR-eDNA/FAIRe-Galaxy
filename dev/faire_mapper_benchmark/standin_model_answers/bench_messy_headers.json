@@ -1,0 +1,167 @@
+[
+ {
+  "column": "Thermos no.",
+  "term": null,
+  "reason": "Thermos number is a logistics field, not a thermocycler."
+ },
+ {
+  "column": "Boat name",
+  "term": null,
+  "reason": "Boat name is a logistics field."
+ },
+ {
+  "column": "Assay/primer set name",
+  "term": "assay_name",
+  "reason": "Values are concise assay identifiers."
+ },
+ {
+  "column": "Esky number",
+  "term": null,
+  "reason": "Esky number is a logistics field."
+ },
+ {
+  "column": "NCBI accession(s) / BioSample",
+  "term": "associatedSequences",
+  "reason": "Values are lists of NCBI SRA, BioSample and BioProject links."
+ },
+ {
+  "column": "Field sheet page",
+  "term": null,
+  "reason": "Field sheet page is an admin field."
+ },
+ {
+  "column": "units NO3",
+  "term": "nitrate_unit",
+  "reason": "NO3 is nitrate and the value is its unit."
+ },
+ {
+  "column": "Checked by",
+  "term": null,
+  "reason": "Checked by is an admin QA field."
+ },
+ {
+  "column": "Extraction method ref / URL",
+  "term": "nucl_acid_ext",
+  "reason": "Value links to the DNA extraction protocol."
+ },
+ {
+  "column": "temp degC (in situ)",
+  "term": "temp",
+  "reason": "In situ sample temperature in degrees Celsius."
+ },
+ {
+  "column": "Landowner contacted?",
+  "term": null,
+  "reason": "Landowner contact is an admin field."
+ },
+ {
+  "column": "Time in freezer before extraction",
+  "term": "samp_store_dur",
+  "reason": "ISO 8601 duration of storage before extraction."
+ },
+ {
+  "column": "Photo ID",
+  "term": null,
+  "reason": "Photo file IDs are not sample identifiers."
+ },
+ {
+  "column": "Gear used (Niskin, bucket etc.)",
+  "term": "samp_collect_device",
+  "reason": "Value names the device used to collect the sample."
+ },
+ {
+  "column": "Collector initials",
+  "term": "recordedBy",
+  "reason": "Initials of the people who collected the samples."
+ },
+ {
+  "column": "Archived to drive",
+  "term": null,
+  "reason": "Archived to drive is an admin field."
+ },
+ {
+  "column": "Collection protocol / SOP link",
+  "term": "samp_collect_method",
+  "reason": "Value links to the sampling protocol."
+ },
+ {
+  "column": "NO2 unit",
+  "term": null,
+  "reason": "NO2 is nitrite, and no nitrite unit term is among the candidates."
+ },
+ {
+  "column": "Tank/mesocosm? 1=yes",
+  "term": null,
+  "reason": "Tank or mesocosm flag, but no artificial-habitat term is among the candidates."
+ },
+ {
+  "column": "Stored at (°C) before filtering",
+  "term": "samp_store_temp",
+  "reason": "Temperature at which the sample was stored before filtering."
+ },
+ {
+  "column": "Cost code",
+  "term": null,
+  "reason": "Cost code is an admin field."
+ },
+ {
+  "column": "Permit holder",
+  "term": null,
+  "reason": "Permit holder is an admin field, not a data rights holder."
+ },
+ {
+  "column": "Weather notes",
+  "term": "samp_weather",
+  "reason": "Notes describe weather on the sampling day."
+ },
+ {
+  "column": "Amount into extraction (mL/mg)",
+  "term": "samp_vol_we_dna_ext",
+  "reason": "Amount of sample processed for DNA extraction."
+ },
+ {
+  "column": "Amount collected (L or g)",
+  "term": "samp_size",
+  "reason": "Amount of sample collected from the environment."
+ },
+ {
+  "column": "Freezer / box / shelf",
+  "term": "samp_store_loc",
+  "reason": "Freezer location where the samples were stored."
+ },
+ {
+  "column": "Data entered by",
+  "term": null,
+  "reason": "Data entered by is an admin field."
+ },
+ {
+  "column": "Bottom of sample depth range m",
+  "term": "maximumDepthInMeters",
+  "reason": "Bottom of the depth range is the greater depth in metres."
+ },
+ {
+  "column": "Extract freezer & box pos.",
+  "term": "dna_store_loc",
+  "reason": "Freezer location of the DNA extracts."
+ },
+ {
+  "column": "Invoice no.",
+  "term": null,
+  "reason": "Invoice number is an admin field."
+ },
+ {
+  "column": "GPS E (dd.ddddd)",
+  "term": "decimalLongitude",
+  "reason": "Values are decimal longitudes."
+ },
+ {
+  "column": "Processing notes (prefilter, filtration etc.)",
+  "term": "samp_mat_process",
+  "reason": "Value describes processing applied to the sample."
+ },
+ {
+  "column": "Who filtered",
+  "term": null,
+  "reason": "Who filtered is an admin field naming staff."
+ }
+]

@@ -1,0 +1,8 @@
+table	requests	answers_used	top1_before	top1_after	accepted_correct_before	accepted_correct_after	confirmed
+heldout_lab_a	23	23	0.9	0.957	0.983	1.0	10
+heldout_lab_b	25	25	0.9	0.943	1.0	1.0	12
+heldout_lab_c	23	23	0.914	0.957	0.982	1.0	10
+heldout_lab_c_messy_values	24	24	0.9	0.943	0.982	1.0	11
+bench_terse	32	32	0.814	0.914	0.979	1.0	18
+bench_messy_headers	33	33	0.814	0.886	0.978	1.0	18
+bench_no_headers	88	88	0.243	0.314	1.0	1.0	21

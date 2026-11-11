@@ -1,0 +1,163 @@
+<tool id="faire_primers_build" name="FAIRe mapper: build primer table" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="@PROFILE@" license="MIT">
+    <description>make or update a primer table for primer lookups</description>
+    <macros>
+        <import>macros.xml</import>
+        <import>faire_guide.xml</import>
+    </macros>
+    <expand macro="creator"/>
+    <expand macro="requirements"/>
+    <version_command>python '$__tool_directory__/faire_primers.py' --version</version_command>
+    <command detect_errors="exit_code"><![CDATA[
+#import re
+#set $names = []
+#set $labels = []
+#for $i, $s in enumerate($sources):
+    #set $ext = 'xlsx' if $s.ext == 'xlsx' else 'tsv'
+    ln -s '$s' 'source_${i}.${ext}' &&
+    #silent $names.append('source_%s.%s' % ($i, $ext))
+    #silent $labels.append($re.sub(r'[^A-Za-z0-9._ ()-]', '_', str($s.element_identifier)))
+#end for
+python '$__tool_directory__/faire_primers.py' build
+    #for $n in $names:
+        '$n'
+    #end for
+    #if $start.kind == 'bundled':
+        --base '$__tool_directory__/primers/faire_primers.tsv'
+    #elif $start.kind == 'own':
+        --base '$start.base'
+    #end if
+    --labels
+    #for $l in $labels:
+        '$l'
+    #end for
+    --output '$table'
+    --report '$problems'
+    ]]></command>
+    <inputs>
+        <param name="sources" type="data" format="xlsx,tabular" multiple="true" label="Primer sources"
+            help="Spreadsheets or TSVs with the columns of the bundled table; Tables S3 and S4 of Takahashi et al. 2023; or a sheet called 'Primer pairs' laid out as the bacteria and archaea register."/>
+        <conditional name="start">
+            <param name="kind" type="select" label="Add them to">
+                <option value="bundled" selected="true">The table that comes with the tool</option>
+                <option value="own">A primer table of my own</option>
+                <option value="none">Nothing: make a new table</option>
+            </param>
+            <when value="bundled"/>
+            <when value="own">
+                <param name="base" type="data" format="tabular" label="My primer table"/>
+            </when>
+            <when value="none"/>
+        </conditional>
+    </inputs>
+    <outputs>
+        <data name="table" format="tabular" label="${tool.name} on ${on_string}: primer table"/>
+        <data name="problems" format="tabular" label="${tool.name} on ${on_string}: problems found"/>
+    </outputs>
+    <tests>
+        <!-- Add the user's rows to the bundled table -->
+        <test expect_num_outputs="2">
+            <param name="sources" value="my_primers.tsv" ftype="tabular"/>
+            <conditional name="start">
+                <param name="kind" value="bundled"/>
+            </conditional>
+            <output name="table">
+                <assert_contents>
+                    <has_line_matching expression="^primer_pair_id\tassay_name\tassay_type\ttargetTaxonomicAssay\ttargetTaxonomicScope\ttarget_gene\t.*"/>
+                    <has_line_matching expression="^pp_35a388f277\tTestAssay\t.*"/>
+                    <has_text text="GTCGGTAAAACTCGTGCCAGC"/>
+                    <not_has_text text="BadRow"/>
+                </assert_contents>
+            </output>
+            <output name="problems">
+                <assert_contents>
+                    <has_line_matching expression="^my_primers.tsv row 3\tneeds a forward and a reverse IUPAC sequence$"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- A new table from a register spreadsheet and a TSV -->
+        <test expect_num_outputs="2">
+            <param name="sources" value="primer_register_small.xlsx,my_primers.tsv"/>
+            <conditional name="start">
+                <param name="kind" value="none"/>
+            </conditional>
+            <output name="table">
+                <assert_contents>
+                    <has_n_lines n="5"/>
+                    <has_line_matching expression="^pp_\w+\t515F-Y / 926R\tmetabarcoding\tBacteria \+ Archaea\tBacteria \+ Archaea\t16S rRNA \(SSU prokaryote\)\tV4-V5\t515F\tGTGYCAGCMGCCGCGGTAA\tParada\t926R\tCCGYCAATTYMTTTRAGTTT\t.*"/>
+                </assert_contents>
+            </output>
+            <output name="problems">
+                <assert_contents>
+                    <has_line_matching expression="^table\tforward primer name 515f is used for 2 different sequences$"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- A correction replaces the pair it corrects -->
+        <test expect_num_outputs="2">
+            <param name="sources" value="my_primers.tsv,primer_correction.tsv" ftype="tabular"/>
+            <conditional name="start">
+                <param name="kind" value="none"/>
+            </conditional>
+            <output name="table">
+                <assert_contents>
+                    <has_n_lines n="2"/>
+                    <has_text text="TTGCATGCATGCATGCAAT"/>
+                    <has_text text="replaces pp_35a388f277 (ACGTACGTACGTACGTAC / TTGCATGCATGCATGCAA)"/>
+                </assert_contents>
+            </output>
+        </test>
+    </tests>
+    <help><![CDATA[
+@EARLY_VERSION@
+**What it does**
+
+This tool makes a primer table for **FAIRe mapper: find primers**, or adds primers to an existing
+one. Use it to add your lab's own primers, newly published assays, or the other names your lab uses
+for primers, without waiting for a new version of the tool.
+
+-----
+
+**Inputs**
+
+- **Primer sources**, in any of these forms:
+
+  - a spreadsheet or TSV file with the same columns as the bundled table (to get these columns,
+    download the output of this tool). The columns are ``assay_name``, ``assay_type``,
+    ``targetTaxonomicAssay``, ``targetTaxonomicScope``, ``target_gene``, ``target_subfragment``,
+    ``pcr_primer_name_forward``, ``pcr_primer_forward``, ``pcr_primer_reference_forward``, the same
+    three for the reverse primer, ``ampliconSize``, ``bibliographicCitation``, ``other_names``
+    (other names, separated by ``;``), ``record_ids``, ``notes`` and ``source``. FAIRe term names
+    are used wherever FAIRe has a term, and ``target_gene`` is written in the FAIRe vocabulary (for
+    example *12S rRNA (SSU mitochondria)*);
+  - Table S3 or S4 of Takahashi et al. 2023, as published;
+  - a workbook with a sheet called *Primer pairs*, laid out like the bacteria and archaea register;
+  - a workbook with sheets called *targeted_assays* and *metabarcoding_assays*, in FAIRe terms,
+    laid out like the metazoan primer register.
+
+- **Add them to**: choose the bundled table, a table of your own, or nothing.
+
+When two rows have the same two sequences, the tool merges them. The new row's values replace the
+old ones wherever it has them, the other names are kept as aliases, and both sources are listed.
+
+To correct a sequence, add a ``replaces`` column that holds the old pair's ``primer_pair_id``. The
+tool then removes the old pair and records the change in ``notes``. To remove a pair that was
+entered in error, give its ``primer_pair_id`` in ``replaces`` and leave both sequences empty. The
+removal is then listed in **problems found**.
+
+**Outputs**
+
+- **primer table**: the combined table, with one row per primer pair. Each pair has a stable
+  ``primer_pair_id``, made from its two sequences.
+- **problems found**: the rows that were left out, and any primer names that are used for different
+  sequences. Rows are left out when their sequences are not plain IUPAC code, for example sequences
+  with adapters or modifications, or two primers in one cell. Fix these in your source and run the
+  tool again.
+
+@HELP_INPUTS@
+
+@HELP_FAIRE_GUIDE@
+
+@HELP_ABOUT@
+    ]]></help>
+    <expand macro="citations"/>
+</tool>

@@ -1,0 +1,13 @@
+name: faire2mdt
+owner: CHANGE_ME
+description: Format FAIRe eDNA metabarcoding data for GBIF's Metabarcoding Data Toolkit (MDT)
+long_description: |
+  Galaxy wrapper for FAIRe2MDT (https://github.com/FAIR-eDNA/FAIRe2MDT), which converts a FAIR
+  eDNA (FAIRe) metadata workbook with its OTU and taxonomy tables into the Excel workbook taken by
+  GBIF's Metabarcoding Data Toolkit, one assay and sequencing run at a time.
+homepage_url: https://github.com/FAIR-eDNA/FAIRe2MDT
+remote_repository_url: https://github.com/FAIR-eDNA/FAIRe-Galaxy/tree/main/tools/faire2mdt
+type: unrestricted
+categories:
+  - Ecology
+  - Convert Formats

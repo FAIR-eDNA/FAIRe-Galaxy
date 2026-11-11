@@ -1,0 +1,27 @@
+[
+ {
+  "column": "EMu registration number",
+  "term": null,
+  "reason": "The column holds museum voucher registration numbers for archived filters, which no candidate describes."
+ },
+ {
+  "column": "Amount filtered ",
+  "term": "samp_size_unit",
+  "reason": "The values give a filtered volume with a litre unit; of the candidates only the sample size unit fits."
+ },
+ {
+  "column": "Filter size",
+  "term": null,
+  "reason": "The column gives filter pore size, and no candidate covers pore size."
+ },
+ {
+  "column": "Sampling country",
+  "term": "geo_loc_name",
+  "reason": "The column gives the country where the sample was collected."
+ },
+ {
+  "column": "Sampling Location",
+  "term": "geo_loc_name",
+  "reason": "The column gives the place where the water was collected."
+ }
+]

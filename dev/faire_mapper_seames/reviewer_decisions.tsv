@@ -1,0 +1,9 @@
+# A person's review of the crosswalk for the 10 L table (with the column prepare_table.py adds), as
+# the guide describes: confirm a match, change its term, or delete the row so the column is not matched.
+# action: confirm | delete | term:<FAIRe term> | add:<FAIRe term> (a second row for the same column)
+column	action	reason
+Control_Neg	confirm	Y marks the field controls: samp_category negative control, N sample
+sample_title	delete	a field label for each sample, not the sampling device
+replicate	delete	repeats sample_title; not a replicate number
+bioproject_accession	delete	the BioProject goes in associatedSequences, from the library table
+Location	delete	station names, not where samples were stored

@@ -1,0 +1,21 @@
+column	term	also_acceptable	note
+ID	samp_name	lib_id	Unique sample code with assay suffix '_18Suni'.
+Bore		geo_loc_name	Bore (well) name; add as locality to geo_loc_name (Location is the term); also holds control labels (EC, Blank, POS).
+Sample_year	eventDate	verbatimEventDate	Year only (2020, 2021); ISO 8601 allows a year-truncated date; NA for lab controls.
+Location	geo_loc_name		Island name; format as 'Australia: Western Australia, Barrow Island' plus the bore.
+Volume	samp_vol_we_dna_ext	samp_size	Water volume filtered in mL (up to 1000 from a 1 L bailer); set unit mL; NA for sediment and lab controls.
+Type	env_medium	neg_cont_type;pos_cont_type;samp_category	GW -> ground water [ENVO:01001004], Sediment -> sediment [ENVO:00002007]; control labels go to neg_cont_type or pos_cont_type.
+Substrate	samp_collect_method	env_medium;samp_collect_device;minimumDepthInMeters	Shallow = plastic bailer in upper 2 m, Deeper = steel bailer at bore bottom, plus Sediment, Passive and control labels.
+Control	samp_category		Sample -> 'sample'; Control -> 'negative control' (the Positive row -> 'positive control'); Mock -> 'positive control'.
+well_abundance			Haul-net stygofauna abundance per bore; study result, not sample metadata.
+well_taxon_richness			Haul-net stygofauna taxon richness per bore; study result, not sample metadata.
+Sequence_depth	output_read_count	input_read_count	Reads per sample, probably after filtering; experimentRunMetadata.
+Extended_scope			Codes 0/1/2 for the before/after haul-net sampling test; study design variable.
+Latitude	decimalLatitude		Decimal latitude of the bore; datum not stated (check WGS84 vs GDA); NA for controls.
+Longitude	decimalLongitude		Decimal longitude of the bore; datum not stated (check WGS84 vs GDA); NA for controls.
+Depth	tot_depth_water_col	maximumDepthInMeters	Bore depth in m; water column depth = Depth minus SWL; also the sampling depth of 'Deeper' samples.
+SWL		tot_depth_water_col;minimumDepthInMeters	Standing water level in m below ground; combine with Depth for tot_depth_water_col and shallow sample depths.
+Casing_type			Bore casing material; no FAIRe term.
+Casing_diameter			Bore casing diameter (mm); no FAIRe term.
+Slot_orientation			Bore screen slot orientation; no FAIRe term.
+Slot_size			Bore screen slot size (mm); no FAIRe term.

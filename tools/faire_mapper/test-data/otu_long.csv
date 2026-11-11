@@ -1,0 +1,8 @@
+sample,ASV,sequence,taxonomy,reads,site_depth
+LIZ_01,asv_1,GACCCTATGGAGCTTTAGACACTAGGTTAACCGAATCTAACCGT,k__Animalia; p__Chordata; c__Actinopteri; o__Perciformes; f__Lutjanidae; g__Lutjanus; s__Lutjanus_carponotatus,1520,5
+LIZ_02,asv_1,GACCCTATGGAGCTTTAGACACTAGGTTAACCGAATCTAACCGT,k__Animalia; p__Chordata; c__Actinopteri; o__Perciformes; f__Lutjanidae; g__Lutjanus; s__Lutjanus_carponotatus,88,7
+LIZ_02,asv_2,GACCCTATGGAGCTTTAGACGCTAAGGTAGCCCAACCAGTTTCA,k__Animalia; p__Chordata; c__Actinopteri; o__Clupeiformes; f__Clupeidae; g__Sardinella; s__,412,7
+LIZ_03,asv_2,GACCCTATGGAGCTTTAGACGCTAAGGTAGCCCAACCAGTTTCA,k__Animalia; p__Chordata; c__Actinopteri; o__Clupeiformes; f__Clupeidae; g__Sardinella; s__,37,3
+LIZ_03,asv_3,GACCCTATGGAGCTTTAGATATTGGGCTAACCCAATCTTTCCGA,k__Animalia; p__Chordata; c__Mammalia; o__Primates; f__Hominidae; g__Homo; s__Homo_sapiens,5,3
+LIZ_FB,asv_3,GACCCTATGGAGCTTTAGATATTGGGCTAACCCAATCTTTCCGA,k__Animalia; p__Chordata; c__Mammalia; o__Primates; f__Hominidae; g__Homo; s__Homo_sapiens,12,0
+LIZ_FB,asv_3,GACCCTATGGAGCTTTAGATATTGGGCTAACCCAATCTTTCCGA,k__Animalia; p__Chordata; c__Mammalia; o__Primates; f__Hominidae; g__Homo; s__Homo_sapiens,1,0

@@ -1,0 +1,10 @@
+column	term	also_acceptable	note
+Site No.		samp_name;materialSampleID	Site number (1 to 71) shared by four unlisted replicate samples; combine with a replicate number to build samp_name and to group biological_rep_relation.
+Latitude	decimalLatitude	verbatimLatitude	Already in decimal degrees (south negative); datum not stated.
+Longitude	decimalLongitude	verbatimLongitude	Already in decimal degrees (east positive); datum not stated.
+Location		geo_loc_name	Site place name (two names each cover two sites) for the locality part of geo_loc_name, e.g. 'Australia: Western Australia, Dampier Peninsula, Gantheaume Bay'.
+Bioregion		geo_loc_name	IMCRA bioregion (Canning or Kimberley) used as a spatial predictor; keep as a user-defined field listed in study_factor, as it is not an ENVO biome for env_broad_scale.
+Subregion		geo_loc_name	Subregion (Dampier Peninsula, South or North Kimberley) used as a spatial predictor; keep as a user-defined field, and it can supply the region part of geo_loc_name.
+Habitat	env_local_scale	env_broad_scale	Shelf habitat class (Inshore, Coastal, Nearshore Estuarine, Midshelf) used as a study factor; translate each class to an ENVO term (e.g. estuarine coastal surface layer for Nearshore Estuarine) and keep the class as a user-defined field.
+Site Depth (m)	tot_depth_water_col		Water depth at the site in metres; samples were surface water, so minimumDepthInMeters and maximumDepthInMeters are 0.
+Date Collected	eventDate	verbatimEventDate	Convert dd/mm/yyyy to ISO 8601 (06/09/2017 becomes 2017-09-06); no time recorded.

@@ -1,0 +1,96 @@
+column	term
+Lab sample code	samp_name
+Sample/Control?	samp_category
+Bottle label (field)	materialSampleID
+GPS E (dd.ddddd)	decimalLongitude
+GPS S (dec deg)	decimalLatitude
+Country / Region / Locality	geo_loc_name
+Date sampled (dd/mm/yyyy hh:mm)	eventDate
+Broad habitat (ENVO biome)	env_broad_scale
+Habitat feature e.g. reef flat	env_local_scale
+Substrate (water/sed/soil)	env_medium
+Tank/mesocosm? 1=yes	habitat_natural_artificial_0_1
+Collection protocol / SOP link	samp_collect_method
+Gear used (Niskin, bucket etc.)	samp_collect_device
+Amount collected (L or g)	samp_size
+units (collected)	samp_size_unit
+Stored at (°C) before filtering	samp_store_temp
+Buffer/preservative added (e.g. Longmire's)	samp_store_sol
+Time in freezer before extraction	samp_store_dur
+Freezer / box / shelf	samp_store_loc
+Extract freezer & box pos.	dna_store_loc
+Processing notes (prefilter, filtration etc.)	samp_mat_process
+Sieve mesh um	size_frac_low
+pore size (micron)	size_frac
+Membrane (PES/MCE/GF)	filter_material
+Filter make & model	filter_name
+Chems used for EtOH ppt	precip_chem_prep
+Spin force xg (ppt)	precip_force_prep
+Spin time (mins) - ppt	precip_time_prep
+Centrifuge temp degC	precip_temp_prep
+Amount into extraction (mL/mg)	samp_vol_we_dna_ext
+unit (vol filtered)	samp_vol_we_dna_ext_unit
+Lysis (bead beat / proteinase K)	nucl_acid_ext_lysis
+Separation (column / magnetic beads / phenol-chloroform)	nucl_acid_ext_sep
+Extraction method ref / URL	nucl_acid_ext
+Ext. kit used	nucl_acid_ext_kit
+Sampling depth - top (m)	minimumDepthInMeters
+Bottom of sample depth range m	maximumDepthInMeters
+Total depth @ stn (m)	tot_depth_water_col
+temp degC (in situ)	temp
+Chl-a mg/m3	chlorophyll
+pH meter reading	ph
+Sal. psu (CTD)	salinity
+DIC (TCO2)	diss_inorg_carb
+units - DIC	diss_inorg_carb_unit
+D.O. reading	diss_oxygen
+O2 unit (mg/L or %sat)	diss_oxygen_unit
+Nitrate (NO3-) conc.	nitrate
+units NO3	nitrate_unit
+NO2- conc	nitrite
+NO2 unit	nitrite_unit
+Neg control (field/EB/NTC)	neg_cont_type
+Assay/primer set name	assay_name
+PCR plate # (1st round)	pcr_plate_id
+Library name (sample_run)	lib_id
+Seq run (date_run)	seq_run_id
+Fwd barcode / MID tag	mid_forward
+Rev barcode tag seq	mid_reverse
+fastq file (R1)	filename
+R2.fastq.gz filename	filename2
+NCBI accession(s) / BioSample	associatedSequences
+# reads (raw, pre-QC)	input_read_count
+Barcode gene (12S/COI/16S)	target_gene
+Variable region e.g. V4	target_subfragment
+Primer F seq (5'-3')	pcr_primer_forward
+Primer R seq 5'-3'	pcr_primer_reverse
+Fwd primer name (e.g. MiFish-U-F)	pcr_primer_name_forward
+Rev primer ID	pcr_primer_name_reverse
+Platform (Illumina/ONT)	platform
+Sequencer model (MiSeq/NovaSeq)	instrument
+Project / survey name	project_id
+Collector initials	
+Boat name	
+Weather notes	
+Esky number	
+Checked by	
+Photo ID	
+Data entered by	
+Field sheet page	
+Datasheet QC'd (Y/N)	
+Invoice no.	
+Courier tracking #	
+Permit holder	
+Landowner contacted?	
+Box received (Y/N)	
+Label printed	
+Who filtered	
+Gloves changed (Y/N)	
+Cost code	
+Vehicle	
+Spare column	
+Colour key	
+Comments for Jo	
+Archived to drive	
+Parking spot	
+Thermos no.	

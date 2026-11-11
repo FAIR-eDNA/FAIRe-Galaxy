@@ -1,0 +1,76 @@
+<tool id="faire_mapper_profile" name="FAIRe mapper: profile columns" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="@PROFILE@" license="MIT">
+    <description>describe the columns of a sample sheet</description>
+    <macros>
+        <import>macros.xml</import>
+        <import>faire_guide.xml</import>
+    </macros>
+    <expand macro="creator"/>
+    <expand macro="requirements"/>
+    <version_command>python '$__tool_directory__/faire_mapper.py' --version</version_command>
+    <command detect_errors="exit_code"><![CDATA[
+python '$__tool_directory__/faire_mapper.py' profile
+    @TABLE_ARGS@
+    --output '$profile'
+    ]]></command>
+    <inputs>
+        <expand macro="table_input"/>
+    </inputs>
+    <outputs>
+        <data name="profile" format="tabular" label="${tool.name} on ${on_string}"/>
+    </outputs>
+    <tests>
+        <test expect_num_outputs="1">
+            <param name="table" value="messy_edna.csv"/>
+            <output name="profile">
+                <assert_contents>
+                    <has_n_lines n="11"/>
+                    <has_line_matching expression="^column\tsummary\tn_rows\tn_values\tn_unique\texamples\t.*"/>
+                    <has_line_matching expression="^Lat\tunique per row; numeric; range -32.1 to -31.95\t5\t5\t5\t.*"/>
+                    <has_line_matching expression="^fwd_primer_seq\tconstant; DNA; sequence length ~19\t.*"/>
+                    <has_line_matching expression="^date_collected\tdate; date format yyyy-mm-dd\t.*"/>
+                </assert_contents>
+            </output>
+        </test>
+        <test expect_num_outputs="1">
+            <param name="table" value="survey_sheet.xlsx"/>
+            <param name="sheet" value="Samples"/>
+            <param name="header_row" value="2"/>
+            <output name="profile">
+                <assert_contents>
+                    <has_n_lines n="96"/>
+                    <has_line_matching expression="^Latitude \(WGS84, decimal; south is negative\)\t.*numeric; range .*"/>
+                </assert_contents>
+            </output>
+        </test>
+    </tests>
+    <help><![CDATA[
+@EARLY_VERSION@
+**What it does**
+
+This tool describes each column of your table, as a first step towards mapping it to FAIRe. For
+each column, it reports what the values look like: numbers and their range, dates and their
+format, DNA sequences and their length, ENVO-style labels such as *sea water [ENVO:00002149]*,
+place names, yes/no values, durations and sequence file names. It also says whether the values
+differ on every row or are the same on every row.
+
+**FAIRe mapper: propose mapping** uses the same profile to match columns to FAIRe terms, so running
+this tool on its own is a good way to check how your table has been read.
+
+-----
+
+**Output**
+
+The output has one row for each column of your table. Each row starts with a plain summary,
+followed by the counts, some example values and the individual measures, such as the fraction of
+values that are numbers or dates.
+
+The tool treats values such as *NA*, *missing* or *not applicable: control sample* as empty.
+
+@HELP_INPUTS@
+
+@HELP_FAIRE_GUIDE@
+
+@HELP_ABOUT@
+    ]]></help>
+    <expand macro="citations"/>
+</tool>

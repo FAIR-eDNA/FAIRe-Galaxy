@@ -1,0 +1,4 @@
+Water samples were filtered and DNA was extracted. Fish were targeted with the MiFish primer set.
+Bacterial communities were amplified with Bact16S_515F and Bact16S_806R.
+Eukaryotes were amplified with a universal eukaryote 18S assay (Pochon et al., 2013).
+Forward and reverse reads were merged before denoising.
