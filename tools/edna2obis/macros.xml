@@ -2,7 +2,7 @@
     <!-- Upstream has tagged releases up to v3.2.0, but the pinned commit is later. The version is the date of
          the pinned commit (aomlomics/edna2obis a3bc89050bcee12b482237cb2e3bb5c3c276debc). -->
     <token name="@TOOL_VERSION@">2026.10.26</token>
-    <token name="@VERSION_SUFFIX@">2</token>
+    <token name="@VERSION_SUFFIX@">3</token>
     <token name="@PROFILE@">23.0</token>
     <xml name="requirements">
         <requirements>
@@ -77,8 +77,8 @@
         </conditional>
     </xml>
     <xml name="n_proc">
-        <param name="n_proc" type="integer" value="4" min="1" max="10" label="Parallel requests"
-            help="edna2obis sends this many requests at a time. Use fewer if the service reports too many requests."/>
+        <param name="n_proc" type="integer" value="1" min="1" max="4" label="Parallel requests"
+            help="How many requests edna2obis sends to WoRMS or GBIF at a time. Jobs running on the same Galaxy server share each service's request limit, so keep this at 1 unless a long list of names is too slow."/>
     </xml>
     <xml name="citations">
         <citations>
