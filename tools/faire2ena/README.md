@@ -16,8 +16,9 @@ Upstream: [FAIR-eDNA/FAIRe2ENA](https://github.com/FAIR-eDNA/FAIRe2ENA) at commi
 - `planemo shed_lint`: passes except for the placeholder owner in `.shed.yml`.
 - `planemo test`: all tests pass in Galaxy 25.0 (summary at the end of this file).
 - ENA's test server, 11 November 2026: three SEA-MES samples submitted through the test Webin
-  Portal were checked by ENA and refused for missing units and an "Unknown" value (item 11 below
-  fixes both; `dev/faire2ena_ena_trial/README.md`). Experiments and runs are not yet tried there.
+  Portal were checked by ENA and refused for missing units and an "Unknown" value. With item 11
+  below, ENA accepted them the same day (`dev/faire2ena_ena_trial/README.md`). Experiments and runs
+  are not yet tried there.
 
 ## Files
 
@@ -134,8 +135,8 @@ These are worth raising with the FAIRe2ENA authors. If they are fixed upstream, 
    dataset, for example an OceanOmics or CSIRO FAIRe workbook: submit samples, upload the receipt to
    Galaxy, upload a few fastq files, submit experiments and runs. The test data here uses invented
    accessions and checksums, so it only proves the XML is well formed. Started 11 November 2026 with
-   three SEA-MES samples (`dev/faire2ena_ena_trial/README.md`): the samples reached ENA's checks
-   through the Webin Portal; resubmit them after item 11, then try experiments and runs.
+   three SEA-MES samples (`dev/faire2ena_ena_trial/README.md`): ENA accepted the samples, after
+   item 11, through the Webin Portal. Experiments and runs are next.
 4. **Fill in `.shed.yml`.** Set `owner` (the ToolShed account that will publish it). Add the
    maintainers to the `<creator>` block in `macros.xml`.
 5. **Publish to the ToolShed.** Use the Test ToolShed first (`planemo shed_create` and

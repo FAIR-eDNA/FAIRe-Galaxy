@@ -37,9 +37,12 @@ Everything else passed: dates, coordinates, depth, environment terms, country.
 
 With both, the three samples carry units for all five attributes, and no "Unknown".
 
+**Resubmitted 11 November 2026** through the test Webin Portal: accepted. ENA gave the three
+samples test accessions (ERS32837772 to ERS32837774, submission ERA37798767), which the test
+service discards within a day.
+
 ## Still to do
 
-- Resubmit the three samples through the test Webin Portal.
 - Then experiments and runs, from the sample receipt (*FAIRe2ENA: experiments and runs*). Runs need
   the fastq files in the test upload area.
 - Find the cause of the 403 from the Webin REST service, which the tool's help describes for

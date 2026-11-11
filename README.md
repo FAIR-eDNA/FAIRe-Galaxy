@@ -10,7 +10,7 @@ tables into a FAIRe workbook. The Galaxy eDNA Lab is at edna.dev.gvl.org.au.
 |---|---|---|---|
 | `tools/faireator` | FAIRe-ator | [FAIR-eDNA/FAIRe-ator](https://github.com/FAIR-eDNA/FAIRe-ator) | Lint clean; 3/3 tests pass; CC BY 4.0 licence copied in (`LICENSE.upstream`); templates open cleanly in Excel, LibreOffice and Google Sheets |
 | `tools/fairefier` | FAIRe-fier (with a new command-line version) | [csiro/FAIRe-fier](https://github.com/csiro/FAIRe-fier) | Lint clean; 6/6 tests pass; outputs identical to the web app; offer the command line upstream |
-| `tools/faire2ena` | FAIRe2ENA: samples; FAIRe2ENA: experiments and runs | [FAIR-eDNA/FAIRe2ENA](https://github.com/FAIR-eDNA/FAIRe2ENA) | Lint clean; 11/11 tests pass; runs can be chosen by assay or sequencing run, and a library holding several assays gets one run; adds the units ENA's checklist asks for (found in an ENA test-server trial of three samples); experiments and runs not yet tried there |
+| `tools/faire2ena` | FAIRe2ENA: samples; FAIRe2ENA: experiments and runs | [FAIR-eDNA/FAIRe2ENA](https://github.com/FAIR-eDNA/FAIRe2ENA) | Lint clean; 11/11 tests pass; runs can be chosen by assay or sequencing run, and a library holding several assays gets one run; adds the units ENA's checklist asks for; ENA's test server accepted three SEA-MES samples; experiments and runs not yet tried there |
 | `tools/faire2ncbi` | FAIRe2NCBI: BioSample; FAIRe2NCBI: SRA | [aomlomics/FAIRe2NCBI](https://github.com/aomlomics/FAIRe2NCBI) | Lint clean; 20/20 tests pass; a library holding several assays gets one SRA row; needs a trial in the NCBI Submission Portal |
 | `tools/faire2qiime` | FAIRe2QIIME | [aomlomics/faire2qiime](https://github.com/aomlomics/faire2qiime) | Lint clean; 7/7 tests pass; needs a trial importing its files into QIIME 2 |
 | `tools/faire2mdt` | FAIRe2MDT | [FAIR-eDNA/FAIRe2MDT](https://github.com/FAIR-eDNA/FAIRe2MDT) | Lint clean; 6/6 tests pass; leaves out control samples, as GBIF asks; ran on 11 assay and run combinations of the FAIRe examples; MDT trial reached an archive GBIF can index; CC BY 4.0 licence copied in (`LICENSE.upstream`) |
@@ -50,7 +50,7 @@ Notes for Galaxy Australia and other evaluators.
   credentials. The tools write the files that users then submit themselves.
 - **Job size.** The test jobs are small. edna2obis and FAIRe2MDT have not yet been timed on large
   OTU tables (thousands of sequences by hundreds of samples), which job rules may need.
-- **Still to do.** Experiments and runs on ENA's test server (samples have been checked there), a
+- **Still to do.** Experiments and runs on ENA's test server (samples have been accepted there), a
   trial submission in NCBI's Submission Portal, importing FAIRe2QIIME's files into QIIME 2, and
   loading edna2obis's output into an IPT. Each
   tool's README lists its remaining steps.
