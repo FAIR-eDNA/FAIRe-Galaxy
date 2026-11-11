@@ -101,7 +101,7 @@ replace functions inside the upstream code while it runs; their READMEs say whic
   | Upstream | Licence | Licence file in the repository |
   |---|---|---|
   | FAIRe-ator | CC BY 4.0 | Yes |
-  | FAIReSheets (not wrapped) | CC BY 4.0 (to be confirmed) | Not checked |
+  | FAIReSheets (not wrapped) | MIT | Yes (added 9 November 2026) |
   | FAIRe-fier | BSD 3-Clause | Yes |
   | FAIRe2MDT | CC BY-SA 4.0 | Not yet |
   | edna2obis | MIT | Yes |
