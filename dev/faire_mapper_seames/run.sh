@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # The FAIRe tools on the CSIRO SEA-MES eDNA data (Deagle et al. 2025; see README.md).
-# Usage: run.sh OUTDIR        (needs python with pandas, openpyxl and pyyaml; set RSCRIPT for FAIRe2MDT)
+# Usage: run.sh OUTDIR        (needs python with pandas, openpyxl and pyyaml; set RSCRIPT for FAIRe2MDT;
+#                              files 4, 7 and 8 of the record downloaded into data/, see README.md)
 #        DATA=demo/seames run.sh OUTDIR   runs it on the demonstration set (make_demo.py)
 #   1. propose mapping on both sample tables as published (NCBI BioSample sheets with comment lines)
 #   2. prepare_table.py: what a person following the guide adds to the 10 L table (the control type)
@@ -33,6 +34,12 @@ ck="$tools/checklist/FAIRe_checklist_v1.0.2.xlsx"
 tpl="$tools/checklist/FAIRe_checklist_v1.0.2_FULLtemplate.xlsx"
 out=$(mkdir -p "${1:?usage: run.sh OUTDIR}" && cd "$1" && pwd)
 d=$(cd "${DATA:-$here/data}" && pwd)
+# Files 4, 7 and 8 of the record are not stored in the repository (each over 1 MB; README.md)
+for f in 4_SEA-MES_16S_ASV_level_output_with_seq.csv 7_SEA-MES_2025_EUK_18S_for_DAT.csv.gz \
+         8_WL_Full_SEA_MES_samples.csv.gz; do
+    [ -e "$d/$f" ] || { echo "Missing $d/$f: download it from the SEA-MES data record (README.md)," \
+        "or run on the demonstration set: DATA=demo/seames run.sh OUTDIR" >&2; exit 1; }
+done
 report="$d/filereport_read_run_PRJNA1263580.tsv"
 mkdir -p "$out/mapper" "$out/faire" "$out/convert/qiime/out" "$out/convert/ncbi_biosample" "$out/convert/ncbi_sra" \
     "$out/convert/ena_samples" "$out/convert/ena_runs"

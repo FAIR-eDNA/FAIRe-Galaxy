@@ -6,3 +6,10 @@ tool_test_output.*
 # Unpublished data shared by the SEA-MES authors: kept out of the repository until the Galaxy tools launch
 dev/faire_mapper_seames/data/private/
 demo/seames/private/
+
+# The four largest files of the SEA-MES data record (each over 1 MB): download them from the record
+# (dev/faire_mapper_seames/README.md)
+dev/faire_mapper_seames/data/4_SEA-MES_16S_ASV_level_output_with_seq.csv
+dev/faire_mapper_seames/data/6_SEA-MES_COI_ASV_level_output_with_seq.csv*
+dev/faire_mapper_seames/data/7_SEA-MES_2025_EUK_18S_for_DAT.csv*
+dev/faire_mapper_seames/data/8_WL_Full_SEA_MES_samples.csv*

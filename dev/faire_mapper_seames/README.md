@@ -27,17 +27,23 @@ Investigator South-East Australian Marine Ecosystem Survey (SEA-MES) voyages (IN
 IN2024_V03), version 2. CSIRO Data Access Portal, [doi:10.25919/ngqx-3557](https://doi.org/10.25919/ngqx-3557).
 CC BY 4.0. Raw reads: NCBI BioProject [PRJNA1263580](https://www.ncbi.nlm.nih.gov/bioproject/PRJNA1263580/).
 
+Files 4, 6, 7 and 8 of the record are not stored here, as each is over 1 MB (the limit the
+repository's checks set for files in a pull request). To run the trial on the full record,
+download them from the record into `data/` with the names below, and gzip files 6, 7 and 8
+(`gzip data/6_*.csv data/7_*.csv data/8_*.csv`); `.gitignore` keeps them out of commits. Without
+them, `DATA=demo/seames run.sh OUTDIR` runs every step on the demonstration set.
+
 | File in `data/` | What it holds |
 |---|---|
 | `1_SEA-MES_M_samples_metadata_10L.xlsx` | 288 10 L samples (M001 ...), as the NCBI BioSample sheet submitted (MIxS water package; 11 comment lines above the header) |
 | `2_SEA-MES_CN_samples_metadata_OCD.xlsx` | 96 deep-tow camera samples (CN...), BioSample sheet with 106 columns, most empty |
 | `3_SRA_metadata_SEAMES_18S.xlsx` | the SRA submission sheet for 217 18S libraries: library ID and both fastq file names |
-| `4_SEA-MES_16S_ASV_level_output_with_seq.csv` | 16S fish ASV table: 2,967 ASVs with sequences, BLAST taxonomy and counts for 358 samples |
+| `4_SEA-MES_16S_ASV_level_output_with_seq.csv` | 16S fish ASV table: 2,967 ASVs with sequences, BLAST taxonomy and counts for 358 samples (not stored here (over 1 MB); download it from the record) |
 | `5_SEA_MES_Fish16S_Tax_Feb_27_2025.csv` | 235 curated fish taxa: the reads of the ASVs given the same name summed, each row named after one of its ASVs; no sequences |
 | `private/SEA_MES_Fish16S_ASV_Feb_27_2025_editColRename.csv` | the authors' ASV-level table of curated 16S names, sent by B. Deagle on 6 November 2026 and not yet published: 2,675 fish ASVs with rank columns, *New_Name* (blank for 62) and *Common_Name*, no sequences, and sample columns named S_M001 and so on. Kept out of the repository (`.gitignore`) until the tool is launched |
-| `6_SEA-MES_COI_ASV_level_output_with_seq.csv.gz` | COI Leray ASV table (gzipped): 11,643 ASVs with sequences, BLAST columns and taxonomy (domain to species), and counts for 378 samples (283 10 L, 92 deep-tow and 3 PCR controls); not curated. Not used: the authors did not use it, as its coverage was low and it holds few target metazoan sequences |
-| `8_WL_Full_SEA_MES_samples.csv.gz` | Wilderlab's full table for its 12-assay panel (gzipped): 59,623 sequences of up to 150 bp, the assay in a `target` column, NCBI names, ranks and taxon IDs, for 150 samples (CN065 and CN066 each appear twice; the second of each is CN165 and CN166) |
-| `7_SEA-MES_2025_EUK_18S_for_DAT.csv.gz` | 18S ASV table (gzipped): 16,901 ASVs, 202 libraries, PR2 and SILVA lineages, and 37 rows of sample details below the counts |
+| `6_SEA-MES_COI_ASV_level_output_with_seq.csv.gz` | (not stored here (over 1 MB); download it from the record; not used by `run.sh`) COI Leray ASV table (gzipped): 11,643 ASVs with sequences, BLAST columns and taxonomy (domain to species), and counts for 378 samples (283 10 L, 92 deep-tow and 3 PCR controls); not curated. Not used: the authors did not use it, as its coverage was low and it holds few target metazoan sequences |
+| `8_WL_Full_SEA_MES_samples.csv.gz` | (not stored here (over 1 MB); download it from the record) Wilderlab's full table for its 12-assay panel (gzipped): 59,623 sequences of up to 150 bp, the assay in a `target` column, NCBI names, ranks and taxon IDs, for 150 samples (CN065 and CN066 each appear twice; the second of each is CN165 and CN166) |
+| `7_SEA-MES_2025_EUK_18S_for_DAT.csv.gz` | (not stored here (over 1 MB); download it from the record) 18S ASV table (gzipped): 16,901 ASVs, 202 libraries, PR2 and SILVA lineages, and 37 rows of sample details below the counts |
 | `filereport_read_run_PRJNA1263580.tsv` | ENA's run report for the BioProject (598 runs): library name, run, sample and study accessions, instrument, fastq files and MD5 checksums |
 | `ReadMe_Description.md` | the data record's ReadMe (files, sequencing runs, assays and primers) |
 | `methods.txt` | sections 3.2.1-3.2.3 and 4.2.1-4.2.3 of the NESP final report (Deagle et al. 2025, CC BY 4.0) |

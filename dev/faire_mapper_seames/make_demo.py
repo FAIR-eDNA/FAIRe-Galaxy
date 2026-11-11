@@ -2,6 +2,9 @@
 
 Usage: python make_demo.py DATA_DIR OUT_DIR
 
+DATA_DIR needs files 4, 7 and 8 of the record, which are not stored in the repository (each over
+1 MB): download them from the record (see README.md).
+
 Keeps a few samples and the sequences with reads in them, and leaves everything else as the
 authors wrote it: file names, sheet and column names, the comment lines above the NCBI headers,
 the quoting of the CSV files, the sample details below the 18S counts, and Wilderlab's repeated

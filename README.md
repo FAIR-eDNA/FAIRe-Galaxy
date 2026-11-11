@@ -62,7 +62,8 @@ FAIRe-fier command line gives the same outputs as the web app; `faire_mapper_ben
 mapper on tables with known answers; `faire_mapper_real_datasets/` and
 `faire_mapper_australian_datasets/` are the trials on four published Dryad eDNA datasets and two
 Australian studies; `faire_mapper_seames/` runs every tool it can on CSIRO's SEA-MES eDNA data
-(Deagle et al. 2025), from the published sample sheets to the NCBI and ENA run tables, and
+(Deagle et al. 2025), from the published sample sheets to the NCBI and ENA run tables (its four
+largest files are downloaded from the record, not stored here), and
 `demo/seames` holds a demonstration set cut from it (23 samples, 0.5 MB, same files and layouts); `faire2mdt/` compares the FAIRe2MDT wrapper with the script run by hand on
 the FAIRe examples; `faire_guide/` holds the shared help guide (below).
 
