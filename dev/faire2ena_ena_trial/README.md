@@ -43,7 +43,7 @@ service discards within a day.
 
 ## Still to do
 
-- Then experiments and runs, from the sample receipt (*FAIRe2ENA: experiments and runs*). Runs need
+- Experiments and runs, from the sample receipt (*FAIRe2ENA: experiments and runs*). Runs need
   the fastq files in the test upload area.
 - Find the cause of the 403 from the Webin REST service, which the tool's help describes for
   submitting.
