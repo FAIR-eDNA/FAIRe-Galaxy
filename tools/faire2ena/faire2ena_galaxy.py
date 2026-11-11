@@ -15,11 +15,13 @@ without modifying them, and adds:
   * one experiment and run for a library that holds several assays (rows with the same sample
     and files), as ENA takes each set of files once, with the lab's name for the library as the
     aliases (FAIRe's lib_id is one amplicon of a sample; the FAIRe mapper writes it as the
-    library name, assay_name and seq_run_id, so those two are taken off).
+    library name, assay_name and seq_run_id, so those two are taken off);
+  * the units and plain numbers ENA's checklist asks for (see ENA_UNITS below).
 """
 
 import argparse
 import datetime
+import decimal
 import os
 import re
 import sys
@@ -81,6 +83,126 @@ def normalise_date(value):
     return text
 
 
+# ENA's water checklist (ERC000024, read on 11 November 2026) wants these attributes as plain numbers
+# with a unit, and refused samples without them in a test-server submission that day. FAIRe gives
+# temp and samp_store_temp in degrees Celsius and salinity in psu (FAIRe checklist v1.0.2), so
+# their units are fixed: {ENA attribute: (FAIRe term, ENA unit, sign allowed)}. The checklist writes
+# temperature's unit with U+00BA and sample storage temperature's with U+00B0; both are kept.
+FIXED_UNITS = {
+    'temperature': ('temp', 'ºC', True),
+    'salinity': ('salinity', 'psu', False),
+    'sample storage temperature': ('samp_store_temp', '°C', True),
+}
+# Sample size and extraction volume have a FAIRe unit term. {ENA attribute: (FAIRe value term,
+# FAIRe unit term, {FAIRe unit, lower case: (ENA unit, factor)})}, from the units FAIRe allows
+# (mL, L, mg, g, kg, cm2, m2, cm3, m3) to the ones ENA allows.
+VARIABLE_UNITS = {
+    'amount or size of sample collected': ('samp_size', 'samp_size_unit', {
+        'ml': ('L', '0.001'), 'l': ('L', '1'), 'cm3': ('L', '0.001'), 'm3': ('m3', '1'),
+        'mg': ('g', '0.001'), 'g': ('g', '1'), 'kg': ('kg', '1'), 'cm2': ('m2', '0.0001'), 'm2': ('m2', '1')}),
+    'sample volume or weight for DNA extraction': ('samp_vol_we_dna_ext', 'samp_vol_we_dna_ext_unit', {
+        'ml': ('mL', '1'), 'l': ('mL', '1000'), 'cm3': ('mL', '1'), 'm3': ('mL', '1000000'),
+        'mg': ('mg', '1'), 'g': ('g', '1'), 'kg': ('g', '1000')}),
+}
+# Upstream also writes the extraction volume under this misspelt name, as "<value> <unit>" or "Unknown".
+MISSPELT = 'sample volume for weight for DNA extraction'
+
+
+def is_missing_term(value):
+    """FAIRe's missing-value terms (not applicable, missing: not collected, ...)."""
+    return str(value).strip().lower().startswith(('not applicable', 'missing', 'not collected', 'not provided',
+                                                  'restricted access'))
+
+
+def ena_number(value, factor='1', signed=False):
+    """The value as a plain number ENA accepts (times factor), or None if it is not one."""
+    if is_blank(value) or isinstance(value, bool):
+        return None
+    try:
+        number = decimal.Decimal(str(value).strip()) * decimal.Decimal(factor)
+    except decimal.InvalidOperation:
+        return None
+    if not number.is_finite() or (number < 0 and not signed):
+        return None
+    text = format(number.normalize(), 'f')
+    return '0' if text in ('-0', '0') else text
+
+
+def fix_ena_values(ena_data, faire_data, notes):
+    """Make the attributes in FIXED_UNITS and VARIABLE_UNITS plain numbers ENA accepts, and return
+    {attribute: unit} for them. Values that cannot be made so are left out (all are optional in
+    ERC000024) and noted as {(attribute, reason): {sample, ...}}."""
+    name = str(faire_data.get('samp_name'))
+    units = {}
+    ena_data.pop(MISSPELT, None)
+
+    def leave_out(attribute, reason):
+        ena_data.pop(attribute, None)
+        notes.setdefault((attribute, reason), set()).add(name)
+
+    for attribute, (term, unit, signed) in FIXED_UNITS.items():
+        if attribute not in ena_data:
+            continue
+        number = ena_number(ena_data[attribute], signed=signed)
+        if number is not None:
+            ena_data[attribute], units[attribute] = number, unit
+        elif is_missing_term(ena_data[attribute]):
+            ena_data.pop(attribute)
+        else:
+            leave_out(attribute, f'{term} is not a number')
+    for attribute, (term, unit_term, conversions) in VARIABLE_UNITS.items():
+        value, unit = faire_data.get(term), faire_data.get(unit_term)
+        if is_blank(value) or is_missing_term(value):
+            ena_data.pop(attribute, None)
+            continue
+        if ena_number(value) is None:
+            leave_out(attribute, f'{term} is not a number')
+        elif is_blank(unit):
+            leave_out(attribute, f'{unit_term} is empty')
+        elif str(unit).strip().lower() not in conversions:
+            leave_out(attribute, f"{unit_term} '{unit}' has no ENA equivalent")
+        else:
+            ena_unit, factor = conversions[str(unit).strip().lower()]
+            ena_data[attribute], units[attribute] = ena_number(value, factor), ena_unit
+    return units
+
+
+def add_units(sample_xml, units):
+    """Give each attribute in units its UNITS line, in place of any upstream wrote."""
+    out, tag = [], None
+    for line in sample_xml.split('\n'):
+        text = line.strip()
+        if text.startswith('<TAG>'):
+            tag = text[len('<TAG>'):-len('</TAG>')]
+        elif text.startswith('<UNITS>') and tag in units:
+            continue
+        out.append(line)
+        if text.startswith('<VALUE>') and tag in units:
+            out.append(f'        <UNITS>{units[tag]}</UNITS>')
+    return '\n'.join(out)
+
+
+def use_ena_units():
+    """While upstream converts samples, fix their values and units (fix_ena_values, add_units).
+    Returns the notes and a count of the calls, so the caller can check the fix was used."""
+    notes, units, calls = {}, {}, {'convert': 0, 'xml': 0}
+    convert, generate = upstream_sample.convert_faire_to_ena, upstream_sample.generate_ena_xml
+
+    def convert_faire_to_ena(faire_data, project_name):
+        calls['convert'] += 1
+        ena_data = convert(faire_data, project_name)
+        units[str(faire_data.get('samp_name'))] = fix_ena_values(ena_data, faire_data, notes)
+        return ena_data
+
+    def generate_ena_xml(ena_data, sample_alias, *args, **kwargs):
+        calls['xml'] += 1
+        return add_units(generate(ena_data, sample_alias, *args, **kwargs), units.get(str(sample_alias), {}))
+
+    upstream_sample.convert_faire_to_ena = convert_faire_to_ena
+    upstream_sample.generate_ena_xml = generate_ena_xml
+    return notes, calls
+
+
 def read_sheet(path, sheet, **kwargs):
     try:
         return pd.read_excel(path, sheet_name=sheet, **kwargs)
@@ -116,6 +238,8 @@ def run_sample(args):
     elif 'eventDate' in df.columns:
         df['eventDate'] = df['eventDate'].apply(lambda v: v if is_blank(v) else str(v)).astype(object)
 
+    notes, calls = use_ena_units()
+
     # Upstream fills only some missing mandatory fields with defaults and raises
     # a KeyError for the rest. Find those first and report them together.
     problems = {}
@@ -139,6 +263,13 @@ def run_sample(args):
     upstream_sample.process_faire_df(
         df, args.output_file, project_name, taxon_id=str(args.taxon_id), center_name=args.center_name
     )
+    if not calls['xml']:
+        fail("FAIRe2ENA no longer writes samples through generate_ena_xml, so the wrapper could not add "
+             "ENA's units. The wrapper needs updating for this FAIRe2ENA version.")
+    for (attribute, reason), samples in sorted(notes.items()):
+        shown = ', '.join(sorted(samples)[:5]) + (' ...' if len(samples) > 5 else '')
+        print(f"INFO: '{attribute}' left out for {len(samples)} sample(s), as ENA needs a number with "
+              f"a unit and {reason}: {shown}")
     with open(args.output_file, encoding='utf-8') as f:
         n = f.read().count('<SAMPLE ')
     print(f"INFO: wrote {n} sample(s) for project {project_name} with taxon {args.taxon_id}")

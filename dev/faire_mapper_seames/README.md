@@ -63,7 +63,9 @@ them, `DATA=demo/seames run.sh OUTDIR` runs every step on the demonstration set.
   the eDNAFlow LCA script, the curation steps, and descriptions of the raw and final tables. Its
   `assay` column marks the values that differ between the assays (target taxa, gene, primers,
   annealing temperature, PCR protocol, amplicon size, taxonomy methods and table descriptions) as
-  Fish16S. The COI values (from Table 3-1 of the report) were taken out on 6 November, with COI. The
+  Fish16S. The 10 L samples' extraction volume (10000) gets its unit, mL, from here (added 11
+  November, after ENA's test server asked for it). The COI values (from Table 3-1 of the report) were
+  taken out on 6 November, with COI. The
   instrument, Illumina NextSeq 2000, is from NCBI's SRA run table, which the authors sent; FAIRe asks
   for an OBI term, and OBI has none for the NextSeq 2000 that we could find.
 - `accessions.py`: the samples are registered at NCBI already, so the runs are linked to them as a
