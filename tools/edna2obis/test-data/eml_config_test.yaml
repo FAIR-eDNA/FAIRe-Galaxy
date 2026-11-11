@@ -1,0 +1,26 @@
+# EML settings made for the Galaxy tests (edna2obis EML_config.yaml layout).
+# The person and addresses are fictional.
+contacts_path: "/etc/should_be_ignored.yaml"
+eml_metadata:
+  title: "Test dataset: fish eDNA from GU19-01 (cut down for Galaxy tests)"
+  abstract: |
+    A cut-down copy of the GU19-01 example data from edna2obis, used to test the
+    Galaxy wrapper. Not for publication.
+  publication_date: "2026-11-03"
+  language: "eng"
+  creators:
+    - contact_ref: test_person
+  contact:
+    contact_ref: test_person
+  keywords:
+    - keyword: "eDNA"
+    - keyword: "Occurrence"
+      thesaurus: "GBIF Dataset Type Vocabulary: http://rs.gbif.org/vocabulary/gbif/dataset_type_2015-07-10.xml"
+  license: "CC0"
+  geographic_coverage:
+    description: "Northern Gulf of Mexico"
+  temporal_coverage:
+    event_date_field: "eventDate"
+  purpose: "Testing only."
+  methods:
+    sampling_description: "Seawater samples (test description)."

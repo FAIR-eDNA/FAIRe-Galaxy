@@ -1,0 +1,349 @@
+<tool id="faire_mapper_map" name="FAIRe mapper: propose mapping" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="@PROFILE@" license="MIT">
+    <description>match the columns of a sample sheet to FAIRe terms</description>
+    <macros>
+        <import>macros.xml</import>
+        <import>faire_guide.xml</import>
+    </macros>
+    <expand macro="creator"/>
+    <expand macro="requirements"/>
+    <version_command>python '$__tool_directory__/faire_mapper.py' --version</version_command>
+    <command detect_errors="exit_code"><![CDATA[
+mkdir out &&
+python '$__tool_directory__/faire_mapper.py' map
+    @TABLE_ARGS@
+    --checklist '$__tool_directory__/checklist/FAIRe_checklist_v1.0.2.xlsx'
+    #if str($assay_type) != 'any':
+        --assay_type '$assay_type'
+    #end if
+    #if $sample_types:
+        --sample_types '$sample_types'
+    #end if
+    #if $responses:
+        --responses '$responses'
+    #end if
+    #if $dictionary:
+        --dictionary '$dictionary'
+        #if str($dictionary_sheet).strip():
+            --dictionary_sheet '$dictionary_sheet'
+        #end if
+    #end if
+    --shortlist $shortlist
+    --shortlist_close $shortlist_close
+    --outdir out
+    ]]></command>
+    <inputs>
+        <expand macro="table_input"/>
+        <param name="assay_type" type="select" label="Assay type"
+            help="Leaves out the FAIRe terms that only apply to the other assay type.">
+            <option value="metabarcoding" selected="true">Metabarcoding</option>
+            <option value="targeted">Targeted (qPCR or ddPCR)</option>
+            <option value="any">Either</option>
+        </param>
+        <param name="sample_types" type="select" multiple="true" optional="true" display="checkboxes" label="Sample types"
+            help="Leaves out the FAIRe fields specific to other sample types. Tick none to consider all.">
+            <option value="Water">Water</option>
+            <option value="Soil">Soil</option>
+            <option value="Sediment">Sediment</option>
+            <option value="Air">Air</option>
+            <option value="HostAssociated">Host-associated</option>
+            <option value="MicrobialMatBiofilm">Microbial mat or biofilm</option>
+            <option value="SymbiontAssociated">Symbiont-associated</option>
+        </param>
+        <param name="responses" type="data" format="json" optional="true" label="Answers for columns to review (optional)"
+            help="A JSON list of decisions from a reviewer or a language model, for example [{&quot;column&quot;: &quot;habitat&quot;, &quot;term&quot;: &quot;env_broad_scale&quot;}, {&quot;column&quot;: &quot;notes&quot;, &quot;term&quot;: null}]. These columns are fixed first and the rest are matched around them."/>
+        <param name="dictionary" type="data" format="csv,tabular,xlsx,txt" optional="true" label="Data dictionary (optional)"
+            help="What each column holds: a table with a column name, a description and units (for example columns headed Variable, Description, Units), or a README with one line per column, such as 'Days frozen: number of days the water was frozen before filtering'. Lines and rows that name no column of the table are ignored."/>
+        <param name="dictionary_sheet" type="text" value="" optional="true" label="Excel sheet of the data dictionary"
+            help="Leave empty for the first sheet.">
+            <validator type="regex" message="Sheet names cannot contain quotes">^[^'"]*$</validator>
+        </param>
+        <param name="shortlist" type="integer" value="5" min="1" max="20" label="Candidate terms listed per column"/>
+        <param name="shortlist_close" type="integer" value="10" min="1" max="20" label="Candidate terms listed when no term clearly leads"
+            help="Used when the last of the candidates above scores within 0.1 of the first. Set it to the same number as above to always list that many."/>
+    </inputs>
+    <outputs>
+        <data name="report" format="tabular" from_work_dir="out/mapping_report.tsv" label="${tool.name} on ${on_string}: mapping report"/>
+        <data name="crosswalk" format="tabular" from_work_dir="out/crosswalk.sssom.tsv" label="${tool.name} on ${on_string}: crosswalk (SSSOM)"/>
+        <data name="missing" format="tabular" from_work_dir="out/missing_mandatory.tsv" label="${tool.name} on ${on_string}: mandatory terms not covered"/>
+        <data name="requests" format="json" from_work_dir="out/adjudication_requests.json" label="${tool.name} on ${on_string}: columns to review"/>
+        <data name="summary" format="json" from_work_dir="out/summary.json" label="${tool.name} on ${on_string}: summary"/>
+    </outputs>
+    <tests>
+        <!-- The prototype's sample sheet: water metabarcoding -->
+        <test expect_num_outputs="5">
+            <param name="table" value="messy_edna.csv"/>
+            <param name="sample_types" value="Water"/>
+            <output name="report">
+                <assert_contents>
+                    <has_n_lines n="11"/>
+                    <has_line_matching expression="^Lat\tdecimalLatitude\tsampleMetadata\taccept\t.*"/>
+                    <has_line_matching expression="^date_collected\teventDate\tsampleMetadata\taccept\t.*"/>
+                    <has_line_matching expression="^fwd_primer_seq\tpcr_primer_forward\tprojectMetadata\taccept\t.*project-level value: GTGYCAGCMGCCGCGGTAA.*"/>
+                    <has_line_matching expression="^notes\t\t\tno match\t.*"/>
+                    <has_line_matching expression="^marker\ttarget_gene\tprojectMetadata\treview\t.*2 different values, but the term holds one value per project or assay.*"/>
+                    <!-- shortlists: five when one term leads (Lat), ten when the scores are close (notes) -->
+                    <has_line_matching expression="^Lat\t([^\t]*\t){6}([^;\t]+; ){4}[^;\t]+\t.*"/>
+                    <has_line_matching expression="^notes\t([^\t]*\t){6}([^;\t]+; ){9}[^;\t]+\t.*"/>
+                </assert_contents>
+            </output>
+            <output name="crosswalk">
+                <assert_contents>
+                    <has_text text="# curie_map:"/>
+                    <has_line_matching expression="^local:Lat\tLat\tskos:exactMatch\tFAIRe:decimalLatitude\tdecimalLatitude\tsemapv:CompositeMatching\t1.0\t.*"/>
+                    <not_has_text text="local:notes"/>
+                </assert_contents>
+            </output>
+            <output name="missing">
+                <assert_contents>
+                    <has_line_matching expression="^geo_loc_name\tsampleMetadata\t.*"/>
+                    <not_has_text text="decimalLatitude"/>
+                </assert_contents>
+            </output>
+            <output name="summary">
+                <assert_contents>
+                    <has_json_property_with_value property="accept" value="8"/>
+                    <has_json_property_with_value property="columns" value="10"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Excel sheet with a title row above the headers; held-out style headers -->
+        <test expect_num_outputs="5">
+            <param name="table" value="survey_sheet.xlsx"/>
+            <param name="sheet" value="Samples"/>
+            <param name="header_row" value="2"/>
+            <param name="sample_types" value="Water"/>
+            <output name="report">
+                <assert_contents>
+                    <has_n_lines n="96"/>
+                    <has_line_matching expression="^Latitude \(WGS84, decimal; south is negative\)\tdecimalLatitude\tsampleMetadata\taccept\t.*"/>
+                    <has_line_matching expression="^Forward primer sequence \(5'-3', no adapters\)\tpcr_primer_forward\t.*"/>
+                </assert_contents>
+            </output>
+            <output name="summary">
+                <assert_contents>
+                    <has_json_property_with_value property="columns" value="95"/>
+                </assert_contents>
+            </output>
+            <output name="requests">
+                <assert_contents>
+                    <has_text text="&quot;instruction&quot;"/>
+                    <has_text text="Total sample amount collected"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Answers from a reviewer are applied first -->
+        <test expect_num_outputs="5">
+            <param name="table" value="messy_edna.csv"/>
+            <param name="sample_types" value="Water"/>
+            <param name="responses" value="messy_edna_responses.json"/>
+            <output name="report">
+                <assert_contents>
+                    <has_line_matching expression="^habitat\tenv_broad_scale\tsampleMetadata\tconfirmed\t.*"/>
+                </assert_contents>
+            </output>
+            <output name="crosswalk">
+                <assert_contents>
+                    <has_line_matching expression="^local:habitat\thabitat\tskos:exactMatch\tFAIRe:env_broad_scale\tenv_broad_scale\tsemapv:ManualMappingCuration\t.*"/>
+                </assert_contents>
+            </output>
+            <output name="summary">
+                <assert_contents>
+                    <has_json_property_with_value property="confirmed" value="1"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Semicolon-separated Windows-1252 text with decimal commas and Excel serial dates -->
+        <test expect_num_outputs="5">
+            <param name="table" value="reef_stations_semicolon.csv" ftype="txt"/>
+            <param name="sample_types" value="Water"/>
+            <output name="report">
+                <assert_contents>
+                    <has_n_lines n="9"/>
+                    <has_line_matching expression="^date\teventDate\tsampleMetadata\taccept\t.*Excel serial dates.*convert Excel serial numbers.*"/>
+                    <has_line_matching expression="^latitude\tdecimalLatitude\tsampleMetadata\taccept\t.*-17.503 to -17.4512.*"/>
+                    <has_line_matching expression="^site_r.cif\tgeo_loc_name\t.*"/>
+                </assert_contents>
+            </output>
+            <output name="summary">
+                <assert_contents>
+                    <has_text text="read as cp1252 text"/>
+                    <has_text text="decimal commas read as points in 3 columns"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- A data dictionary in a README: descriptions change two matches -->
+        <test expect_num_outputs="5">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="sample_types" value="Water"/>
+            <param name="dictionary" value="apply_reef_readme.md" ftype="txt"/>
+            <output name="report">
+                <assert_contents>
+                    <has_line_matching expression="^Notes\tsamp_weather\tsampleMetadata\treview\t.*"/>
+                    <has_line_matching expression="^Site\tgeo_loc_name\tsampleMetadata\treview\t.*"/>
+                    <has_line_matching expression="^Days frozen\tsamp_store_dur\tsampleMetadata\taccept\t.*P316D.*number of days the water was frozen before filtering.$"/>
+                </assert_contents>
+            </output>
+            <output name="requests">
+                <assert_contents>
+                    <has_text text="&quot;description&quot;: &quot;the person who filtered the sample, and any notes on the weather.&quot;"/>
+                </assert_contents>
+            </output>
+            <output name="summary">
+                <assert_contents>
+                    <has_text text="data dictionary (README lines): descriptions for 13 of 13 columns"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- A data dictionary as a table, with units -->
+        <test expect_num_outputs="5">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="sample_types" value="Water"/>
+            <param name="dictionary" value="apply_reef_dictionary.csv" ftype="csv"/>
+            <output name="report">
+                <assert_contents>
+                    <has_line_matching expression="^Notes\trecordedBy\tprojectMetadata\treview\t.*the person.*"/>
+                    <has_line_matching expression="^Days frozen\tsamp_store_dur\tsampleMetadata\taccept\t.*"/>
+                </assert_contents>
+            </output>
+            <output name="summary">
+                <assert_contents>
+                    <has_text text="data dictionary (table): descriptions for 6 of 13 columns"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- An NCBI BioSample sheet: comment lines, MIxS lat_lon, one depth, a yes/no control column -->
+        <test expect_num_outputs="5">
+            <param name="table" value="mixs_sheet.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <output name="crosswalk">
+                <assert_contents>
+                    <has_line_matching expression="^local:_lat_lon\t\*lat_lon\tskos:exactMatch\tFAIRe:decimalLatitude\t.*\tlatitude$"/>
+                    <has_line_matching expression="^local:_lat_lon\t\*lat_lon\tskos:exactMatch\tFAIRe:decimalLongitude\t.*\tlongitude$"/>
+                    <has_line_matching expression="^local:_depth\t\*depth\tskos:exactMatch\tFAIRe:maximumDepthInMeters\t.*"/>
+                    <has_line_matching expression="^local:Control_Neg\tControl_Neg\tskos:closeMatch\tFAIRe:samp_category\t.*\tnegative control if yes$"/>
+                </assert_contents>
+            </output>
+            <output name="missing">
+                <assert_contents>
+                    <not_has_text text="decimalLongitude&#009;sampleMetadata"/>
+                    <not_has_text text="samp_category&#009;sampleMetadata"/>
+                    <has_line_matching expression="^neg_cont_type\tsampleMetadata\t.*"/>
+                </assert_contents>
+            </output>
+            <output name="summary">
+                <assert_contents>
+                    <has_text text="skipped 2 comment lines (starting with #) above the header"/>
+                    <has_json_property_with_value property="columns" value="6"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- A sheet that does not exist -->
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="table" value="survey_sheet.xlsx"/>
+            <param name="sheet" value="Field data"/>
+            <assert_stderr>
+                <has_text text="no sheet called 'Field data'. Sheets: Samples, Read me"/>
+            </assert_stderr>
+        </test>
+    </tests>
+    <help><![CDATA[
+@EARLY_VERSION@
+**What it does**
+
+This tool proposes which FAIRe term each column of your table holds, so you do not have to rename
+columns by hand. The result is a **crosswalk**: a table with one row for each column of your table
+and the FAIRe term it matches, saved in SSSOM, a standard format for such tables. You check and
+correct the crosswalk, and **FAIRe mapper: apply mapping** then uses it to write your FAIRe
+workbook.
+
+For every column, the tool scores each FAIRe term on three kinds of evidence:
+
+- **the header**, which it compares with the term's name and its common alternative names (for
+  example *Lat*, *Collection date* or *Primer F seq*);
+- **the values**, which it compares with what the term should hold: its type, format and allowed
+  values (for example latitudes, ISO dates, primer sequences, or *sample* and *negative control*);
+- **the level**: a column with the same value on every row, such as the primer sequence, suits a
+  term that applies to the whole project or assay.
+
+Each FAIRe term is given to one column at most. The tool then routes each column to one of these
+outcomes, shown in the *route* column of the mapping report:
+
+- **accept**: a strong match, clearly ahead of the alternatives;
+- **review**: a plausible match that a person should check, listed with the alternatives;
+- **no match**: nothing fits well enough, so the column is left out;
+- **confirmed**: a match set by a person in your answers file;
+- **model**: a match chosen by a language model in your answers file (answers marked
+  ``"by": "model:..."``). Check these, because only a person can confirm a match.
+
+Some columns fill more than one term, and each term then has its own row in the crosswalk. Examples
+are a number and its unit in one cell ("1 L"), latitude and longitude in one cell (MIxS lat_lon,
+"40.57 S 148.73 E"), and a single depth for each sample, which fills both minimumDepthInMeters and
+maximumDepthInMeters. A yes/no column that says which samples are controls, under a header such as
+*Control_Neg*, is matched to samp_category, with yes written as *negative control* and no as
+*sample*. Empty columns are not matched.
+
+@HELP_INPUTS@
+
+-----
+
+**Inputs**
+
+- **Your table**, as an Excel file or as text separated by commas, semicolons or tabs, and the row
+  that holds its headers. Comment lines starting with # above the headers, as in NCBI and ENA
+  submission sheets, are skipped. The tool reads text in Latin-1 or Windows encodings and decimal
+  commas (0,45) correctly, and the *summary* output records how it read the file.
+- **The assay type and sample types**, so the tool can leave out FAIRe terms that do not apply.
+- **Answers for the columns to review** (optional), as a JSON list such as
+  ``[{"column": "habitat", "term": "env_broad_scale"}, {"column": "notes", "term": null}]``. The
+  answers can come from a person, or from **FAIRe mapper: ask a language model** given the *columns
+  to review* output. Answers from a model should carry ``"by": "model:<name>"``, so that they are
+  not shown as confirmed. Run the tool again with the answers, and it matches the rest of the table
+  around them.
+- **Data dictionary** (optional): a description of what each column holds, as a table (column name,
+  description and units) or as a README with one line per column (``Days frozen: number of days the
+  water was frozen before filtering``). The tool treats a description like a header, so a FAIRe
+  term that the description names gets support from it. When the description names other terms but
+  not the one the header matched, the header match counts for less: for example, *Sample
+  processing* described as "the person that filtered the sample" points to recordedBy. Units in a
+  description ("in litres", "(µm)") are used like units in a header. The descriptions are also
+  passed to the model in the *columns to review*.
+
+**Outputs**
+
+- **mapping report**: one row for each column, giving the proposed term, its FAIRe sheet, the route,
+  the score and the evidence. It also gives hints for reformatting (for example converting
+  dd/mm/yyyy dates, or a unit found in a header), the shortlist of candidates (five, or ten when no
+  term clearly leads), how columns combine or split, and the column's description from the data
+  dictionary.
+- **crosswalk (SSSOM)**: the proposed and confirmed matches in the
+  `SSSOM <https://mapping-commons.github.io/sssom/>`_ format, which you can reuse with later
+  datasets.
+- **mandatory terms not covered**: the FAIRe mandatory terms that no column provides. It leaves out
+  the terms that the tool's settings supply (the assay type and checklist version) and those that
+  apply only to the other assay type. Many of these are project-level values usually found in the
+  methods text, and the rest are questions to ask the data provider.
+- **columns to review**: the review and no-match columns, with their values and candidate terms, in
+  a form that a reviewer or a language model can answer.
+- **summary**: the number of columns in each route.
+
+-----
+
+**How accurate is it?**
+
+We tested the tool on tables built from a real FAIRe dataset, with headers written independently in
+six lab styles. The first choice was correct for 81 to 93% of columns, and the correct term was in
+the shortlist for 94 to 99%. Of the columns routed to *accept*, 98 to 100% were correct. Matching on
+values alone, with headers that give nothing away, is much weaker (about 24%). The tests covered
+commonly used fields, and less common FAIRe fields are likely to match less well.
+
+Four published eDNA datasets were harder: the first choice was right for 55% of the columns that
+have a FAIRe term, and 84% of accepted columns were right. A data dictionary helps. On two test
+tables described column by column, the first choice rose from 81% to 91% and from 90% to 94%. Treat
+*review* columns as suggestions, and check the accepted ones too.
+
+@HELP_FAIRE_GUIDE@
+
+@HELP_ABOUT@
+    ]]></help>
+    <expand macro="citations"/>
+</tool>

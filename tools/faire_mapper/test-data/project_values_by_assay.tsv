@@ -1,0 +1,9 @@
+term	value	assay
+target_gene	COI	COIElasmo
+target_gene	16S rRNA (LSU mitochondria)	Fish16S
+pcr_primer_forward	ACCAACCACAAAGANATNGGCAC	COIElasmo
+pcr_primer_reverse	GATTATTACNAAAGCNTGGGC	COIElasmo
+pcr_primer_forward	GACCCTATGGAGCTTTAGAC	Fish16S
+pcr_primer_reverse	CGCTGTTATCCCTADRGTAACT	Fish16S
+seq_kit	MiSeq Reagent Kit v2 (500 cycles)	
+pcr_cycles	35	MiFish

@@ -1,0 +1,15 @@
+name: faire2qiime
+owner: CHANGE_ME
+description: Make QIIME 2 sample metadata and manifests from a FAIRe eDNA workbook
+long_description: |
+  Galaxy wrapper for FAIRe2QIIME (https://github.com/aomlomics/faire2qiime), which turns a
+  FAIR eDNA (FAIRe) metadata workbook into QIIME 2 sample metadata (one per assay) and
+  paired-end manifests (one per sequencing run and assay). Accepts both the FAIRe layout
+  produced by FAIRe-ator and the FAIRe-NOAA layout.
+homepage_url: https://github.com/aomlomics/faire2qiime
+remote_repository_url: https://github.com/FAIR-eDNA/FAIRe-Galaxy/tree/main/tools/faire2qiime
+type: unrestricted
+categories:
+  - Ecology
+  - Convert Formats
+  - Metagenomics

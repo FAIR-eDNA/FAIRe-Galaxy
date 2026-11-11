@@ -1,0 +1,192 @@
+<tool id="faire_mapper_model" name="FAIRe mapper: ask a language model" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="25.1" license="MIT">
+    <description>to answer the columns to review</description>
+    <macros>
+        <import>macros.xml</import>
+        <import>faire_guide.xml</import>
+    </macros>
+    <expand macro="creator"/>
+    <expand macro="requirements">
+        <!-- Read by faire_mapper_adjudicate.py from the environment (option from_env, prefix FAIRE_MAPPER_USER), never
+             from the command line. A model the server provides comes from FAIRE_MAPPER_SERVER_FORMAT,
+             _URL, _MODEL and _KEY, which the server's job rules set (see README.md). -->
+        <credentials name="faire_mapper_model" version="1.0" label="Your own language model service" optional="true"
+            description="If you have an account with a language model service, such as OpenAI (ChatGPT) or Anthropic (Claude), enter its details here to use it with this tool. Not needed if you use the model this Galaxy server provides. Galaxy keeps these details encrypted and passes them only to this tool's jobs.">
+            <variable name="format" inject_as_env="FAIRE_MAPPER_USER_FORMAT" optional="true" label="Request format"
+                description="openai (the default) for OpenAI and the many services that take its format, such as LiteLLM gateways, vLLM and Ollama; anthropic for Claude"/>
+            <variable name="url" inject_as_env="FAIRE_MAPPER_USER_URL" optional="true" label="Service address"
+                description="Leave empty for the provider's public service (https://api.openai.com/v1 or https://api.anthropic.com/v1). For any other service give its address, for example http://my-server:11434/v1"/>
+            <variable name="model" inject_as_env="FAIRE_MAPPER_USER_MODEL" optional="true" label="Model"
+                description="The model's name as the service gives it, for example gpt-5-mini or claude-sonnet-5-5"/>
+            <secret name="api_key" inject_as_env="FAIRE_MAPPER_USER_KEY" optional="true" label="API key"
+                description="Your key for the service, from its developer site: for OpenAI, the API keys page of the OpenAI Platform (platform.openai.com); for Claude, the API keys page of the Claude Console (platform.claude.com/settings/keys). Leave it empty only if your institution runs the model on its own computers and does not ask for a key."/>
+        </credentials>
+    </expand>
+    <version_command>python '$__tool_directory__/faire_mapper.py' --version</version_command>
+    <command detect_errors="exit_code"><![CDATA[
+python '$__tool_directory__/faire_mapper_adjudicate.py' '$requests'
+    -o out.json
+    --log log.tsv
+    --from_env '$source'
+    #if $preview:
+        --dry_run
+    #end if
+    ]]></command>
+    <inputs>
+        <param name="requests" type="data" format="json" label="Columns to review"
+            help="The 'columns to review' output of FAIRe mapper: propose mapping."/>
+        <param name="source" type="select" label="Language model">
+            <option value="FAIRE_MAPPER_SERVER" selected="true">The model this Galaxy server provides, if it provides one</option>
+            <option value="FAIRE_MAPPER_USER">My own model service, set in the credentials above</option>
+        </param>
+        <param name="preview" type="boolean" checked="false" label="Only show what would be sent"
+            help="Writes the requests the model would receive, one per column, and sends nothing."/>
+    </inputs>
+    <outputs>
+        <data name="answers" format="json" from_work_dir="out.json" label="${tool.name} on ${on_string}: answers">
+            <filter>not preview</filter>
+        </data>
+        <data name="log" format="tabular" from_work_dir="log.tsv" label="${tool.name} on ${on_string}: answer log">
+            <filter>not preview</filter>
+        </data>
+        <data name="prompts" format="json" from_work_dir="out.json" label="${tool.name} on ${on_string}: requests that would be sent">
+            <filter>preview</filter>
+        </data>
+    </outputs>
+    <tests>
+        <!-- Preview with no model set up: the requests are written and nothing is sent -->
+        <test expect_num_outputs="1">
+            <param name="requests" value="messy_edna_review.json"/>
+            <param name="preview" value="true"/>
+            <output name="prompts">
+                <assert_contents>
+                    <has_text text="You help map columns of environmental DNA"/>
+                    <has_text text="marker"/>
+                    <has_text text="target_gene"/>
+                </assert_contents>
+            </output>
+            <assert_stdout>
+                <has_text text="nothing was sent"/>
+                <has_text text="provides no language model"/>
+            </assert_stdout>
+        </test>
+        <!-- Preview with the user's own service: names the address and model, sends nothing -->
+        <test expect_num_outputs="1">
+            <param name="requests" value="messy_edna_review.json"/>
+            <param name="source" value="FAIRE_MAPPER_USER"/>
+            <param name="preview" value="true"/>
+            <credentials name="faire_mapper_model">
+                <variable name="url" value="http://127.0.0.1:9/v1"/>
+                <variable name="model" value="test-model"/>
+            </credentials>
+            <assert_stdout>
+                <has_text text="they would go to http://127.0.0.1:9/v1/chat/completions, model test-model, without an API key"/>
+            </assert_stdout>
+        </test>
+        <!-- The server provides no model -->
+        <test expect_exit_code="2" expect_failure="true">
+            <param name="requests" value="messy_edna_review.json"/>
+            <assert_stderr>
+                <has_text text="this Galaxy server provides no language model"/>
+            </assert_stderr>
+        </test>
+        <!-- Own service chosen, but no credentials given -->
+        <test expect_exit_code="2" expect_failure="true">
+            <param name="requests" value="messy_edna_review.json"/>
+            <param name="source" value="FAIRE_MAPPER_USER"/>
+            <assert_stderr>
+                <has_text text="no model is set: give the model name in the credentials for this tool"/>
+            </assert_stderr>
+        </test>
+        <!-- A service that cannot be reached stops the job with a plain message -->
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="requests" value="messy_edna_review.json"/>
+            <param name="source" value="FAIRE_MAPPER_USER"/>
+            <credentials name="faire_mapper_model">
+                <variable name="url" value="http://127.0.0.1:9/v1"/>
+                <variable name="model" value="test-model"/>
+            </credentials>
+            <assert_stderr>
+                <has_text text="could not reach the model service at http://127.0.0.1:9/v1/chat/completions"/>
+            </assert_stderr>
+        </test>
+    </tests>
+    <help><![CDATA[
+@EARLY_VERSION@
+
+**What it does**
+
+This tool uses a language model to help review the mapping. **FAIRe mapper: propose mapping**
+matches most columns on its own, and sends the columns it is unsure of to review, each with a short
+list of candidate FAIRe terms. This tool asks the model to choose the right term from each list, or
+none, so you do not have to answer every column yourself. If the model picks a term that is not on
+the list, its answer is discarded.
+
+It should make the proposed mapping more accurate, and you can still check the model's choices
+before the workbook is written (see *Using the answers*). The tool is optional: without it, you
+review the columns yourself, as the help of *propose mapping* describes.
+
+**Using the answers**
+
+When the model has answered, take its **answers** back to **FAIRe mapper: propose mapping**: run it
+again with the same table and settings, and give the answers as *Answers for columns to review*. In
+the new mapping report, the columns the model answered are marked *model*, which means a model chose
+the term and no person has checked it yet. **FAIRe mapper: apply mapping** treats these like
+matches you have accepted, so check them in the report before you apply the mapping. To change one,
+correct it in the crosswalk (the table of matches that *propose mapping* writes), or give your own
+answer for that column.
+
+**Which model**
+
+There are two ways to connect a language model:
+
+- **Your own account with a model service.** If you have an account with a language model service,
+  such as OpenAI (ChatGPT) or Anthropic (Claude), you can connect it to this tool and use it to help
+  with the mapping. You will need an API key from the service's developer site: for OpenAI, the API
+  keys page of the OpenAI Platform (platform.openai.com), and for Claude, the API keys page of the
+  Claude Console (platform.claude.com/settings/keys). A chat subscription, such as ChatGPT Plus,
+  does not include an API key, and the service bills API use separately, to your account. Enter the
+  key and the model's name in the credentials section at the top of the form, and choose *My own
+  model service*. Galaxy keeps these details encrypted, and you can reuse them.
+
+  For example, for OpenAI give the format openai, leave the address empty, and give a model such as
+  gpt-5-mini. For Claude, give the format anthropic, leave the address empty, and give a model such
+  as claude-sonnet-5-5. For a service your institution runs, give the format openai, the service's
+  address and its model name, and a key only if it needs one.
+- **A model this Galaxy server provides.** Some Galaxy servers connect to a model service
+  themselves, so you do not need an account of your own. Choose *The model this Galaxy server
+  provides*. If the server does not provide one, the job stops and tells you so.
+
+**What is sent to the model**
+
+The tool sends one request for each column to review. Each request holds the column's header, up to
+five of its values, and a summary of its values (how many there are, which kinds, number ranges and
+formats). It also holds the data provider's description of the column, if you gave *propose
+mapping* a data dictionary, and the candidate FAIRe terms with their descriptions from the FAIRe
+checklist. The rest of your table is not sent. If you tick *Only show what would be sent*, the tool
+writes these requests and sends nothing, so you can check them first.
+
+Requests to your own service go to that provider under your account, and the provider's terms apply
+to what it receives and keeps.
+
+**Outputs**
+
+- **answers**: one answer for each usable column (JSON), to give to *propose mapping*.
+- **answer log**: every column, with the model's answer and its reason, and why any answer was
+  discarded.
+- **requests that would be sent**: written only when you ask for the preview.
+
+**How accurate is it?**
+
+We have tested the accuracy with a Claude model answering. On four test tables, the first choice
+was right for about 90% of columns without the model, and for 94 to 96% with it. On four published
+eDNA datasets, it was right for 55% of columns without the model and 78% with it, and the columns
+accepted were right for 94% (84 to 85% without the model). In these tests the model reasoned with
+more care than a single request may allow, so treat these figures as upper estimates. We have not
+tested other models, and smaller ones may choose less well.
+
+@HELP_FAIRE_GUIDE@
+
+@HELP_ABOUT@
+    ]]></help>
+    <expand macro="citations"/>
+</tool>

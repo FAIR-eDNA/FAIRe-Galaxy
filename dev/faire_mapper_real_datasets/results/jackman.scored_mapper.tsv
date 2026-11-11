@@ -1,0 +1,8 @@
+column	route	proposed	gold	outcome	gold_in_shortlist
+Sample	accept	samp_name	samp_name	correct	True
+Location	accept	geo_loc_name	geo_loc_name	correct	True
+Distance	no match			right to leave	False
+Side	no match			right to leave	False
+Date Collection	accept	eventDate	eventDate	correct	True
+Date Extraction	accept	date_ext	date_ext	correct	True
+DNA []	review	nucl_acid_ext	concentration	wrong	False

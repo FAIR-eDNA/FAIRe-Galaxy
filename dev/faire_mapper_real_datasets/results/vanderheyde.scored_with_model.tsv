@@ -1,0 +1,21 @@
+column	route	proposed	gold	outcome	gold_in_shortlist
+ID	confirmed	samp_name	samp_name	correct	True
+Bore	no match			right to leave	False
+Sample_year	no match		eventDate	missed	False
+Location	accept	geo_loc_name	geo_loc_name	correct	True
+Volume	accept	samp_size	samp_vol_we_dna_ext	acceptable	True
+Type	confirmed	samp_category	env_medium	acceptable	True
+Substrate	accept	env_medium	samp_collect_method	acceptable	True
+Control	review	neg_cont_type	samp_category	wrong	True
+well_abundance	no match			right to leave	False
+well_taxon_richness	no match			right to leave	False
+Sequence_depth	no match		output_read_count	missed	False
+Extended_scope	no match			right to leave	False
+Latitude	accept	decimalLatitude	decimalLatitude	correct	True
+Longitude	accept	decimalLongitude	decimalLongitude	correct	True
+Depth	accept	minimumDepthInMeters	tot_depth_water_col	wrong	True
+SWL	no match			right to leave	False
+Casing_type	no match			right to leave	False
+Casing_diameter	no match			right to leave	False
+Slot_orientation	no match			right to leave	False
+Slot_size	no match			right to leave	False

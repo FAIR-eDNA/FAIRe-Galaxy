@@ -1,0 +1,47 @@
+[
+ {
+  "column": "ID",
+  "term": "samp_name",
+  "reason": "Unique per-row identifiers are sample names."
+ },
+ {
+  "column": "Sample_year",
+  "term": null,
+  "reason": "A collection year does not match any candidate."
+ },
+ {
+  "column": "Type",
+  "term": "samp_category",
+  "reason": "Values such as sediment, groundwater and blanks give the category of each sample."
+ },
+ {
+  "column": "Sequence_depth",
+  "term": null,
+  "reason": "Large counts per sample look like read depth, not a water or sediment depth."
+ },
+ {
+  "column": "Extended_scope",
+  "term": null,
+  "reason": "A 0 to 2 code for sampling scope matches none of the candidates."
+ },
+ {
+  "column": "SWL",
+  "term": null,
+  "reason": "Values look like a standing water level, which no candidate covers."
+ },
+ {
+  "column": "Casing_type",
+  "term": null,
+  "reason": "Bore casing material is not covered by any candidate."
+ },
+ {
+  "column": "Casing_diameter",
+  "term": null,
+  "reason": "This is bore casing diameter, not filter diameter."
+ },
+ {
+  "column": "Slot_size",
+  "term": null,
+  "reason": "This looks like the slot size of a bore screen, not a filter pore size."
+ }
+]

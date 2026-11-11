@@ -1,0 +1,29 @@
+	<?xml version="1.0" encoding="UTF-8"?>
+<dcterms:dc xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://purl.org/dc/elements/1.1/ https://dublincore.org/schemas/xmls/qdc/2008/02/11/dcterms.xsd">
+  <dc:title>Environmental DNA data from the RV Investigator South-East Australian Marine Ecosystem Survey (SEA-MES) voyages (IN2023_V05 and IN2024_V03)</dc:title>
+  <dc:creator>Bruce Deagle</dc:creator>
+  <dc:subject>Genetics not elsewhere classified</dc:subject>
+  <dc:subject>Conservation and biodiversity</dc:subject>
+  <dc:subject>Marine and estuarine ecology (incl. marine ichthyology)</dc:subject>
+  <dc:description>This data is from a CSIRO project which was funded through the National Environmental Science Program (NESP) Marine and Coastal Hub - Project 4.23: ?Environmental DNA for measuring offshore marine biodiversity: what can DNA in water collected from the RV Investigator tell us??
+The project generated a set of high-quality eDNA-based biodiversity datasets from samples collected at broadly distributed offshore sites across Southeast Australia. The data deposited here is processed data from eDNA metabarcoding assays (i.e. tables with sampling information, sequence read counts and taxonomy derived from the sequences), the raw sequence data (over 180 million sequences) is available on NCBI (https://www.ncbi.nlm.nih.gov/) under BioProject PRJNA1263580: Environmental DNA measuring offshore marine biodiversity in southeast Australia (https://www.ncbi.nlm.nih.gov/bioproject/PRJNA1263580/).
+The eDNA biodiversity information focussed on fish but includes sequence data from the full tree of life (from bacteria to vertebrates). Part of the purpose of data collection was to assess key technical aspects of eDNA data collection to refine sampling methods and provide guidance for best practices in future offshore eDNA research
+Details of the project can be accessed here:
+https://www.nespmarinecoastal.edu.au/project/4-23/
+This final report is available on the NESP Marine and Coastal Hub website:
+https://www.nespmarinecoastal.edu.au/publication/environmental-dna-for-measuring-offshore-marine-biodiversity-what-can-dna-in-water-collected-from-the-rv-investigator-tell-us/ 
+</dc:description>
+  <dc:publisher>CSIRO</dc:publisher>
+  <dc:contributor>Sahan Jayasinghe</dc:contributor>
+  <dc:contributor>Cindy Bessey</dc:contributor>
+  <dc:contributor>Lev Bodrossy</dc:contributor>
+  <dc:contributor>Katrina West</dc:contributor>
+  <dc:type />
+  <dc:format />
+  <dc:identifier>https://doi.org/10.25919/ngqx-3557</dc:identifier>
+  <dc:language />
+  <dcterms:temporal xsi:type="dcterms:Period">start=2023-07-01; end=2024-06-01</dcterms:temporal>
+  <dcterms:spatial xsi:type="dcterms:Box">northlimit=-34.8985; southlimit=-42.4658; westlimit=146.5786; eastLimit=152.3951; projection=WGS84</dcterms:spatial>
+  <dc:rights />
+</dcterms:dc>
+

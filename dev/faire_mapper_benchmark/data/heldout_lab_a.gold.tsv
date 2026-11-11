@@ -1,0 +1,96 @@
+column	term
+Sample ID	samp_name
+Sample type (field sample or control)	samp_category
+Field bottle number	materialSampleID
+Longitude (decimal degrees)	decimalLongitude
+Latitude (decimal degrees)	decimalLatitude
+Location name (region, locality)	geo_loc_name
+Date and time sampled	eventDate
+Broad habitat (biome)	env_broad_scale
+Local habitat feature	env_local_scale
+Sample medium (water, sediment, etc.)	env_medium
+Artificial waterbody? (0 = natural, 1 = artificial)	habitat_natural_artificial_0_1
+Sampling method	samp_collect_method
+Sampling equipment	samp_collect_device
+Sample volume collected	samp_size
+Volume collected units	samp_size_unit
+Storage temperature (°C)	samp_store_temp
+Preservative added	samp_store_sol
+Time in storage before extraction	samp_store_dur
+Sample storage location	samp_store_loc
+DNA extract storage location	dna_store_loc
+Sample processing description	samp_mat_process
+Prefilter mesh size (µm)	size_frac_low
+Filter pore size (µm)	size_frac
+Filter membrane type	filter_material
+Filter brand and model	filter_name
+Precipitation chemicals	precip_chem_prep
+Centrifuge speed (x g)	precip_force_prep
+Precipitation time (minutes)	precip_time_prep
+Precipitation temperature (°C)	precip_temp_prep
+Volume used for extraction	samp_vol_we_dna_ext
+Extraction volume units	samp_vol_we_dna_ext_unit
+Lysis method	nucl_acid_ext_lysis
+DNA separation method	nucl_acid_ext_sep
+DNA extraction method reference	nucl_acid_ext
+Extraction kit used	nucl_acid_ext_kit
+Sample depth from (m)	minimumDepthInMeters
+Sample depth to (m)	maximumDepthInMeters
+Total water depth at site (m)	tot_depth_water_col
+Water temperature (°C)	temp
+Chlorophyll a (mg/m3)	chlorophyll
+pH (pH units)	ph
+Salinity (PSU)	salinity
+Dissolved inorganic carbon	diss_inorg_carb
+Dissolved inorganic carbon units	diss_inorg_carb_unit
+Dissolved oxygen	diss_oxygen
+Dissolved oxygen units (mg/L or % sat)	diss_oxygen_unit
+Nitrate (as N)	nitrate
+Nitrate units	nitrate_unit
+Nitrite (as N)	nitrite
+Nitrite units	nitrite_unit
+Type of blank (field, extraction or PCR)	neg_cont_type
+Assay (target group)	assay_name
+PCR plate number	pcr_plate_id
+Library number	lib_id
+Sequencing run number	seq_run_id
+Forward index sequence	mid_forward
+Reverse index sequence	mid_reverse
+Forward read file	filename
+Reverse read file	filename2
+Sequence archive links	associatedSequences
+Number of raw reads	input_read_count
+Gene region targeted	target_gene
+Gene subregion	target_subfragment
+Forward primer sequence	pcr_primer_forward
+Reverse primer sequence	pcr_primer_reverse
+Forward primer name	pcr_primer_name_forward
+Reverse primer name	pcr_primer_name_reverse
+Sequencing platform	platform
+Sequencer model	instrument
+Monitoring program code	project_id
+Vehicle registration	
+Odometer start (km)	
+Kilometres travelled	
+Boat hours	
+Fuel cost ($)	
+Number of eskies	
+Ice bricks packed	
+Gate key returned (Y/N)	
+Field sheet scanned	
+Courier consignment number	
+Freight charge (AUD)	
+Purchase order number	
+Invoice number	
+Cost centre	
+GST applicable	
+Service tier (Standard / Express)	
+Quote reference	
+Turnaround time (business days)	
+Travel allowance claimed	
+Overtime hours	
+qa_checked	
+db_upload_status	
+sheet_version	
+Calibration log page	
+Price per sample (excl. GST)	

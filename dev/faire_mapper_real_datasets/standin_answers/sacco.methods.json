@@ -1,0 +1,124 @@
+{
+ "values": [
+  {
+   "term": "geo_loc_name",
+   "value": "Australia: Western Australia, Rottnest Island",
+   "quote": "Microbial Ecology of Five Hyper-saline Lakes at Rottnest Island (WA, Australia)",
+   "stated": false
+  },
+  {
+   "term": "sterilise_method",
+   "value": "All water filtering equipment was soaked for a minimum of 10 minutes in 10% sodium hypochlorite solution and treated with UV light prior to use and between sample replicates.",
+   "quote": "All water filtering equipment was soaked for a minimum of 10 minutes in 10% sodium hypochlorite solution and treated with UV light prior to use and between sample replicates (n=5) for each SP.",
+   "stated": true
+  },
+  {
+   "term": "neg_cont_0_1",
+   "value": "1",
+   "quote": "Water membranes, inclusive of laboratory controls, were extracted",
+   "stated": true
+  },
+  {
+   "term": "neg_cont_type",
+   "value": "extraction negative",
+   "quote": "2 Extraction controls",
+   "stated": false
+  },
+  {
+   "term": "samp_size",
+   "value": "1",
+   "quote": "Five 1 litre water sample replicates",
+   "stated": true
+  },
+  {
+   "term": "samp_size_unit",
+   "value": "L",
+   "quote": "Five 1 litre water sample replicates",
+   "stated": false
+  },
+  {
+   "term": "size_frac",
+   "value": "0.45",
+   "quote": "through 0.45 μm sterile membrane filters",
+   "stated": true
+  },
+  {
+   "term": "nucl_acid_ext_kit",
+   "value": "DNeasy Blood and Tissue Kit (Qiagen)",
+   "quote": "extracted using DNeasy Blood and Tissue Kit (Qiagen; Venlo, Netherlands)",
+   "stated": true
+  },
+  {
+   "term": "pcr_0_1",
+   "value": "1",
+   "quote": "Water samples were used for bacterial 16S metabarcoding",
+   "stated": false
+  },
+  {
+   "term": "targetTaxonomicAssay",
+   "value": "bacteria",
+   "quote": "Water samples were used for bacterial 16S metabarcoding",
+   "stated": true
+  },
+  {
+   "term": "target_gene",
+   "value": "16S rRNA (SSU prokaryote)",
+   "quote": "Water samples were used for bacterial 16S metabarcoding",
+   "stated": false
+  },
+  {
+   "term": "custom_mm",
+   "value": "1 x PCR Gold Buffer, 2.5 mM MgCl2, 0.4 mg/mL BSA, 0.25 mM of each dNTP, 0.4 μM of each primer, 0.2 μL AmpliTaq Gold",
+   "quote": "containing 1 x PCR Gold Buffer, 2.5 mM MgCl",
+   "stated": true
+  },
+  {
+   "term": "pcr_rep",
+   "value": "2",
+   "quote": "MID-tag PCR amplicons were generated in duplicate for each sample",
+   "stated": true
+  },
+  {
+   "term": "pcr_cond",
+   "value": "initial denaturation:95_5;annealing:52_0.5;elongation:72_0.5;final elongation:72_10;40",
+   "quote": "initial denaturation at 95°C for 5 minutes, followed by 40 cycles of 95°C for 30 seconds, 52°C for 30 seconds, 72°C for 30 seconds, and a final extension at 72°C for 10 minutes",
+   "stated": false
+  },
+  {
+   "term": "annealingTemp",
+   "value": "52",
+   "quote": "52°C for 30 seconds",
+   "stated": false
+  },
+  {
+   "term": "pcr_cycles",
+   "value": "40",
+   "quote": "followed by 40 cycles of 95°C",
+   "stated": true
+  },
+  {
+   "term": "platform",
+   "value": "ILLUMINA",
+   "quote": "sequenced using a 500 cycle V2 kit on an Illumina MiSeq platform",
+   "stated": false
+  },
+  {
+   "term": "instrument",
+   "value": "Illumina MiSeq [OBI_0002003]",
+   "quote": "sequenced using a 500 cycle V2 kit on an Illumina MiSeq platform",
+   "stated": false
+  },
+  {
+   "term": "seq_kit",
+   "value": "500 cycle V2 kit",
+   "quote": "sequenced using a 500 cycle V2 kit on an Illumina MiSeq platform",
+   "stated": true
+  },
+  {
+   "term": "lib_screen",
+   "value": "The final library was size selected (160-600bp) using Pippin Prep (Sage Sciences, USA) to remove MID-tag primer-dimer products",
+   "quote": "The final library was size selected (160-600bp) using Pippin Prep (Sage Sciences, USA)",
+   "stated": true
+  }
+ ]
+}

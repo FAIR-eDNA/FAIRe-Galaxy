@@ -1,0 +1,31 @@
+faire_target_gene	target_subfragment	gbif_target_gene	gbif_label	how
+12S rRNA (SSU mitochondria)		SSU_rRNA_12S_mitochondrial	12S ribosomal small subunit RNA (mitochondrial) (12S)	set for this tool (MDT finds no match)
+16S rRNA (LSU mitochondria)		LSU_rRNA_16S_mitochondrial	16S ribosomal large subunit RNA (mitochondrial) (mt16S)	set for this tool (MDT finds no match)
+16S rRNA (SSU prokaryote)		SSU_rRNA_16S_prokaryotic	16S ribosomal small subunit RNA (prokaryotic) (pro16S)	MDT matches it
+23S rRNA (LSU prokaryote)		LSU_rRNA_23S_prokaryotic	23S ribosomal large subunit RNA (prokaryotic) (23S)	set for this tool (MDT finds no match)
+18S rRNA (SSU eukaryote)		SSU_rRNA_18S_eukaryotic	18S ribosomal small subunit RNA (eukaryotic) (18S)	set for this tool (MDT finds no match)
+28S rRNA (LSU eukaryote)		LSU_rRNA_28S_eukaryotic	28S ribosomal large subunit RNA (eukaryotic) (28S)	set for this tool (MDT finds no match)
+rbcL		rbcL	Ribulose-bisphosphate carboxylase large chain (rbcL)	MDT matches it
+CytB		CytB	Cytochrome b (CytB)	MDT matches it
+COI		COI	Cytochrome c oxidase subunit I (COI)	MDT matches it
+COII		COII	Cytochrome c oxidase subunit II (COII)	MDT matches it
+COIII		COIII	Cytochrome c oxidase subunit III (COIII)	MDT matches it
+nifH		nifH	Nitrogenase reductase (nifH)	MDT matches it
+ITS		ITS_region	Internal Transcribed Spacer region (ITS)	MDT matches it
+ND1		ND1	NADH dehydrogenase subunit 1 (ND1)	MDT matches it
+ND2		ND2	NADH dehydrogenase subunit 2 (ND2)	MDT matches it
+ND3		ND3	NADH dehydrogenase subunit 3 (ND3)	MDT matches it
+ND4		ND4	NADH dehydrogenase subunit 4 (ND4)	MDT matches it
+ND5		ND5	NADH dehydrogenase subunit 5 (ND5)	MDT matches it
+ND6		ND6	NADH dehydrogenase subunit 6 (ND6)	MDT matches it
+amoA		amoA	Ammonia monooxygenase subunit A (amoA)	MDT matches it
+rpoB		rpoB	RNA polymerase subunit B (rpoB)	MDT matches it
+rpoC1		rpoC1	RNA polymerase subunit C1 (rpoC1)	MDT matches it
+rpoC2		rpoC2	RNA polymerase subunit C2 (rpoC2)	MDT matches it
+matK		matK	Maturase K (matK)	MDT matches it
+trnH		trnH	tRNA-His (trnH)	MDT matches it
+trnL		trnL	tRNA-Leu (trnL)	MDT matches it
+psbK		psbK	Photosystem II protein K (psbK)	MDT matches it
+D-loop		Dloop	Mitochondrial control region (Dloop)	MDT matches it
+ITS	ITS1	ITS1	Internal Transcribed Spacer 1 (ITS1)	set for this tool (from target_subfragment)
+ITS	ITS2	ITS2	Internal Transcribed Spacer 2 (ITS2)	set for this tool (from target_subfragment)

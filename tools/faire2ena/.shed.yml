@@ -1,0 +1,13 @@
+name: faire2ena
+owner: CHANGE_ME
+description: Convert FAIRe eDNA metadata to ENA sample, experiment and run XML
+long_description: |
+  Galaxy wrappers for FAIRe2ENA (https://github.com/FAIR-eDNA/FAIRe2ENA), which converts
+  FAIR eDNA (FAIRe) metadata workbooks into XML files for submission to the European
+  Nucleotide Archive. Two tools: samples (ERC000024 water checklist) and experiments/runs.
+homepage_url: https://github.com/FAIR-eDNA/FAIRe2ENA
+remote_repository_url: https://github.com/FAIR-eDNA/FAIRe-Galaxy/tree/main/tools/faire2ena
+type: unrestricted
+categories:
+  - Ecology
+  - Convert Formats

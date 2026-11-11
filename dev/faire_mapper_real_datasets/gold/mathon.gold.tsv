@@ -1,0 +1,53 @@
+column	term	also_acceptable	note
+code_spygen	samp_name	materialSampleID	Unique SPYGEN filter code per row; links to the sequencing sample lists.
+code_explo	materialSampleID	biological_rep_relation	Field sample code shared by replicate filters; '_temoin' suffix marks controls (feeds samp_category).
+rep		biological_rep_relation;biological_rep	Filter replicate number at a station; group with code_explo to build biological_rep_relation.
+date	eventDate	verbatimEventDate	Excel serial day numbers (43272 = 2018-06-21); convert to ISO yyyy-mm-dd, add time_start and time zone; NA for controls.
+station		geo_loc_name	Station name; append as locality to geo_loc_name (country is the term).
+site_name		geo_loc_name	Site name; combine into geo_loc_name as the region or locality (country is the term).
+province		geo_loc_name	Marine biogeographic province (MEOW); no FAIRe term, could inform the sea name in geo_loc_name.
+country	geo_loc_name		Country; build 'country: site_name, station' with INSDC names (fix 'Columbia' to 'Colombia'; use French Polynesia, Guadeloupe etc. for overseas sites).
+project		project_name;project_id	Four sub-project or campaign names that vary by sample; no sample-level FAIRe term.
+sample_type	samp_category	samp_collect_method	transect/point -> 'sample', control -> 'negative control' (also check '_temoin' rows); transect vs point also describes the method.
+sample_method	samp_collect_method	samp_collect_device	Collection method codes, partly French (transect_aller_retour = out-and-back transect); niskin and bag also suit samp_collect_device.
+time_start	verbatimEventTime	eventDate	Start time as Excel day fraction with decimal comma (0,645833 = 15:30); convert to hh:mm and add to eventDate.
+time_end		eventDate;verbatimEventTime	End time as Excel day fraction; combine with date and time_start into an eventDate interval (start/end).
+duration_min	eventDurationValue		Sampling duration mixing minutes (30) and Excel day fractions (0,0208 = 30 min); convert to ISO 8601 duration e.g. PT30M.
+volume	samp_size	samp_vol_we_dna_ext	Water volume filtered in litres; set samp_size_unit = L; NA -> missing.
+depth	minimumDepthInMeters	maximumDepthInMeters	Sampling depth in m; copy single values to both min and max; split ranges such as '65-10'.
+temperature	temp		Water temperature in degrees C; NA -> missing.
+turbidity	turbidity		Integer 0-4 score with no unit, probably a visual scale not NTU; confirm before use.
+habitat	env_broad_scale	env_medium;env_local_scale	Habitat class (marine, estuary, river, lake, resurgence); map to ENVO biomes e.g. marine biome [ENVO:00000447].
+habitat_type		env_local_scale	All values NA; nothing to map.
+gps_start			GPS waypoint number for transect start; internal code.
+latitude_start	verbatimLatitude	decimalLatitude	Raw start latitude with stray '?' characters and leading zeros; cleaned copy is latitude_start_clean.
+longitude_start	verbatimLongitude	decimalLongitude	Raw start longitude with stray '?' characters; cleaned copy is longitude_start_clean.
+gps_b			GPS waypoint ID for a transect vertex; internal code.
+lat_gps_b			Extra transect vertex; FAIRe holds one point per sample.
+long_gps_b			Extra transect vertex; FAIRe holds one point per sample.
+gps_c			GPS waypoint ID for a transect vertex; internal code.
+lat_gps_c			Extra transect vertex; FAIRe holds one point per sample.
+long_gps_c			Extra transect vertex; FAIRe holds one point per sample.
+gps_d			GPS waypoint ID for a transect vertex; internal code.
+lat_gps_d			Extra transect vertex; FAIRe holds one point per sample.
+long_gps_d			Extra transect vertex; FAIRe holds one point per sample.
+gps_half_turn			GPS waypoint ID at the transect turn point; internal code.
+latitude_turn			Latitude at the transect turn point; FAIRe holds one point per sample.
+longitude_turn			Longitude at the transect turn point; FAIRe holds one point per sample.
+gps_end			GPS waypoint ID at transect end; internal code.
+latitude_end			Latitude at transect end; FAIRe holds one point per sample (could be used to derive a midpoint).
+longitude_end			Longitude at transect end; FAIRe holds one point per sample (could be used to derive a midpoint).
+filter	size_frac		Filter pore size in um (0.2, 0.22, 0.45); NA -> missing.
+data_manager	recordedBy		Person managing each sample record; collapse the distinct names into the project-level recordedBy list.
+gps_owner			Owner of the GPS unit; no FAIRe term.
+comment			Mixed free-text field notes (French and English) on currents, sightings, old station names.
+longitude_start_clean	decimalLongitude		Cleaned decimal longitude of transect start; datum not stated (assume WGS84).
+latitude_start_clean	decimalLatitude		Cleaned decimal latitude of transect start; datum not stated (assume WGS84).
+dist_to_coast			Derived distance to coast; analysis variable.
+site35			Derived site grouping used in analysis; not field metadata.
+site30			Derived site grouping used in analysis; not field metadata.
+site25			Derived site grouping used in analysis; not field metadata.
+site20			Derived site grouping used in analysis; not field metadata.
+site10			Derived site grouping used in analysis; not field metadata.
+site5			Derived site grouping used in analysis; not field metadata.
+dist_to_CT			Derived distance to the Coral Triangle; analysis variable.

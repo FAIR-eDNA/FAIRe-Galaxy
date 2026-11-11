@@ -1,0 +1,140 @@
+<macros>
+    <!-- Upstream has tagged releases up to v3.2.0, but the pinned commit is later. The version is the date of
+         the pinned commit (aomlomics/edna2obis a3bc89050bcee12b482237cb2e3bb5c3c276debc). -->
+    <token name="@TOOL_VERSION@">2026.10.26</token>
+    <token name="@VERSION_SUFFIX@">2</token>
+    <token name="@PROFILE@">23.0</token>
+    <xml name="requirements">
+        <requirements>
+            <requirement type="package" version="3.12">python</requirement>
+            <requirement type="package" version="2.2.3">pandas</requirement>
+            <requirement type="package" version="2.5.4">numpy</requirement>
+            <requirement type="package" version="3.1.5">openpyxl</requirement>
+            <requirement type="package" version="6.0.3">pyyaml</requirement>
+            <requirement type="package" version="0.3.0">pyworms</requirement>
+            <requirement type="package" version="0.6.5">pygbif</requirement>
+            <requirement type="package" version="0.70.19">multiprocess</requirement>
+            <requirement type="package" version="2.34.2">requests</requirement>
+            <requirement type="package" version="15.0.0">rich</requirement>
+            <requirement type="package" version="1.0.3">pyfiglet</requirement>
+        </requirements>
+    </xml>
+    <xml name="form_json">
+        <configfiles>
+            <!-- All form values as JSON, read by the driver. Free text (EML fields, assay names) is not
+                 sanitised because it never reaches the command line. -->
+            <inputs name="form_json" data_style="staging_path_and_source_path"/>
+        </configfiles>
+    </xml>
+    <xml name="assay_name">
+        <param name="assay_name" type="text" value="" label="Assay name"
+            help="As written in the assay_name column of experimentRunMetadata, for example ssu16sv4v5-emp.">
+            <sanitizer sanitize="false"/>
+            <validator type="empty_field"/>
+            <validator type="regex" message="Enter the assay name on one line, without leading or trailing spaces">^[^\s](.*[^\s])?$</validator>
+        </param>
+    </xml>
+    <xml name="taxonomy_table">
+        <param name="taxonomy" type="data" format="tabular,csv,xlsx" label="Taxonomy table (one row per ASV or OTU)"
+            help="With a feature ID column first (seq_id, featureid or '#OTU ID') and a verbatimIdentification (or taxonomy) column holding the full taxonomy string, for example a FAIRe taxaRaw sheet or a Tourmaline asvTaxaFeatures file. Rows above the field names, such as the two '#' rows of FAIRe templates, are skipped."/>
+    </xml>
+    <xml name="skip_species">
+        <param name="skip_species" type="boolean" checked="false" label="Ignore species-level names for this assay"
+            help="edna2obis then matches from the genus upwards. Useful for markers whose species-level assignments are unreliable, such as 16S for bacteria. edna2obis drops the last name only when the string has all its ranks (see the help below)."/>
+    </xml>
+    <xml name="api_conditional">
+        <conditional name="api">
+            <param name="api_select" type="select" label="Look up names in">
+                <option value="WoRMS" selected="true">WoRMS (World Register of Marine Species), for OBIS</option>
+                <option value="GBIF">GBIF Backbone Taxonomy, for GBIF</option>
+            </param>
+            <when value="WoRMS">
+                <param name="worms_return_all_matches" type="boolean" checked="false" label="Include non-marine taxa"
+                    help="By default edna2obis asks WoRMS for marine taxa only. Turn this on for freshwater, estuarine or land samples, otherwise many names will not match."/>
+                <section name="worms_advanced" title="More WoRMS settings" expanded="false">
+                    <param name="worms_min_ranks_matched" type="integer" value="1" min="1" label="Ranks that must agree"
+                        help="How many names in the taxonomy string must also appear in the WoRMS classification of a match. edna2obis advises keeping this at 1."/>
+                    <param name="worms_max_walkup_steps" type="integer" value="" optional="true" min="0" label="Most steps up the taxonomy string"
+                        help="When the lowest name has no acceptable match, edna2obis tries the next name up, and so on. Leave empty for no limit (the upstream default); 0 tries the lowest name only."/>
+                    <param name="worms_return_higher_classification" type="boolean" checked="false" label="Add higherClassification"
+                        help="The full WoRMS lineage, including ranks such as subphylum. Needs one more request per taxon, so it is slower."/>
+                    <param name="worms_consider_unaccepted_for_selection" type="boolean" checked="false" label="Let unaccepted names be selected"
+                        help="When WoRMS resolves a name to its accepted name, the unaccepted name is listed for review. With this on, it can also be the selected match."/>
+                    <expand macro="n_proc"/>
+                </section>
+            </when>
+            <when value="GBIF">
+                <section name="gbif_advanced" title="More GBIF settings" expanded="false">
+                    <param name="gbif_match_limit" type="integer" value="3" min="1" max="20" label="Candidates to request for each name"
+                        help="More candidates give more to review but take much longer."/>
+                    <param name="gbif_use_assignment_score_for_selection" type="boolean" checked="false" label="Select by agreement with the taxonomy string first"
+                        help="By default the candidate with the highest GBIF confidence is selected. With this on, the candidate whose classification shares most names with the taxonomy string (assignment_score) is selected first."/>
+                    <param name="gbif_return_higher_classification" type="boolean" checked="false" label="Add higherClassification"
+                        help="The full GBIF lineage. Needs one more request per taxon, so it is slower."/>
+                    <expand macro="n_proc"/>
+                </section>
+            </when>
+        </conditional>
+    </xml>
+    <xml name="n_proc">
+        <param name="n_proc" type="integer" value="4" min="1" max="10" label="Parallel requests"
+            help="edna2obis sends this many requests at a time. Use fewer if the service reports too many requests."/>
+    </xml>
+    <xml name="citations">
+        <citations>
+            <citation type="doi">10.5281/zenodo.23667395</citation>
+            <citation type="doi">10.1002/edn3.70100</citation>
+        </citations>
+    </xml>
+    <xml name="creator">
+        <creator>
+            <organization name="NOAA 'Omics, AOML (edna2obis developers)" url="https://github.com/aomlomics/edna2obis"/>
+            <person givenName="Oliver" familyName="Berry"/>
+        </creator>
+    </xml>
+    <token name="@HELP_MATCHING@"><![CDATA[
+**How names are matched**
+
+edna2obis first cleans each taxonomy string: it splits the string at ``;``, turns ``_``, ``-`` and
+``/`` into spaces, and drops numbers, "sp." and "unassigned". It then tries the lowest name first,
+and moves up the string until a name has an accepted match. Strings that match nothing become
+*incertae sedis*.
+
+- **WoRMS** keeps accepted names only, and resolves unaccepted names to their accepted name. The
+  WoRMS matcher does not remove SILVA-style rank prefixes such as ``d__`` or ``p__``, so strings
+  like ``d__Bacteria; p__Cyanobacteria`` do not match in WoRMS. Use GBIF for these, or remove the
+  prefixes from the taxonomy table first.
+- **GBIF** removes those prefixes, scores each candidate, and selects the one with the highest GBIF
+  confidence (or the best agreement with the string, if you choose that).
+- **Ignore species-level names**: WoRMS drops the last name when the string has as many names as
+  the table has rank columns between verbatimIdentification and Confidence (7 if there is no
+  Confidence column). GBIF drops it when the string has 6 or more names.
+    ]]></token>
+    <token name="@HELP_MAPPING_COLUMNS@"><![CDATA[
+**The mapping table**
+
+The table has one row for each candidate match, as in edna2obis's ``taxa_mapping_INFO`` file, with
+an ``assay_name`` column added after ``verbatimIdentification``. The main columns are:
+
+- **selected_match**: True on the row used for the Darwin Core tables. Exactly one row for each
+  name and assay should be True.
+- **ambiguous**: True when there was more than one candidate.
+- **scientificName**, **taxonRank**, **scientificNameID** (WoRMS) or **taxonID** (GBIF), and the
+  ranks **kingdom** to **genus**.
+- **ranks_matched**, **ranks_provided** and **assignment_score**: how many names in the string
+  appear in the candidate's classification.
+- **match_type_debug**: how the row was found, for example ``Success_Batch_Diaphus`` (matched on
+  that name) or ``Failed_All_Stages_NoMatch``.
+- **nameAccordingTo**: WoRMS or GBIF.
+    ]]></token>
+    <token name="@HELP_FOOTER@"><![CDATA[
+-----
+
+**Credits**
+
+This tool runs `edna2obis <https://github.com/aomlomics/edna2obis>`_ (MIT) from NOAA 'Omics, AOML,
+by Bayden Willms and Katherine Silliman, through a small Galaxy driver. Names are matched with the
+`WoRMS <https://www.marinespecies.org>`_ and `GBIF <https://www.gbif.org>`_ web services. The FAIRe
+checklist is described in Takahashi et al. (2025) *Environmental DNA* 7: e70100. The Galaxy tool was written by Oliver Berry (CSIRO), with Claude (Anthropic).
+    ]]></token>
+</macros>

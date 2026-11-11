@@ -1,0 +1,296 @@
+<tool id="faire2mdt" name="FAIRe2MDT" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="23.0" license="MIT">
+    <description>format FAIRe metabarcoding data for GBIF's Metabarcoding Data Toolkit</description>
+    <macros>
+        <!-- FAIRe2MDT.R script version 1.1.0 (16 Jul 2025), FAIR-eDNA/FAIRe2MDT commit 13d1fcc -->
+        <token name="@TOOL_VERSION@">1.1.0</token>
+        <token name="@VERSION_SUFFIX@">0</token>
+        <token name="@NAME_RE@">^\s*[A-Za-z0-9_.+() -]+\s*$</token>
+        <token name="@SHEET_RE@">^[A-Za-z0-9 _.,+()#-]{1,31}$</token>
+        <import>faire_guide.xml</import>
+    </macros>
+    <creator>
+        <organization name="FAIR eDNA (FAIRe) collaboration, FAIRe2MDT developers" url="https://github.com/FAIR-eDNA/FAIRe2MDT"/>
+        <person givenName="Oliver" familyName="Berry"/>
+    </creator>
+    <requirements>
+        <requirement type="package" version="4.4.3">r-base</requirement>
+        <requirement type="package" version="1.6.0">r-readxl</requirement>
+        <requirement type="package" version="4.2.9">r-openxlsx</requirement>
+        <requirement type="package" version="1.2.1">r-dplyr</requirement>
+        <requirement type="package" version="3.3.1">r-tibble</requirement>
+    </requirements>
+    <version_command>echo '@TOOL_VERSION@'</version_command>
+    <command detect_errors="exit_code"><![CDATA[
+Rscript --vanilla '$__tool_directory__/faire2mdt_galaxy.R'
+    --upstream '$__tool_directory__/FAIRe2MDT.R'
+    --target_genes '$__tool_directory__/mdt_target_gene.tsv'
+    --workbook '$workbook'
+    --assay '$assay'
+    --seq_run '$seq_run'
+    --otu '$otu' --otu_format '$otu.ext' --otu_sheet '$otu_sheet'
+    --taxa '$taxa' --taxa_format '$taxa.ext' --taxa_sheet '$taxa_sheet'
+    --controls '$controls'
+    --output '$mdt'
+    --log '$log'
+    ]]></command>
+    <inputs>
+        <param name="workbook" type="data" format="xlsx" label="FAIRe metadata workbook"
+            help="With projectMetadata, sampleMetadata and experimentRunMetadata sheets, for example a filled-in FAIRe-ator template."/>
+        <param name="assay" type="text" label="Assay name" help="As written in assay_name, for example COILeray.">
+            <validator type="regex" message="Use letters, digits, spaces and _ . + ( ) - only">@NAME_RE@</validator>
+        </param>
+        <param name="seq_run" type="text" label="Sequencing run ID" help="As written in seq_run_id in experimentRunMetadata, for example Library_2021.">
+            <validator type="regex" message="Use letters, digits, spaces and _ . + ( ) - only">@NAME_RE@</validator>
+        </param>
+        <param name="otu" type="data" format="xlsx,tabular,csv" label="OTU or ASV table (otuFinal) for this assay and run"
+            help="A seq_id column and one column of read counts per sample. An Excel file (this can be the metadata workbook, if it has an otuFinal sheet), or a TSV or CSV file."/>
+        <param name="otu_sheet" type="text" value="otuFinal" label="Sheet with the OTU table"
+            help="For Excel files only. If the file has one sheet, that sheet is used.">
+            <validator type="regex" message="A sheet name of up to 31 letters, digits, spaces and _ . , + ( ) # -">@SHEET_RE@</validator>
+        </param>
+        <param name="taxa" type="data" format="xlsx,tabular,csv" label="Taxonomy table (taxaFinal) for this assay and run"
+            help="The FAIRe taxaFinal table: a seq_id column and one column per taxonomic rank or other field. The rows above the seq_id row are skipped."/>
+        <param name="taxa_sheet" type="text" value="taxaFinal" label="Sheet with the taxonomy table"
+            help="For Excel files only. If the file has one sheet, that sheet is used.">
+            <validator type="regex" message="A sheet name of up to 31 letters, digits, spaces and _ . , + ( ) # -">@SHEET_RE@</validator>
+        </param>
+        <param name="controls" type="select" label="Control samples"
+            help="Controls are samples whose samp_category is negative control, positive control or PCR standard, or that have a neg_cont_type or pos_cont_type. GBIF does not want them, so they are left out by default, with the sequences that only they have reads of.">
+            <option value="omit" selected="true">Leave them out</option>
+            <option value="keep">Keep them (their 'missing: not collected' becomes 'not applicable: control sample')</option>
+        </param>
+    </inputs>
+    <outputs>
+        <data name="mdt" format="xlsx" label="${tool.name} on ${on_string}: MDT workbook (${assay}, ${seq_run})"/>
+        <data name="log" format="txt" label="${tool.name} on ${on_string}: log"/>
+    </outputs>
+    <tests>
+        <!-- One of two assays and one of two runs whose names overlap; OTU table in its own workbook, taxonomy as TSV -->
+        <test expect_num_outputs="2">
+            <param name="workbook" value="mdt_workbook.xlsx"/>
+            <param name="assay" value="MiFish"/>
+            <param name="seq_run" value="run1"/>
+            <param name="otu" value="otuFinal_mdttest_MiFish_run1.xlsx" ftype="xlsx"/>
+            <param name="taxa" value="taxaFinal_mdttest_MiFish_run1.tsv" ftype="tabular"/>
+            <output name="mdt" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/workbook.xml">
+                        <has_text text="name=&quot;Study&quot;"/>
+                        <has_text text="name=&quot;Samples&quot;"/>
+                        <has_text text="name=&quot;Taxonomy&quot;"/>
+                        <has_text text="name=&quot;OTU_table&quot;"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/sharedStrings.xml">
+                        <has_text text="lib_S1_MiFish_run1"/>
+                        <not_has_text text="lib_NC1_MiFish_run1"/>
+                        <not_has_text text="lib_S1_MiFishE_run1"/>
+                        <not_has_text text="lib_S3_MiFish_run10"/>
+                        <not_has_text text="GTTGGTAAATCTCGTGCCAGC"/>
+                        <has_text text="&gt;2024-03-05&lt;"/>
+                        <has_text text="&gt;09:25:00&lt;"/>
+                        <has_text text="&gt;2026-11-03&lt;"/>
+                        <not_has_text text="45356"/>
+                        <has_text text="&gt;105.70852&lt;"/>
+                        <not_has_text text="105.70851999"/>
+                        <has_text text="Pagrus auratus"/>
+                        <has_text text="&gt;SSU_rRNA_12S_mitochondrial&lt;"/>
+                        <not_has_text text="12S rRNA (SSU mitochondria)"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_line line="FAIRe2MDT 1.1.0: assay MiFish, sequencing run run1."/>
+                    <has_text text="would also take 4 rows of other assays or runs"/>
+                    <has_text text="Note: 1 control sample left out (NC1), as GBIF does not want controls."/>
+                    <has_line line="Samples sheet: 2 samples, 13 fields."/>
+                    <has_line line="OTU_table sheet: 3 sequences, 2 samples."/>
+                    <has_text text="target_gene '12S rRNA (SSU mitochondria)' written as 'SSU_rRNA_12S_mitochondrial'"/>
+                    <not_has_text text="Warning"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Assay name spelt with other punctuation and run ID in other case; both tables are sheets of the metadata workbook -->
+        <test expect_num_outputs="2">
+            <param name="workbook" value="mdt_workbook.xlsx"/>
+            <param name="assay" value="MiFish_E"/>
+            <param name="seq_run" value="RUN1"/>
+            <param name="otu" value="mdt_workbook.xlsx" ftype="xlsx"/>
+            <param name="otu_sheet" value="otuFinal_MiFish-E_run1"/>
+            <param name="taxa" value="mdt_workbook.xlsx" ftype="xlsx"/>
+            <param name="taxa_sheet" value="taxaFinal_MiFish-E_run1"/>
+            <output name="mdt" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/sharedStrings.xml">
+                        <has_text text="GTTGGTAAATCTCGTGCCAGC"/>
+                        <has_text text="lib_S2_MiFishE_run1"/>
+                        <not_has_text text="lib_S2_MiFish_run1"/>
+                        <not_has_text text="GTCGGTAAAACTCGTGCCAGC"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="so 'MiFish-E' was used, which differs only in punctuation or case"/>
+                    <has_text text="projectMetadata spells the assay 'MiFish-E'"/>
+                    <has_line line="Samples sheet: 2 samples, 13 fields."/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- OTU table as CSV with a column that is not a sample of this run; taxonomy workbook whose only sheet has another name -->
+        <test expect_num_outputs="2">
+            <param name="workbook" value="mdt_workbook.xlsx"/>
+            <param name="assay" value="mifish"/>
+            <param name="seq_run" value="run1"/>
+            <param name="otu" value="otuFinal_mdttest_MiFish_run1.csv" ftype="csv"/>
+            <param name="taxa" value="taxa_one_sheet.xlsx" ftype="xlsx"/>
+            <output name="mdt" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/sharedStrings.xml">
+                        <has_text text="lib_S1_MiFish_run1"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="so its only sheet ('Sheet1') was used"/>
+                    <has_text text="not samples of this assay and run in the metadata: S9."/>
+                    <has_text text="the OTU table had 1 empty cell, written as 0"/>
+                    <has_line line="OTU_table sheet: 3 sequences, 3 samples."/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- taxaFinal with an ASV that otuFinal sums under another (FAIRe's final tables): left out of Taxonomy -->
+        <test expect_num_outputs="2">
+            <param name="workbook" value="mdt_workbook.xlsx"/>
+            <param name="assay" value="MiFish"/>
+            <param name="seq_run" value="run1"/>
+            <param name="otu" value="otuFinal_mdttest_MiFish_run1.xlsx" ftype="xlsx"/>
+            <param name="taxa" value="taxaFinal_extra_asv.tsv" ftype="tabular"/>
+            <output name="mdt" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/sharedStrings.xml">
+                        <has_text text="Pagrus auratus"/>
+                        <has_text text="ACACCGCCCGTCACTCTCCCCAAG"/>
+                        <not_has_text text="ACACCGCCCGTCACTCTCCCCAGG"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="Note: 1 row of the taxonomy table left out, as the OTU table has no row for its sequence (ASV_4)"/>
+                    <not_has_text text="in the taxonomy table but not in the OTU table"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Controls kept: the negative control's "missing: not collected" date becomes "not applicable: control sample" -->
+        <test expect_num_outputs="2">
+            <param name="workbook" value="mdt_workbook.xlsx"/>
+            <param name="assay" value="MiFish"/>
+            <param name="seq_run" value="run1"/>
+            <param name="otu" value="otuFinal_mdttest_MiFish_run1.xlsx" ftype="xlsx"/>
+            <param name="taxa" value="taxaFinal_mdttest_MiFish_run1.tsv" ftype="tabular"/>
+            <param name="controls" value="keep"/>
+            <output name="mdt" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/sharedStrings.xml">
+                        <has_text text="lib_NC1_MiFish_run1"/>
+                        <has_text text="not applicable: control sample"/>
+                        <not_has_text text="missing: not collected"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="Note: 'missing: not collected' written as 'not applicable: control sample' in 1 cell of the controls"/>
+                    <not_has_text text="control sample left out"/>
+                    <has_line line="Samples sheet: 3 samples, 13 fields."/>
+                    <has_line line="OTU_table sheet: 3 sequences, 3 samples."/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- An assay that is not in the workbook -->
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="workbook" value="mdt_workbook.xlsx"/>
+            <param name="assay" value="MiFish-U"/>
+            <param name="seq_run" value="run1"/>
+            <param name="otu" value="otuFinal_mdttest_MiFish_run1.xlsx" ftype="xlsx"/>
+            <param name="taxa" value="taxaFinal_mdttest_MiFish_run1.tsv" ftype="tabular"/>
+            <assert_stderr>
+                <has_text text="The workbook has: MiFish / run1 (3 rows); MiFish / run10 (1 row); MiFish-E / run1 (2 rows); MiFish-E / run10 (1 row)."/>
+            </assert_stderr>
+        </test>
+    </tests>
+    <help><![CDATA[
+**What it does**
+
+This tool converts FAIR eDNA (`FAIRe <https://fair-edna.github.io/>`_) metabarcoding data for one
+assay and one sequencing run into the Excel workbook that GBIF's
+`Metabarcoding Data Toolkit (MDT) <https://www.gbif.org/metabarcoding>`_ takes, so that you can
+publish eDNA occurrence data through GBIF. For a study with several assays or runs, run the tool
+once for each assay and run.
+
+-----
+
+**Inputs**
+
+- **FAIRe metadata workbook**, with projectMetadata, sampleMetadata and experimentRunMetadata
+  sheets.
+- **Assay name** and **sequencing run ID**, as written in the workbook. The tool uses only the rows
+  of experimentRunMetadata with exactly this assay_name and seq_run_id (ignoring case). If there are
+  none, it uses a name that differs only in punctuation or case (12S_V5 for 12S-V5), and the log
+  says so.
+- **OTU or ASV table** (FAIRe *otuFinal*) for this assay and run. This has a seq_id column and one
+  column of read counts for each sample, named as samp_name is in the metadata. If the top-left cell
+  is empty, the first column is taken as seq_id.
+- **Taxonomy table** (FAIRe *taxaFinal*) for this assay and run.
+
+Both tables can be separate files (Excel, TSV or CSV) or sheets of the metadata workbook. For Excel
+files, give the sheet names if they are not *otuFinal* and *taxaFinal*.
+
+**Outputs**
+
+- **MDT workbook**, with four sheets:
+
+  - *Study*: the projectMetadata terms and values. With several assays, the values for this assay
+    replace the blank project-level values, and assay_name is set to this assay. target_gene is
+    written as the GBIF vocabulary term that MDT uses (12S rRNA (SSU mitochondria) becomes
+    SSU_rRNA_12S_mitochondrial), so that MDT fills in the marker itself.
+  - *Samples*: sampleMetadata joined to the experimentRunMetadata rows of this assay and run, with
+    samp_name renamed id, and without the control samples unless you keep them. Fields with no
+    values are left out.
+  - *Taxonomy*: the taxonomy table, with seq_id renamed id, for the sequences in the OTU table.
+    Fields with no values are left out.
+  - *OTU_table*: the OTU table as given, without the control samples' columns and the sequences
+    that only they have reads of, unless you keep the controls.
+
+- **Log**: what was used, any notes and warnings (for example OTU table columns that are not
+  samples of this run, or sequences missing from the taxonomy table), and the size of each sheet.
+
+Upload the workbook to MDT, which checks it and maps the fields to Darwin Core.
+
+-----
+
+**Differences from running FAIRe2MDT.R by hand**
+
+- This tool matches runs by their exact names. The script also takes names that contain the given
+  name, so COILeray would also take COILeray2, and run1 would take run10.
+- Excel dates stay dates (2024-03-05, not 45356), and numbers keep the digits Excel shows
+  (105.70852, not 105.70851999999999).
+- Problems are reported in plain words before the conversion starts.
+- target_gene is written as the GBIF term, which MDT needs for five of FAIRe's rRNA genes.
+
+@HELP_FAIRE_GUIDE@
+
+-----
+
+**Credits**
+
+This tool runs `FAIRe2MDT <https://github.com/FAIR-eDNA/FAIRe2MDT>`_ (script version 1.1.0) from
+the FAIR eDNA collaboration. The FAIRe checklist is described in Takahashi et al. (2025)
+*Environmental DNA* 7: e70100. The Galaxy tool was written by Oliver Berry (CSIRO), with Claude (Anthropic).
+    ]]></help>
+    <citations>
+        <citation type="doi">10.1002/edn3.70100</citation>
+    </citations>
+</tool>

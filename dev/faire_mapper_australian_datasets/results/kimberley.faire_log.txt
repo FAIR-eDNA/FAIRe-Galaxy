@@ -1,0 +1,76 @@
+FAIRe mapper: apply mapping 0.4.0
+
+## Inputs
+
+- table: site_metadata_TableS1.csv, 71 rows and 9 columns
+- crosswalk: crosswalk.sssom.tsv, 8 rows; applied: skos:exactMatch and skos:closeMatch
+- assay type metabarcoding; sample types Water; project ID kimberley_2017_2018; assays 16SFish,COIElasmobranch,16SReptile
+
+## Columns written
+
+- 'Site No.' to samp_name (sampleMetadata)
+- 'Latitude' to decimalLatitude (sampleMetadata): trailing zeros (-13.99230) are shown by the cell format but dropped from the stored number, so FAIRe-fier may count fewer decimal places
+- 'Longitude' to decimalLongitude (sampleMetadata): trailing zeros (-13.99230) are shown by the cell format but dropped from the stored number, so FAIRe-fier may count fewer decimal places
+- 'Subregion' + 'Location' to geo_loc_name (sampleMetadata), combined in this order, e.g. 'Australia: Dampier Peninsula, Gantheaume Bay'
+- 'Habitat' to env_local_scale (sampleMetadata)
+- 'Site Depth (m)' to tot_depth_water_col (sampleMetadata): trailing zeros (-13.99230) are shown by the cell format but dropped from the stored number, so FAIRe-fier may count fewer decimal places
+- 'Date Collected' to eventDate (sampleMetadata): read day first, as 13/09/2017 shows, e.g. '06/09/2017' as '2017-09-06'
+- kept as user-defined fields in sampleMetadata: Bioregion
+
+## Project values
+
+- sterilise_method = Sample bottles were bleach sterilised; filtration equipment was cleaned with 10% (projectMetadata)
+- neg_cont_0_1 = 1 (projectMetadata)
+- env_medium = sea water [ENVO:00002149] (every sample)
+- samp_size = 1 (every sample)
+- samp_size_unit = L (every sample)
+- size_frac = 0.45 (every sample)
+- filter_material = polyethersulfone (every sample)
+- nucl_acid_ext_kit = DNeasy Blood and Tissue Kit (Qiagen) (every sample)
+- pcr_0_1 = 1 (projectMetadata)
+- targetTaxonomicAssay = bony fish | elasmobranchs | aquatic reptiles (projectMetadata)
+- target_gene = 16S rRNA (LSU mitochondria) | COI (projectMetadata)
+- custom_mm = 1X AmpliTaq Gold PCR buffer (Life Technologies), 2 mM MgCl2, 0.25 mM dNTPs, 0.2  (projectMetadata)
+- pcr_dna_vol = 4 (projectMetadata)
+- pcr_rep = 3 (projectMetadata)
+- pcr_cond = initial denaturation:95_5;annealing:51-54_0.5;elongation:72_0.75;final elongatio (projectMetadata)
+- pcr_cycles = 50 (projectMetadata)
+- barcoding_pcr_appr = one-step PCR (projectMetadata)
+- platform = ILLUMINA (projectMetadata)
+- lib_screen = Libraries were size-selected using a Pippin-Prep (Sage Science), purified using  (projectMetadata)
+- otu_db = NCBI GenBank nucleotide database (accessed in 2018/19) | in-house 16S rRNA Weste (projectMetadata)
+- otu_seq_comp_appr = BLASTn (projectMetadata)
+- screen_contam_method = ASVs detected in filtration and/or extraction blanks were entirely removed (projectMetadata)
+- assay_name = 16SFish | COIElasmobranch | 16SReptile (every sample)
+
+## OTU and taxonomy tables
+
+- Actinopterygii_read_abundance_matrix.xlsx: samples as rows; 362 sequences or taxa, 71 samples
+- Actinopterygii_read_abundance_matrix.xlsx: columns after the counts were left out (sample details): Site.1, Latitude, Longitude, Bioregion, Subregion, Habitat, Site_depth, Sampling season
+- Actinopterygii_read_abundance_matrix.xlsx: taxonomy for 362 taxa read from their names only; ranks above them are empty (edna2obis: match taxa can fill them from WoRMS or GBIF)
+- Actinopterygii_read_abundance_matrix.xlsx: taxonomy from the names in the table (binomials as species; -idae family, -iformes order; other single words as genus)
+- Actinopterygii_read_abundance_matrix.xlsx: WARNING dna_sequence (mandatory in FAIRe) is empty for 362 of 362 rows; the table has reads summed per taxon, without sequences
+- Actinopterygii_read_abundance_matrix.xlsx: written as otuFinal_16SFish and taxaFinal_16SFish (assay 16SFish)
+- experimentRunMetadata: 71 rows made from the OTU tables (samp_name, assay_name, seq_run_id); lib_id is left empty
+
+## Left out
+
+- project values with status review, not applied: tax_assign_cat, pcr_primer_forward (12), pcr_primer_reverse (11), pcr_primer_name_forward (12), pcr_primer_name_reverse (12), pcr_primer_reference_forward (11), pcr_primer_reference_reverse (11), ampliconSize (11)
+
+## Warnings
+
+- 'Habitat' to env_local_scale: 71 values are not in "label [ENVO:id]" form, as FAIRe needs; kept as they are, e.g. 'Inshore', 'Coastal', 'Nearshore Estuarine'
+- several assays: values for the whole project are in project_level; move any that differ between assays to the assay columns
+- checkls_ver is written as FAIRe-ator writes it (FAIRe_checklist_v1.0.2.xlsx); FAIRe-fier reports this as an error until the FAIRe authors settle the format
+
+## Mandatory terms with no value
+
+- recordedBy (projectMetadata)
+- project_contact (projectMetadata)
+- pcr_primer_forward (projectMetadata; mandatory if pcr_0_1 is 1)
+- pcr_primer_reverse (projectMetadata; mandatory if pcr_0_1 is 1)
+- samp_category (sampleMetadata)
+- neg_cont_type (sampleMetadata; mandatory if samp_category = negative control)
+- pos_cont_type (sampleMetadata; mandatory if samp_category = positive control)
+- env_broad_scale (sampleMetadata; mandatory unless samp_category = negative control, positive control, or PCR standard)
+- lib_id (experimentRunMetadata)

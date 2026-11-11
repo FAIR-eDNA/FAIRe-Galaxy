@@ -1,0 +1,33 @@
+# curie_map:
+#   FAIRe: https://github.com/FAIR-eDNA/FAIRe_checklist#
+#   local: 'urn:faire-mapper:local:'
+#   skos: http://www.w3.org/2004/02/skos/core#
+#   semapv: https://w3id.org/semapv/vocab/
+# mapping_set_id: urn:faire-mapper:mixs_sheet.tsv
+# mapping_set_description: Proposed mapping of the columns of mixs_sheet.tsv to FAIRe terms (FAIRe_checklist_v1.0.2.xlsx)
+# license: https://creativecommons.org/publicdomain/zero/1.0/
+# mapping_tool: faire_mapper 0.5.0
+# mapping_date: 2026-11-04
+# extension_definitions:
+#   - slot_name: combine_order
+#     property: urn:faire-mapper:combine_order
+#     type_hint: xsd:integer
+#   - slot_name: value_part
+#     property: urn:faire-mapper:value_part
+#     type_hint: xsd:string
+# comment: combine_order numbers the columns that together build one value, in order
+#   (geo_loc_name is country, then region, then locality). value_part says which part of each
+#   cell a term takes: number or unit (1 L fills samp_size and samp_size_unit), latitude or
+#   longitude (MIxS lat_lon), or a conversion (negative control if yes). The apply mapping
+#   tool applies rows with skos:exactMatch; change a row to skos:exactMatch to confirm it.
+#   A column with no skos:exactMatch row is kept as a user-defined field, unless the apply
+#   mapping tool is set to leave such columns out.
+subject_id	subject_label	predicate_id	object_id	object_label	mapping_justification	confidence	comment	combine_order	value_part
+local:_sample_name	*sample_name	skos:exactMatch	FAIRe:samp_name	samp_name	semapv:CompositeMatching	1.0	accept; header matches term name 'sample name' (1.00); a different value on every row		
+local:_collection_date	*collection_date	skos:exactMatch	FAIRe:eventDate	eventDate	semapv:CompositeMatching	1.0	accept; header matches common name 'collection date' (1.00); dates (yyyy-mm-dd hh:mm:ss); hint: convert dates from yyyy-mm-dd hh:mm:ss to ISO 8601 (yyyy-mm-dd)		
+local:_depth	*depth	skos:exactMatch	FAIRe:minimumDepthInMeters	minimumDepthInMeters	semapv:CompositeMatching	1.0	accept; header matches common name 'depth' (1.00); numbers (10 to 12); hint: write the depth to minimumDepthInMeters and maximumDepthInMeters		
+local:_depth	*depth	skos:exactMatch	FAIRe:maximumDepthInMeters	maximumDepthInMeters	semapv:CompositeMatching	1.0	accept; one depth for each sample: it fills minimumDepthInMeters and maximumDepthInMeters		
+local:_lat_lon	*lat_lon	skos:exactMatch	FAIRe:decimalLatitude	decimalLatitude	semapv:CompositeMatching	0.914	accept; header matches common name 'latitude' (0.91); latitude and longitude in each cell (14.68472 S 145.44247 E): split into decimalLatitude and decimalLongitude; hint: split each cell into decimalLatitude and decimalLongitude, south and west negative		latitude
+local:_lat_lon	*lat_lon	skos:exactMatch	FAIRe:decimalLongitude	decimalLongitude	semapv:CompositeMatching	0.914	accept; the longitude part of the same cells		longitude
+local:Control_Neg	Control_Neg	skos:exactMatch	FAIRe:samp_category	samp_category	semapv:CompositeMatching	0.629	review; yes or no for each sample, under a header that matches neg_cont_0_1 (0.63): yes is written as negative control and no as sample. Fill neg_cont_type for the controls		negative control if yes
+local:temp	temp	skos:exactMatch	FAIRe:temp	temp	semapv:CompositeMatching	1.0	accept; header matches term name 'temperature' (1.00); numbers (26 to 26.4)		

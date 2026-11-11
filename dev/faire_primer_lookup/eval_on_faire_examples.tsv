@@ -1,0 +1,38 @@
+workbook	assay	query_type	query	pair_in_table	fwd_in_table	candidate_pairs	true_pair_found	true_fwd_found	compatible_pair_found	swapped_pair_found	matched_by
+CPR_2015	LerayCOI	primer name	ILF_mlCOIintF	True	True	5	True	True	True	False	part of name
+CPR_2015	LerayCOI	assay name	LerayCOI	True	True	6	True	True	True	False	author and gene
+CPR_2015	LerayCOI	reference	https://doi.org/10.1186/1742-9994-10-34	True	True	0	False	False	False	False	
+NECR534_GCN_metabarcoding	12S-V5	primer name	Riaz_12S_V5F	True	True	1	False	False	False	False	part of name
+NECR534_GCN_metabarcoding	12S-V5	assay name	12S-V5	True	True	4	True	True	True	False	part of name
+NECR534_GCN_metabarcoding	12S-V5	reference	https://doi.org/10.1093/nar/gkr732	True	True	0	False	False	False	False	
+verte_quadeloupe	vert01	assay name	vert01	True	True	0	False	False	False	False	
+verte_quadeloupe	vert01	reference	https://doi.org/10.1093/oso/978019876722	True	True	0	False	False	False	False	
+verte_quadeloupe	tele01	assay name	tele01	False	True	0	False	False	False	False	
+verte_quadeloupe	tele01	reference	https://doi.org/10.1111/mec.13428	False	True	0	False	False	False	False	
+verte_quadeloupe	mamm01	assay name	mamm01	False	False	1	False	False	True	False	name
+verte_quadeloupe	mamm01	reference	https://doi.org/10.1093/oso/978019876722	False	False	0	False	False	False	False	
+verte_quadeloupe	cetac	assay name	cetac	False	False	0	False	False	False	False	
+verte_quadeloupe	cetac	reference	Girardet et al. unpublished	False	False	0	False	False	False	False	
+IOT-eDNA	16SFish	assay name	16SFish	False	True	3	False	False	False	False	part of name
+IOT-eDNA	COILeray	assay name	COILeray	True	True	6	True	True	True	False	author and gene
+noaa-aoml-gomecc4	ssu16sv4v5-emp	primer name	515F-Y	True	True	2	True	True	True	False	name
+noaa-aoml-gomecc4	ssu16sv4v5-emp	assay name	ssu16sv4v5-emp	True	True	0	False	False	False	False	
+noaa-aoml-gomecc4	ssu16sv4v5-emp	reference	10.1111/1462-2920.13023	True	True	0	False	False	False	False	
+noaa-aoml-gomecc4	ssu18sv9-emp	primer name	1391f	True	True	0	False	False	False	False	
+noaa-aoml-gomecc4	ssu18sv9-emp	assay name	ssu18sv9-emp	True	True	0	False	False	False	False	
+noaa-aoml-gomecc4	ssu18sv9-emp	reference	10.1371/journal.pone.0006372	True	True	0	False	False	False	False	
+AEP_Fish_sedDNA	eFish1	assay name	eFish1	False	False	0	False	False	False	False	
+AEP_Fish_sedDNA	eESLU1	assay name	eESLU1	False	False	0	False	False	False	False	
+AEP_Fish_sedDNA	eCOAR7	assay name	eCOAR7	False	False	0	False	False	False	False	
+EirwiniBurdekin	EirwiniND4	primer name	Espp_F	False	False	0	False	False	False	False	
+EirwiniBurdekin	EirwiniND4	assay name	EirwiniND4	False	False	0	False	False	False	False	
+EirwiniBurdekin	EirwiniND4	reference	https://doi.org/10.1186/s12862-022-02009	False	False	0	False	False	False	False	
+NECR534_GCN_single-species	TCCB	primer name	TCCBL	True	True	1	True	True	True	False	name
+NECR534_GCN_single-species	TCCB	assay name	TCCB	True	True	0	False	False	False	False	
+NECR534_GCN_single-species	TCCB	reference	https://doi.org/10.1111/j.1365-294X.2011	True	True	0	False	False	False	False	
+Rockfish_targeted_qPCR	eSEMA3	assay name	eSEMA3	False	False	0	False	False	False	False	
+Rockfish_targeted_qPCR	eSEMA3	reference	https://doi.org/10.1016/j.ecolind.2024.1	False	False	0	False	False	False	False	
+Rockfish_targeted_qPCR	eSEPA9	assay name	eSEPA9	False	False	0	False	False	False	False	
+Rockfish_targeted_qPCR	eSEPA9	reference	https://doi.org/10.1016/j.ecolind.2024.1	False	False	0	False	False	False	False	
+Rockfish_targeted_qPCR	eSERU5	assay name	eSERU5	False	False	0	False	False	False	False	
+Rockfish_targeted_qPCR	eSERU5	reference	https://doi.org/10.1016/j.ecolind.2024.1	False	False	0	False	False	False	False	

@@ -1,0 +1,6 @@
+# requirement_level_code	M	M	O	O	O	O	O	O	O	O
+# section	OTU/ASV	Taxonomy	Taxonomy	Taxonomy	Taxonomy	Taxonomy	Taxonomy	Taxonomy	Taxonomy	Taxonomy
+seq_id	dna_sequence	kingdom	phylum	class	order	family	genus	scientificName	percent_match	notes
+ASV_1	ACACCGCCCGTCACTCTCCCCAAG	Animalia	Chordata	Teleostei	Perciformes	Sparidae	Pagrus	Pagrus auratus	99.5	
+ASV_2	ACACCGCCCGTCACCCTCCTCAAA	Animalia	Chordata	Teleostei	Labriformes	Labridae	Choerodon		99.5	
+ASV_3	ACACCGCCCGTCACCCTTCTCAAG	Animalia	Chordata	Teleostei					99.5	

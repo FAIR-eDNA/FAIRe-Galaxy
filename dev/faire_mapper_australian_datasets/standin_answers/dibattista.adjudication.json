@@ -1,0 +1,37 @@
+[
+ {
+  "column": "EMu registration number",
+  "term": null,
+  "reason": "Museum voucher number matches no candidate."
+ },
+ {
+  "column": "Amount filtered ",
+  "term": "samp_size",
+  "reason": "Volume of water filtered is the original sample size in litres."
+ },
+ {
+  "column": "Sample processing",
+  "term": "recordedBy",
+  "reason": "Values are a person name, and the description says who filtered the sample."
+ },
+ {
+  "column": "Sampling country",
+  "term": "geo_loc_name",
+  "reason": "Country where the sample was collected."
+ },
+ {
+  "column": "Sampling Location",
+  "term": "geo_loc_name",
+  "reason": "Named locality where the sample was collected."
+ },
+ {
+  "column": "Reef Location",
+  "term": "geo_loc_name",
+  "reason": "Reef region where the sample was collected."
+ },
+ {
+  "column": "Exposed or Sheltered",
+  "term": null,
+  "reason": "Exposure category is not an ENVO entity or any other candidate."
+ }
+]

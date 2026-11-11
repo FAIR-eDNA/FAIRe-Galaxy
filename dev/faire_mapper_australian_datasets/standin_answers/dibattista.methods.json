@@ -1,0 +1,142 @@
+{
+ "values": [
+  {
+   "term": "sterilise_method",
+   "value": "Sampling bottles were sterilised in 10% bleach solution before use; filtration equipment was soaked in 10% bleach for at least 10 min between replicates",
+   "quote": "bottles that had been sterilized in a 10% bleach solution prior",
+   "stated": true
+  },
+  {
+   "term": "neg_cont_0_1",
+   "value": "1",
+   "quote": "An extraction blank was processed",
+   "stated": true
+  },
+  {
+   "term": "env_medium",
+   "value": "sea water [ENVO:00002149]",
+   "quote": "Six replicate seawater samples",
+   "stated": true
+  },
+  {
+   "term": "samp_size",
+   "value": "1",
+   "quote": "Six replicate seawater samples (1 L per sample)",
+   "stated": true
+  },
+  {
+   "term": "samp_size_unit",
+   "value": "L",
+   "quote": "Six replicate seawater samples (1 L per sample)",
+   "stated": true
+  },
+  {
+   "term": "samp_store_temp",
+   "value": "-20",
+   "quote": "samples were immediately frozen at −20 °C",
+   "stated": true
+  },
+  {
+   "term": "size_frac",
+   "value": "0.2",
+   "quote": "filtered through 0.2-μm cellulose",
+   "stated": true
+  },
+  {
+   "term": "filter_material",
+   "value": "cellulose",
+   "quote": "filtered through 0.2-μm cellulose filter membranes",
+   "stated": true
+  },
+  {
+   "term": "nucl_acid_ext_kit",
+   "value": "DNeasy Blood and Tissue Kit (QIAGEN)",
+   "quote": "DNeasy Blood and Tissue Kit (QIAGEN)",
+   "stated": true
+  },
+  {
+   "term": "pcr_0_1",
+   "value": "1",
+   "quote": "Quantitative PCR",
+   "stated": true
+  },
+  {
+   "term": "targetTaxonomicAssay",
+   "value": "bony fish | scleractinian coral",
+   "quote": "to amplify primarily bony fish and scleractinian coral taxa",
+   "stated": true
+  },
+  {
+   "term": "custom_mm",
+   "value": "1X AmpliTaq Gold PCR buffer (Life Technologies), 2 mM MgCl2 (Fisher Biotec), 0.4 μM dNTPs, 0.1 mg BSA (Fisher Biotec), 0.4 μM each of forward and reverse primers (Integrated DNA Technologies), 0.6 μl of 5X SYBR Green (Life Technologies), 1U AmpliTaq Gold DNA Polymerase (Life Technologies), 2 μl eDNA template, made to volume with Ultrapure Distilled Water (Life Technologies)",
+   "quote": "1X AmpliTaq Gold® PCR buffer (Life Technologies, Massachusetts, USA), 2 mM MgCl2 (Fisher Biotec, Australia), 0.4 μM dNTPs, 0.1 mg BSA (Fisher Biotec, Australia), 0.4 μM each of forward and reverse primers (Integrated DNA Technologies, Australia), 0.6 μl of 5X",
+   "stated": true
+  },
+  {
+   "term": "pcr_dna_vol",
+   "value": "2",
+   "quote": "2 μl of eDNA template",
+   "stated": true
+  },
+  {
+   "term": "pcr_rep",
+   "value": "2",
+   "quote": "Each sample was amplified in duplicate",
+   "stated": true
+  },
+  {
+   "term": "pcr_cond",
+   "value": "initial denaturation:95_5;annealing:52-55_0.5;elongation:72_0.75;final elongation:72_10;40",
+   "quote": "initial denaturation at 95 °C for 5 min, followed by 40 cycles of 95 °C for 30 s, 52–55 °C for 30 s (see respective annealing temperatures in Table 1), and 72 °C for 45 s, with a final extension of 72 °C for 10 min",
+   "stated": true
+  },
+  {
+   "term": "pcr_cycles",
+   "value": "40",
+   "quote": "followed by 40 cycles of",
+   "stated": true
+  },
+  {
+   "term": "barcoding_pcr_appr",
+   "value": "one-step PCR",
+   "quote": "in duplicate in a single-step process",
+   "stated": true
+  },
+  {
+   "term": "platform",
+   "value": "ILLUMINA",
+   "quote": "on an Illumina MiSeq platform",
+   "stated": true
+  },
+  {
+   "term": "lib_screen",
+   "value": "The two libraries were size-selected using a Pippin-Prep (Sage Science), purified using the QIAquick PCR Purification Kit (Qiagen), quantified using a Qubit 4.0 Fluorometer dsDNA high-sensitivity assay (Invitrogen) and diluted to 2 nM before loading onto the sequencing platform",
+   "quote": "The two libraries were then size-selected using a Pippin-Prep (Sage Science, Beverly, USA) to remove any amplicons outside of the target range (150–450 bp and 160–600 bp, respectively). Size-selected libraries were then purified using the QIAquick PCR Purification Kit (Qiagen, Venlo, Netherlands), quantified using a Qubit 4.0 Fluorometer dsDNA high-sensitivity assay (Invitrogen, Carlsbad, USA), and diluted to 2 nM",
+   "stated": true
+  },
+  {
+   "term": "otu_db",
+   "value": "NCBI GenBank nucleotide database (accessed September 2020)",
+   "quote": "GenBank nucleotide database (accessed September 2020",
+   "stated": true
+  },
+  {
+   "term": "tax_assign_cat",
+   "value": "sequence similarity",
+   "quote": "using BLASTn (minimum percentage identity = 90",
+   "stated": false
+  },
+  {
+   "term": "otu_seq_comp_appr",
+   "value": "BLASTn",
+   "quote": "using BLASTn (minimum percentage identity = 90",
+   "stated": true
+  },
+  {
+   "term": "screen_contam_method",
+   "value": "ASVs detected in extraction blanks with a read count > 10 were removed across the entire dataset",
+   "quote": "ASVs detected in extraction blanks with a read count > 10 were removed across the entire dataset",
+   "stated": true
+  }
+ ]
+}

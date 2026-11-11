@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RECEIPT receiptDate="2026-11-03T10:00:00.000Z" submissionFile="submission.xml" success="true">
+     <SAMPLE accession="ERS9999901" alias="GOMECC4_27N_Sta1_DCM_A" status="PRIVATE">
+          <EXT_ID accession="SAMEA9999901" type="biosample"/>
+     </SAMPLE>
+     <SAMPLE accession="ERS9999902" alias="GOMECC4_27N_Sta1_DCM_B" status="PRIVATE">
+          <EXT_ID accession="SAMEA9999902" type="biosample"/>
+     </SAMPLE>
+     <SAMPLE accession="ERS9999903" alias="GOMECC4_BROWNSVILLE_Sta63_DCM_A" status="PRIVATE">
+          <EXT_ID accession="SAMEA9999903" type="biosample"/>
+     </SAMPLE>
+     <SUBMISSION accession="ERA9999999" alias="SUBMISSION-test"/>
+     <ACTIONS>ADD</ACTIONS>
+</RECEIPT>

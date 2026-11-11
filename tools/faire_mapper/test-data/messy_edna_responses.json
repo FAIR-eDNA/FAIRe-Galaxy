@@ -1,0 +1,11 @@
+[
+ {
+  "column": "habitat",
+  "term": "env_broad_scale",
+  "reason": "values are biomes"
+ },
+ {
+  "column": "notes",
+  "term": null
+ }
+]

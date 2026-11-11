@@ -1,0 +1,96 @@
+column	term
+col_1	samp_name
+col_2	samp_category
+col_3	materialSampleID
+col_4	decimalLongitude
+col_5	decimalLatitude
+col_6	geo_loc_name
+col_7	eventDate
+col_8	env_broad_scale
+col_9	env_local_scale
+col_10	env_medium
+col_11	habitat_natural_artificial_0_1
+col_12	samp_collect_method
+col_13	samp_collect_device
+col_14	samp_size
+col_15	samp_size_unit
+col_16	samp_store_temp
+col_17	samp_store_sol
+col_18	samp_store_dur
+col_19	samp_store_loc
+col_20	dna_store_loc
+col_21	samp_mat_process
+col_22	size_frac_low
+col_23	size_frac
+col_24	filter_material
+col_25	filter_name
+col_26	precip_chem_prep
+col_27	precip_force_prep
+col_28	precip_time_prep
+col_29	precip_temp_prep
+col_30	samp_vol_we_dna_ext
+col_31	samp_vol_we_dna_ext_unit
+col_32	nucl_acid_ext_lysis
+col_33	nucl_acid_ext_sep
+col_34	nucl_acid_ext
+col_35	nucl_acid_ext_kit
+col_36	minimumDepthInMeters
+col_37	maximumDepthInMeters
+col_38	tot_depth_water_col
+col_39	temp
+col_40	chlorophyll
+col_41	ph
+col_42	salinity
+col_43	diss_inorg_carb
+col_44	diss_inorg_carb_unit
+col_45	diss_oxygen
+col_46	diss_oxygen_unit
+col_47	nitrate
+col_48	nitrate_unit
+col_49	nitrite
+col_50	nitrite_unit
+col_51	neg_cont_type
+col_52	assay_name
+col_53	pcr_plate_id
+col_54	lib_id
+col_55	seq_run_id
+col_56	mid_forward
+col_57	mid_reverse
+col_58	filename
+col_59	filename2
+col_60	associatedSequences
+col_61	input_read_count
+col_62	target_gene
+col_63	target_subfragment
+col_64	pcr_primer_forward
+col_65	pcr_primer_reverse
+col_66	pcr_primer_name_forward
+col_67	pcr_primer_name_reverse
+col_68	platform
+col_69	instrument
+col_70	project_id
+col_71	
+col_72	
+col_73	
+col_74	
+col_75	
+col_76	
+col_77	
+col_78	
+col_79	
+col_80	
+col_81	
+col_82	
+col_83	
+col_84	
+col_85	
+col_86	
+col_87	
+col_88	
+col_89	
+col_90	
+col_91	
+col_92	
+col_93	
+col_94	
+col_95	

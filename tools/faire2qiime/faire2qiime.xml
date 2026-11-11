@@ -1,0 +1,347 @@
+<tool id="faire2qiime" name="FAIRe2QIIME" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="23.0" license="MIT">
+    <description>make QIIME 2 sample metadata and manifests from a FAIRe workbook</description>
+    <macros>
+        <!-- Upstream has no tagged releases. The version is the date of the pinned
+             commit (aomlomics/faire2qiime 13e87de). -->
+        <token name="@TOOL_VERSION@">2026.07.23</token>
+        <token name="@VERSION_SUFFIX@">2</token>
+        <import>faire_guide.xml</import>
+    </macros>
+    <creator>
+        <organization name="NOAA 'Omics, AOML (FAIRe2QIIME developers)" url="https://github.com/aomlomics/faire2qiime"/>
+        <person givenName="Oliver" familyName="Berry"/>
+    </creator>
+    <requirements>
+        <requirement type="package" version="3.12">python</requirement>
+        <requirement type="package" version="2.2.3">pandas</requirement>
+        <requirement type="package" version="3.1.5">openpyxl</requirement>
+    </requirements>
+    <version_command>echo '@TOOL_VERSION@'</version_command>
+    <command detect_errors="exit_code"><![CDATA[
+set -o pipefail;
+ln -s '$input_file' input.xlsx &&
+python '$__tool_directory__/normalise_faire.py' input.xlsx normalised.xlsx
+    --check_column '$sample_name_column'
+    #if $suffix.use_suffix == 'yes':
+        --check_column '$suffix.column_suffix'
+    #end if
+    #if $manifests.write_manifests == 'yes':
+        --check_filled filename
+    #end if
+> log.txt &&
+mkdir out &&
+## FAIRe2QIIME names files by gene and fragment; assays that share them are converted one at a time
+python '$__tool_directory__/faire2qiime_by_assay.py' '$__tool_directory__/faire2qiime.py' normalised.xlsx out --
+    --sample_name_column '$sample_name_column'
+    #if $manifests.write_manifests == 'yes':
+        --absolute_path_sequences '$manifests.absolute_path_sequences'
+    #else:
+        --absolute_path_sequences /not/used
+    #end if
+    #if $suffix.use_suffix == 'yes':
+        --column_suffix '$suffix.column_suffix'
+        --direction_suffix '$suffix.direction_suffix'
+        --num_chars_suffix $suffix.num_chars_suffix
+        --delimiter_suffix '$suffix.delimiter_suffix'
+    #end if
+| sed 's/\x1b\[[0-9;]*m//g' | grep -v -e 'pyfiglet' -e '^=*$' -e '^ *$' >> log.txt &&
+## A check that no file was written twice (faire2qiime_by_assay.py should prevent it).
+dup=\$(grep -o 'Generated [a-z]* file .*' log.txt | sort | uniq -d || true) &&
+if [ -n "\$dup" ]; then
+    echo "ERROR: two or more assays share the same target_gene and target_subfragment, so FAIRe2QIIME wrote these files more than once and kept only the last assay: \$dup. Give each assay its own target_subfragment in projectMetadata, or run the tool on a workbook with one of the assays." >&2;
+    exit 1;
+fi &&
+cp log.txt '$log'
+    ]]></command>
+    <inputs>
+        <param name="input_file" type="data" format="xlsx" label="FAIRe metadata workbook"
+            help="Excel workbook with projectMetadata, sampleMetadata and experimentRunMetadata sheets. Both the FAIRe layout (assay1, assay2 ... columns, as made by FAIRe-ator) and the FAIRe-NOAA layout are accepted."/>
+        <param name="sample_name_column" type="text" value="lib_id" label="Column to use as the QIIME 2 sample ID"
+            help="Copied to a first column called sample_name. It must match the sample IDs you use when importing reads into QIIME 2. lib_id is usually the right choice because it is unique per library.">
+            <validator type="empty_field"/>
+        </param>
+        <conditional name="manifests">
+            <param name="write_manifests" type="select" label="Write QIIME 2 manifest files?"
+                help="Manifests list the forward and reverse fastq file of each sample, one file per sequencing run and assay.">
+                <option value="yes" selected="true">Yes</option>
+                <option value="no">No, metadata only</option>
+            </param>
+            <when value="yes">
+                <param name="absolute_path_sequences" type="text" value="/path/to/sequences" label="Folder that holds the sequencing run folders"
+                    help="The manifests give each file as FOLDER/seq_run_id/filename. Enter the folder on the computer where you will run QIIME 2 (for example your HPC project folder). Galaxy cannot see these files; the path is only written into the manifests.">
+                    <validator type="regex" message="Enter an absolute path starting with /">^/.*$</validator>
+                </param>
+            </when>
+            <when value="no"/>
+        </conditional>
+        <conditional name="suffix">
+            <param name="use_suffix" type="select" label="Make repeated samp_name values unique?"
+                help="Adds a samp_name_unique column. Samples that appear more than once within an assay (for example resequenced in a second run) get a suffix taken from another column.">
+                <option value="no" selected="true">No</option>
+                <option value="yes">Yes</option>
+            </param>
+            <when value="no"/>
+            <when value="yes">
+                <param name="column_suffix" type="text" value="seq_run_id" label="Column to take the suffix from">
+                    <validator type="empty_field"/>
+                </param>
+                <param name="direction_suffix" type="select" label="Take characters from the">
+                    <option value="left" selected="true">start (left)</option>
+                    <option value="right">end (right)</option>
+                </param>
+                <param name="num_chars_suffix" type="integer" value="20" min="1" label="Number of characters"/>
+                <param name="delimiter_suffix" type="text" value="_" label="Text to put before the suffix">
+                    <validator type="regex" message="Use letters, digits, '.', '_' or '-' only">^[A-Za-z0-9._-]+$</validator>
+                </param>
+            </when>
+        </conditional>
+    </inputs>
+    <outputs>
+        <collection name="metadata" type="list" label="${tool.name} on ${on_string}: QIIME 2 metadata">
+            <discover_datasets pattern="(?P&lt;designation&gt;.+)_metadata\.tsv" directory="out" format="tabular"/>
+        </collection>
+        <collection name="manifest" type="list" label="${tool.name} on ${on_string}: QIIME 2 manifests">
+            <discover_datasets pattern="(?P&lt;designation&gt;.+)_manifest\.tsv" directory="out" format="tabular"/>
+            <filter>manifests['write_manifests'] == 'yes'</filter>
+        </collection>
+        <data name="log" format="txt" label="${tool.name} on ${on_string}: log"/>
+    </outputs>
+    <tests>
+        <!-- FAIRe layout with two assays (assay1, assay2 columns) -->
+        <test expect_num_outputs="3">
+            <param name="input_file" value="faire_two_assays.xlsx"/>
+            <conditional name="manifests">
+                <param name="write_manifests" value="yes"/>
+                <param name="absolute_path_sequences" value="/data/seqs"/>
+            </conditional>
+            <output_collection name="metadata" type="list" count="2">
+                <element name="noaa-aoml-gomecc4_16S-V4V5">
+                    <assert_contents>
+                        <has_line_matching expression="^sample_name\tsamp_name\tassay_name\t.*"/>
+                        <has_n_lines n="5"/>
+                        <has_text text="GOMECC16S_Plate4_46"/>
+                        <has_text text="ssu16sv4v5-emp"/>
+                    </assert_contents>
+                </element>
+                <element name="noaa-aoml-gomecc4_18S-V9">
+                    <assert_contents>
+                        <has_n_lines n="5"/>
+                    </assert_contents>
+                </element>
+            </output_collection>
+            <output_collection name="manifest" type="list" count="3">
+                <element name="20220613_Amplicon_PE250_16S-V4V5">
+                    <assert_contents>
+                        <has_line line="sample-id&#009;forward-absolute-filepath&#009;reverse-absolute-filepath"/>
+                        <has_text text="/data/seqs/20220613_Amplicon_PE250/"/>
+                    </assert_contents>
+                </element>
+                <element name="20220718_18S-Amplicon_PE250_18S-V9">
+                    <assert_contents>
+                        <has_n_lines n="5"/>
+                    </assert_contents>
+                </element>
+                <element name="20220831_16S-Amplicon_PE250_16S-V4V5">
+                    <assert_contents>
+                        <has_n_lines n="2"/>
+                    </assert_contents>
+                </element>
+            </output_collection>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="relabelled as 'ssu16sv4v5-emp'"/>
+                    <has_text text="Generated metadata file"/>
+                    <not_has_text text="pyfiglet"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Two assays of the same gene and fragment: each converted on its own, files named by assay -->
+        <test expect_num_outputs="3">
+            <param name="input_file" value="faire_same_gene.xlsx"/>
+            <conditional name="manifests">
+                <param name="write_manifests" value="yes"/>
+                <param name="absolute_path_sequences" value="/data/seqs"/>
+            </conditional>
+            <output_collection name="metadata" type="list" count="2">
+                <element name="noaa-aoml-gomecc4_ssu16sv4v5-emp">
+                    <assert_contents>
+                        <has_n_lines n="5"/>
+                        <has_line_matching expression="^GOMECC16S_Plate4_46\tGOMECC4_27N_Sta1_DCM_B\tssu16sv4v5-emp\t.*"/>
+                    </assert_contents>
+                </element>
+                <element name="noaa-aoml-gomecc4_ssu18sv9-emp">
+                    <assert_contents>
+                        <has_n_lines n="5"/>
+                        <has_line_matching expression="^GOMECC18S_Plate1_37\tGOMECC4_BROWNSVILLE_Sta63_DCM_A\tssu18sv9-emp\t.*"/>
+                    </assert_contents>
+                </element>
+            </output_collection>
+            <output_collection name="manifest" type="list" count="3">
+                <element name="20220718_18S-Amplicon_PE250_ssu18sv9-emp">
+                    <assert_contents>
+                        <has_n_lines n="5"/>
+                    </assert_contents>
+                </element>
+            </output_collection>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="Note: these assays share a target gene and fragment, so their files would have the same names: ssu16sv4v5-emp, ssu18sv9-emp (16S-V4V5)."/>
+                    <has_text text="Generated metadata file noaa-aoml-gomecc4_ssu18sv9-emp_metadata.tsv (assay ssu18sv9-emp; FAIRe2QIIME named it noaa-aoml-gomecc4_16S-V4V5_metadata.tsv)"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Single assay, as FAIRe-ator writes it (assay details in project_level); metadata only -->
+        <test expect_num_outputs="2">
+            <param name="input_file" value="faire_single_assay.xlsx"/>
+            <conditional name="manifests">
+                <param name="write_manifests" value="no"/>
+            </conditional>
+            <output_collection name="metadata" type="list" count="1">
+                <element name="noaa-aoml-gomecc4_16S-V4V5">
+                    <assert_contents>
+                        <has_n_lines n="5"/>
+                    </assert_contents>
+                </element>
+            </output_collection>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="single assay 'ssu16sv4v5-emp'"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Suffix option adds samp_name_unique -->
+        <test expect_num_outputs="3">
+            <param name="input_file" value="faire_two_assays.xlsx"/>
+            <param name="sample_name_column" value="samp_name"/>
+            <conditional name="suffix">
+                <param name="use_suffix" value="yes"/>
+                <param name="column_suffix" value="seq_run_id"/>
+                <param name="direction_suffix" value="left"/>
+                <param name="num_chars_suffix" value="8"/>
+            </conditional>
+            <output_collection name="metadata" type="list" count="2">
+                <element name="noaa-aoml-gomecc4_16S-V4V5">
+                    <assert_contents>
+                        <has_line_matching expression="^sample_name\tsamp_name\tsamp_name_unique\t.*"/>
+                    </assert_contents>
+                </element>
+            </output_collection>
+        </test>
+        <!-- A sample ID column that does not exist -->
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="input_file" value="faire_two_assays.xlsx"/>
+            <param name="sample_name_column" value="libid"/>
+            <assert_stderr>
+                <has_text text="column 'libid' is not in experimentRunMetadata or sampleMetadata"/>
+            </assert_stderr>
+        </test>
+        <!-- Text values reach the metadata tables as written: text starting with '=', a '#' inside a cell (upstream cuts the row off there), IDs written as text (upstream reads 001 as 1) -->
+        <test expect_num_outputs="2">
+            <param name="input_file" value="faire_text_values.xlsx"/>
+            <conditional name="manifests">
+                <param name="write_manifests" value="no"/>
+            </conditional>
+            <output_collection name="metadata" type="list" count="2">
+                <element name="noaa-aoml-gomecc4_16S-V4V5">
+                    <assert_contents>
+                        <has_text text="=see notes"/>
+                        <has_text text="&#009;Sta1 #2&#009;"/>
+                        <has_text text="&#009;001&#009;"/>
+                        <has_line_matching expression="^GOMECC16S_Plate4_46\tGOMECC4_27N_Sta1_DCM_B\t.*"/>
+                    </assert_contents>
+                </element>
+                <element name="noaa-aoml-gomecc4_18S-V9">
+                    <assert_contents>
+                        <has_text text="=see notes"/>
+                        <has_text text="&#009;Sta1 #2&#009;"/>
+                    </assert_contents>
+                </element>
+            </output_collection>
+        </test>
+        <!-- Assays converted one at a time keep text values too -->
+        <test expect_num_outputs="2">
+            <param name="input_file" value="faire_same_gene_text_values.xlsx"/>
+            <conditional name="manifests">
+                <param name="write_manifests" value="no"/>
+            </conditional>
+            <output_collection name="metadata" type="list" count="2">
+                <element name="noaa-aoml-gomecc4_ssu16sv4v5-emp">
+                    <assert_contents>
+                        <has_text text="=see notes"/>
+                    </assert_contents>
+                </element>
+                <element name="noaa-aoml-gomecc4_ssu18sv9-emp">
+                    <assert_contents>
+                        <has_text text="=see notes"/>
+                    </assert_contents>
+                </element>
+            </output_collection>
+        </test>
+    </tests>
+    <help><![CDATA[
+**What it does**
+
+This tool reads a FAIRe metadata workbook and writes the files that QIIME 2 needs to start an
+amplicon analysis:
+
+- one **sample metadata** file for each assay, which joins experimentRunMetadata, sampleMetadata,
+  and the project-level and assay-level values from projectMetadata;
+- if you ask for them, one **manifest** for each sequencing run and assay, which lists the forward
+  and reverse fastq file for each sample.
+
+The files are named from the project_id, the target gene and subfragment, and the seq_run_id, for
+example *myproject_COI-Leray_metadata* and *RUN01_COI-Leray_manifest*. If two assays have the same
+target gene and subfragment (for example three 12S assays), each assay is converted on its own and
+every file is named by its assay_name, for example *myproject_MiFish-U_metadata*.
+
+-----
+
+**Inputs**
+
+The tool takes a FAIRe workbook (.xlsx) with projectMetadata, sampleMetadata and
+experimentRunMetadata sheets. projectMetadata needs target_gene, and ideally target_subfragment,
+for each assay.
+
+FAIRe2QIIME was written for the FAIRe-NOAA layout, where each assay has a projectMetadata column
+named after it. Workbooks from FAIRe-ator use columns called assay1, assay2 ... (or project_level
+for a single assay). This tool relabels those columns by their assay_name before conversion, so
+both layouts work, and the log records what was relabelled.
+
+Values reach the QIIME 2 files as they are written in the workbook. On its own, FAIRe2QIIME treats a
+# anywhere in a cell as the start of a comment, so *Sta1 #2* becomes *Sta1* and the rest of that
+sample's row is lost, and it reads a column of IDs such as 001, 002 as numbers (1, 2). While
+FAIRe2QIIME runs, this tool reads the workbook for it in a way that avoids both.
+
+-----
+
+**Outputs**
+
+- **QIIME 2 metadata** (a collection of tabular files). The first column, sample_name, holds the
+  values of the column you chose as the sample ID. Columns that are empty for every sample are
+  dropped, and repeated column names get a _SAMPLE or _PROJECT suffix.
+- **QIIME 2 manifests** (a collection, if you ask for them). Each file has the columns sample-id,
+  forward-absolute-filepath and reverse-absolute-filepath, which is the
+  *PairedEndFastqManifestPhred33V2* format for **qiime tools import**.
+- **log**: a record of the run.
+
+**About the manifests**
+
+The manifests point to files on the computer where you will run QIIME 2, and Galaxy does not check
+that the files exist. If you are importing reads into QIIME 2 *within Galaxy*, you do not need the
+manifests. Instead, build a paired collection of your fastq files, with element identifiers that
+match the sample_name column, and use the metadata file from this tool.
+
+@HELP_FAIRE_GUIDE@
+
+-----
+
+**Credits**
+
+This tool runs `FAIRe2QIIME <https://github.com/aomlomics/faire2qiime>`_ (CC0) from NOAA 'Omics,
+after a small Galaxy step that relabels FAIRe assay columns and checks the chosen columns exist.
+The FAIRe checklist is described in Takahashi et al. (2025) *Environmental DNA* 7: e70100. The Galaxy tool was written by Oliver Berry (CSIRO), with Claude (Anthropic).
+    ]]></help>
+    <citations>
+        <citation type="doi">10.1002/edn3.70100</citation>
+    </citations>
+</tool>

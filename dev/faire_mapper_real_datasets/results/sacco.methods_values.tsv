@@ -1,0 +1,21 @@
+term	level	value	status	problem	stated	quote
+geo_loc_name	sample	Australia: Western Australia, Rottnest Island	review	inferred, not stated	False	Microbial Ecology of Five Hyper-saline Lakes at Rottnest Island (WA, Australia)
+sterilise_method	project	All water filtering equipment was soaked for a minimum of 10 minutes in 10% sodium hypochlorite solution and treated with UV light prior to use and between sample replicates.	supported		True	All water filtering equipment was soaked for a minimum of 10 minutes in 10% sodium hypochlorite solution and treated with UV light prior to use and between sample replicates (n=5) for each SP.
+neg_cont_0_1	project	1	supported		True	Water membranes, inclusive of laboratory controls, were extracted
+neg_cont_type	sample	extraction negative	review	inferred, not stated	False	2 Extraction controls
+samp_size	sample	1	supported		True	Five 1 litre water sample replicates
+samp_size_unit	sample	L	review	inferred, not stated	False	Five 1 litre water sample replicates
+size_frac	sample	0.45	supported		True	through 0.45 μm sterile membrane filters
+nucl_acid_ext_kit	sample	DNeasy Blood and Tissue Kit (Qiagen)	supported		True	extracted using DNeasy Blood and Tissue Kit (Qiagen; Venlo, Netherlands)
+pcr_0_1	project	1	review	inferred, not stated	False	Water samples were used for bacterial 16S metabarcoding
+targetTaxonomicAssay	project	bacteria	supported		True	Water samples were used for bacterial 16S metabarcoding
+target_gene	project	16S rRNA (SSU prokaryote)	review	inferred, not stated	False	Water samples were used for bacterial 16S metabarcoding
+custom_mm	project	1 x PCR Gold Buffer, 2.5 mM MgCl2, 0.4 mg/mL BSA, 0.25 mM of each dNTP, 0.4 μM of each primer, 0.2 μL AmpliTaq Gold	supported		True	containing 1 x PCR Gold Buffer, 2.5 mM MgCl
+pcr_rep	project	2	supported		True	MID-tag PCR amplicons were generated in duplicate for each sample
+pcr_cond	project	initial denaturation:95_5;annealing:52_0.5;elongation:72_0.5;final elongation:72_10;40	review	inferred, not stated	False	initial denaturation at 95°C for 5 minutes, followed by 40 cycles of 95°C for 30 seconds, 52°C for 30 seconds, 72°C for 30 seconds, and a final extension at 72°C for 10 minutes
+annealingTemp	project	52	review	inferred, not stated	False	52°C for 30 seconds
+pcr_cycles	project	40	supported		True	followed by 40 cycles of 95°C
+platform	project	ILLUMINA	review	inferred, not stated	False	sequenced using a 500 cycle V2 kit on an Illumina MiSeq platform
+instrument	project	Illumina MiSeq [OBI_0002003]	review	inferred, not stated	False	sequenced using a 500 cycle V2 kit on an Illumina MiSeq platform
+seq_kit	project	500 cycle V2 kit	supported		True	sequenced using a 500 cycle V2 kit on an Illumina MiSeq platform
+lib_screen	project	The final library was size selected (160-600bp) using Pippin Prep (Sage Sciences, USA) to remove MID-tag primer-dimer products	supported		True	The final library was size selected (160-600bp) using Pippin Prep (Sage Sciences, USA)

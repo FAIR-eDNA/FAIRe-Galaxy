@@ -1,0 +1,6 @@
+FAIRe2MDT 1.1.0: assay 16SFish, sequencing run kimberley_2017_2018.
+Warning: target_gene '16S rRNA (LSU mitochondria) | COI' is not a FAIRe target_gene value, so MDT may not recognise it; check the marker in MDT's mapping step.
+Study sheet: 20 terms.
+Samples sheet: 71 samples, 15 fields.
+Taxonomy sheet: 362 sequences, 7 fields.
+OTU_table sheet: 362 sequences, 71 samples.

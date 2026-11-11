@@ -1,0 +1,3 @@
+run_accession	sample_accession	library_name	instrument_platform	instrument_model	library_layout	fastq_ftp	fastq_md5
+ERR9999911	SAMEA9999901	LIZ_01_16S_COI	ILLUMINA	Illumina MiSeq	PAIRED	ftp.sra.ebi.ac.uk/vol1/fastq/ERR999/ERR9999911/ERR9999911_1.fastq.gz;ftp.sra.ebi.ac.uk/vol1/fastq/ERR999/ERR9999911/ERR9999911_2.fastq.gz	e1b2c3d4e5f60718293a4b5c6d7e8f11;f1b2c3d4e5f60718293a4b5c6d7e8f11
+ERR9999912	SAMEA9999902	LIZ_02_16S_COI	ILLUMINA	Illumina MiSeq	PAIRED	ftp.sra.ebi.ac.uk/vol1/fastq/ERR999/ERR9999912/ERR9999912_1.fastq.gz;ftp.sra.ebi.ac.uk/vol1/fastq/ERR999/ERR9999912/ERR9999912_2.fastq.gz	e1b2c3d4e5f60718293a4b5c6d7e8f12;f1b2c3d4e5f60718293a4b5c6d7e8f12

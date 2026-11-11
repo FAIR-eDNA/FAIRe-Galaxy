@@ -1,0 +1,7 @@
+[
+ {
+  "column": "Site No.",
+  "term": "samp_name",
+  "reason": "Unique per row identifier for each sample site."
+ }
+]

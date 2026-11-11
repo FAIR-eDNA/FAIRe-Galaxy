@@ -1,0 +1,110 @@
+<tool id="faire_mapper_identify" name="FAIRe mapper: identify your files" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="@PROFILE@" license="MIT">
+    <description>say what each file is and where it goes</description>
+    <macros>
+        <import>macros.xml</import>
+        <import>faire_guide.xml</import>
+    </macros>
+    <expand macro="creator"/>
+    <expand macro="requirements"/>
+    <version_command>python '$__tool_directory__/faire_mapper.py' --version</version_command>
+    <command detect_errors="exit_code"><![CDATA[
+python '$__tool_directory__/faire_mapper_identify.py'
+    --checklist '$__tool_directory__/checklist/FAIRe_checklist_v1.0.2.xlsx'
+    #for $f in $files:
+        #set $fname = str($f.element_identifier).replace("'", "")
+        --file '$f' --name '$fname' --format '$f.ext'
+    #end for
+    -o '$report'
+    ]]></command>
+    <inputs>
+        <param name="files" type="data" format="tabular,csv,xlsx,txt" multiple="true" label="Your files"
+            help="Every file you have for the dataset: sample sheets, OTU or ASV tables, taxonomy tables, run reports, methods or ReadMe texts. Each sheet of an Excel file is reported on its own."/>
+    </inputs>
+    <outputs>
+        <data name="report" format="tabular" label="${tool.name} on ${on_string}"/>
+    </outputs>
+    <tests>
+        <test expect_num_outputs="1">
+            <param name="files" value="apply_reef.csv,otu_asv_table.tsv,otu_dada2_taxa.tsv,library_ena_report.tsv,apply_reef_dictionary.csv,primer_methods.txt,otu_curated.csv,apply_reef.sssom.tsv"/>
+            <output name="report">
+                <assert_contents>
+                    <has_n_lines n="9"/>
+                    <has_line_matching expression="^apply_reef\.csv\t\tsample table\t.*"/>
+                    <has_line_matching expression="^otu_asv_table\.tsv\t\tOTU or ASV table\t.*4 column headers are sample names.*"/>
+                    <has_line_matching expression="^otu_dada2_taxa\.tsv\t\ttaxonomy table\t.*"/>
+                    <has_line_matching expression="^library_ena_report\.tsv\t\tlibrary table\t.*run accessions in run_accession.*"/>
+                    <has_line_matching expression="^apply_reef_dictionary\.csv\t\tdata dictionary\t.*"/>
+                    <has_line_matching expression="^primer_methods\.txt\t\ttext\t.*mentions primers or PCR.*"/>
+                    <has_line_matching expression="^otu_curated\.csv\t\tOTU or ASV table\t.*Column of curated names.*"/>
+                    <has_line_matching expression="^apply_reef\.sssom\.tsv\t\tcrosswalk\t.*"/>
+                </assert_contents>
+            </output>
+            <assert_stdout>
+                <has_text text="INFO: 8 files"/>
+            </assert_stdout>
+        </test>
+        <!-- An Excel file: each sheet on its own -->
+        <test expect_num_outputs="1">
+            <param name="files" value="library_sra_sheet.xlsx,primer_register_small.xlsx"/>
+            <output name="report">
+                <assert_contents>
+                    <has_line_matching expression="^library_sra_sheet\.xlsx\tSRA_data\tlibrary table\t.*library names \(library_ID\) with their sequence files \(filename\).*"/>
+                    <has_line_matching expression="^primer_register_small\.xlsx\tPrimer pairs\tprimer table\t.*"/>
+                </assert_contents>
+            </output>
+            <assert_stdout>
+                <has_text text="no sample table was found"/>
+            </assert_stdout>
+        </test>
+    </tests>
+    <help><![CDATA[
+@EARLY_VERSION@
+
+**What it is for**
+
+The first step in turning your eDNA data into FAIRe format is putting each of your files in the
+right place. The FAIRe mapper tools take several kinds of file, such as a sample sheet, OTU or ASV
+tables, taxonomy tables, run reports and methods text, and each kind goes in its own field. This
+tool looks at all the files you give it, and for each one tells you what kind of file it seems to
+be, why it thinks so, and which field of which tool it belongs in.
+
+The tool makes its best guess from each file's layout, column names and values, so check each
+result and confirm the file's type before you go on. If you do put a file in the wrong field later,
+*apply mapping* will usually notice and tell you.
+
+**How it decides**
+
+Here is what the tool looks for in each kind of file:
+
+- **Sample tables** have one row per sample, with columns of sample details such as dates, places,
+  depths and volumes. Their sample names are then used to recognise the other tables.
+- **OTU or ASV tables** have columns of whole-number read counts, with the samples as columns (or as
+  rows), and sequence IDs, DNA sequences or taxon names as rows. A table whose rows are taxon names
+  holds reads summed per taxon, which is usually a final (curated) table.
+- **Taxonomy tables** have rank columns (Kingdom, Phylum ...) or a lineage column, and no read
+  counts.
+- **Library tables** (run reports, SRA sheets) have run accessions such as SRR numbers, or library
+  names with their sequence file names. A sample sheet that also names each sample's files is
+  reported as a sample table that can serve as the library table too.
+- **Text** (methods, ReadMe files) is reported with the primer sequences it holds, if any.
+- Crosswalks, data dictionaries, tables of values for the whole project and primer tables are
+  recognised too.
+
+If the tool does not recognise a file, check whether the column names are on its first row. Some
+sheets have a title or notes above them; when you give such a file to the other tools, set its
+header row.
+
+**Output**
+
+The result is a table with one row for each file, and one for each sheet of an Excel file. It gives
+the file and sheet, the kind of file, what it looks like and why, the field to give it to, and what
+to check or do next, such as whether an OTU table should go in as raw or final.
+
+@HELP_INPUTS@
+
+@HELP_FAIRE_GUIDE@
+
+@HELP_ABOUT@
+    ]]></help>
+    <expand macro="citations"/>
+</tool>

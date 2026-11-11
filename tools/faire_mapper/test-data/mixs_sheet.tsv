@@ -1,0 +1,7 @@
+# This is a submission template for batch deposit of MIMARKS samples (a test version of the NCBI sheet).
+# GREEN fields are mandatory.
+*sample_name	*collection_date	*depth	*lat_lon	Control_Neg	temp
+LIZ_01	2017-09-06 00:00:00	10	14.68472 S 145.44247 E	N	26.1
+LIZ_02	2017-09-13 00:00:00	12	14.68390 S 145.44310 E	N	26.4
+LIZ_03	2017-09-13 00:00:00	11	14.68211 S 145.44502 E	N	26.0
+LIZ_FB	2017-09-13 00:00:00	not applicable	not applicable	Y	not applicable

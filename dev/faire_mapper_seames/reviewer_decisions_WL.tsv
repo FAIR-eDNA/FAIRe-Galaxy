@@ -1,0 +1,7 @@
+# A person's review of the crosswalk for the Wilderlab sample table (make_WL_table.py), as the guide
+# describes: confirm a match, change its term, or delete the row so the column is not matched.
+# action: confirm | delete | term:<FAIRe term> | add:<FAIRe term> (a second row for the same column)
+column	action	reason
+Control_Neg	confirm	Y marks the negative controls: samp_category negative control, N sample
+sample_title	delete	a field label for each sample, not the material sample ID
+Location	delete	station names, not where samples were stored

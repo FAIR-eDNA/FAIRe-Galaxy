@@ -1,0 +1,161 @@
+{
+    "name": "FAIRe mapper: propose a mapping",
+    "a_galaxy_workflow": "true",
+    "format-version": "0.1",
+    "annotation": "The first step from a lab's own sample table to a FAIRe workbook. Profiles the columns of the\nsample table, proposes a FAIRe term for each (a crosswalk for review), lists the mandatory FAIRe\nterms not yet covered, and finds the primer pairs a methods text names, cites or gives as\nsequences. Review the crosswalk, then run \"FAIRe mapper: write and check a FAIRe workbook\".\n",
+    "tags": [],
+    "license": "MIT",
+    "release": "0.1",
+    "uuid": "5764cb7d-4f44-41c9-a2e7-142bdc937e44",
+    "creator": [
+        {
+            "name": "FAIRe Galaxy project contributors",
+            "class": "Organization"
+        }
+    ],
+    "comments": [],
+    "steps": {
+        "0": {
+            "id": 0,
+            "name": "sample_table",
+            "type": "data_input",
+            "label": "sample_table",
+            "annotation": "A sample sheet or metadata table in your own format, one row per sample.",
+            "tool_state": "{\"name\": \"sample_table\", \"format\": [\"csv\", \"tabular\", \"xlsx\", \"txt\"]}",
+            "position": {
+                "top": 0,
+                "left": 0
+            },
+            "input_connections": {},
+            "inputs": [
+                {
+                    "name": "sample_table",
+                    "description": ""
+                }
+            ],
+            "outputs": [],
+            "workflow_outputs": [],
+            "post_job_actions": {}
+        },
+        "1": {
+            "id": 1,
+            "name": "methods_text",
+            "type": "data_input",
+            "label": "methods_text",
+            "annotation": "The methods of the study as plain text.",
+            "tool_state": "{\"name\": \"methods_text\", \"format\": [\"txt\"]}",
+            "position": {
+                "top": 10,
+                "left": 10
+            },
+            "input_connections": {},
+            "inputs": [
+                {
+                    "name": "methods_text",
+                    "description": ""
+                }
+            ],
+            "outputs": [],
+            "workflow_outputs": [],
+            "post_job_actions": {}
+        },
+        "2": {
+            "id": 2,
+            "name": "faire_mapper_profile",
+            "type": "tool",
+            "label": "profile",
+            "annotation": "What each column holds: types, ranges, formats.",
+            "tool_state": "{\"__page__\": 0}",
+            "tool_id": "faire_mapper_profile",
+            "position": {
+                "top": 20,
+                "left": 20
+            },
+            "input_connections": {
+                "table": [
+                    {
+                        "id": 0,
+                        "output_name": "output"
+                    }
+                ]
+            },
+            "inputs": [],
+            "outputs": [],
+            "workflow_outputs": [
+                {
+                    "label": "column_profile",
+                    "output_name": "profile"
+                }
+            ],
+            "post_job_actions": {}
+        },
+        "3": {
+            "id": 3,
+            "name": "faire_mapper_map",
+            "type": "tool",
+            "label": "propose",
+            "annotation": "A FAIRe term for each column, with a score and the evidence; set the sample types on the run form.",
+            "tool_state": "{\"__page__\": 0, \"assay_type\": \"metabarcoding\", \"shortlist\": 5, \"sample_types\": {\"__class__\": \"RuntimeValue\"}}",
+            "tool_id": "faire_mapper_map",
+            "position": {
+                "top": 30,
+                "left": 30
+            },
+            "input_connections": {
+                "table": [
+                    {
+                        "id": 0,
+                        "output_name": "output"
+                    }
+                ]
+            },
+            "inputs": [],
+            "outputs": [],
+            "workflow_outputs": [
+                {
+                    "label": "mapping_report",
+                    "output_name": "report"
+                },
+                {
+                    "label": "crosswalk",
+                    "output_name": "crosswalk"
+                },
+                {
+                    "label": "mandatory_not_covered",
+                    "output_name": "missing"
+                }
+            ],
+            "post_job_actions": {}
+        },
+        "4": {
+            "id": 4,
+            "name": "faire_primers_find",
+            "type": "tool",
+            "label": "primers",
+            "annotation": "Primer pairs the methods name, cite or give as sequences, from the bundled primer table.",
+            "tool_state": "{\"__page__\": 0, \"search\": {\"mode\": \"text\"}, \"table\": {\"source\": \"bundled\"}}",
+            "tool_id": "faire_primers_find",
+            "position": {
+                "top": 40,
+                "left": 40
+            },
+            "input_connections": {
+                "search|texts": [
+                    {
+                        "id": 1,
+                        "output_name": "output"
+                    }
+                ]
+            },
+            "inputs": [],
+            "outputs": [],
+            "workflow_outputs": [
+                {
+                    "label": "primer_candidates",
+                    "output_name": "candidates"
+                }
+            ],
+            "post_job_actions": {}
+        }
+    }
+}

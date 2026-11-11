@@ -1,0 +1,5 @@
+OTU,phylum,class,order,family,genus,New_Name,Common_Name,Sp_Level,LIZ_01,LIZ_02,LIZ_03,LIZ_FB
+ASV_1,Chordata,Actinopteri,Clupeiformes,Clupeidae,Sardinops,Sardinops sagax ,Australian Sardine,Y,960,40,12,0
+ASV_2,Chordata,Actinopteri,Carangiformes,Carangidae,Trachurus,Trachurus Sp,Jack mackerel,N,0,310,25,0
+ASV_4,Chordata,Actinopteri,Myctophiformes,Myctophidae,Diaphus,Diaphus Sp1,Lanternfish,N,0,0,48,0
+ASV_5,Chordata,Actinopteri,Acropomatiformes,Emmelichthyidae,Emmelichthys,Emmelicthys nitidus,Redbait,Y,15,0,0,0

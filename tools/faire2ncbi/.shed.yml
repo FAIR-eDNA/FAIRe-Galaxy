@@ -1,0 +1,14 @@
+name: faire2ncbi
+owner: CHANGE_ME
+description: Make NCBI BioSample and SRA metadata tables from a FAIRe eDNA workbook
+long_description: |
+  Galaxy wrappers for FAIRe2NCBI (https://github.com/aomlomics/FAIRe2NCBI), which converts
+  FAIR eDNA (FAIRe) metadata workbooks into the BioSample (MIMARKS survey, water) and SRA
+  metadata tables used by the NCBI Submission Portal. Two tools sharing macros.xml. Accepts
+  both the FAIRe layout produced by FAIRe-ator and the FAIRe-NOAA layout.
+homepage_url: https://github.com/aomlomics/FAIRe2NCBI
+remote_repository_url: https://github.com/FAIR-eDNA/FAIRe-Galaxy/tree/main/tools/faire2ncbi
+type: unrestricted
+categories:
+  - Ecology
+  - Convert Formats

@@ -1,0 +1,96 @@
+column	term
+smpl_id	samp_name
+type	samp_category
+fld_id	materialSampleID
+lon	decimalLongitude
+Lat	decimalLatitude
+locality	geo_loc_name
+date	eventDate
+biome_envo	env_broad_scale
+localHab	env_local_scale
+medium	env_medium
+artificial_YN	habitat_natural_artificial_0_1
+collMethod	samp_collect_method
+device	samp_collect_device
+vol_coll	samp_size
+vol_unit	samp_size_unit
+store_C	samp_store_temp
+presv	samp_store_sol
+days_stored	samp_store_dur
+freezer	samp_store_loc
+DNA_box	dna_store_loc
+processing	samp_mat_process
+prefilt_um	size_frac_low
+pore_um	size_frac
+filt_mat	filter_material
+filterProduct	filter_name
+precip_reag	precip_chem_prep
+spin_g	precip_force_prep
+ppt_min	precip_time_prep
+ppt_C	precip_temp_prep
+volFilt	samp_vol_we_dna_ext
+filt_unit	samp_vol_we_dna_ext_unit
+lysis	nucl_acid_ext_lysis
+purif	nucl_acid_ext_sep
+ext_SOP	nucl_acid_ext
+kit	nucl_acid_ext_kit
+depth_min	minimumDepthInMeters
+dep_max	maximumDepthInMeters
+bottom_depth	tot_depth_water_col
+Temp_C	temp
+Chla	chlorophyll
+pH_insitu	ph
+sal	salinity
+DIC	diss_inorg_carb
+DIC_unit	diss_inorg_carb_unit
+DO	diss_oxygen
+DOunits	diss_oxygen_unit
+NO3	nitrate
+NO3_unit	nitrate_unit
+NO2	nitrite
+no2_units	nitrite_unit
+neg_ctrl	neg_cont_type
+AssayID	assay_name
+plate	pcr_plate_id
+lib	lib_id
+RunID	seq_run_id
+MID_F	mid_forward
+MID_R	mid_reverse
+R1	filename
+R2	filename2
+sra_acc	associatedSequences
+nreads	input_read_count
+gene	target_gene
+subregion	target_subfragment
+FwdSeq	pcr_primer_forward
+RevSeq	pcr_primer_reverse
+primerF	pcr_primer_name_forward
+primerR	pcr_primer_name_reverse
+seq_tech	platform
+machine	instrument
+proj	project_id
+Collector initials	
+Boat name	
+Weather notes	
+Esky number	
+Checked by	
+Photo ID	
+Data entered by	
+Field sheet page	
+Datasheet QC'd (Y/N)	
+Invoice no.	
+Courier tracking #	
+Permit holder	
+Landowner contacted?	
+Box received (Y/N)	
+Label printed	
+Who filtered	
+Gloves changed (Y/N)	
+Cost code	
+Vehicle	
+Spare column	
+Colour key	
+Comments for Jo	
+Archived to drive	
+Parking spot	
+Thermos no.	

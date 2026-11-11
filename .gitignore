@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.planemo/
+tool_test_output.*
+
+# Unpublished data shared by the SEA-MES authors: kept out of the repository until the Galaxy tools launch
+dev/faire_mapper_seames/data/private/
+demo/seames/private/

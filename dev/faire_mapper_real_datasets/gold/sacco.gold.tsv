@@ -1,0 +1,7 @@
+column	term	also_acceptable	note
+Sequence_ID	samp_name	lib_id	Unique lab code per extract; links to the fastq file.
+File name	filename		Per-sample fastq name (relabelled, demultiplexed reads; one file per sample so no filename2).
+Sample_Type	samp_category	neg_cont_type;env_medium	Water -> 'sample'; Extraction control -> 'negative control' with neg_cont_type = extraction negative.
+Lake	geo_loc_name		Lake name; format as 'Australia: Western Australia, Rottnest Island, Lake Vincent'; 'Control' rows not applicable.
+Sample_ID	materialSampleID	biological_rep_relation	Sampling point code shared by its five water replicates (WM = water membrane).
+Description		biological_rep_relation;samp_category	Free text giving replicate number or 'Control'; group replicates by Sample_ID for biological_rep_relation.

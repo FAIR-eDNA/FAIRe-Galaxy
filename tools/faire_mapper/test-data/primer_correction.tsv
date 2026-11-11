@@ -1,0 +1,2 @@
+assay_name	target_gene	pcr_primer_name_forward	pcr_primer_forward	pcr_primer_name_reverse	pcr_primer_reverse	notes	replaces
+TestAssay	12S	TestAssay-F	ACGTACGTACGTACGTAC	TestAssay-R	TTGCATGCATGCATGCAAT	reverse primer corrected (made-up example)	pp_35a388f277

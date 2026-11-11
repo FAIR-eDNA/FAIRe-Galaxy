@@ -1,0 +1,424 @@
+<tool id="faire2ncbi_sra" name="FAIRe2NCBI: SRA" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="@PROFILE@" license="MIT">
+    <description>make an NCBI SRA metadata table from a FAIRe workbook</description>
+    <macros>
+        <import>macros.xml</import>
+        <import>faire_guide.xml</import>
+    </macros>
+    <expand macro="creator"/>
+    <expand macro="requirements"/>
+    <version_command>echo '@TOOL_VERSION@'</version_command>
+    <command detect_errors="exit_code"><![CDATA[
+set -o pipefail;
+@LINK_INPUT@
+python '$__tool_directory__/faire2ncbi_galaxy.py' sra
+    --input_file input.xlsx
+    --runs_by '$runs.runs_by'
+    #if $runs.runs_by != 'all':
+        --runs_values '$runs.runs_values'
+    #end if
+    --associated '$associated'
+    #if $instrument_model != 'from_workbook':
+        --instrument_model '$instrument_model'
+    #end if
+    #if $link.link_by == 'accessions':
+        --accessions '$link.accessions'
+    #end if
+    @ORGANISM@
+    --output '$sra_table'
+    --config_out '$config'
+    < /dev/null
+| tee '$log'
+    ]]></command>
+    <inputs>
+        <expand macro="faire_input"/>
+        <conditional name="runs">
+            <param name="runs_by" type="select" label="Runs to include"
+                help="Each row of experimentRunMetadata is one amplicon of a sample (FAIRe's library). NCBI needs a unique library_ID on every row of a submission. A library that holds several assays (the same sample and files on each row) gets one row.">
+                <option value="all" selected="true">All runs</option>
+                <option value="assay">Runs of some assays (assay_name)</option>
+                <option value="seq_run">Runs from some sequencing runs (seq_run_id)</option>
+                <option value="lib_id">Some libraries (lib_id)</option>
+            </param>
+            <when value="all"/>
+            <when value="assay">
+                <expand macro="runs_values" field="assay_name" example="MiFish-U,COI-Leray"/>
+            </when>
+            <when value="seq_run">
+                <expand macro="runs_values" field="seq_run_id" example="RUN01,RUN02"/>
+            </when>
+            <when value="lib_id">
+                <expand macro="runs_values" field="lib_id" example="S01_MiFish,S02_MiFish"/>
+            </when>
+        </conditional>
+        <param name="associated" type="select" label="Only runs not yet submitted?"
+            help="associatedSequences in experimentRunMetadata holds the NCBI links of runs already submitted. A cell holding NA or N/A counts as filled.">
+            <option value="all" selected="true">No, include all selected runs</option>
+            <option value="blank_only">Yes, only runs with an empty associatedSequences cell</option>
+        </param>
+        <param name="instrument_model" type="select" label="Sequencing instrument"
+            help="NCBI's controlled values (from the SRA metadata template). 'From the workbook' uses the platform and instrument rows of projectMetadata for each assay, after removing ontology codes such as [OBI_0002003]; the tool stops if they are missing or not NCBI values. Choosing an instrument sets it, and its platform, for every run.">
+            <option value="from_workbook" selected="true">From the workbook</option>
+            <option value="HiSeq X Five">HiSeq X Five (ILLUMINA)</option>
+            <option value="HiSeq X Ten">HiSeq X Ten (ILLUMINA)</option>
+            <option value="Illumina Genome Analyzer">Illumina Genome Analyzer (ILLUMINA)</option>
+            <option value="Illumina Genome Analyzer II">Illumina Genome Analyzer II (ILLUMINA)</option>
+            <option value="Illumina Genome Analyzer IIx">Illumina Genome Analyzer IIx (ILLUMINA)</option>
+            <option value="Illumina HiScanSQ">Illumina HiScanSQ (ILLUMINA)</option>
+            <option value="Illumina HiSeq 1000">Illumina HiSeq 1000 (ILLUMINA)</option>
+            <option value="Illumina HiSeq 1500">Illumina HiSeq 1500 (ILLUMINA)</option>
+            <option value="Illumina HiSeq 2000">Illumina HiSeq 2000 (ILLUMINA)</option>
+            <option value="Illumina HiSeq 2500">Illumina HiSeq 2500 (ILLUMINA)</option>
+            <option value="Illumina HiSeq 3000">Illumina HiSeq 3000 (ILLUMINA)</option>
+            <option value="Illumina HiSeq 4000">Illumina HiSeq 4000 (ILLUMINA)</option>
+            <option value="Illumina HiSeq X">Illumina HiSeq X (ILLUMINA)</option>
+            <option value="Illumina MiSeq">Illumina MiSeq (ILLUMINA)</option>
+            <option value="Illumina MiniSeq">Illumina MiniSeq (ILLUMINA)</option>
+            <option value="Illumina NovaSeq 6000">Illumina NovaSeq 6000 (ILLUMINA)</option>
+            <option value="Illumina NovaSeq X">Illumina NovaSeq X (ILLUMINA)</option>
+            <option value="Illumina NovaSeq X Plus">Illumina NovaSeq X Plus (ILLUMINA)</option>
+            <option value="Illumina iSeq 100">Illumina iSeq 100 (ILLUMINA)</option>
+            <option value="NextSeq 1000">NextSeq 1000 (ILLUMINA)</option>
+            <option value="NextSeq 2000">NextSeq 2000 (ILLUMINA)</option>
+            <option value="NextSeq 500">NextSeq 500 (ILLUMINA)</option>
+            <option value="NextSeq 550">NextSeq 550 (ILLUMINA)</option>
+            <option value="GridION">GridION (OXFORD_NANOPORE)</option>
+            <option value="MinION">MinION (OXFORD_NANOPORE)</option>
+            <option value="PromethION">PromethION (OXFORD_NANOPORE)</option>
+            <option value="PacBio RS">PacBio RS (PACBIO_SMRT)</option>
+            <option value="PacBio RS II">PacBio RS II (PACBIO_SMRT)</option>
+            <option value="Revio">Revio (PACBIO_SMRT)</option>
+            <option value="Sequel">Sequel (PACBIO_SMRT)</option>
+            <option value="Sequel II">Sequel II (PACBIO_SMRT)</option>
+            <option value="Sequel IIe">Sequel IIe (PACBIO_SMRT)</option>
+            <option value="Onso">Onso (PACBIO_SMRT)</option>
+            <option value="Ion Torrent PGM">Ion Torrent PGM (ION_TORRENT)</option>
+            <option value="Ion Torrent Proton">Ion Torrent Proton (ION_TORRENT)</option>
+            <option value="Ion Torrent S5 XL">Ion Torrent S5 XL (ION_TORRENT)</option>
+            <option value="Ion Torrent S5">Ion Torrent S5 (ION_TORRENT)</option>
+            <option value="Ion Torrent Genexus">Ion Torrent Genexus (ION_TORRENT)</option>
+            <option value="Ion GeneStudio S5">Ion GeneStudio S5 (ION_TORRENT)</option>
+            <option value="Ion GeneStudio S5 Plus">Ion GeneStudio S5 Plus (ION_TORRENT)</option>
+            <option value="Ion GeneStudio S5 Prime">Ion GeneStudio S5 Prime (ION_TORRENT)</option>
+            <option value="Element AVITI">Element AVITI (ELEMENT)</option>
+            <option value="DNBSEQ-G400">DNBSEQ-G400 (DNBSEQ)</option>
+            <option value="DNBSEQ-G50">DNBSEQ-G50 (DNBSEQ)</option>
+            <option value="DNBSEQ-T7">DNBSEQ-T7 (DNBSEQ)</option>
+            <option value="DNBSEQ-G400 FAST">DNBSEQ-G400 FAST (DNBSEQ)</option>
+            <option value="BGISEQ-50">BGISEQ-50 (BGISEQ)</option>
+            <option value="BGISEQ-500">BGISEQ-500 (BGISEQ)</option>
+            <option value="MGISEQ-2000RS">MGISEQ-2000RS (BGISEQ)</option>
+            <option value="UG 100">UG 100 (ULTIMA)</option>
+            <option value="GenoCare 1600">GenoCare 1600 (GENEMIND)</option>
+            <option value="GenoLab M">GenoLab M (GENEMIND)</option>
+            <option value="GS111">GS111 (GENAPSYS)</option>
+            <option value="Tapestri">Tapestri (TAPESTRI)</option>
+            <option value="Sentosa SQ301">Sentosa SQ301 (VELA_DIAGNOSTICS)</option>
+            <option value="AB 310 Genetic Analyzer">AB 310 Genetic Analyzer (CAPILLARY)</option>
+            <option value="AB 3130 Genetic Analyzer">AB 3130 Genetic Analyzer (CAPILLARY)</option>
+            <option value="AB 3130xL Genetic Analyzer">AB 3130xL Genetic Analyzer (CAPILLARY)</option>
+            <option value="AB 3500 Genetic Analyzer">AB 3500 Genetic Analyzer (CAPILLARY)</option>
+            <option value="AB 3500xL Genetic Analyzer">AB 3500xL Genetic Analyzer (CAPILLARY)</option>
+            <option value="AB 3730 Genetic Analyzer">AB 3730 Genetic Analyzer (CAPILLARY)</option>
+            <option value="AB 3730xL Genetic Analyzer">AB 3730xL Genetic Analyzer (CAPILLARY)</option>
+            <option value="454 GS">454 GS (_LS454)</option>
+            <option value="454 GS 20">454 GS 20 (_LS454)</option>
+            <option value="454 GS FLX">454 GS FLX (_LS454)</option>
+            <option value="454 GS FLX+">454 GS FLX+ (_LS454)</option>
+            <option value="454 GS FLX Titanium">454 GS FLX Titanium (_LS454)</option>
+            <option value="454 GS Junior">454 GS Junior (_LS454)</option>
+            <option value="AB 5500 Genetic Analyzer">AB 5500 Genetic Analyzer (ABI_SOLID)</option>
+            <option value="AB 5500xl Genetic Analyzer">AB 5500xl Genetic Analyzer (ABI_SOLID)</option>
+            <option value="AB 5500x-Wl Genetic Analyzer">AB 5500x-Wl Genetic Analyzer (ABI_SOLID)</option>
+            <option value="AB SOLiD 3 Plus System">AB SOLiD 3 Plus System (ABI_SOLID)</option>
+            <option value="AB SOLiD 4 System">AB SOLiD 4 System (ABI_SOLID)</option>
+            <option value="AB SOLiD 4hq System">AB SOLiD 4hq System (ABI_SOLID)</option>
+            <option value="AB SOLiD PI System">AB SOLiD PI System (ABI_SOLID)</option>
+            <option value="AB SOLiD System">AB SOLiD System (ABI_SOLID)</option>
+            <option value="AB SOLiD System 2.0">AB SOLiD System 2.0 (ABI_SOLID)</option>
+            <option value="AB SOLiD System 3.0">AB SOLiD System 3.0 (ABI_SOLID)</option>
+            <option value="Complete Genomics">Complete Genomics (COMPLETE_GENOMICS)</option>
+            <option value="Helicos HeliScope">Helicos HeliScope (HELICOS)</option>
+        </param>
+        <conditional name="link">
+            <param name="link_by" type="select" label="Link runs to their BioSamples by"
+                help="Each SRA row must point to a BioSample.">
+                <option value="sample_name" selected="true">sample_name (BioSamples registered in the same submission)</option>
+                <option value="accessions">BioSample accession (samples already registered)</option>
+            </param>
+            <when value="sample_name"/>
+            <when value="accessions">
+                <param name="accessions" type="data" format="tabular,csv" label="BioSample accession table"
+                    help="A table with an 'accession' (or 'biosample_accession') column and a 'sample_name' column, such as the attributes table you can download from your BioSample submission. sample_name must match samp_name in the workbook."/>
+            </when>
+        </conditional>
+        <section name="advanced" title="More options" expanded="false">
+            <expand macro="organism"/>
+        </section>
+    </inputs>
+    <outputs>
+        <data name="sra_table" format="tsv" label="${tool.name} on ${on_string}: SRA table"/>
+        <expand macro="outputs_common"/>
+    </outputs>
+    <tests>
+        <!-- FAIRe-ator layout, one assay: instrument from the workbook without its OBI code, linked by sample_name -->
+        <test expect_num_outputs="3">
+            <param name="input_file" value="faire_ncbi_two_assays.xlsx"/>
+            <conditional name="runs">
+                <param name="runs_by" value="assay"/>
+                <param name="runs_values" value="ssu16sv4v5-emp"/>
+            </conditional>
+            <output name="sra_table">
+                <assert_contents>
+                    <has_n_lines n="5"/>
+                    <has_line line="sample_name&#009;library_ID&#009;title&#009;library_strategy&#009;library_source&#009;library_selection&#009;library_layout&#009;platform&#009;instrument_model&#009;design_description&#009;filetype&#009;filename&#009;filename2&#009;filename3&#009;filename4&#009;assembly&#009;fasta_file"/>
+                    <has_text text="GOMECC4_27N_Sta1_DCM_A&#009;GOMECC16S_Plate4_53&#009;GOMECC4_27N_Sta1_DCM_A: ssu16sv4v5-emp metabarcoding of seawater metagenome in USA: Atlantic Ocean, east of Florida (27 N)&#009;AMPLICON&#009;METAGENOMIC&#009;PCR&#009;paired&#009;ILLUMINA&#009;Illumina MiSeq&#009;Metabarcoding of 16S rRNA (SSU prokaryote) gene V4-V5 region"/>
+                    <has_text text="&#009;fastq&#009;GOMECC16S_Plate4_53_S341_L001_R1_001.fastq.gz&#009;GOMECC16S_Plate4_53_S341_L001_R2_001.fastq.gz&#009;"/>
+                    <not_has_text text="OBI_"/>
+                    <not_has_text text="ssu18sv9-emp"/>
+                </assert_contents>
+            </output>
+            <output name="config">
+                <assert_contents>
+                    <has_text text="lib_id_selection_choice: all"/>
+                    <has_text text="kept 4 run(s) with assay_name in: ssu16sv4v5-emp"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="removed ontology codes"/>
+                    <has_text text="wrote 4 SRA row(s)"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- All runs: each library holds both assays (the same lib_id, sample and files), so its rows are joined -->
+        <test expect_num_outputs="3">
+            <param name="input_file" value="faire_ncbi_shared_library.xlsx"/>
+            <output name="sra_table">
+                <assert_contents>
+                    <has_n_lines n="5"/>
+                    <has_text text="GOMECC4_27N_Sta1_DCM_A&#009;GOMECC16S_Plate4_53&#009;GOMECC4_27N_Sta1_DCM_A: ssu16sv4v5-emp and ssu18sv9-emp metabarcoding of seawater metagenome"/>
+                    <has_text text="2 assays in one library. ssu16sv4v5-emp: Metabarcoding of 16S rRNA (SSU prokaryote) gene V4-V5 region"/>
+                    <has_text text="; ssu18sv9-emp: Metabarcoding of 18S rRNA (SSU eukaryote) gene"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="joined the rows of 4 libraries that hold several assays (ssu16sv4v5-emp and ssu18sv9-emp)"/>
+                    <has_text text="4 lib_ids name several assays (e.g. GOMECC16S_Neg1); FAIRe takes a library to be one amplicon of a sample"/>
+                    <has_text text="wrote 4 SRA row(s) for 4 libraries"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- The same libraries with one lib_id per amplicon (library, assay and run, as the FAIRe mapper
+             writes them): joined by their files, with the library's own name as library_ID -->
+        <test expect_num_outputs="3">
+            <param name="input_file" value="faire_ncbi_amplicon_libraries.xlsx"/>
+            <output name="sra_table">
+                <assert_contents>
+                    <has_n_lines n="5"/>
+                    <has_text text="GOMECC4_27N_Sta1_DCM_A&#009;GOMECC16S_Plate4_53&#009;GOMECC4_27N_Sta1_DCM_A: ssu16sv4v5-emp and ssu18sv9-emp metabarcoding of seawater metagenome"/>
+                    <not_has_text text="_ssu16sv4v5-emp_"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="joined the rows of 4 libraries that hold several assays (ssu16sv4v5-emp and ssu18sv9-emp)"/>
+                    <has_text text="library_ID is each library's own name: the lib_id without its assay_name and seq_run_id (e.g. GOMECC16S_Neg1_ssu16sv4v5-emp_20220613_Amplicon_PE250 -> GOMECC16S_Neg1)"/>
+                    <not_has_text text="name several assays"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- All runs: this example reuses lib_id across assays with different files, so the tool stops with advice -->
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="input_file" value="faire_ncbi_two_assays.xlsx"/>
+            <assert_stderr>
+                <has_text text="these library_ID values appear more than once"/>
+                <has_text text="run the tool once per assay"/>
+            </assert_stderr>
+        </test>
+        <!-- FAIRe-NOAA layout, two assays, instrument chosen on the form -->
+        <test expect_num_outputs="3">
+            <param name="input_file" value="faire_noaa_layout.xlsx"/>
+            <param name="instrument_model" value="Illumina NovaSeq 6000"/>
+            <output name="sra_table">
+                <assert_contents>
+                    <has_n_lines n="11"/>
+                    <has_text text="GU190706-CTD11-220&#009;GU190706-CTD11-220_Riaz_S1&#009;"/>
+                    <has_text text="&#009;ILLUMINA&#009;Illumina NovaSeq 6000&#009;Metabarcoding of 12S rRNA (SSU mitochondria) gene V5-V6 region using PCR primers MiFish-U-F"/>
+                    <not_has_text text="Illumina MiSeq"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="already has assay columns named by assay_name"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Samples already registered: accessions from a BioSample attributes table -->
+        <test expect_num_outputs="3">
+            <param name="input_file" value="faire_ncbi_two_assays.xlsx"/>
+            <conditional name="runs">
+                <param name="runs_by" value="assay"/>
+                <param name="runs_values" value="ssu18sv9-emp"/>
+            </conditional>
+            <conditional name="link">
+                <param name="link_by" value="accessions"/>
+                <param name="accessions" value="biosample_accessions.tsv" ftype="tabular"/>
+            </conditional>
+            <output name="sra_table">
+                <assert_contents>
+                    <has_n_lines n="5"/>
+                    <has_line_matching expression="^biosample_accession\tlibrary_ID\ttitle\t.*"/>
+                    <has_text text="SAMN37516094&#009;GOMECC16S_Plate4_53&#009;GOMECC4_27N_Sta1_DCM_A: ssu18sv9-emp"/>
+                    <has_text text="SAMN37516589&#009;GOMECC16S_Neg1&#009;"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Accession table with unexpected column names: the unanswered question becomes a plain error -->
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="input_file" value="faire_ncbi_two_assays.xlsx"/>
+            <conditional name="runs">
+                <param name="runs_by" value="assay"/>
+                <param name="runs_values" value="ssu18sv9-emp"/>
+            </conditional>
+            <conditional name="link">
+                <param name="link_by" value="accessions"/>
+                <param name="accessions" value="accessions_odd_columns.tsv" ftype="tabular"/>
+            </conditional>
+            <assert_stderr>
+                <has_text text="FAIRe2NCBI asked a question that this Galaxy tool does not answer"/>
+                <has_text text="Which column should be used for BioSample accession?"/>
+            </assert_stderr>
+        </test>
+        <!-- One sequencing run, runs not yet submitted -->
+        <test expect_num_outputs="3">
+            <param name="input_file" value="faire_ncbi_two_assays.xlsx"/>
+            <conditional name="runs">
+                <param name="runs_by" value="seq_run"/>
+                <param name="runs_values" value="20220613_Amplicon_PE250"/>
+            </conditional>
+            <param name="associated" value="blank_only"/>
+            <output name="sra_table">
+                <assert_contents>
+                    <has_n_lines n="3"/>
+                    <has_text text="GOMECC16S_Neg1"/>
+                    <has_text text="GOMECC16S_Plate4_53"/>
+                    <not_has_text text="GOMECC16S_Plate4_46"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="kept 2 run(s) with no associatedSequences; left out 1"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Single assay in project_level; unknown assay name stops with the list of assays -->
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="input_file" value="faire_ncbi_single_assay.xlsx"/>
+            <conditional name="runs">
+                <param name="runs_by" value="assay"/>
+                <param name="runs_values" value="MiFish"/>
+            </conditional>
+            <assert_stderr>
+                <has_text text="no runs with assay_name 'MiFish'. Values in the workbook: ssu16sv4v5-emp"/>
+            </assert_stderr>
+        </test>
+        <test expect_num_outputs="3">
+            <param name="input_file" value="faire_ncbi_single_assay.xlsx"/>
+            <output name="sra_table">
+                <assert_contents>
+                    <has_n_lines n="5"/>
+                    <has_text text="Metabarcoding of 16S rRNA (SSU prokaryote) gene V4-V5 region using PCR primers 515F-Y (GTGYCAGCMGCCGCGGTAA) and 926R (CCGYCAATTYMTTTRAGTTT) using protocol at https://doi.org/10.1111/1462-2920.13023"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="single assay 'ssu16sv4v5-emp'"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- NA and N/A in associatedSequences mark runs as already submitted -->
+        <test expect_num_outputs="3">
+            <param name="input_file" value="faire_noaa_text_values.xlsx"/>
+            <param name="associated" value="blank_only"/>
+            <output name="sra_table">
+                <assert_contents>
+                    <has_n_lines n="9"/>
+                    <not_has_text text="GU190707-CTD13-310_MiFish_S31"/>
+                    <not_has_text text="GU190707-CTD13-310_Riaz_S2"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="kept 8 run(s) with no associatedSequences; left out 2"/>
+                </assert_contents>
+            </output>
+        </test>
+    </tests>
+    <help><![CDATA[
+**What it does**
+
+This tool turns the **experimentRunMetadata** sheet of a FAIRe workbook into an SRA metadata table
+for the NCBI Submission Portal, with one row for each sequencing library. Upload it on the *SRA
+metadata* tab of an SRA submission at https://submit.ncbi.nlm.nih.gov, then upload the fastq files
+it lists.
+
+FAIRe2NCBI normally asks you questions as it runs. In Galaxy, the tool answers them from the form.
+It also writes a **config** file holding those answers, so that the same run can be repeated
+outside Galaxy.
+
+-----
+
+**Inputs**
+
+- **A FAIRe workbook** (.xlsx). experimentRunMetadata needs samp_name, assay_name, lib_id, filename
+  and, for paired reads, filename2. projectMetadata gives each assay's target gene, primers,
+  platform and instrument.
+- **Which runs to include**, and whether to leave out runs that have already been submitted.
+- **How to link each run to its BioSample.** Choose **sample_name** when you register the
+  BioSamples in the same submission (using the table from **FAIRe2NCBI: BioSample**), or
+  **BioSample accession** when the samples are already registered.
+
+**Outputs**
+
+- **SRA table**: one row for each library. The columns follow NCBI's SRA template, and title and
+  design_description are built from sampleMetadata and projectMetadata. library_strategy,
+  library_source and library_selection are set to AMPLICON, METAGENOMIC and PCR.
+- **config**: the answers given to FAIRe2NCBI, as YAML.
+- **log**: a record of what FAIRe2NCBI and the tool did.
+
+-----
+
+**Checks**
+
+The tool stops, with a list of the problems, if a library_ID or file name appears more than once,
+if a library has no file name, or if a library has no BioSample accession when you link by
+accession.
+
+FAIRe defines a library as "an amplicon of a sample with unique MIDs". This means a sequencing
+library that holds several assays, such as amplicons pooled before indexing, has a row for each
+assay, with the same sample and files. The tool joins these into one row, with a title and design
+description that name every assay.
+
+library_ID is the library's own name. The FAIRe mapper writes lib_id as the library name,
+assay_name and seq_run_id (M097_16SFish_LerayCOI_Fish16S_AGRF_2024-12), and this tool takes the
+assay and run off again (M097_16SFish_LerayCOI). Where names would then repeat, as for a library
+sequenced in two runs, the tool keeps the run, or failing that the whole lib_id. A lib_id given to
+several assays with the same files is accepted, with a note. If the same lib_id was used for
+several assays with different files, give each row its own lib_id, or run the tool once for each
+assay.
+
+**Not included**
+
+FAIRe2NCBI can also check fastq files for empty or corrupted files, and split the output by
+BioProject with links to the fastq files. Both of these need the fastq files in a local folder, so
+they are not part of this Galaxy tool.
+
+@HELP_LAYOUT@
+
+@HELP_FAIRE_GUIDE@
+
+@HELP_FOOTER@
+    ]]></help>
+    <expand macro="citations"/>
+</tool>

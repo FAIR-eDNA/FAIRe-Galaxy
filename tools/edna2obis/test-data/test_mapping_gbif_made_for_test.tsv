@@ -1,0 +1,11 @@
+verbatimIdentification	cleanedTaxonomy	selected_match	ambiguous	replaced_unaccepted	unaccepted_match	ranks_matched	ranks_provided	assignment_score	environment	scientificName	confidence	taxonRank	taxonID	kingdom	phylum	class	order	family	genus	match_type_debug	nameAccordingTo
+Bacteria		True	False	False	False					incertae sedis										made_for_test_not_from_GBIF	GBIF
+Eukaryota;Chordata;Actinopteri;Myctophiformes;Myctophidae;Diaphus;Diaphus dumerilii		True	False	False	False					Diaphus dumerilii		species	gbif:made-for-test-1	Animalia	Chordata				Diaphus	made_for_test_not_from_GBIF	GBIF
+Eukaryota;Chordata;Actinopteri;Perciformes;Scorpaenidae;Pontinus		True	False	False	False					Pontinus		genus	gbif:made-for-test-2	Animalia	Chordata				Pontinus	made_for_test_not_from_GBIF	GBIF
+Eukaryota;Chordata;Actinopteri;NA;Malacanthidae;Lopholatilus;Lopholatilus chamaeleonticeps		True	False	False	False					Lopholatilus chamaeleonticeps		species	gbif:made-for-test-3	Animalia	Chordata				Lopholatilus	made_for_test_not_from_GBIF	GBIF
+Eukaryota;Chordata;Actinopteri;Stomiiformes;Sternoptychidae;Maurolicus;Maurolicus weitzmani		True	False	False	False					Maurolicus weitzmani		species	gbif:made-for-test-4	Animalia	Chordata				Maurolicus	made_for_test_not_from_GBIF	GBIF
+Eukaryota;Chordata;Actinopteri;Scombriformes;Ariommatidae;Ariomma;Ariomma bondi		True	False	False	False					Ariomma bondi		species	gbif:made-for-test-5	Animalia	Chordata				Ariomma	made_for_test_not_from_GBIF	GBIF
+Eukaryota;Chordata;Actinopteri;Scombriformes;Scombridae;Thunnini		True	True	False	False					Thunnini		tribe	gbif:made-for-test-6	Animalia	Chordata					made_for_test_not_from_GBIF	GBIF
+Eukaryota;Chordata;Actinopteri;Scombriformes;Scombridae;Thunnini		False	True	False	False					Scombridae		family	gbif:made-for-test-7	Animalia	Chordata					made_for_test_not_from_GBIF	GBIF
+Eukaryota;Chordata;Mammalia;Artiodactyla;Delphinidae;Tursiops;Tursiops truncatus		True	False	False	False					Tursiops truncatus		species	gbif:made-for-test-8	Animalia	Chordata				Tursiops	made_for_test_not_from_GBIF	GBIF
+Eukaryota;Chordata;Actinopteri;Aulopiformes;Scopelarchidae;Scopelarchus;Scopelarchus analis		True	False	False	False					Scopelarchus analis		species	gbif:made-for-test-9	Animalia	Chordata				Scopelarchus	made_for_test_not_from_GBIF	GBIF

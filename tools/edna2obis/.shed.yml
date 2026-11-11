@@ -1,0 +1,18 @@
+name: edna2obis
+owner: CHANGE_ME
+description: Make Darwin Core tables for OBIS and GBIF from a FAIRe eDNA workbook and ASV tables
+long_description: |
+  Galaxy wrappers for edna2obis (https://github.com/aomlomics/edna2obis), which turns a FAIR eDNA
+  (FAIRe) metadata workbook and per-assay ASV or OTU abundance and taxonomy tables into Darwin Core
+  tables (occurrence core, DNA-derived data and eMoF extensions, optional Event core) with eml.xml
+  and meta.xml, for publication through OBIS and GBIF. Two tools sharing macros.xml: one looks up
+  taxonomy strings in WoRMS or GBIF and writes a mapping table for review (needs internet access);
+  the other builds the tables and the Darwin Core archive, using that reviewed mapping (no internet
+  needed) or looking the names up itself. Accepts both the FAIRe layout produced by FAIRe-ator and
+  the FAIRe-NOAA layout.
+homepage_url: https://github.com/aomlomics/edna2obis
+remote_repository_url: https://github.com/FAIR-eDNA/FAIRe-Galaxy/tree/main/tools/edna2obis
+type: unrestricted
+categories:
+  - Ecology
+  - Convert Formats

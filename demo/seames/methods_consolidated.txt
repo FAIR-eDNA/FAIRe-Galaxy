@@ -1,0 +1,185 @@
+METHODS COMPENDIUM
+
+Environmental DNA sampling and analytical methods
+
+Sampling, laboratory and bioinformatic methods extracted from report Sections 3-6
+
+  ---------------------------------------------------------------------------------------------------------------------------
+  Source report                       Deagle et al. (2025), Project 4.23 final report
+  ----------------------------------- ---------------------------------------------------------------------------------------
+  Coverage                            Fish eDNA, deep-tow sampler, plankton eDNA and Tree of Life metabarcoding
+
+  Treatment                           Methods content reorganised for convenient reference; substantive parameters retained
+  ---------------------------------------------------------------------------------------------------------------------------
+
+Prepared from Project-4.23_eDNA-final-report.pdf
+
+1. Scope of this methods extract
+
+This document consolidates the eDNA-specific methods in Sections 3-6 of the source report. It covers field sampling and controls, filtration and preservation, DNA extraction, PCR and library preparation, sequencing, bioinformatic processing, taxonomic assignment and eDNA data handling. Statistical ecological analyses and comparisons between eDNA and trawl, camera or other sample types have been excluded.
+
+Editorial note: wording has been lightly standardised for consistency and scanability. Numerical settings, sample sizes, instruments, software, thresholds and primer sequences have been retained. Figures, results, ecological interpretation and statistical comparisons are not reproduced.
+
+  ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Component                  Fish 16S (Section 3)                                Plankton 18S (Section 5)                     Tree of Life (Section 6)
+  -------------------------- --------------------------------------------------- -------------------------------------------- --------------------------------------------------------
+  Water volume / filter      10 L; 47 mm 0.45 µm MCE                             2 L; 0.22 µm Sterivex GP                     Existing extracts from 10 L, 2 L and OCD samples
+
+  Primary target             Fish mtDNA 16S                                      Eukaryote 18S rRNA V4                        12-assay panel spanning bacteria to vertebrates
+
+  Sequencing                 Illumina NextSeq 2000, 2 x 300 bp                   Tag sequencing at Ramaciotti Centre          iSeq 100 or NextSeq 1000, single direction, 200 cycles
+
+  Bioinformatic processing   DADA2; BLASTn; eDNAFlow LCA; manual fish curation   Seqtk; FLASH; Mothur; USEARCH; SILVA + PR2   insect; DADA2; global reference database; LCA/SINTAX
+  ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+2. Fish eDNA sampling and analysis (source Section 3.2)
+
+2.1 CTD water sampling
+
+eDNA samples were collected from 62 CTD deployments during Voyage 1 and 80 during Voyage 2. Each sample comprised 10 L of water from a 12 L Niskin bottle mounted on a 36-bottle CTD rosette.
+
+-   Night: two replicate 10 L samples near the seafloor, aligned with deep-tow camera deployment.
+
+-   Morning: one 10 L bottom sample and one 10 L surface sample before trawl operations.
+
+-   Afternoon: two replicate 10 L bottom samples, one 10 L deep chlorophyll maximum sample identified from the downcast CTD trace, and one 10 L surface sample.
+
+Samples were stored at 4 °C and filtered within 12 hours. A Masterflex L/S console pump system was used with 47 mm, 0.45 µm mixed cellulose ester membranes, which were immediately stored at -80 °C. Filtration and sampling equipment was soaked in 10% bleach for at least 6 hours between runs. Before filtration, lines were primed with 10% bleach for 15 minutes and flushed three times with Milli-Q water. Field filtration controls consisted of 5 L Milli-Q water samples.
+
+2.2 DNA extraction and fish metabarcoding library preparation
+
+DNA extraction and PCR followed West et al. (2024), with modifications. Work was undertaken in a dedicated pre-PCR room at CSIRO Hobart. Filter membranes were cut into small pieces and digested in 540 µL ATL lysis buffer plus 60 µL Proteinase K for 3 hours at 56 °C with gentle shaking. After digestion, 300 µL digest was combined with 300 µL buffer AL and 300 µL ethanol, after which the standard QIAGEN DNeasy Blood and Tissue Kit protocol was followed. DNA was eluted in 100 µL buffer AE. Extraction blanks were processed in parallel.
+
+A fish 16S mtDNA assay targeting teleost and elasmobranch eDNA was used. The same extracts were also processed with the broader COI Leray metazoan marker, although only fish-marker results were reported in Section 3.
+
+Library preparation used two-stage qPCR. In the first stage, locus-specific primers were flanked by a unique 6 bp dual index and Nextera-style overhang. Reactions were 25 µL and contained 1x QIAGEN Multiplex PCR MasterMix, 0.4 µM each primer, 1x EvaGreen dye, 2 µL neat eDNA template, and ultrapure water. Cycling on a QuantStudio 5 was: 95 °C for 15 minutes; 40 cycles of 95 °C for 30 seconds, 54 °C for 90 seconds and 72 °C for 90 seconds; final extension 72 °C for 10 minutes.
+
+First-stage amplicons were sent to the Australian Genome Research Facility for second-stage PCR, addition of Nextera-style i5/i7 indices and flow-cell binding regions, cleaning, pooling and normalisation. Sequencing used an Illumina NextSeq 2000 with a P1 600-cycle flow cell and 2 x 300 bp reads.
+
+  -----------------------------------------------------------------------------------------------------------
+  Assay       Target    Forward primer               Reverse primer               Target length   Annealing
+  ----------- --------- ---------------------------- ---------------------------- --------------- -----------
+  Fish 16S    Fish      GACCCTATGGAGCTTTAGAC         CGCTGTTATCCCTADRGTAACT       ~180-230 bp     54 °C
+
+  COI Leray   Metazoa   GGWACWGGWTGAACWGTWTAYCCYCC   TAIACYTCIGGRTGICCRAARAAYCA   313 bp          46 °C
+  -----------------------------------------------------------------------------------------------------------
+
+2.3 Fish 16S bioinformatics and taxonomic curation
+
+Reads were demultiplexed and trimmed with a custom R script. DADA2 in R 4.2.1 was used for quality filtering, denoising, chimera filtering and dereplication with pseudo-pooling. Filters were minimum sequence length 100 bp, maximum expected errors 2, and no ambiguous nucleotides. The resulting ASV fasta file and count table were used for taxonomic assignment.
+
+ASVs were queried against NCBI GenBank (accessed August 2023) using BLASTn on CSIRO’s Petrichor HPC cluster. Search settings were minimum identity 85%, query coverage 96%, and maximum 20 target sequences. The eDNAFlow lowest common ancestor script then assigned taxonomy using query coverage 96%, minimum identity 85% and Diff = 1. Species-level assignment required at least 98% identity and 100% query coverage. Where top hits were within 1% similarity, taxonomy was collapsed to the lowest common ancestor.
+
+Fish assignments were manually curated. Geographic plausibility was checked against Fishes of Australia. Species assignments below 98.5% identity were reviewed and reduced to genus where regionally occurring congeners lacked reference sequences. Poorly resolved but high-identity matches were checked for database errors. Family- or genus-level clusters containing substantial ASV diversity were examined using distance-based trees; distinct clusters differing by more than 2% were assigned unique operational names. Chimeras and rare variants close to common ASVs were removed. Final data were collapsed by scientific name using dplyr.
+
+3. Deep-tow camera eDNA sampling (source Section 4.2)
+
+3.1 Paired sample collection
+
+Paired sampling was conducted at 15 southeast Australian sites during Voyage IN2024_V03 in May 2024. CTD Niskin bottles were opened about 10 m above the seafloor. The Open-Close Device (OCD) was attached to the deep-tow camera and opened for a transect about 1 m above the seafloor. Operational constraints meant paired CTD and OCD locations were approximately 1,000 m apart, ranging from 236 to 3,541 m.
+
+CTD samples comprised three replicate 1 L samples and duplicate 10 L samples. Each OCD sample combined approximately 1 L retained water with 1 L deionised rinse water used to dislodge material from the internal 100 µm mesh net. All samples were filtered using a peristaltic pump. One-litre samples used 0.45 µm nylon membranes; 10 L samples used 0.45 µm mixed cellulose ester membranes.
+
+3.2 OCD deployment procedure
+
+The OCD is a 300 x 100 x 100 mm open-ended box mounted to the deep-tow camera frame. Its internal chamber held a 100 µm mesh mini-bongo net in a plastic cartridge. Before each deployment the sampler was loaded with sterile mesh and cartridge, filled with deionised water without air bubbles, closed, mounted and connected to power. The camera system was lowered to approximately 1 m above the seafloor and towed for 1.3-4 km. The OCD was opened for the transect and closed before ascent. After recovery it was held at 4 °C and filtered within 4 hours. Equipment was sterilised in 10% bleach for 30 minutes and rinsed with deionised water between deployments.
+
+3.3 Field and laboratory controls
+
+Closed-device controls were deployed at sites N8 and N30 over 4 km transects to test leakage or contamination during deployment. The sampler remained closed throughout. Voyage laboratory controls included 1 L samples of the 10% bleach solution used for sterilisation and 1 L samples of the deionised water used to prepare the OCD. A PCR plate control was also included during molecular processing.
+
+3.4 Molecular processing and bioinformatics
+
+DNA extraction followed the Section 3 protocol: QIAGEN DNeasy Blood and Tissue Kit, with filters digested in 540 µL ATL buffer plus 60 µL Proteinase K for 3 hours at 56 °C with rotation at 300 rpm. Extraction was undertaken in dedicated CSIRO eDNA laboratories in Perth and Hobart. Extracts were shipped to Hobart for fish 16S amplification. Libraries were sequenced on an Illumina NextSeq 2000 and processed using the Section 3 demultiplexing, quality-control and taxonomic-assignment workflow. Singletons were removed before statistical analysis.
+
+4. Plankton eDNA survey (source Section 5.2)
+
+4.1 CTD water sampling
+
+Plankton eDNA samples were collected from 99 CTDs during IN2023_V05 and 100 CTDs during IN2024_V03. Each sample comprised 2 L from a 12 L Niskin bottle on a 36-bottle CTD rosette. Samples represented surface, deep chlorophyll maximum and bottom water, without disturbing sediment.
+
+Samples were held at 4 °C and filtered within 12 hours using a Masterflex L/S console pump onto 0.22 µm Sterivex GP filters, then stored immediately at -80 °C. Sampling and filtration equipment was soaked in 10% bleach for at least 6 hours between runs. Lines were primed with 10% bleach for 15 minutes and flushed three times with Milli-Q water.
+
+4.2 DNA extraction and 18S V4 sequencing
+
+DNA was extracted using Australian Microbiome protocol meth_3.1.9. Sterivex filters were shaken for 60 minutes in lysis buffer containing lysozyme, SDS and CTAB; extracted with phenol; incubated for 120 minutes at 60 °C with Proteinase K; extracted twice with chloroform-isoamyl alcohol; and purified using QIAGEN DNeasy PowerWater filter columns. DNA was eluted in 80 µL 0.1x TE buffer.
+
+The V4 region of 18S rRNA was tag-sequenced at the Ramaciotti Centre for Genomics using Australian Microbiome protocol meth_5.1. Primers were TAReuk454FWD1 (CCAGCASCYGCGGTAATTCC) and modified TAReuk-Rev3 (ACTTTCGTTCTTGATYRATGA).
+
+4.3 Bioinformatic analysis
+
+Paired reads were trimmed with Seqtk trimfq and merged with FLASH. Mothur screen.seqs removed reads with ambiguous bases and homopolymers longer than 8 bases. Quality-filtered sequences were mapped to biologically correct, chimera-free zero-radius operational taxonomic units using USEARCH 64-bit v10.0.240, generating a sample-by-read abundance matrix. zOTUs retained single-nucleotide variation to maximise phylogenetic resolution.
+
+Taxonomy was assigned against SILVA v138.1 and PR2 v5.0.0 using the Wang classifier with a 60% Bayesian probability cut-off. Reads not classified as eukaryotes at phylum level in SILVA or domain level in PR2 were removed.
+
+5. Tree of Life metabarcoding (source Section 6.2)
+
+5.1 Samples and assay panel
+
+A total of 150 eDNA extracts were sent to Wilderlab: 90 extracts from 10 L Voyage 1 samples, including seven negative controls; 42 extracts from 2 L Voyage 1 samples; and 18 Voyage 2 OCD-study extracts representing OCD samples and paired CTD water. For each sample, 35 µL DNA extract was supplied. Collection and extraction followed the relevant methods above.
+
+Wilderlab amplified each extract using a 12-assay panel of fusion-tag mitochondrial and nuclear rRNA markers spanning vertebrates, fish, sharks and rays, eukaryotes, bacteria, invertebrates, corals and crustaceans.
+
+  --------------------------------------------------------------------------------------------------------------------
+  Code          Gene region    Target                    Primer pair (5′-3′)
+  ------------- -------------- ------------------------- -------------------------------------------------------------
+  WV            mt16S          Vertebrates               GACGAGAAGACCCTWTGGAGC / CCRYGGTCGCCCCAAC
+
+  RV            mt12S          Vertebrates               TTAGATACCCCACTATGC / TAGAACAGGCTCCTCTAG
+
+  LG            mt12S          Fish                      CGGCGTAAAGWGTGGTTAGG / CATAGTGGGGTATCTAATCCCAGTTTG
+
+  RJ            mt12S          Sharks and rays           TTAGATACCCTACTATG / AAGCTAGCGCTTGTAGT
+
+  BE            18S V9         Eukaryotes                CCCTGCCHTTTGTACACAC / CCTTCYGCAGGTTCACCTAC
+
+  BU            18S V9         Eukaryotes and bacteria   TTGTACACACCGCCC / CCTTCYGCAGGTTCACCTAC
+
+  BX*           18S            General eukaryote         GCCAGTAGTCATATGCTTGTCT / GCCTGCTGCCTTCCTT
+
+  CI            COI            Invertebrates             DACWGGWTGAACWGTWTAYCCHCC / GTTGTAATAAAATTAAYDGCYCCTARAATDGA
+
+  GD*           ITS2           Coral                     GARTCTTTGAACGCAAATGGC / GCTTATTAATATGCTTAAATTCAGCG
+
+  HD*           mt16S          Crustaceans               GGACGATAAGACCCTATAAA / ACGCTGTTATCCCTAAAGT
+
+  UM            16S V5         Bacteria                  GGATTAGATACCCTGGTA / CCGTCAATTCMTTTRAGTTT
+
+  XN*           COI            Invertebrates             DACWGGWTGAACWGTWTAYCCHCC / TANACYTCNGGRTGNCCRAARAAYCA
+  --------------------------------------------------------------------------------------------------------------------
+
+* Long-amplicon assays were run with a single index, reading only the first 150 bp of the amplicon.
+
+5.2 Fusion-tag PCR and sequencing
+
+Fusion-tag primers incorporated Illumina P5/P7 adapters, an Illumina TruSeq sequencing-primer binding site on the forward primer, unique 8 or 9 bp index sequences, and locus-specific primers. Index sequences differed by at least 3 bp. PCRs were run in duplicate.
+
+Each PCR contained 3 µL MyTaq 2x Red Mix with BSA at 2 mg/mL, 0.5 µL 10 µM forward primer, 0.5 µL 10 µM reverse primer and 1.5 µL template DNA. Cycling was 95 °C for 3 minutes, then 38 cycles of 95 °C for 5 seconds, assay-specific annealing for 10 seconds, and 72 °C for 15 seconds.
+
+Libraries, including negative controls, were pooled, cleaned and double-ended size-selected with AMPure XP beads at 0.9x and 1.2x lower and upper bounds. Concentration was measured with Qubit 4 and adjusted to 50 pM for the basic panel or 650 pM for the comprehensive panel. The basic panel used an Illumina iSeq i1 V2 cartridge with 5% PhiX, 200 cycles in one direction on iSeq 100. The comprehensive panel used a NextSeq 1000/2000 P1 XLEAP-SBS cartridge with 15% PhiX, 200 cycles in one direction on NextSeq 1000.
+
+5.3 ASV generation and taxonomic assignment
+
+FASTQ files were demultiplexed in R using insect v1.4.0. Trimmed sequences were filtered and exact ASVs generated with DADA2. ASVs were identified to the lowest possible rank against a global reference database primarily comprising trimmed GenBank and BOLD sequences, plus RDP v18 for the UM assay.
+
+An ASV matching a reference at 100% identity and 100% coverage was assigned using lowest common ancestor logic. Thus, matches to multiple species were assigned to genus, and matches to multiple genera to family. For the lower-resolution BU, BE, BX and UM markers, assignment was restricted to genus or higher. Unmatched sequences longer than 50 bp were queried with SINTAX at a conservative threshold above 0.99, again restricted to genus or higher.
+
+5.4 eDNA data handling and visualisation
+
+The full Wilderlab eDNA data table was imported into R. It retained sequence counts by sample, assay identity, taxonomic assignments and predefined taxonomic-group flags. No manual taxonomic curation was undertaken for the report. Records were collapsed by scientific name using dplyr summarise. The Wilderlab Shiny Wheels application was used to visualise phylogenetic trees for example eDNA files.
+
+6. Quality-control considerations retained in the methods
+
+-   Field filtration controls, extraction blanks, PCR controls and closed-device controls were used where relevant to each workflow.
+
+-   Sampling and filtration equipment was decontaminated with 10% bleach, with protocol-specific contact times and rinsing steps.
+
+-   The fish 16S workflow included manual review of geographic plausibility, sequence similarity and reference-database limitations.
+
+-   The Tree of Life workflow retained provider taxonomic assignments without equivalent manual curation; this distinction is relevant when interpreting the resulting eDNA identifications.
+
+7. Provenance
+
+Source: Deagle BE, Jayasinghe SA, Bessey C, Bodrossy L, West KM (2025). Environmental DNA for measuring offshore marine biodiversity: what can DNA in water collected from the RV Investigator tell us? Report to the National Environmental Science Program. CSIRO, Hobart, Australia.
+
+Extracted from Sections 3.2, 4.2, 5.2 and 6.2, with closely related method details brought forward where those sections referred to earlier procedures. The source report is licensed under Creative Commons Attribution 4.0 Australia.

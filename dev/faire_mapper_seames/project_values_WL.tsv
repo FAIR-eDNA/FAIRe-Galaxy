@@ -1,0 +1,142 @@
+term	value	assay
+project_name	Environmental DNA for measuring offshore marine biodiversity (SEA-MES, NESP Marine and Coastal Hub Project 4.23): Wilderlab Tree of Life panel	
+project_contact	Bruce Deagle (Bruce.Deagle@csiro.au)	
+pcr_0_1	1	
+pcr_cycles	38	
+pcr_rep	2	
+pcr_dna_vol	1.5	
+pcr_primer_vol_forward	0.5	
+pcr_primer_vol_reverse	0.5	
+pcr_primer_conc_forward	10	
+pcr_primer_conc_reverse	10	
+commercial_mm	MyTaq 2x Red Mix, with BSA at 2 mg/mL	
+platform	ILLUMINA	
+barcoding_pcr_appr	one-step PCR	
+sequencing_location	Wilderlab	
+lib_layout	single end	
+lib_screen	Libraries, with the negative controls, pooled, cleaned and double size-selected with AMPure XP beads (0.9x and 1.2x); concentration measured with Qubit 4	
+seq_method_additional	Fusion-tag primers with Illumina P5/P7 adapters, the TruSeq sequencing-primer site on the forward primer and unique 8 or 9 bp indexes differing by at least 3 bp; pooled library at 650 pM with 15% PhiX; 200 cycles in one direction	
+instrument	Illumina NextSeq 1000 [OBI_0003606]	
+seq_kit	NextSeq 1000/2000 P1 XLEAP-SBS Reagent cartridge	
+otu_db	Wilderlab's reference database of trimmed GenBank and BOLD sequences; RDP v18 for UM	
+demux_tool	insect v1.4.0 (R package)	
+otu_clust_tool	DADA2	
+min_reads_cutoff	5	
+min_reads_cutoff_unit	reads	
+screen_contam_method	Wilderlab removes sequences assigned to humans before reporting	
+tax_assign_cat	sequence similarity	
+otu_seq_comp_appr	Exact match (100% identity and coverage) with lowest common ancestor; unmatched sequences longer than 50 bp queried with SINTAX (threshold 0.99)	
+tax_class_id_cutoff	100	
+tax_class_query_cutoff	100	
+tax_class_collapse	Lowest common ancestor: matches to several species assigned to genus, and to several genera to family	
+tax_class_other	Assignment for BU, BE, BX and UM, and by SINTAX, restricted to genus or higher	
+otu_final_description	Wilderlab's full table (file 8 of the data record), as delivered: ASVs from DADA2 (reads demultiplexed with insect v1.4.0), one table for the 12 assays, with Wilderlab's taxonomy; not curated. Long-amplicon assays (BX, GD, HD, XN) read only the first 150 bp.	
+targetTaxonomicAssay	Vertebrates	WV
+pcr_cond	initial denaturation:95_3;denaturation:95_0.083;annealing:58_0.167;elongation:72_0.25;38	WV
+annealingTemp	58	WV
+target_gene	16S rRNA (LSU mitochondria)	WV
+pcr_primer_forward	GACGAGAAGACCCTWTGGAGC	WV
+pcr_primer_reverse	CCRYGGTCGCCCCAAC	WV
+pcr_primer_name_forward	16S_FishSyn_Short forward	WV
+pcr_primer_name_reverse	16S_FishSyn_Short reverse	WV
+pcr_primer_reference_forward	https://doi.org/10.1002/edn3.93	WV
+pcr_primer_reference_reverse	https://doi.org/10.1002/edn3.93	WV
+targetTaxonomicAssay	Vertebrates	RV
+pcr_cond	initial denaturation:95_3;denaturation:95_0.083;annealing:58_0.167;elongation:72_0.25;38	RV
+annealingTemp	58	RV
+target_gene	12S rRNA (SSU mitochondria)	RV
+pcr_primer_forward	TTAGATACCCCACTATGC	RV
+pcr_primer_reverse	TAGAACAGGCTCCTCTAG	RV
+pcr_primer_name_forward	12S-V5-F	RV
+pcr_primer_name_reverse	12S-V5-R	RV
+pcr_primer_reference_forward	https://doi.org/10.1093/nar/gkr732	RV
+pcr_primer_reference_reverse	https://doi.org/10.1093/nar/gkr732	RV
+targetTaxonomicAssay	Fish	LG
+pcr_cond	95 °C for 3 min, then 38 cycles of 95 °C for 5 s, annealing for 10 s (temperature not given) and 72 °C for 15 s	LG
+target_gene	12S rRNA (SSU mitochondria)	LG
+pcr_primer_forward	CGGCGTAAAGWGTGGTTAGG	LG
+pcr_primer_reverse	CATAGTGGGGTATCTAATCCCAGTTTG	LG
+targetTaxonomicAssay	Sharks and rays	RJ
+pcr_cond	95 °C for 3 min, then 38 cycles of 95 °C for 5 s, annealing for 10 s (temperature not given) and 72 °C for 15 s	RJ
+target_gene	12S rRNA (SSU mitochondria)	RJ
+pcr_primer_forward	TTAGATACCCTACTATG	RJ
+pcr_primer_reverse	AAGCTAGCGCTTGTAGT	RJ
+targetTaxonomicAssay	Eukaryotes	BE
+pcr_cond	initial denaturation:95_3;denaturation:95_0.083;annealing:52_0.167;elongation:72_0.25;38	BE
+annealingTemp	52	BE
+target_gene	18S rRNA (SSU eukaryote)	BE
+target_subfragment	V9	BE
+pcr_primer_forward	CCCTGCCHTTTGTACACAC	BE
+pcr_primer_reverse	CCTTCYGCAGGTTCACCTAC	BE
+pcr_primer_name_forward	1380F	BE
+pcr_primer_name_reverse	1510R	BE
+pcr_primer_reference_forward	https://doi.org/10.1371/journal.pone.0006372	BE
+pcr_primer_reference_reverse	https://doi.org/10.1371/journal.pone.0006372	BE
+targetTaxonomicAssay	Eukaryotes and bacteria	BU
+pcr_cond	initial denaturation:95_3;denaturation:95_0.083;annealing:52_0.167;elongation:72_0.25;38	BU
+annealingTemp	52	BU
+target_gene	18S rRNA (SSU eukaryote)	BU
+target_subfragment	V9	BU
+pcr_primer_forward	TTGTACACACCGCCC	BU
+pcr_primer_reverse	CCTTCYGCAGGTTCACCTAC	BU
+pcr_primer_name_forward	1389F	BU
+pcr_primer_name_reverse	1510R	BU
+pcr_primer_reference_forward	https://doi.org/10.1371/journal.pone.0006372	BU
+pcr_primer_reference_reverse	https://doi.org/10.1371/journal.pone.0006372	BU
+targetTaxonomicAssay	General eukaryote	BX
+pcr_cond	initial denaturation:95_3;denaturation:95_0.083;annealing:52_0.167;elongation:72_0.25;38	BX
+annealingTemp	52	BX
+target_gene	18S rRNA (SSU eukaryote)	BX
+pcr_primer_forward	GCCAGTAGTCATATGCTTGTCT	BX
+pcr_primer_reverse	GCCTGCTGCCTTCCTT	BX
+pcr_primer_name_forward	18S_uni_1F	BX
+pcr_primer_name_reverse	18S_uni_400R	BX
+pcr_primer_reference_forward	https://doi.org/10.1371/journal.pone.0073935	BX
+pcr_primer_reference_reverse	https://doi.org/10.1371/journal.pone.0073935	BX
+targetTaxonomicAssay	Invertebrates	CI
+pcr_cond	initial denaturation:95_3;denaturation:95_0.083;annealing:45_0.167;elongation:72_0.25;38	CI
+annealingTemp	45	CI
+target_gene	COI	CI
+pcr_primer_forward	DACWGGWTGAACWGTWTAYCCHCC	CI
+pcr_primer_reverse	GTTGTAATAAAATTAAYDGCYCCTARAATDGA	CI
+pcr_primer_name_forward	mlCOIintF (modified)	CI
+pcr_primer_name_reverse	CIR	CI
+pcr_primer_reference_forward	https://doi.org/10.1186/1742-9994-10-34	CI
+pcr_primer_reference_reverse	https://peerj.com/articles/16963/	CI
+targetTaxonomicAssay	Coral	GD
+pcr_cond	initial denaturation:95_3;denaturation:95_0.083;annealing:52_0.167;elongation:72_0.25;38	GD
+annealingTemp	52	GD
+target_gene	ITS	GD
+target_subfragment	ITS2	GD
+pcr_primer_forward	GARTCTTTGAACGCAAATGGC	GD
+pcr_primer_reverse	GCTTATTAATATGCTTAAATTCAGCG	GD
+pcr_primer_name_forward	SCLER5.8SForw	GD
+pcr_primer_name_reverse	SCLER28SRev	GD
+pcr_primer_reference_forward	https://doi.org/10.1007/s00338-018-01762-9	GD
+pcr_primer_reference_reverse	https://doi.org/10.1007/s00338-018-01762-9	GD
+targetTaxonomicAssay	Crustaceans	HD
+pcr_cond	initial denaturation:95_3;denaturation:95_0.083;annealing:55_0.167;elongation:72_0.25;38	HD
+annealingTemp	55	HD
+target_gene	16S rRNA (LSU mitochondria)	HD
+pcr_primer_forward	GGACGATAAGACCCTATAAA	HD
+pcr_primer_reverse	ACGCTGTTATCCCTAAAGT	HD
+pcr_primer_name_forward	MiDeca-F	HD
+pcr_primer_name_reverse	MiDeca-R	HD
+pcr_primer_reference_forward	https://doi.org/10.3897/mbmg.3.33835	HD
+pcr_primer_reference_reverse	https://doi.org/10.3897/mbmg.3.33835	HD
+targetTaxonomicAssay	Bacteria	UM
+pcr_cond	initial denaturation:95_3;denaturation:95_0.083;annealing:52_0.167;elongation:72_0.25;38	UM
+annealingTemp	52	UM
+target_gene	16S rRNA (SSU prokaryote)	UM
+target_subfragment	V5	UM
+pcr_primer_forward	GGATTAGATACCCTGGTA	UM
+pcr_primer_reverse	CCGTCAATTCMTTTRAGTTT	UM
+pcr_primer_name_forward	U785F	UM
+pcr_primer_name_reverse	U907R	UM
+pcr_primer_reference_forward	https://doi.org/10.1128/JCM.00670-06	UM
+pcr_primer_reference_reverse	https://doi.org/10.1073/pnas.82.20.6955	UM
+targetTaxonomicAssay	Invertebrates	XN
+pcr_cond	95 °C for 3 min, then 38 cycles of 95 °C for 5 s, annealing for 10 s (temperature not given) and 72 °C for 15 s	XN
+target_gene	COI	XN
+pcr_primer_forward	DACWGGWTGAACWGTWTAYCCHCC	XN
+pcr_primer_reverse	TANACYTCNGGRTGNCCRAARAAYCA	XN

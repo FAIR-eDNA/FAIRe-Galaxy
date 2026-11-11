@@ -1,0 +1,38 @@
+worksheet	level	record	term	input	type	message	suggested
+projectMetadata	error	ALL	checkls_ver	FAIRe_checklist_v1.0.2.xlsx	value_error	Value error, Require scientific notation to be in format '3x10+8' or '3e8'.	
+projectMetadata	error	ALL	pcr_primer_forward		string_type; float_type; int_type; datetime_type	Input should be a valid string; Input should be a valid number; Input should be a valid integer; Input should be a valid datetime	
+projectMetadata	error	ALL	pcr_primer_reverse		string_type; float_type; int_type; datetime_type	Input should be a valid string; Input should be a valid number; Input should be a valid integer; Input should be a valid datetime	
+projectMetadata	error	ALL	project_contact		string_type; float_type; int_type; datetime_type	Input should be a valid string; Input should be a valid number; Input should be a valid integer; Input should be a valid datetime	
+projectMetadata	error	ALL	recordedBy		string_type; float_type; int_type; datetime_type	Input should be a valid string; Input should be a valid number; Input should be a valid integer; Input should be a valid datetime	
+sampleMetadata	error	ALL	env_broad_scale		string_type; float_type; int_type; datetime_type	Input should be a valid string; Input should be a valid number; Input should be a valid integer; Input should be a valid datetime	
+sampleMetadata	error	ALL	env_local_scale	Inshore	assertion_error	Assertion failed, Require value to be in format termLabel [termID].	
+sampleMetadata	error	ALL	samp_category		string_type; float_type; int_type; datetime_type	Input should be a valid string; Input should be a valid number; Input should be a valid integer; Input should be a valid datetime	
+sampleMetadata	warning	ALL	Bioregion			Extra term found that is not defined in the model. Please review to confirm whether it should be included.	
+sampleMetadata	warning	ALL	decimalLongitude	122.128		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLatitude	-17.5261		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLongitude	122.9654		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLatitude	-16.2419		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLatitude	-15.721		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLongitude	125.1048		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLatitude	-15.46		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLatitude	-15.2905		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLongitude	124.6034		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLatitude	-13.9923		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLongitude	126.0068		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLongitude	126.1043		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLongitude	125.2309		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLongitude	125.374		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLatitude	-14.0587		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLatitude	-13.9468		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLongitude	124.8773		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLatitude	-14.4316		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLongitude	124.7436		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLatitude	-15.6854		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLongitude	124.7384		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLatitude	-15.6583		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLongitude	124.8177		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLatitude	-15.6565		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLongitude	124.6991		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLatitude	-16.3924		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLongitude	124.5906		Recommended value to have at least 5 decimal places (0.00001).	
+sampleMetadata	warning	ALL	decimalLatitude	-16.4089		Recommended value to have at least 5 decimal places (0.00001).	

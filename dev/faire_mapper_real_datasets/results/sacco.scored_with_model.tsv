@@ -1,0 +1,7 @@
+column	route	proposed	gold	outcome	gold_in_shortlist
+Sequence_ID	confirmed	lib_id	samp_name	acceptable	True
+File name	accept	filename	filename	correct	True
+Sample_Type	accept	samp_category	samp_category	correct	True
+Lake	no match		geo_loc_name	missed	True
+Sample_ID	accept	samp_name	materialSampleID	wrong	True
+Description	no match			right to leave	False

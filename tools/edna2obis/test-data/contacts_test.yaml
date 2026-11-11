@@ -1,0 +1,9 @@
+# Contacts made for the Galaxy tests. Fictional person.
+test_person:
+  givenName: Alex
+  surName: Example
+  organizationName: Example Marine Institute
+  electronicMailAddress: alex.example@example.org
+  address:
+    city: Perth
+    country: AU

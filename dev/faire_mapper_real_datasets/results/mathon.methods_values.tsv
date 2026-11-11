@@ -1,0 +1,6 @@
+term	level	value	status	problem	stated	quote
+recordedBy	project	Laetitia Mathon, Virginie Marques, David Mouillot, Camille Albouy, Marco Andrello, Florian Baletaud, Giomar H. Borrero-Pérez, Tony Dejean, Graham J. Edgar, Jonathan Grondin, Pierre-Edouard Guerin, Régis Hocdé, Jean-Baptiste Juhel, Kadarusman, Eva Maire, Matthew McLean, Andrea Polanco F., Laurent Pouyaud, Rick D. Stuart-Smith, Hagi Yulia Sugeha, Alice Valentini, Laurent Vigliola, Indra B Vimono, Loïc Pellissier, Stéphanie Manel	supported		True	Data collected and processed by Laetitia Mathon, Virginie Marques, David Mouillot, Camille Albouy
+project_contact	project	Laetitia Mathon, laetitia.mathon@gmail.com	supported		True	Contact : Laetitia Mathon, laetitia.mathon@gmail.com, CEFE Montpellier, France
+neg_cont_0_1	project	1	review	inferred, not stated	False	detected in the blanks (empty wells in the sequencing plate)
+targetTaxonomicAssay	project	fish	supported		True	This dataset contains fish eDNA sequences from the 12S mitochondrial gene.
+target_gene	project	12S rRNA (SSU mitochondria)	review	inferred, not stated	False	This dataset contains fish eDNA sequences from the 12S mitochondrial gene.

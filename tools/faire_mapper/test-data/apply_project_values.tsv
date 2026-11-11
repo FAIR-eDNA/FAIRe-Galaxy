@@ -1,0 +1,6 @@
+term	value	status	quote
+pcr_0_1	1	supported	qPCR was carried out
+target_gene	COI	supported	COI
+env_medium	sea water [ENVO:00002149]	supported	seawater
+samp_size	2	supported	two litres
+pcr_primer_forward	ACCAACCACAAAGANATNGGCAC	review	FishF1

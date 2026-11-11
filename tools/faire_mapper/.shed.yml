@@ -1,0 +1,21 @@
+name: faire_mapper
+owner: CHANGE_ME
+description: Propose how the columns of an eDNA sample sheet map to FAIRe metadata terms
+long_description: |
+  Two tools that help turn eDNA metadata in a lab's own format into FAIR eDNA (FAIRe) format:
+  profile the columns of a sample sheet, then propose which FAIRe term each column holds, using
+  the FAIRe checklist (term names, common names, types, formats, allowed values and level). Writes
+  a mapping report, an SSSOM crosswalk, the mandatory FAIRe terms not covered, and the columns to
+  review in a form a reviewer or language model can answer. Two more tools find primer sequences
+  for primer names, citations or methods text in a bundled primer table, and let users add their
+  own primers. A fifth tool applies the reviewed mapping and writes a FAIRe workbook in the
+  FAIRe-ator layout, converting dates, durations, units and place names, and adds OTU and taxonomy
+  tables from a lab's ASV table or a matrix of reads per taxon, and library details (files,
+  checksums, archive links) from an ENA or SRA run report or a run sheet. No language model is
+  required.
+homepage_url: https://github.com/FAIR-eDNA/FAIRe-Galaxy
+remote_repository_url: https://github.com/FAIR-eDNA/FAIRe-Galaxy/tree/main/tools/faire_mapper
+type: unrestricted
+categories:
+  - Ecology
+  - Convert Formats

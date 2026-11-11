@@ -1,0 +1,422 @@
+[
+ {
+  "term": "samp_name",
+  "description": "Sample Name is a name that you choose for the sample. It can have any format, but we suggest that you make it concise, unique and consistent within your lab, and as informative as possible. Every Sample Name from a single Submitter must be unique.",
+  "example": "S01_1",
+  "unit": ""
+ },
+ {
+  "term": "samp_category",
+  "description": "A type/category of a sample. 'Sample\" includes biological and technical replicates. If negative or positive control was selected, provide further information under the terms fill neg_cont_type and pos_cont_type.",
+  "example": "sample",
+  "unit": ""
+ },
+ {
+  "term": "materialSampleID",
+  "description": "An identifier for the physical sample (as opposed to the extracted DNA sample defined by samp_name). In the absence of a persistent global unique identifier, construct one from a combination of identifiers in the record.",
+  "example": "GOMECC4_27N_Sta1_Deep",
+  "unit": ""
+ },
+ {
+  "term": "decimalLongitude",
+  "description": "The geographic longitude in decimal degrees using WGS84 datum. Positive values are east of the Greenwich Meridian, negative values are west of it. Legal values lie between -180 and 180, inclusive. The desired minimum number of decimal places is the hundred-thousandth (0.00001) to achieve meter scale resolution.",
+  "example": "-121.17611",
+  "unit": ""
+ },
+ {
+  "term": "decimalLatitude",
+  "description": "The geographic latitude in decimal degrees using WGS84 datum. Positive values are north of the Equator, negative values are south of it. Legal values lie between -90 and 90, inclusive. The desired minimum number of decimal places is the hundred-thousandth (0.00001) to achieve meter scale resolution.",
+  "example": "-41.09834",
+  "unit": ""
+ },
+ {
+  "term": "geo_loc_name",
+  "description": "The geographical origin of the sample as defined by the country or sea name followed by regions and localities. Country or sea names should be chosen from the INSDC Geographic Location Name List INSDC country list (http://insdc.org/country.html). Fixed format following <country or sea names>:<region>,<locality>. E.g., \"USA: Maryland, Bethesda\" , \"Atlantic Ocean:Charlie Gibbs Fracture Zone\"",
+  "example": "USA: Maryland, Bethesda",
+  "unit": ""
+ },
+ {
+  "term": "eventDate",
+  "description": "The date and time of sampling, either as an instance (single point in time) or interval. Must follow ISO 8601 format (yyyy-mm-ddThh:mm:ss). Time zone must be specified after the timestamp (e.g., \"2008-01-23T19:23-06:00\" in the time zone six hours earlier than UTC, \"2008-01-23T19:23Z\" at UTC time). In case no exact time is available, the date/time can be right truncated i.e. all of these are valid times: 2008-01-23T19:23:10+00:00; 2008-01-23T19:23:10Z; 2008-01-23; 2008-01; 2008; Except: 2008-01; 2008 all are ISO8601 compliant. A date and time range can be specified using a forward slash (/) to separate the start and end values (e.g., 2008-01-23T19:23-06:00/2008-01-23T19:53-06:00). A duration can also be provided using the eventDurationValue term.",
+  "example": "2008-01-23T19:23-06:00",
+  "unit": ""
+ },
+ {
+  "term": "env_broad_scale",
+  "description": "Major environmental system your sample came from. The systems identified should have a coarse spatial grain, to provide the general environmental context of where the sampling was done. Select from ENVO\u2019s biome class: http://purl.obolibrary.org/obo/ENVO_00000428. Examples include; estuarine biome [ENVO:01000020], tropical moist broadleaf forest biome [ENVO:01000228],",
+  "example": "estuarine biome [ENVO:01000020]",
+  "unit": ""
+ },
+ {
+  "term": "env_local_scale",
+  "description": "The entity or entities which are in your sample or specimen\u2019s local vicinity and which you believe have significant causal influences on your sample. Select from ENVO's layer class: http://purl.obolibrary.org/obo/ENVO_01000281. Examples include;  marine pelagic zone [ENVO:00000208], estuarine coastal surface layer [ENVO:01001302], shrub layer [ENVO:01000336]",
+  "example": "estuarine coastal surface layer [ENVO:01001302]",
+  "unit": ""
+ },
+ {
+  "term": "env_medium",
+  "description": "Environmental material or materials (pipe separated) immediately surrounded your sample prior to sampling. Select from ENVO's environmental material class (entity/ continuant/ independent continuant/ material entity/ environmental material): http://purl.obolibrary.org/obo/ENVO_00010483. Examples include; soil [ENVO:00001998], marine sediment [ENVO:03000033], air [ENVO:00002005], sea water [ENVO:00002149], fresh water [ENVO:00002011], tap water [ENVO:00003096], fecal material [ENVO:00002003], digestive tract environment [ENVO:2100002], intestine environment [ENVO:2100002], planktonic material [ENVO:01000063]",
+  "example": "soil [ENVO:00001998]",
+  "unit": ""
+ },
+ {
+  "term": "habitat_natural_artificial_0_1",
+  "description": "Whether samples were taken from natural (0) or artificial (1) habitat. The examples of artificial habitat include mesocosm tank in lab, enclosure in zoo etc., including semi-natural systems. The definition of natural habitat is locations uncontrolled by researchers",
+  "example": "0",
+  "unit": ""
+ },
+ {
+  "term": "samp_collect_method",
+  "description": "The method employed for collecting the sample. Provide a link to a paper/ handbook/ standard operation protocol if any.",
+  "example": "https://research.csiro.au/ambsm/1-sample-collection-procedures/meth_1-2-soil-sampling-for-utas-urban-soil-and-aerial-microbiome-study/",
+  "unit": ""
+ },
+ {
+  "term": "samp_collect_device",
+  "description": "The device used to collect an environmental sample. This term accepts terms listed under environmental sampling device (https://ontobee.org/ontology/OBI?iri=http://purl.obolibrary.org/obo/OBI_0000968) such as syringe [OBI_0000422] and container [OBI_0000967] as well as free-text entry (i.e. niskin bottle, push core, spoon, water bottle).",
+  "example": "push core",
+  "unit": ""
+ },
+ {
+  "term": "samp_size",
+  "description": "Amount or size of original sample (volume, mass or area) that was collected from the environment. Specify the unit under the term samp_size_unit. Note: the amount or size of (sub)sample processed for DNA extraction should be entered under the term samp_vol_we_dna_ext.",
+  "example": "5.0",
+  "unit": "Select from sampl_size_unit"
+ },
+ {
+  "term": "samp_size_unit",
+  "description": "Unit for samp_size",
+  "example": "L",
+  "unit": ""
+ },
+ {
+  "term": "samp_store_temp",
+  "description": "Temperature at which the sample was stored. Enter either the fixed term \"ambient temperature\" or a numeric value. Note: If a sample was processed before DNA extraction (e.g., filtration, homogenisation, subsampling), enter the storage temperature before the process here, and the storage temperature of the processed sample (i.e., filter paper) under a term prepped_samp_store_temp. Unit = degree Celsius",
+  "example": "-80.0",
+  "unit": "degree Celsius"
+ },
+ {
+  "term": "samp_store_sol",
+  "description": "Solution within which the sample was stored. Note: If a sample was processed before DNA extraction (e.g., filtration, homogenisation, subsampling), enter the storage solution before the process here, and the storage solution of the processed sample under the term prepped_samp_store_sol.",
+  "example": "none",
+  "unit": ""
+ },
+ {
+  "term": "samp_store_dur",
+  "description": "Duration for which the sample was stored prior to DNA extraction, written in ISO 8601 format (i.e., P14D for 14 days period. P1Y6M for 1 year and 6 months period. P1W/4W for some time between 1 and 4 weeks). Note: If a sample was processed before DNA extraction (e.g., filtration, homogenisation, subsampling), enter the storage duration before the process here, and the storage duration of the processed sample under the term prepped_samp_store_temp.",
+  "example": "P1Y6M",
+  "unit": ""
+ },
+ {
+  "term": "samp_store_loc",
+  "description": "Location at which sample was stored, usually name of a specific freezer/room",
+  "example": "UWA, IOMRC, Lv4 -80Freezer1",
+  "unit": ""
+ },
+ {
+  "term": "dna_store_loc",
+  "description": "Location at which extracted DNA was stored, usually name of a specific freezer/room",
+  "example": "UWA, IOMRC, Lv4 -80Freezer2",
+  "unit": ""
+ },
+ {
+  "term": "samp_mat_process",
+  "description": "Any processing applied to the sample during or after retrieving the sample from environment (i.e. sieving, filtration, precipitation, homogenising, subsampling).",
+  "example": "Water samples were pre-filtered using a sieve (200 micrometers), then filtered using a peristaltic pump (pore size 0.45 micrometers).",
+  "unit": ""
+ },
+ {
+  "term": "size_frac_low",
+  "description": "Refers to the mesh/pore size used to pre-filter/pre-sort the sample. Materials larger than the size threshold are excluded from the sample. Unit = \u00b5m",
+  "example": "20.0",
+  "unit": "\u00b5m"
+ },
+ {
+  "term": "size_frac",
+  "description": "Filtering pore size used in sample filtration. Unit = \u00b5m",
+  "example": "0.22",
+  "unit": "\u00b5m"
+ },
+ {
+  "term": "filter_material",
+  "description": "Material of filter",
+  "example": "cellulose ester",
+  "unit": ""
+ },
+ {
+  "term": "filter_name",
+  "description": "Commercial names and brand of filter",
+  "example": "Merck Sterivex",
+  "unit": ""
+ },
+ {
+  "term": "precip_chem_prep",
+  "description": "Chemicals used in precipitation at the sample preparation step prior to DNA extraction, if precipitation was performed",
+  "example": "ethanol | sodium chloride",
+  "unit": ""
+ },
+ {
+  "term": "precip_force_prep",
+  "description": "Centrifuge force used in precipitation at the sample preparation step prior to DNA extraction, if precipitation was performed. Unit = x g",
+  "example": "20000.0",
+  "unit": "x g"
+ },
+ {
+  "term": "precip_time_prep",
+  "description": "Duration of precipitation at the sample preparation step prior to DNA extraction, if precipitation was performed. Unit = minute",
+  "example": "45.0",
+  "unit": "minute"
+ },
+ {
+  "term": "precip_temp_prep",
+  "description": "Temperature used in precipitation at the sample preparation step prior to DNA extraction, if precipitation was performed. Unit = degree Celsius",
+  "example": "10.0",
+  "unit": "degree Celsius"
+ },
+ {
+  "term": "samp_vol_we_dna_ext",
+  "description": "Volume or mass of sample or subsamples that was processed for DNA extraction. For example, if 1L of water was collected and filtered, and half of the filter paper was used for DNA extraction, the entries of samp_size and samp_vol_we_dna_ext should be 1L and 500mL respectively. Specify the unit under the term samp_vol_ext_unit.",
+  "example": "1500.0",
+  "unit": "select from samp_vol_ext_unit"
+ },
+ {
+  "term": "samp_vol_we_dna_ext_unit",
+  "description": "Unit for samp_vol_we_dna_ext",
+  "example": "mL",
+  "unit": ""
+ },
+ {
+  "term": "nucl_acid_ext_lysis",
+  "description": "The approach used to lyse DNA-containing material. For example, physical methods may involve freeze-thaw cycles or the uses of bead mills, homogenizers and sonicators. Thermal methods apply high temperatures, often used in combination with other methods.",
+  "example": "enzymatic",
+  "unit": ""
+ },
+ {
+  "term": "nucl_acid_ext_sep",
+  "description": "The approach used to separate DNA from a mixture.",
+  "example": "column-based",
+  "unit": ""
+ },
+ {
+  "term": "nucl_acid_ext",
+  "description": "A link to a literature reference, electronic resource or a standard operating procedure (SOP), that describes the material separation to recover the nucleic acid fraction from a sample. If a custom extraction method has been developed and applied to the samples within this dataset, it is Highly recommended to make the SOP available and provide the link here.",
+  "example": "https://www.qiagen.com/us/resources/resourcedetail?id=5a0517a7-711d-4085-8a28-2bb25fab828a&lang=en",
+  "unit": ""
+ },
+ {
+  "term": "nucl_acid_ext_kit",
+  "description": "The name of the extraction kit used to recover the nucleic acid fraction of an input material",
+  "example": "Qiagen PowerSoil Kit",
+  "unit": ""
+ },
+ {
+  "term": "minimumDepthInMeters",
+  "description": "The lesser depth of a range of depth (vertical distance below the local surface) at which a sample was collected. For sediment or soil samples depth is measured from sediment or soil surface, respectively. If there is only one single point of depth (no range), the values in minimumDepthInMeters and maximumDepthInMeters are the same. Unit = meter",
+  "example": "0.2",
+  "unit": "meter"
+ },
+ {
+  "term": "maximumDepthInMeters",
+  "description": "The greater depth of a range of depth (vertical distance below the local surface) at which a sample was collected. For sediment or soil samples depth is measured from sediment or soil surface, respectively. If there is only one single point of depth (no range), the values in minimumDepthInMeters and maximumDepthInMeters are the same. Unit = meter",
+  "example": "0.2",
+  "unit": "meter"
+ },
+ {
+  "term": "tot_depth_water_col",
+  "description": "Measurement of total depth of water column. For example, if a sea surface water sample was collected at a sampling site where the water depth was 15m, enter 15 here and 0 under the terms minimumDepthInMeters and maximumDepthInMeters. Unit = meter",
+  "example": "15.0",
+  "unit": "meter"
+ },
+ {
+  "term": "temp",
+  "description": "Temperature of the sample at the time of sampling in degree Celsius",
+  "example": "25.0",
+  "unit": "degree Celsius"
+ },
+ {
+  "term": "chlorophyll",
+  "description": "Concentration of chlorophyll. Unit = mg/m3",
+  "example": "5.0",
+  "unit": "mg/m3"
+ },
+ {
+  "term": "ph",
+  "description": "Ph measurement of the sample, or liquid portion of sample, or aqueous phase of the fluid. Unit = no unit",
+  "example": "7.2",
+  "unit": "no unit"
+ },
+ {
+  "term": "salinity",
+  "description": "The total concentration of all dissolved salts in a liquid or solid sample. While salinity can be measured by a complete chemical analysis, this method is difficult and time consuming. More often, it is instead derived from the conductivity measurement. This is known as practical salinity. These derivations compare the specific conductance of the sample to a salinity standard such as seawater. Unit = practical salinity unit (psu)",
+  "example": "25.0",
+  "unit": "practical salinity unit (psu)"
+ },
+ {
+  "term": "diss_inorg_carb",
+  "description": "Dissolved inorganic carbon concentration in the sample, typically measured after filtering the sample using a 0.45 micrometre filter",
+  "example": "2059.0",
+  "unit": ""
+ },
+ {
+  "term": "diss_inorg_carb_unit",
+  "description": "The unit of diss_inorg_carb",
+  "example": "mmol/kg",
+  "unit": ""
+ },
+ {
+  "term": "diss_oxygen",
+  "description": "Concentration of dissolved oxygen",
+  "example": "175.0",
+  "unit": ""
+ },
+ {
+  "term": "diss_oxygen_unit",
+  "description": "The unit of diss_oxygen",
+  "example": "mmol/kg",
+  "unit": ""
+ },
+ {
+  "term": "nitrate",
+  "description": "Concentration of nitrate in the sample",
+  "example": "65.0",
+  "unit": ""
+ },
+ {
+  "term": "nitrate_unit",
+  "description": "The unit of nitrate",
+  "example": "\u00b5mol/L",
+  "unit": ""
+ },
+ {
+  "term": "nitrite",
+  "description": "Concentration of nitrite in the sample",
+  "example": "0.5",
+  "unit": ""
+ },
+ {
+  "term": "nitrite_unit",
+  "description": "The unit of nitrite",
+  "example": "\u00b5mol/L",
+  "unit": ""
+ },
+ {
+  "term": "neg_cont_type",
+  "description": "A negative control type used in an investigation. See Table 2 in Klymus et al. 2024 (DOI: 10.3897/mbmg.8.128689) for the description of each control type, how and why it's created. For example, process negative is a sample added during processing that lacks target DNA, such as blank filter papers.",
+  "example": "field negative | process negative | extraction negative | PCR negative",
+  "unit": ""
+ },
+ {
+  "term": "assay_name",
+  "description": "A brief, concise identifier for assay with no spaces or special characters, ensuring machine readability. This ID will be used in file names as 'assay_name'.",
+  "example": "MiFish (metabarcoding) / eSERU5 (qPCR)",
+  "unit": ""
+ },
+ {
+  "term": "pcr_plate_id",
+  "description": "PCR plate ID. This identifier is particularly crucial when location-specific standard curves are employed for targeted assay detections, as it ensures a linkage between the standards and the corresponding eDNA samples. If two-step PCR was applied for a metabarcoding approach, enter the second PCR protocol under the term pcr2_* in the library preparation/sequencing section.",
+  "example": "20240802_pcr1",
+  "unit": ""
+ },
+ {
+  "term": "lib_id",
+  "description": "An identifier of a library (an amplicon of a sample with unique MIDs)",
+  "example": "S01_MiSeq_run20230922",
+  "unit": ""
+ },
+ {
+  "term": "seq_run_id",
+  "description": "A brief, concise identifier for sequencing run with no spaces or special characters, ensuring machine readability. This ID will be used in file names as 'seq_run_id'.",
+  "example": "run20230922",
+  "unit": ""
+ },
+ {
+  "term": "mid_forward",
+  "description": "Forward multiplex Identifiers (MIDs), that was used to specifically tag unique samples in a sequencing run. Sequence should be reported in uppercase letters",
+  "example": "GTGAATAT",
+  "unit": ""
+ },
+ {
+  "term": "mid_reverse",
+  "description": "Reverse multiplex Identifiers (MIDs), that was used to specifically tag unique samples in a sequencing run. Sequence should be reported in uppercase letters",
+  "example": "AACAAGCC",
+  "unit": ""
+ },
+ {
+  "term": "filename",
+  "description": "A file name of raw sequencing data. If paired end, fill filename2 for the reverse read",
+  "example": "S01_R1.fastq",
+  "unit": ""
+ },
+ {
+  "term": "filename2",
+  "description": "A raw sequencing data file name of reverse reads if lib_layout = paired end",
+  "example": "S01_R2.fastq",
+  "unit": ""
+ },
+ {
+  "term": "associatedSequences",
+  "description": "A list (concatenated and separated) of identifiers (publication, global unique identifier, URI) of genetic sequence information associated with the samp_name",
+  "example": "https://www.ncbi.nlm.nih.gov/sra/SRR26148187 | https://www.ncbi.nlm.nih.gov/biosample/SAMN37516094 | https://www.ncbi.nlm.nih.gov/bioproject/PRJNA887898",
+  "unit": ""
+ },
+ {
+  "term": "input_read_count",
+  "description": "The total number of raw sequence reads for each sample. Unit = reads",
+  "example": "20485",
+  "unit": "reads"
+ },
+ {
+  "term": "target_gene",
+  "description": "Targeted gene or locus name for marker gene studies",
+  "example": "COI",
+  "unit": ""
+ },
+ {
+  "term": "target_subfragment",
+  "description": "Name of subfragment of a gene or locus. Important to e.g. identify special regions on marker genes like V6 on 16S rRNA.",
+  "example": "V6",
+  "unit": ""
+ },
+ {
+  "term": "pcr_primer_forward",
+  "description": "Forward PCR primer (5' - 3') that were used to amplify the sequence of the targeted gene. The primer sequence should NOT contain MIDs and adapter sequences, and should be reported in uppercase letters. If multiple forward primers are present in a single PCR reaction, either report them separately in separate submissions (with separate OTU tables for each primer set), or list the primers here separated by pipe ( | ) and provide one OTU table resulting from all the primers applied here. The latter is recommended only when the multiple primers target the same gene region and thus a single OTU table was generated from the multiplexed PCR. This term is required except for PCR free methods.",
+  "example": "GGWACWGGWTGAACWGTWTAYCCYCC",
+  "unit": ""
+ },
+ {
+  "term": "pcr_primer_reverse",
+  "description": "Reverse PCR primer (5' - 3') that were used to amplify the sequence of the targeted gene. The primer sequence should NOT contain MIDs and adapter sequences, and should be reported in uppercase letters. If multiple reverse primers are present in a single PCR reaction, either report them separately in separate submissions (with separate OTU tables for each primer set), or list the primers here separated by pipe ( | ) and provide one OTU table resulting from all the primers applied here. The latter is recommended only when the multiple primers target the same gene region and thus a single OTU table was generated from the multiplexed PCR. This term is required except for PCR free methods.",
+  "example": "GGRGGRTASACSGTTCASCCSGTSCC",
+  "unit": ""
+ },
+ {
+  "term": "pcr_primer_name_forward",
+  "description": "Name of the pcr_primer_forward. If multiple primers are listed in pcr_primer_forward, list the names respectively, separated by pipe ( | ).",
+  "example": "mlCOIintF",
+  "unit": ""
+ },
+ {
+  "term": "pcr_primer_name_reverse",
+  "description": "Name of the pcr_primer_reverse. If multiple primers are listed in pcr_primer_reverse, list the names respectively, separated by pipe ( | ).",
+  "example": "mlCOIintR",
+  "unit": ""
+ },
+ {
+  "term": "platform",
+  "description": "General sequencing platform used.",
+  "example": "ILLUMINA",
+  "unit": ""
+ },
+ {
+  "term": "instrument",
+  "description": "Sequencing instrument (manufacturer and model) used. Where possible the term should be taken from the OBI list of DNA sequencers (https://ontobee.org/ontology/OBI?iri=http://purl.obolibrary.org/obo/OBI_0002750)",
+  "example": "Illumina HiSeq 1500 [OBI_0003386]",
+  "unit": ""
+ },
+ {
+  "term": "project_id",
+  "description": "A brief, concise project identifier with no spaces or special characters, ensuring machine readability. This ID will be used in data file names as 'project_id'.",
+  "example": "noaa-aoml-gomecc4",
+  "unit": ""
+ }
+]

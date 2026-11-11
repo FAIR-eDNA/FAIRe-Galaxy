@@ -1,0 +1,76 @@
+{
+ "values": [
+  {
+   "term": "neg_cont_0_1",
+   "value": "1",
+   "quote": "At the start of each sampling period, a field blank was collected, totalling four field blanks overall.",
+   "stated": true
+  },
+  {
+   "term": "neg_cont_type",
+   "value": "field negative | extraction negative | PCR negative",
+   "quote": "(including 41 water samples, four field blanks, two extraction blanks, four PCR negative controls)",
+   "stated": true
+  },
+  {
+   "term": "sterilise_method",
+   "value": "Disposable collection bottles and syringes were used to avoid the risk of contamination.",
+   "quote": "disposable collection bottles and syringes were used to avoid the risk of contamination",
+   "stated": true
+  },
+  {
+   "term": "samp_size",
+   "value": "500",
+   "quote": "using 500 ml water bottles",
+   "stated": true
+  },
+  {
+   "term": "size_frac",
+   "value": "0.45",
+   "quote": "Sterivex enclosed filters (0.45μm, Merck Millipore)",
+   "stated": true
+  },
+  {
+   "term": "nucl_acid_ext",
+   "value": "Sales et al. (2021)",
+   "quote": "following the procedure described in Sales et al. (2021)",
+   "stated": true
+  },
+  {
+   "term": "pcr_0_1",
+   "value": "1",
+   "quote": "amplification of the 12S rRNA fragment using the MiFish primer set",
+   "stated": true
+  },
+  {
+   "term": "targetTaxonomicAssay",
+   "value": "fish",
+   "quote": "widely used in fish eDNA metabarcoding studies",
+   "stated": true
+  },
+  {
+   "term": "target_gene",
+   "value": "12S rRNA (SSU mitochondria)",
+   "quote": "amplification of the 12S rRNA fragment using the MiFish primer set",
+   "stated": true
+  },
+  {
+   "term": "platform",
+   "value": "ILLUMINA",
+   "quote": "Illumina MiSeq - V2 2x150bp kit",
+   "stated": false
+  },
+  {
+   "term": "instrument",
+   "value": "Illumina MiSeq [OBI_0002003]",
+   "quote": "Illumina MiSeq - V2 2x150bp kit",
+   "stated": false
+  },
+  {
+   "term": "seq_kit",
+   "value": "V2 2x150bp kit",
+   "quote": "Illumina MiSeq - V2 2x150bp kit",
+   "stated": true
+  }
+ ]
+}

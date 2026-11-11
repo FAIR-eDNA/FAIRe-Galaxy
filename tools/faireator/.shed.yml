@@ -1,0 +1,12 @@
+name: faireator
+owner: CHANGE_ME
+description: Make a FAIRe eDNA metadata template tailored to a study
+long_description: |
+  Galaxy wrapper for FAIRe-ator (https://github.com/FAIR-eDNA/FAIRe-ator), which builds an Excel
+  template for FAIR eDNA (FAIRe) metadata, filtered to a study's sample types, assay type and
+  requirement levels. Bundles the FAIRe checklist v1.0.2.
+homepage_url: https://github.com/FAIR-eDNA/FAIRe-ator
+remote_repository_url: https://github.com/FAIR-eDNA/FAIRe-Galaxy/tree/main/tools/faireator
+type: unrestricted
+categories:
+  - Ecology

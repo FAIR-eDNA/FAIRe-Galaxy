@@ -1,0 +1,354 @@
+<tool id="faire2ncbi_biosample" name="FAIRe2NCBI: BioSample" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="@PROFILE@" license="MIT">
+    <description>make an NCBI BioSample table from a FAIRe workbook</description>
+    <macros>
+        <import>macros.xml</import>
+        <import>faire_guide.xml</import>
+    </macros>
+    <expand macro="creator"/>
+    <expand macro="requirements"/>
+    <version_command>echo '@TOOL_VERSION@'</version_command>
+    <command detect_errors="exit_code"><![CDATA[
+set -o pipefail;
+@LINK_INPUT@
+python '$__tool_directory__/faire2ncbi_galaxy.py' biosample
+    --input_file input.xlsx
+    #if str($bioproject).strip():
+        --bioproject '$bioproject'
+    #end if
+    @ORGANISM@
+    --mandatory_fill '$mandatory_fill'
+    --associated '$associated'
+    #if str($duplicates_column).strip():
+        --duplicates_column '$duplicates_column'
+    #end if
+    #if not $advanced.convert_dates:
+        --no_date_conversion
+    #end if
+    #if not $advanced.mixs_units:
+        --no_mixs_units
+    #end if
+    --sample_title '$advanced.title.sample_title'
+    #if $advanced.title.sample_title == 'custom':
+        --title_columns '$advanced.title.title_columns'
+    #end if
+    --extra_columns '$advanced.extra.extra_columns'
+    #if $advanced.extra.extra_columns == 'except':
+        --exclude_columns '$advanced.extra.exclude_columns'
+    #end if
+    --output '$biosample_table'
+    --config_out '$config'
+    < /dev/null
+| tee '$log'
+    ]]></command>
+    <inputs>
+        <expand macro="faire_input"/>
+        <param name="bioproject" type="text" value="" optional="true" label="BioProject accession"
+            help="The BioProject the samples belong to, for example PRJNA123456. Leave empty to link the BioProject later in the NCBI Submission Portal.">
+            <validator type="regex" message="Enter a BioProject accession such as PRJNA123456">^(PRJ(NA|EB|DB)[0-9]+)?$</validator>
+        </param>
+        <expand macro="organism"/>
+        <param name="mandatory_fill" type="select" label="Empty mandatory fields"
+            help="What to do when a mandatory BioSample field (organism, collection date, depth, env_broad_scale, env_local_scale, env_medium, geo_loc_name, latitude and longitude) is empty for a sample. NCBI rejects empty mandatory fields. The terms are the INSDC missing-value terms.">
+            <option value="stop" selected="true">Stop and list them</option>
+            <option value="not collected">Fill with 'not collected'</option>
+            <option value="not provided">Fill with 'not provided'</option>
+            <option value="not applicable">Fill with 'not applicable'</option>
+            <option value="missing">Fill with 'missing'</option>
+            <option value="missing: control sample">Fill with 'missing: control sample'</option>
+        </param>
+        <param name="associated" type="select" label="Samples to include"
+            help="associatedSequences in experimentRunMetadata holds the NCBI links of runs already submitted. A cell holding NA or N/A counts as filled.">
+            <option value="all" selected="true">All samples</option>
+            <option value="blank_only">Only samples with no associatedSequences on any of their runs (new samples)</option>
+        </param>
+        <param name="duplicates_column" type="text" value="" optional="true" label="Field that tells apart samples with identical attributes"
+            help="NCBI will not register samples whose attributes are all the same apart from sample_name, sample_title and description, such as field replicates. If that happens, the tool adds this sampleMetadata field, for example replicate_number or extract_id. Leave empty to stop and list such samples.">
+            <validator type="regex" message="Enter a single field name">^[A-Za-z0-9_]*$</validator>
+        </param>
+        <section name="advanced" title="More options" expanded="false">
+            <param name="convert_dates" type="boolean" checked="true" label="Convert eventDate values for NCBI"
+                help="NCBI needs collection times in UTC. With this on, a time zone offset is converted (2021-09-14T11:00+08:00 becomes 2021-09-14T03:00Z) and Excel date cells are written as ISO dates. With it off, values are passed unchanged."/>
+            <param name="mixs_units" type="boolean" checked="true" label="Add MIxS preferred units"
+                help="Numeric fields with a matching _unit field (for example temp_unit) always get that unit. With this on, other numeric fields get the MIxS preferred unit, for example 'degree Celsius' for temp. With it off, they are left as plain numbers."/>
+            <conditional name="title">
+                <param name="sample_title" type="select" label="sample_title"
+                    help="A short title NCBI shows on the public BioSample page.">
+                    <option value="default" selected="true">geo_loc_name, organism and sample_name</option>
+                    <option value="custom">Join other BioSample columns</option>
+                    <option value="none">Leave empty</option>
+                </param>
+                <when value="default"/>
+                <when value="none"/>
+                <when value="custom">
+                    <param name="title_columns" type="text" value="" label="BioSample columns to join"
+                        help="Comma-separated BioSample column names, for example sample_name,geo_loc_name,depth. The leading * of mandatory columns is optional.">
+                        <validator type="regex" message="Use column names separated by commas">^[*A-Za-z0-9_]+( *, *[*A-Za-z0-9_]+)*$</validator>
+                    </param>
+                </when>
+            </conditional>
+            <conditional name="extra">
+                <param name="extra_columns" type="select" label="Other sampleMetadata fields"
+                    help="sampleMetadata fields that are not BioSample attributes can be added as extra columns, which NCBI keeps as custom attributes. Fields that are empty for every sample are never added.">
+                    <option value="all" selected="true">Add all</option>
+                    <option value="except">Add all except some</option>
+                    <option value="none">Add none</option>
+                </param>
+                <when value="all"/>
+                <when value="none"/>
+                <when value="except">
+                    <param name="exclude_columns" type="text" value="" label="Fields to leave out"
+                        help="Comma-separated sampleMetadata field names, for example samp_collect_notes,dna_store_loc">
+                        <validator type="regex" message="Use field names separated by commas">^[A-Za-z0-9_]+( *, *[A-Za-z0-9_]+)*$</validator>
+                    </param>
+                </when>
+            </conditional>
+        </section>
+    </inputs>
+    <outputs>
+        <data name="biosample_table" format="tsv" label="${tool.name} on ${on_string}: BioSample table"/>
+        <expand macro="outputs_common"/>
+    </outputs>
+    <tests>
+        <!-- Whole numbers with MIxS units (all -80, and depths with an empty cell); lat_lon keeps its decimal places -->
+        <test expect_num_outputs="3">
+            <param name="input_file" value="faire_ncbi_whole_numbers.xlsx"/>
+            <param name="bioproject" value="PRJNA999999"/>
+            <param name="mandatory_fill" value="not applicable"/>
+            <output name="biosample_table">
+                <assert_contents>
+                    <has_text text="-80 degree Celsius"/>
+                    <has_text text="26.9971234 N 79.6181234 W"/>
+                    <has_text text="&#009;49 meter&#009;"/>
+                    <not_has_text text="49.0 meter"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="wrote 4 BioSample(s)"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- FAIRe-ator layout, two assays: offset date to UTC, Excel date cell, filled mandatory field, replicates told apart -->
+        <test expect_num_outputs="3">
+            <param name="input_file" value="faire_ncbi_two_assays.xlsx"/>
+            <param name="bioproject" value="PRJNA999999"/>
+            <param name="mandatory_fill" value="missing: control sample"/>
+            <param name="duplicates_column" value="replicate_number"/>
+            <output name="biosample_table">
+                <assert_contents>
+                    <has_n_lines n="16"/>
+                    <has_line_matching expression="^\*sample_name\tsample_title\tbioproject_accession\t\*organism\t\*collection_date\t.*\treplicate_number\t.*"/>
+                    <has_text text="GOMECC4_27N_Sta1_DCM_A&#009;USA: Atlantic Ocean, east of Florida (27 N) seawater metagenome GOMECC4_27N_Sta1_DCM_A&#009;PRJNA999999&#009;seawater metagenome&#009;2021-09-14T15:00Z&#009;49 meter"/>
+                    <has_text text="&#009;2021-10-02&#009;10 meter&#009;"/>
+                    <has_text text="28.592 degree Celsius"/>
+                    <has_text text="26.997 N 79.618 W"/>
+                    <has_text text="&#009;missing: control sample&#009;"/>
+                    <not_has_text text="-04:00"/>
+                </assert_contents>
+            </output>
+            <output name="config">
+                <assert_contents>
+                    <has_text text="bioproject_single_value: PRJNA999999"/>
+                    <has_text text="duplicate_resolution_field: replicate_number"/>
+                    <has_text text="converted 3 eventDate value(s)"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="relabelled as 'ssu16sv4v5-emp'"/>
+                    <has_text text="wrote 4 BioSample(s)"/>
+                    <not_has_text text="[91m"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Default 'stop' for empty mandatory fields -->
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="input_file" value="faire_ncbi_two_assays.xlsx"/>
+            <assert_stderr>
+                <has_text text="*geo_loc_name (FAIRe term geo_loc_name): GOMECC4_NegativeControl_1"/>
+            </assert_stderr>
+        </test>
+        <!-- Replicates with identical attributes and no field to tell them apart -->
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="input_file" value="faire_ncbi_two_assays.xlsx"/>
+            <param name="mandatory_fill" value="not collected"/>
+            <assert_stderr>
+                <has_text text="identical BioSample attributes"/>
+                <has_text text="Group 1: [GOMECC4_27N_Sta1_DCM_A, GOMECC4_27N_Sta1_DCM_B]"/>
+                <has_text text="extract_id"/>
+            </assert_stderr>
+        </test>
+        <!-- New samples only, no extra fields, no titles -->
+        <test expect_num_outputs="3">
+            <param name="input_file" value="faire_ncbi_two_assays.xlsx"/>
+            <param name="mandatory_fill" value="missing: control sample"/>
+            <param name="associated" value="blank_only"/>
+            <section name="advanced">
+                <conditional name="title">
+                    <param name="sample_title" value="none"/>
+                </conditional>
+                <conditional name="extra">
+                    <param name="extra_columns" value="none"/>
+                </conditional>
+            </section>
+            <output name="biosample_table">
+                <assert_contents>
+                    <has_n_lines n="15"/>
+                    <has_line_matching expression="^GOMECC4_27N_Sta1_DCM_A\t\t\tseawater metagenome\t.*"/>
+                    <not_has_text text="GOMECC4_27N_Sta1_DCM_B"/>
+                    <not_has_text text="replicate_number"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="left out 1: GOMECC4_27N_Sta1_DCM_B"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- FAIRe-NOAA layout: no organism column, custom titles, one field left out, no MIxS units -->
+        <test expect_num_outputs="3">
+            <param name="input_file" value="faire_noaa_layout.xlsx"/>
+            <conditional name="organism">
+                <param name="organism_select" value="seawater metagenome"/>
+            </conditional>
+            <param name="mandatory_fill" value="not applicable"/>
+            <section name="advanced">
+                <param name="mixs_units" value="false"/>
+                <conditional name="title">
+                    <param name="sample_title" value="custom"/>
+                    <param name="title_columns" value="sample_name,depth"/>
+                </conditional>
+                <conditional name="extra">
+                    <param name="extra_columns" value="except"/>
+                    <param name="exclude_columns" value="short_name,lab_note"/>
+                </conditional>
+            </section>
+            <output name="biosample_table">
+                <assert_contents>
+                    <has_n_lines n="17"/>
+                    <has_text text="GU190706-CTD11-220&#009;GU190706-CTD11-220 220&#009;&#009;seawater metagenome&#009;7/6/19&#009;220&#009;"/>
+                    <has_text text="28.662 N 85.793 W"/>
+                    <has_text text="expedition_id"/>
+                    <not_has_text text="short_name"/>
+                    <not_has_text text="degree Celsius"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="already has assay columns named by assay_name"/>
+                    <has_text text="set organism to 'seawater metagenome' for 5 sample(s)"/>
+                    <has_text text="not in a date format NCBI lists"/>
+                    <has_text text="nothing to leave out: lab_note"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Single assay in project_level, defaults -->
+        <test expect_num_outputs="3">
+            <param name="input_file" value="faire_ncbi_single_assay.xlsx"/>
+            <output name="biosample_table">
+                <assert_contents>
+                    <has_n_lines n="16"/>
+                    <has_text text="2021-09-14T11:00&#009;"/>
+                </assert_contents>
+            </output>
+            <output name="config">
+                <assert_contents>
+                    <has_text text="bioproject_manual_entry: n"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="single assay 'ssu16sv4v5-emp'"/>
+                    <has_text text="have a time but no time zone; NCBI expects UTC: GOMECC4_27N_Sta1_DCM_B"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Text values: NA and N/A in associatedSequences mark a sample's runs as submitted; text starting with '=', a '#' inside a cell and IDs written as text (001) are kept; NA in a mandatory field is empty (as FAIRe2BioSample reads it) -->
+        <test expect_num_outputs="3">
+            <param name="input_file" value="faire_noaa_text_values.xlsx"/>
+            <conditional name="organism">
+                <param name="organism_select" value="seawater metagenome"/>
+            </conditional>
+            <param name="mandatory_fill" value="not applicable"/>
+            <param name="associated" value="blank_only"/>
+            <output name="biosample_table">
+                <assert_contents>
+                    <has_n_lines n="16"/>
+                    <has_text text="=see notes"/>
+                    <has_text text="Bottle #3"/>
+                    <has_text text="&#009;001&#009;"/>
+                    <not_has_text text="GU190707-CTD13-310"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="kept 4 sample(s) with no associatedSequences; left out 1: GU190707-CTD13-310"/>
+                    <has_text text="filled empty mandatory fields with 'not applicable': *env_medium (env_medium)"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- NA in a mandatory field stops the default 'stop', as an empty cell does -->
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="input_file" value="faire_noaa_text_values.xlsx"/>
+            <assert_stderr>
+                <has_text text="*env_medium (FAIRe term env_medium): GU190707-CTD14-315"/>
+            </assert_stderr>
+        </test>
+    </tests>
+    <help><![CDATA[
+**What it does**
+
+This tool turns the **sampleMetadata** sheet of a FAIRe workbook into a BioSample table for the
+NCBI Submission Portal, using NCBI's *MIMARKS: survey, water* package (version 6.0). Upload the
+table on the *Attributes* tab of a BioSample or SRA submission at https://submit.ncbi.nlm.nih.gov
+
+FAIRe2NCBI normally asks you questions as it runs. In Galaxy, the tool answers them from the form.
+It also writes a **config** file holding those answers, so that the same run can be repeated
+outside Galaxy.
+
+-----
+
+**Inputs**
+
+- **A FAIRe workbook** (.xlsx). The samples come from sampleMetadata. experimentRunMetadata is used
+  only to find samples that have already been submitted (associatedSequences).
+- **The BioProject accession** (optional).
+- **The organism** to use for samples that have none. NCBI needs an organism, for example *marine
+  metagenome*, and FAIRe has no organism field.
+
+**Outputs**
+
+- **BioSample table**: NCBI's template header (11 comment lines), followed by one row for each
+  sample.
+- **config**: the answers given to FAIRe2NCBI, as YAML.
+- **log**: a record of what FAIRe2NCBI and the tool did.
+
+-----
+
+**What the tool changes before conversion**
+
+- eventDate values with a time zone offset are converted to UTC, as NCBI asks.
+- Empty organism values are filled with the organism you chose.
+- If you choose a missing-value term, empty mandatory fields are filled with it. If you do not, the
+  tool stops and lists them.
+- Rows without a samp_name are ignored.
+- Whole numbers stay whole (14, not 14.0), and lat_lon keeps the decimal places of decimalLatitude
+  and decimalLongitude. (FAIRe2NCBI on its own rounds them to 3 places, which is about 100 m.)
+
+**Checks**
+
+- NCBI will not register samples whose attributes are all the same apart from sample_name,
+  sample_title and description, which is common for field replicates. To avoid this, give a field
+  that tells them apart, such as replicate_number. The check runs before the other sampleMetadata
+  fields are added, so it can report samples that those fields would have told apart.
+- Collection dates that NCBI may not be able to read (for example 7/6/19) are listed in the log as
+  warnings.
+
+@HELP_LAYOUT@
+
+@HELP_FAIRE_GUIDE@
+
+@HELP_FOOTER@
+    ]]></help>
+    <expand macro="citations"/>
+</tool>

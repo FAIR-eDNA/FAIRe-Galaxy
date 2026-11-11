@@ -1,0 +1,6 @@
+The 18S V4 region was amplified with TAReuk454FWD1 (CCAGCASCYGCGGTAATTCC) and modified TAReuk-Rev3 (ACTTTCGTTCTTGATYRATGA).
+Fusion primers carried the Nextera overhang TCGTCGGCAGCGTCAGATGTGTATAAGAGACAG at their 5' end.
+A laboratory 12S assay used the primers below (made up for this test).
+
+Lab12S-F    ACGTGGTCAGGATCCAAGTT
+Lab12S-R    TTGCAGGATCCTTAGCACGA

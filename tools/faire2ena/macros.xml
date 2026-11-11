@@ -1,0 +1,45 @@
+<macros>
+    <!-- Upstream has no tagged releases. The version is the date of the
+         pinned commit (FAIR-eDNA/FAIRe2ENA 29d0c98669a3ad9ba1c855b3dbf32d71e9e03c0c). -->
+    <token name="@TOOL_VERSION@">2025.11.12</token>
+    <token name="@VERSION_SUFFIX@">0</token>
+    <token name="@PROFILE@">23.0</token>
+    <xml name="requirements">
+        <requirements>
+            <requirement type="package" version="3.12">python</requirement>
+            <requirement type="package" version="2.2.3">pandas</requirement>
+            <requirement type="package" version="3.1.5">openpyxl</requirement>
+        </requirements>
+    </xml>
+    <xml name="faire_input">
+        <param name="input_file" type="data" format="xlsx" label="FAIRe metadata workbook"
+            help="Excel workbook in FAIRe format, for example a template from FAIRe-ator filled in with your data. Field names must be on row 3 of each sheet."/>
+    </xml>
+    <xml name="center_name">
+        <param name="center_name" type="text" label="Centre name"
+            help="The name of your institution as registered with your ENA Webin account, for example CSIRO.">
+            <validator type="empty_field"/>
+        </param>
+    </xml>
+    <token name="@LINK_INPUT@">ln -s '$input_file' input.xlsx &amp;&amp;</token>
+    <xml name="citations">
+        <citations>
+            <citation type="doi">10.1002/edn3.70100</citation>
+        </citations>
+    </xml>
+    <xml name="creator">
+        <creator>
+            <organization name="FAIRe2ENA developers, Minderoo OceanOmics Centre at UWA" url="https://github.com/FAIR-eDNA/FAIRe2ENA"/>
+            <person givenName="Oliver" familyName="Berry"/>
+        </creator>
+    </xml>
+    <token name="@HELP_FOOTER@"><![CDATA[
+-----
+
+**Credits**
+
+This tool runs `FAIRe2ENA <https://github.com/FAIR-eDNA/FAIRe2ENA>`_ (MIT licence) through a small
+Galaxy driver that adds input checks, collection date conversion and a choice of sample taxon.
+The FAIRe checklist is described in Takahashi et al. (2025) *Environmental DNA* 7: e70100. The Galaxy tool was written by Oliver Berry (CSIRO), with Claude (Anthropic).
+    ]]></token>
+</macros>

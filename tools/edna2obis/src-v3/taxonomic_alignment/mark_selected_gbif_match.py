@@ -1,0 +1,110 @@
+import pandas as pd
+import os
+
+from .taxa_assignment_info_export import (
+    read_taxa_assignment_info_dataframe,
+    write_taxa_assignment_info_xlsx,
+)
+
+
+def mark_selected_gbif_matches(params, reporter=None):
+    """
+    Reads taxa_mapping_INFO_GBIF.xlsx and the final occurrence_gbif_matched.csv
+    to mark which of the GBIF matches was selected.
+    """
+    try:
+        api_choice = params.get('taxonomic_api_source', 'GBIF')
+        if api_choice != 'GBIF':
+            return
+
+        output_dir = params.get('output_dir', '../processed-v3/')
+        info_filename = f"taxa_mapping_INFO_{api_choice}.xlsx"
+        info_filepath = os.path.join(output_dir, info_filename)
+
+        occurrence_filename = f"occurrence_core_{api_choice.lower()}.csv"
+        occurrence_filepath = os.path.join(output_dir, occurrence_filename)
+
+        if not os.path.exists(info_filepath):
+            return
+        if not os.path.exists(occurrence_filepath):
+            return
+
+        info_df = read_taxa_assignment_info_dataframe(info_filepath)
+        
+        if info_df.empty:
+            return
+            
+        occurrence_df = pd.read_csv(occurrence_filepath, usecols=['verbatimIdentification', 'taxonID'])
+
+        # Before comparison, ensure data types are compatible without making assumptions
+        # about the content. Convert to string to be safe.
+        info_df['verbatimIdentification'] = info_df['verbatimIdentification'].astype(str)
+        info_df['taxonID'] = info_df['taxonID'].astype(str)
+        occurrence_df['verbatimIdentification'] = occurrence_df['verbatimIdentification'].astype(str)
+        occurrence_df['taxonID'] = occurrence_df['taxonID'].astype(str)
+
+        # Preserve the original row index so we can mark the correct rows after merge.
+        # (Pandas merge creates a new RangeIndex, which is not the same as info_df's index.)
+        info_df['_info_row_idx'] = info_df.index
+
+        # Mark all as False initially
+        info_df['selected_match'] = False
+
+        # Identify the selected verbatim-taxon pairs from the occurrence file.
+        # We only need the unique pairs that were chosen.
+        selected_pairs = occurrence_df[['verbatimIdentification', 'taxonID']].drop_duplicates()
+        if reporter:
+            reporter.add_text(f"Found {len(selected_pairs)} unique selected pairs in the occurrence file.")
+
+        # Use a merge operation to find all candidate matches in the info file.
+        # This is more robust than iterating or using sets.
+        merged_df = pd.merge(
+            info_df,
+            selected_pairs,
+            on=['verbatimIdentification', 'taxonID'],
+            how='inner'
+        )
+
+        if not merged_df.empty:
+            # From the candidates, find the single best one for each pair (highest confidence).
+            # This handles any cases where the same pair might appear multiple times.
+            best_candidates = merged_df.sort_values('confidence', ascending=False).drop_duplicates(
+                subset=['verbatimIdentification', 'taxonID'],
+                keep='first'
+            )
+
+            # Mark the 'selected_match' column as True only for the corresponding rows in info_df.
+            info_df.loc[best_candidates['_info_row_idx'], 'selected_match'] = True
+
+        # Drop helper column before writing the final file.
+        if '_info_row_idx' in info_df.columns:
+            info_df = info_df.drop(columns=['_info_row_idx'])
+
+        write_taxa_assignment_info_xlsx(info_df, info_filepath)
+
+        num_selected = info_df['selected_match'].sum()
+        if reporter:
+            reporter.add_text(f"Marked {num_selected} selected matches in {info_filename}.")
+
+        # If a reporter object is provided, force it to update its internal
+        # dataframe from the file we just saved. This ensures the report
+        # reflects the newly added 'selected_match' column.
+        if reporter:
+            try:
+                reporter.update_dataframe_from_file(info_filename, info_filepath)
+            except Exception:
+                pass
+
+    except Exception as e:
+        if reporter:
+            reporter.add_warning(f"GBIF match marking error: {str(e)}")
+
+if __name__ == '__main__':
+    # This block allows the script to be run standalone for testing
+    mock_params = {
+        'taxonomic_api_source': 'GBIF',
+        'output_dir': '../../processed-v3/'
+    }
+    # To test, you would need sample files in the 'processed-v3' directory.
+    # mark_selected_gbif_matches(mock_params)
+    print("This script is intended to be called from the main edna2obis pipeline.") 

@@ -1,0 +1,324 @@
+Methods (West et al. 2021, Diversity and Distributions)
+
+2 | METHODS
+
+2.1 | Field sampling
+
+Four one-litre water replicates were sampled from 71 sites
+across the Canning/Kimberley bioregions (Figure 1; Table S1) in
+September 2017 and July/September 2018, totalling 284 samples over 700 km of coastline. Samples were taken on a transect line traversing the purported biogeographic break and more
+widely across the Kimberley region in mid-shelf, inshore, coastal
+and nearshore estuarine habitats. Surface water was collected
+using bleach sterilized 1L Nalgene bottles attached to an extended pole, to avoid close encounters with saltwater crocodiles
+(C. porosus). Samples were immediately stored on ice and were
+individually filtered across Pall 0.45μm Supor® polyethersulphone membranes using a Pall Sentino® Microbiology pump (Pall
+Corporation) within five hours of collection. Filtration equipment
+was cleaned using 10% bleach (4% chlorine) – a one-litre sample
+of this was taken at the end of each sampling day as a filtration
+control to test for any carry over contamination. Membranes with
+filtrate were immediately frozen at −20°C, prior to their transportation to the Trace & Environmental DNA (TrEnD) Laboratory
+in Perth, Western Australia, where they were stored at −80°C
+
+WEST et al.
+
+F I G U R E 1 Location of sampling
+sites across the Canning and Kimberley
+bioregions in north-western Australia
+(NWA). The Canning sites (1–7; latitude
+16.1°S-17.5°S) located within the
+Dampier Peninsula subregion extend
+northwards from Broome to the
+purported biogeographic break line off
+Cape Leveque. The Kimberley sites (8–71)
+located north-west of the purported
+biogeographic break are additionally
+categorized into the subregions, South
+Kimberley (sites 8–44 and 68–71; latitude
+15.1°S-16.4°S) and North Kimberley
+(sites 45–66; latitude 13.6°S-14.6°S).
+Bathymetry data were sourced from
+Geoscience Australia (Whiteway, 2009)
+[Colour figure can be viewed at
+wileyonlinelibrary.com]
+
+until extraction – all eDNA was isolated within two months of
+collection.
+
+2.2 | DNA extraction
+
+DNA was extracted from half of the membrane using a DNeasy
+Blood and Tissue Kit (Qiagen) with the following modifications:
+540 μl of ATL lysis buffer, 60 μl of Proteinase K and a 3-hr digestion at 56ºC. Extracts were eluted in 100 μl of Buffer EB. This
+was completed within four weeks of collection. Extraction blank
+controls were processed in parallel with all samples to detect any
+cross-contamination. Genomic DNA extracts were then stored at
+−20°C.
+
+2.3 | Metabarcoding assay design, amplification and
+library sequencing
+
+Three PCR metabarcoding assays were employed: 16S Fish, COI
+Elasmobranch and 16S Reptile (Table 1) to amplify bony fish,
+elasmobranchs and aquatic reptiles, respectively, from mixed environmental samples. The 16S Fish and COI Elasmobranch PCR
+assays have been optimized and successfully applied in previous
+eDNA metabarcoding studies examining fish and shark diversity
+and trophic interactions (Bakker et al., 2017; Berry et al., 2017;
+Boussarie et al., 2018; Stat et al., 2017, 2019; West et al., 2020).
+
+                  WEST et al.
+
+PCR assay information for marine eDNA metabarcoding across the Canning
+
+TA B L E 1
+
+| 1945
+
+The 16S Reptile assay has been recently designed to amplify
+
+Note: Three primer sets: 16S Fish, 16S Reptile and COI Elasmobranch corresponding to the mitochondrial 16S rDNA and COI regions were applied to all collected seawater samples. In the primer name,
+northern Australian aquatic reptiles, such as sea snakes, turtles
+
+Deagle et al. (2007)
+and crocodiles (West et al., 2021).
+
+Degenerate: West
+
+Degenerate: West
+Berry et al. (2017)
+
+West et al. (2021)
+Primer reference
+Following quantitative PCR-based (qPCR) quantification to op-
+
+Original: Fields
+Original: Ward
+et al. (2005)
+
+et al. (2020)
+
+et al. (2020)
+et al. (2015)
+timize levels of input DNA (Murray et al., 2015), final qPCR was
+performed in a single step using fusion tagged primer architecture
+consisting of Illumina compatible sequencing adaptors, a unique
+index (6-8bp in length) and a respective primer sequence for each
+Annealing temp
+
+assay. All qPCR reactions were prepared in dedicated clean room facilities at the TrEnD Laboratory, Curtin University, and are described
+in detail in Section S1. Quantitative PCR amplicons were pooled at
+(°C)
+
+equimolar ratios based on qPCR ΔRn values and size-selected using
+54
+
+52
+
+52                                                                                                                                                                                                                                                 a Pippin-Prep (Sage Science, Beverly, USA) to remove any off-target amplicons. Size-selected libraries were then purified using the
+Target length
+
+Qiaquick PCR Purification Kit (Qiagen), quantified using a Qubit
+178–228
+
+211–277
+110–241
+
+4.0 Fluorometer (Invitrogen) and diluted to 2 nM for loading onto
+a 300 cycle MiSeq® V2 Standard Flow Cell. Sequencing was con-
+(bp)
+
+ducted on an Illumina MiSeq platform (Illumina), housed in the TrEnD
+Laboratory at Curtin University, Western Australia.
+TCNACNAATCATAAAGATATCGGCAC
+ACCAACCACAAAGANATNGGCAC
+
+2.4 | Bioinformatics
+Oligonucleotide sequence (5’−3’)
+
+CGCTGTTATCCCTADRGTAACT
+
+GATTATTACNAAAGCNTGGGC
+GACCCTATGGAGCTTTAGAC
+/Kimberley bioregions
+
+AGACNAGAAGACCCTGTG
+CCTGATCCAACATCGAGG
+
+Sequencing reads were demultiplexed and quality filtered in OBITools
+(v1.2.9; Boyer et al., 2014) and in R (v3.5.3; R Core Team, 2015) using
+the DADA2 (v1.10.1) bioinformatics package (Callahan et al., 2016;
+see Section S2 for bioinformatic parameter details). Resulting amplicon sequence variants (ASVs) were queried against NCBI’s
+GenBank nucleotide database (accessed in 2018/19 for different
+assays; Benson et al., 2005) using BLASTn and also against an inhouse 16S rRNA Western Australian fish database consisting of 306
+Shark COI-MINIR- degenerate
+
+species (Nester et al., 2020). Taxonomic assignments of ASVs were
+made using a lowest common ancestor approach (https://github.
+AqReptileF-degenerate
+
+com/mahsa​- mousa​v i/eDNAF​l ow/tree/maste​r/LCA_taxon​o myAs​
+FishF2-degenerate
+FishF1-degenerate
+16S2R-degenerate
+
+signm​ent_scripts, Mousavi-Derazmahalleh et al., unpublished data;
+see Section S2). All taxonomic assignments required 100% query
+Primer name
+
+AqReptileR
+
+coverage, with a species-level assignment requiring at minimum a
+“F” refers to the forward primer and “R” to the reverse primer.
+16SF/D
+
+98% identity match to a reference sequence. Consolidated taxa assignments (at the lowest possible taxonomic level) were then additionally categorized based on habitat association and biogeographic
+distribution information obtained from Kimberley biodiversity
+Sharks, Skates &
+
+Aquatic Reptiles
+
+checklists (Moore et al., 2014), FishBase (Froese & Pauly, 2019) and
+the World Register of Marine Species (WoRMS; Horton et al., 2018).
+Target taxa
+
+Bony Fish
+
+Nomenclature was reviewed and, if necessary, updated using the
+Rays
+
+Australian Faunal Directory (AFD; ABRS, 2009).
+In order to normalize the dataset, we determined appropriate
+subsampling depths for each assay (see Section S2 for more detail)
+and conducted consecutive rounds of subsampling using the mulCOI Elasmobranch
+
+tiple_rarefactions function in QIIME (v1.7.0; Caporaso et al., 2010).
+ASVs detected in filtration and/or extraction blanks were entirely re16S Reptile
+PCR assay
+
+moved, prior to ASVs being merged by taxonomy using the phyloseq
+16S Fish
+
+(v1.24.2) “tax_glom” function (McMurdie & Holmes, 2013) in RStudio.
+We then consolidated our assay data into three taxonomic-based
+       |
+
+1946
+
+datasets: Actinopterygii (bony fish), Elasmobranchii (elasmobranchs,
+i.e. sharks and rays) and Reptilia (reptiles), which allowed us to examine community composition by discrete taxonomic group, rather
+than by individual metabarcoding assays which contained some
+overlap in taxonomic detections.
+
+2.5 | Statistics
+
+Community composition variation was analysed across the study
+region, with a particular focus across the purported biogeographic
+break at Cape Leveque. In order to control for the effect of differing
+habitats, variation was tested between sites within inshore, coastal
+and nearshore estuarine habitats independently. Presence–absence
+data for each taxonomic dataset (bony fish, elasmobranchs and reptiles) were converted to Jaccard similarity matrices and tested for
+compositional variation by a distance-based linear routine (DistLM)
+                                                      2
+using a step-wise selection procedure and adjusted R criterion in the
+PERMANOVA + add-on (Anderson et al., 2008) of PRIMER v7 (Clarke
+& Gorley, 2015). Normalized spatial predictor variables included bioregion (Canning and Kimberley), subregion (Dampier Peninsula
+[Canning], South Kimberley and North Kimberley), latitude and site
+depth (Table S1); longitude was omitted due to collinearity with latitude. Temporal variation in sampling was not included, given earlier
+research indicated that season only has a small influence on inshore
+reef fish composition in this region (Travers et al., 2006). DistLM
+analyses are capable of handling unbalanced designs (Anderson
+et al., 2008), in this case, where there are an unequal number of site
+in the spatial predictor variable groups. We did, however, run an additional DistLM routine on a subset (Sites 1–11 and 42–44) of the
+data assemblages to assess the bioregional influence across 14 sites
+(seven sites directly on either side of the purported biogeographic
+break). Site variation was visualized by principal coordinate analysis
+(PCO) using the stats function “cmdscale” and predictor variables
+overlaid using the vegan “ordisurf” function (Oksanen et al., 2019) in
+R Studio (v1.1.423; R Core Team, 2015). Observed taxonomic richness at each site was tested for significance between bioregions and
+subregions using ANOVA and graphed in ggplot2 (Wickham, 2016)
+in RStudio. Additionally, similarity percentage analyses (SIMPER)
+were conducted in PRIMER to identify the top inshore and coastal
+taxa that contribute to pairwise dissimilarity between bioregions
+and subregions, where significant in the DistLM analyses. This elucidated whether variation in community composition between the
+bioregions and subregions is driven by uneven taxonomic richness
+and/or variation in compositional diversity.
+
+
+Supporting information, Section S1: Laboratory processing
+DNA was extracted from half of each filter membrane using a DNeasy Blood and Tissue Kit
+(Qiagen; Venlo, Netherlands) with the following modifications: 540l of ATL lysis buffer and
+60l of Proteinase K. This was completed within four weeks of collection. Blank controls were
+processed in parallel with all samples to detect any cross-contamination. Three PCR assays
+were applied: 16S Fish, COI Elasmobranch and 16S Reptile (Table 1) that were designed to
+amplify bony fish, elasmobranchs and aquatic reptiles, respectively, from mixed environmental
+samples. The 16S Fish and COI Elasmobranch PCR assays have been optimised and
+successfully applied in previous eDNA metabarcoding studies examining fish diversity and
+trophic interactions (Berry et al., 2017; Stat et al., 2017, 2019; West, Stat, et al., 2020). The
+16S Reptile assay has been recently designed to amplify northern Australian aquatic reptiles,
+such as sea snakes, turtles and crocodiles (West, Heydenrych, et al., 2021).
+Following quantitative PCR-based (qPCR) quantification to optimise levels of input DNA
+(Berry et al., 2017), final qPCR was performed in a single step using fusion tagged primer
+architecture consisting of an Illumina sequencing adaptor, a unique index (6-8bp in length) and
+a respective primer sequence for each assay. All qPCR reactions were prepared in a dedicated
+trace DNA facility at the TrEnD Laboratory, Curtin University. Each qPCR reaction was
+carried out in 25l containing: 1X AmpliTaq Gold® PCR buffer (Life Technologies,
+Massachusetts, USA), 2mM MgCl2, 0.25mM dNTPs, 0.2M each of forward and reverse
+primers (Integrated DNA Technologies, Australia), 10ug BSA (Fisher Biotec, Australia), 0.6l
+of 5X SYBR® Green (Life Technologies), 1U AmpliTaq Gold® DNA Polymerase (Life
+Technologies), 4l of eDNA template (neat), and made to volume with Ultrapure Distilled
+Water (Life Technologies). For the multiplex COI Elasmobranch assay, containing two
+forward primers and one reverse primer (Fields et al., 2015), the volume of forward primers
+was adjusted to 0.1M each, whilst the volume of reverse primer remained unchanged at
+0.2M. Each qPCR was performed on a StepOnePlus Real-Time PCR System (Applied
+Biosystems, Massachusetts, USA) under the following conditions: initial denaturation at
+95 °C for 5 min, followed by 50 cycles of 30 s at 95 °C, 51-54 °C for 30 s (see respective
+annealing temperatures in Table 1) and 45 s at 72 °C, with a final extension for 10 min at
+72 °C. Each eDNA sample was amplified in triplicate PCRs with the same index tag,
+combined into a larger library of amplicons pooled at equimolar ratios based on qPCR Rn
+values and size-selected using a Pippin-Prep (Sage Science, Beverly, USA) to remove any
+amplicons outside of the target range. Size-selected libraries were then purified using the
+Qiaquick PCR Purification Kit (Qiagen, Venlo, Netherlands), quantified using a Qubit 4.0
+Fluorometer (Invitrogen, Carlsbad, USA) and if necessary, diluted to 2nM, for loading onto
+a 300 cycle MiSeq® V2 Standard Flow Cell. Sequencing was conducted on an Illumina
+MiSeq platform (Illumina, San Diego, USA), housed in the TrEnD Laboratory at Curtin
+University, Western Australia.
+Section S2: Bioinformatics processing
+Sequencing reads were demultiplexed into their respective samples using the ngsfilter
+(allowing up to three mismatches in primer sequences) and obisplit commands in OBITools
+(v1.2.9; Boyer et al., 2014). Data was then quality filtered (minimum length=100, maximum
+expected errors=2, no ambiguous nucleotides), denoised, filtered for chimeras and
+dereplicated (pool=TRUE) in R (v3.5.3; RStudio Team, 2015) using the DADA2
+bioinformatics package (Callahan et al. 2016). This generated an amplicon sequence variant
+(ASV) fasta and count table; the former was queried against NCBI’s GenBank nucleotide
+database (accessed in 2018/19; Benson et al., 2005) using BLASTn (minimum percentage
+identity of 90, maximum target sequences of 10, reward value of 1) and also queried against
+an in-house 16S rRNA Western Australian fish database (Nester et al., 2020) via Zeus, an
+SGI cluster, based at the Pawsey Supercomputing Centre in Kensington, Western Australia.
+Taxonomic assignments of ASVs were curated using a lowest common ancestor (LCA)
+approach
+(https://github.com/mahsa-mousavi/eDNAFlow#lca-lowest-common-ancestorscript-for-assigning-taxonomy, Mousavi-Derazmahalleh et al., in review). This compares the
+top ten hits for each query, collapsing to the lowest common ancestor if the percentage
+identity between each consecutive hit differed by less than one (based on the same query
+coverage). All taxonomic assignments required 100% query coverage, with a species-level
+assignment requiring at minimum a 98% identity match to a reference sequence.
+Consolidated taxa assignments were classified based on habitat association and
+biogeographic distribution obtained from Kimberley biodiversity checklists (Moore et al.
+2014), FishBase (Froese & Pauly, 2018) and the World Register of Marine Species (WoRMS;
+Horton et al., 2018). Nomenclature was reviewed and if necessary, updated using the
+Australian Faunal Directory (AFD; ABRS 2009). The circlize package (Gu, Gu, Eils,
+Schlesner, & Brors, 2014) in RStudio was used to plot the range of order level taxa detected
+by each assay.
+ASV accumulation curves by the addition of sampling replicates and sites were plotted using
+the vegan ‘specaccum’ function (Oksanen et al., 2019) in RStudio. To determine an appropriate
+subsampling depth in order to normalise the dataset, we plotted rarefaction curves (after
+pooling sample reads based on site) using the ‘rarecurve’ function in vegan and conducted
+consecutive rounds of subsampling using the multiple_rarefactions function (for 16S Fish:
+min=25,000, max=200,000, step=25,000; for COI Elasmobranch and 16S Reptile: min=4,000,
+max=20,000, step=4,000) in Qiime (Caporaso et al., 2010). We aimed to maximise the number
+of sites retained, whilst minimising ASV loss; the final subsampling thresholds were
+implemented using the single_rarefactions function in Qiime. ASVs detected in filtration
+and/or extraction blanks were entirely removed, prior to ASVs being merged by taxonomy
+using the phyloseq ‘tax_glom’ function (McMurdie & Holmes, 2013) in RStudio. We then
+consolidated our assay data into three taxonomic-based datasets: Actinopterygii (bony fish),
+Elasmobranchii (sharks and rays) and Reptilia (reptiles), which allowed us to examine
+community composition by discrete taxonomic group, rather than by individual metabarcoding
+assays which contained some overlap in taxonomic detections.

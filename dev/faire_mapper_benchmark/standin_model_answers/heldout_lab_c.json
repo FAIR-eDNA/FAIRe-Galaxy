@@ -1,0 +1,117 @@
+[
+ {
+  "column": "qa_checked",
+  "term": null,
+  "reason": "QA checked flag is an admin field."
+ },
+ {
+  "column": "Public repository accession(s) (SRA/ENA BioSample, separate with |)",
+  "term": "associatedSequences",
+  "reason": "Values are lists of SRA, BioSample and BioProject links."
+ },
+ {
+  "column": "DIC unit (e.g. µmol/kg)",
+  "term": null,
+  "reason": "DIC unit, but no diss_inorg_carb_unit term is among the candidates."
+ },
+ {
+  "column": "Total sample amount collected (volume, mass or area)",
+  "term": "samp_size",
+  "reason": "Total amount of sample collected from the environment."
+ },
+ {
+  "column": "Assay / marker name (e.g. MiFish-U, 16S Fish)",
+  "term": "assay_name",
+  "reason": "Values are concise assay identifiers."
+ },
+ {
+  "column": "Number of eskies",
+  "term": null,
+  "reason": "Number of eskies is a logistics field."
+ },
+ {
+  "column": "In situ temperature at collection (°C)",
+  "term": "temp",
+  "reason": "In situ sample temperature at collection in degrees Celsius."
+ },
+ {
+  "column": "Collection method / SOP reference (URL if available)",
+  "term": "samp_collect_method",
+  "reason": "Value links to the sampling SOP."
+ },
+ {
+  "column": "Courier consignment number",
+  "term": null,
+  "reason": "Courier consignment number is a logistics field."
+ },
+ {
+  "column": "Field sheet scanned",
+  "term": null,
+  "reason": "Field sheet scanned is an admin tracking field."
+ },
+ {
+  "column": "db_upload_status",
+  "term": null,
+  "reason": "Database upload status is an admin field."
+ },
+ {
+  "column": "Quote reference",
+  "term": null,
+  "reason": "Quote reference is an admin field."
+ },
+ {
+  "column": "Turnaround time (business days)",
+  "term": null,
+  "reason": "Turnaround time is an admin field."
+ },
+ {
+  "column": "Purchase order number",
+  "term": null,
+  "reason": "Purchase order number is an admin field."
+ },
+ {
+  "column": "Commercial extraction kit (name and manufacturer)",
+  "term": "nucl_acid_ext_kit",
+  "reason": "Value is the name of a DNA extraction kit."
+ },
+ {
+  "column": "Cost centre",
+  "term": null,
+  "reason": "Cost centre is an admin field."
+ },
+ {
+  "column": "Pre-filtration size cut-off (µm), if used",
+  "term": null,
+  "reason": "Prefilter size cut-off, but no pre-filter size term is among the candidates."
+ },
+ {
+  "column": "Sample pre-processing performed (e.g. prefiltration, sieving, homogenisation)",
+  "term": "samp_mat_process",
+  "reason": "Value describes processing applied to the sample after collection."
+ },
+ {
+  "column": "Storage location of DNA extracts (building, freezer, rack)",
+  "term": "dna_store_loc",
+  "reason": "Storage location of DNA extracts."
+ },
+ {
+  "column": "Invoice number",
+  "term": null,
+  "reason": "Invoice number is an admin field."
+ },
+ {
+  "column": "Price per sample (excl. GST)",
+  "term": null,
+  "reason": "Price per sample is an admin field."
+ },
+ {
+  "column": "Filter product name / manufacturer",
+  "term": "filter_name",
+  "reason": "Value is a commercial filter product name."
+ },
+ {
+  "column": "Storage facility / freezer for samples",
+  "term": "samp_store_loc",
+  "reason": "Storage location of the samples."
+ }
+]

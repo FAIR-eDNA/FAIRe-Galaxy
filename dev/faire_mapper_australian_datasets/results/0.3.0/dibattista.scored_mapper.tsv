@@ -1,0 +1,15 @@
+column	route	proposed	gold	outcome	gold_in_shortlist
+EMu registration number	no match			right to leave	False
+Sample ID	accept	samp_name	samp_name	correct	True
+Amount filtered 	review	samp_vol_we_dna_ext_unit	samp_size	wrong	False
+Filter size	no match		size_frac	missed	False
+Sample processing	accept	samp_mat_process	recordedBy	wrong	True
+Sampling country	review	env_medium	geo_loc_name	wrong	True
+Sampling Location	review	samp_store_loc		wrong	False
+Reef Location	accept	geo_loc_name		acceptable	False
+Exposed or Sheltered	no match			right to leave	False
+Latitude	accept	decimalLatitude	decimalLatitude	correct	True
+Longitude	accept	decimalLongitude	decimalLongitude	correct	True
+Sampling Date	accept	eventDate	eventDate	correct	True
+Lunar Cycle	no match			right to leave	False
+Days frozen	no match		samp_store_dur	missed	False

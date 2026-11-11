@@ -1,0 +1,15 @@
+column	term	also_acceptable	note
+EMu registration number		materialSampleID;samp_store_loc	Australian Museum lot number for the archived filters (one lot for February, one for later months, now de-accessioned); FAIRe has no catalogue-number term, so keep as a user-defined field.
+Sample ID	samp_name	materialSampleID	Unique filter-replicate code (LIRS_dd_mm_yy_replicate) that prefixes the fastq names; group the six replicates per date to fill biological_rep_relation.
+Amount filtered 	samp_size	samp_vol_we_dna_ext	Split '1 L' into samp_size = 1 and samp_size_unit = L; samp_vol_we_dna_ext would be 500 mL because half of each filter was extracted.
+Filter size	size_frac		Filter pore size; strip the text so '0.2 micron' becomes 0.2 (unit µm).
+Sample processing	recordedBy		Name of the person who filtered the samples (constant: Joseph DiBattista); FAIRe has no processor field, so use it for project-level recordedBy (samp_mat_process does not fit because it describes the process).
+Sampling country	geo_loc_name		Constant 'Australia' supplies the INSDC country part of geo_loc_name; combine with Reef Location and Sampling Location, e.g. 'Australia: Queensland, Great Barrier Reef, Lizard Island, Big Vicky's Reef'.
+Sampling Location		geo_loc_name	Site locality (Lizard Island, Big Vicky's Reef) that forms the locality part of geo_loc_name.
+Reef Location		geo_loc_name	Broader region (Great Barrier Reef) that forms the region part of geo_loc_name.
+Exposed or Sheltered			Reef exposure class (constant 'Semi-Exposed'); no FAIRe term, so keep as a user-defined field.
+Latitude	decimalLatitude	verbatimLatitude	Already in decimal degrees (south negative); datum not stated.
+Longitude	decimalLongitude	verbatimLongitude	Already in decimal degrees (east positive); datum not stated.
+Sampling Date	eventDate	verbatimEventDate	Convert d-Mon-yy to ISO 8601 (12-Feb-19 becomes 2019-02-12); no time recorded, though methods give 10:00 to 16:00 AEST (+10:00).
+Lunar Cycle			Moon phase and per cent illumination tested as an explanatory variable; no FAIRe term, so keep as a user-defined field and list it in study_factor.
+Days frozen	samp_store_dur		Days the water was held at -20 °C before thawing and filtering; convert to ISO 8601 (316 becomes P316D, 0 becomes P0D) and set samp_store_temp to -20, except February samples, which were kept on ice and filtered at once.

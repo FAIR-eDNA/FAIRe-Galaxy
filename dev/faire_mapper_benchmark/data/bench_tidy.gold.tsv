@@ -1,0 +1,96 @@
+column	term
+Sample ID	samp_name
+Sample type	samp_category
+Field sample ID	materialSampleID
+Longitude (decimal degrees)	decimalLongitude
+Latitude (decimal degrees)	decimalLatitude
+Geographic location (country: region)	geo_loc_name
+Collection date	eventDate
+Biome	env_broad_scale
+Local habitat	env_local_scale
+Sample material	env_medium
+Natural or artificial habitat (0/1)	habitat_natural_artificial_0_1
+Sampling method	samp_collect_method
+Sampling device	samp_collect_device
+Volume collected	samp_size
+Sample volume units	samp_size_unit
+Storage temperature (°C)	samp_store_temp
+Preservative	samp_store_sol
+Storage duration	samp_store_dur
+Sample storage location	samp_store_loc
+DNA extract storage location	dna_store_loc
+Sample processing	samp_mat_process
+Pre-filter mesh size (µm)	size_frac_low
+Filter pore size (µm)	size_frac
+Filter type	filter_material
+Filter brand	filter_name
+Precipitation reagents	precip_chem_prep
+Centrifuge force (x g)	precip_force_prep
+Precipitation time (min)	precip_time_prep
+Precipitation temperature (°C)	precip_temp_prep
+Volume filtered for extraction	samp_vol_we_dna_ext
+Filtered volume units	samp_vol_we_dna_ext_unit
+Lysis method	nucl_acid_ext_lysis
+DNA purification method	nucl_acid_ext_sep
+Extraction protocol	nucl_acid_ext
+Extraction kit	nucl_acid_ext_kit
+Depth (m)	minimumDepthInMeters
+Maximum sampling depth (m)	maximumDepthInMeters
+Water depth at site (m)	tot_depth_water_col
+Water temperature (°C)	temp
+Chlorophyll a (mg/m³)	chlorophyll
+pH (field)	ph
+Salinity (PSU)	salinity
+Dissolved inorganic carbon	diss_inorg_carb
+DIC units	diss_inorg_carb_unit
+Dissolved oxygen	diss_oxygen
+DO units	diss_oxygen_unit
+Nitrate concentration	nitrate
+Nitrate units	nitrate_unit
+Nitrite concentration	nitrite
+Nitrite units	nitrite_unit
+Blank type	neg_cont_type
+Assay	assay_name
+PCR plate	pcr_plate_id
+Library ID	lib_id
+Sequencing run	seq_run_id
+Forward index	mid_forward
+Reverse index	mid_reverse
+Forward read file	filename
+Reverse read file	filename2
+SRA accession	associatedSequences
+Raw read count	input_read_count
+Marker	target_gene
+Gene region	target_subfragment
+Forward primer sequence	pcr_primer_forward
+Reverse primer sequence	pcr_primer_reverse
+Forward primer	pcr_primer_name_forward
+Reverse primer	pcr_primer_name_reverse
+Sequencing platform	platform
+Sequencer	instrument
+Project code	project_id
+Collector initials	
+Boat name	
+Weather notes	
+Esky number	
+Checked by	
+Photo ID	
+Data entered by	
+Field sheet page	
+Datasheet QC'd (Y/N)	
+Invoice no.	
+Courier tracking #	
+Permit holder	
+Landowner contacted?	
+Box received (Y/N)	
+Label printed	
+Who filtered	
+Gloves changed (Y/N)	
+Cost code	
+Vehicle	
+Spare column	
+Colour key	
+Comments for Jo	
+Archived to drive	
+Parking spot	
+Thermos no.	

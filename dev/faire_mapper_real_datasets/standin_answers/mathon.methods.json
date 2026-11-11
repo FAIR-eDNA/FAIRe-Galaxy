@@ -1,0 +1,34 @@
+{
+ "values": [
+  {
+   "term": "recordedBy",
+   "value": "Laetitia Mathon, Virginie Marques, David Mouillot, Camille Albouy, Marco Andrello, Florian Baletaud, Giomar H. Borrero-Pérez, Tony Dejean, Graham J. Edgar, Jonathan Grondin, Pierre-Edouard Guerin, Régis Hocdé, Jean-Baptiste Juhel, Kadarusman, Eva Maire, Matthew McLean, Andrea Polanco F., Laurent Pouyaud, Rick D. Stuart-Smith, Hagi Yulia Sugeha, Alice Valentini, Laurent Vigliola, Indra B Vimono, Loïc Pellissier, Stéphanie Manel",
+   "quote": "Data collected and processed by Laetitia Mathon, Virginie Marques, David Mouillot, Camille Albouy",
+   "stated": true
+  },
+  {
+   "term": "project_contact",
+   "value": "Laetitia Mathon, laetitia.mathon@gmail.com",
+   "quote": "Contact : Laetitia Mathon, laetitia.mathon@gmail.com, CEFE Montpellier, France",
+   "stated": true
+  },
+  {
+   "term": "neg_cont_0_1",
+   "value": "1",
+   "quote": "detected in the blanks (empty wells in the sequencing plate)",
+   "stated": false
+  },
+  {
+   "term": "targetTaxonomicAssay",
+   "value": "fish",
+   "quote": "This dataset contains fish eDNA sequences from the 12S mitochondrial gene.",
+   "stated": true
+  },
+  {
+   "term": "target_gene",
+   "value": "12S rRNA (SSU mitochondria)",
+   "quote": "This dataset contains fish eDNA sequences from the 12S mitochondrial gene.",
+   "stated": false
+  }
+ ]
+}

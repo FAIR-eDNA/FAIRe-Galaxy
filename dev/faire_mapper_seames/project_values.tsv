@@ -1,0 +1,36 @@
+term	value	assay
+project_name	Environmental DNA for measuring offshore marine biodiversity (SEA-MES, NESP Marine and Coastal Hub Project 4.23)	
+targetTaxonomicAssay	Fish (teleosts and elasmobranchs)	Fish16S
+target_gene	16S rRNA (LSU mitochondria)	Fish16S
+pcr_primer_name_forward	16SF/D	Fish16S
+pcr_primer_name_reverse	16S2R-degenerate	Fish16S
+pcr_primer_forward	GACCCTATGGAGCTTTAGAC	Fish16S
+pcr_primer_reverse	CGCTGTTATCCCTADRGTAACT	Fish16S
+pcr_primer_reference_forward	Berry et al. (2017)	Fish16S
+pcr_primer_reference_reverse	Deagle et al. (2007)	Fish16S
+nucl_acid_ext_kit	DNeasy Blood and Tissue Kit (QIAGEN)	
+filter_material	cellulose ester	
+samp_store_temp	-80	
+pcr_cycles	40	
+pcr_dna_vol	2	
+pcr_cond	initial denaturation:95_15;denaturation:95_0.5;annealing:54_1.5;elongation:72_1.5;final elongation:72_10	Fish16S
+annealingTemp	54	Fish16S
+platform	ILLUMINA	
+seq_kit	NextSeq 2000 P1 flow cell, 600 cycles (2 x 300 bp)	
+instrument	Illumina NextSeq 2000	
+sterilise_method	Filtration and sampling equipment was soaked in 10% bleach for at least 6 hours between each filtration run or sampling; filtration lines were primed with 10% bleach for 15 minutes, then flushed three times with Milli-Q water.	
+samp_mat_process	Water was stored at 4 °C and filtered within 12 hours of collection through 47 mm, 0.45 µm mixed cellulose ester membranes with a peristaltic pump; filters were stored at -80 °C.	
+pcr_0_1	1	
+project_contact	Bruce Deagle (Bruce.Deagle@csiro.au)	
+otu_db	NCBI GenBank nucleotide database (accessed August 2023)	Fish16S
+tax_assign_cat	sequence similarity	Fish16S
+otu_seq_comp_appr	BLASTn	Fish16S
+tax_class_id_cutoff	85	Fish16S
+tax_class_query_cutoff	96	Fish16S
+tax_class_collapse	Lowest common ancestor (LCA) script in eDNAFlow (Mousavi-Derazmahalleh et al. 2021): where an ASV had several top hits within 1% similarity of each other (Diff = 1), its taxonomy was collapsed to their lowest common ancestor.	Fish16S
+tax_class_other	BLASTn with at most 20 target sequences, on CSIRO's Petrichor HPC cluster. A species-level assignment required at least 98% identity and 100% query coverage.	Fish16S
+screen_geograph_method	The distribution of each species was checked in Fishes of Australia (https://fishesofaustralia.net.au/); taxa not expected in south-east Australia were assigned to genus or higher, based on related species in the area.	Fish16S
+screen_nontarget_method	Only fish ASVs were curated and kept in the final table.	Fish16S
+screen_other	Fish ASVs were curated by hand. Species assignments below 98.5% identity were changed to genus where congeneric species with no reference sequence occur in the region. Good matches (above 97%) with poor taxonomic resolution were checked for errors in the reference database. Large groups of ASVs assigned to one family or genus (such as Myctophidae or Urolophus) were split into clusters differing by more than 2% on a distance-based tree, each with its own name (Urolophus Sp1, Urolophus Sp2). Chimeric sequences and rare variants close to common ASVs were removed.	Fish16S
+otu_raw_description	ASVs from DADA2 (file 4 of the data record), with the preliminary taxonomy from BLASTn and the eDNAFlow LCA script, before curation.	Fish16S
+otu_final_description	Fish only: taxonomic assignments curated by the authors at the ASV level, with the reads of the ASVs given the same name summed under the most abundant of them, giving 235 fish taxa.	Fish16S

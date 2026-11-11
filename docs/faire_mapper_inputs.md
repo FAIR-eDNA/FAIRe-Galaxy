@@ -1,0 +1,155 @@
+<!-- The same text is in tools/faire_mapper/macros.xml (@HELP_INPUTS@), shown in the help of every
+FAIRe mapper tool in Galaxy. Edit both together. -->
+
+# What inputs the FAIRe mapper can work with
+
+Start with what you have. A sample table is all you need to begin, and each other file you add will
+improve the result.
+
+If you are not sure which of your files is which, start with **FAIRe mapper: identify your files**.
+It tells you what each file looks like and which field of which tool it goes in.
+
+## The steps to create FAIRe-formatted metadata with the help of AI, in order
+
+1. **FAIRe mapper: propose mapping** proposes a FAIRe term for each column in your sample table.
+2. You **review** the matches, as described under *Reviewing the matches* below. If you like,
+   **FAIRe mapper: ask a language model** can answer the columns marked for review, and you then
+   check its answers.
+3. **FAIRe mapper: find primers** finds the primer pairs that your methods name, cite or give as
+   sequences, such as "the MiFish primers", "Pochon et al., 2013" or
+   "TAReuk454FWD1 (CCAGCASCYGCGGTAATTCC)". It lists each candidate pair with its sequences, target
+   gene and reference, so you can check them and copy the right ones into your values for the whole
+   project.
+4. **FAIRe mapper: apply mapping** writes the FAIRe workbook, based on your review.
+5. **FAIRe-fier** checks the workbook. You can then use the submission tools to submit it to your
+   chosen repository - now in a FAIR format!
+
+Each step apart from your review uses a separate Galaxy tool, listed in the tool panel under the
+name shown in bold. Search the panel for *FAIRe* to find them. In the rest of this guide, the tool
+names are in italics and leave off *FAIRe mapper:* at the front.
+
+## The files you can provide, and the tools that work on them
+
+**Sample table** (needed by the *propose mapping* and *apply mapping* tools). This is the
+spreadsheet you keep for your samples, with one row per sample or filter, including the controls,
+and one row of column headers. It can be an Excel file, or text with the values separated by
+commas, semicolons or tabs. Your own column names and formats are fine. If a title sits above the
+headers, set the header row on the form; comment lines starting with # are skipped. The tools will
+do a better job if you:
+
+- put one value in each cell;
+- give units in the header ("Volume (mL)") or with each value ("1 L");
+- keep a column that says which rows are controls, and what kind of control each one is;
+- use the same sample names as in your OTU table.
+
+**Data dictionary** (recommended, for the *propose mapping* tool). A data dictionary is a list of
+the columns in your sample table with a short description of each: what it holds, its units, and
+what any codes mean. Many labs already have one, as a ReadMe sheet or a table in their methods. It
+is worth including: the tool reads each description as extra words for its column, so a short or
+cryptic header such as "vol" or "T1" can still be matched to the right FAIRe term. On our test
+tables it improved the matching, most of all for tables with short headers, and the descriptions
+also go to the language model if you use one. Give it as a table, for example:
+
+```csv
+Variable,Description,Units
+Days frozen,Days the water was frozen before filtering,days
+Who filtered,Name of the person who filtered the sample,
+```
+
+or as one line per column, the format used in many Dryad README files, for example:
+
+```
+Days frozen: days the water was frozen before filtering
+```
+
+In each description, say what kind of thing the column holds (a person, a place, a date, a volume,
+a count or a code) and what any codes mean ("NC = negative control"). You can give a whole README,
+as the tool ignores lines that do not name a column in your table.
+
+**Methods text** (for the *find primers* tool). This is the methods section of your paper or
+protocol, as plain text. The tool finds the primer pairs it names, cites or gives as sequences, and
+lists them with their sequences for you to check. You can also type primer names or citations into
+the tool, one per line.
+
+**Values for the whole project** (for the *apply mapping* tool). These are things that are true of
+the whole study, such as the primers, the extraction kit or the sequencing platform. Give them as a
+table of FAIRe term names and values, in an Excel, CSV or tab-separated file:
+
+```csv
+term,value
+pcr_primer_forward,GTCGGTAAAACTCGTGCCAGC
+nucl_acid_ext_kit,DNeasy Blood and Tissue Kit (QIAGEN)
+```
+
+If you have more than one assay, add an `assay` column for the values that differ between them,
+such as the primers. Rows without an assay apply to the whole project.
+
+To see which terms you still need to find, look at the *mandatory terms not covered* output of the
+*propose mapping* tool.
+
+**OTU or ASV table** (for the *apply mapping* tool), one for each assay. This table holds the reads
+of each sequence or taxon in each sample. The samples can be columns (as in an ASV table, or DADA2's
+table with the sequences as row names) or rows (as in a published matrix of reads per taxon), or
+the table can be in long form, with one row per sample and sequence. A table that holds several
+assays, such as Wilderlab's, can be given once, together with the column that names each row's
+assay. The sample names must match those in your sample table, or be their Illumina file names
+(M108_S7_L001 for M108), or carry a prefix that every sample column has (S_M108 for M108).
+
+If you curated the taxonomy, add a column to your ASV table that gives each ASV its curated name,
+and choose that column on the form (*Column of curated names*). The tool then writes FAIRe's raw
+tables, with every ASV, and its final tables: taxaFinal with one row per ASV, and otuFinal with each
+taxon's reads summed under its most abundant ASV.
+
+**Library table** (optional, for the *apply mapping* tool). This table says which sequence files
+belong to which sample. It can be your study's run report from ENA or the SRA, the SRA submission
+sheet, or your own run sheet. The tool matches each library to a sample by its sample name, or by a
+library name that starts with the sample name (M159_16SFish matches M159). It then fills in the
+library IDs, file names, checksums and links to the archive records in experimentRunMetadata. FAIRe
+treats a library as one amplicon of a sample, so each lib_id is made of the library name, the assay
+and the run (M159_16SFish_LerayCOI_Fish16S_RUN1), and a library that holds the amplicons of two
+assays gets two lib_ids.
+
+**Taxonomy table** (for the *apply mapping* tool), if your OTU table keeps its taxonomy in a separate
+file. The tool reads rank columns (Kingdom ... Species), FAIRe columns, or a single lineage column
+(`k__Animalia; p__Chordata; ...`, or PR2 and SILVA lineages such as
+`Eukaryota(100);Obazoa(100);...`). The ASV ID or sequence should be in the first column.
+
+FAIRe's taxonomy terms (kingdom to species) are Linnaean ranks, so the tool fills them fully only if
+you've provided Linnaean classifications, such as NCBI or BOLD taxonomy, whose names typically carry
+Linnaean ranks. For other classifications, such as PR2, it keeps the genus and species, notes on
+each row that PR2 was used, keeps the full lineage, and leaves the higher rank terms empty. Add the
+PR2 version you used (for example PR2 v5.0.0) as otu_db in your values for the whole project.
+
+**Your own primers** (for the *build primer table* tool), if they are not already in the primer
+table that comes with the tools.
+
+## Reviewing the matches
+
+The crosswalk is the table of matches that the *propose mapping* tool writes. It has one row for
+each column of your table, with the FAIRe term it matches, and it is where you check the matches
+and make corrections. Each match is rated for how certain it is: `skos:exactMatch` marks accepted
+and confirmed matches, and `skos:closeMatch` marks those to review.
+
+Open the crosswalk in a spreadsheet or text editor. To confirm a match, change its row to
+`skos:exactMatch` by typing it over `skos:closeMatch` in the `predicate_id` column. To correct a
+match, change the term in `object_label`. To stop a column being matched, delete its row. Then save
+the crosswalk as Excel, CSV or tab-separated text, and upload it as the input for the
+*apply mapping* tool.
+
+Any column without a `skos:exactMatch` row is kept as a user-defined field at the end of
+sampleMetadata, unless you tick *Leave out columns that are not matched to a FAIRe term* in the
+*apply mapping* tool. The *mapping report* output shows the evidence and the other candidates for
+each column.
+
+## What you may still need to add
+
+The mapper matches columns in your sample table to any FAIRe term, including the ones listed below.
+For example, it matches *Collected by* to `recordedBy` and *Run* to `seq_run_id`. It does not search
+the methods text for these terms, as it reads the methods only for primers. For habitats, it matches
+a column such as *Habitat* but keeps the values as you wrote them. FAIRe needs ENVO labels and IDs,
+such as `sea water [ENVO:00002149]`, so you will need to add these yourself.
+
+The terms most often missing from sample tables are who collected the data and who to contact, the
+project ID, ENVO terms for habitats, library and run IDs (unless you give a library table), and
+anything else that is not in your files. The *mandatory terms not covered* output of
+*propose mapping* and the log of *apply mapping* list what is still missing.

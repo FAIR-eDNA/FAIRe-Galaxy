@@ -1,0 +1,442 @@
+[
+ {
+  "column": "col_47",
+  "term": null,
+  "reason": "Mixed small numbers do not clearly identify any candidate."
+ },
+ {
+  "column": "col_76",
+  "term": null,
+  "reason": "Photo file IDs are not metadata."
+ },
+ {
+  "column": "col_77",
+  "term": null,
+  "reason": "Staff initials match no candidate."
+ },
+ {
+  "column": "col_45",
+  "term": null,
+  "reason": "Numbers 118 to 220 do not clearly identify any candidate."
+ },
+ {
+  "column": "col_16",
+  "term": "samp_store_temp",
+  "reason": "Constant -80 is a freezer storage temperature."
+ },
+ {
+  "column": "col_69",
+  "term": null,
+  "reason": "Sequencing instrument label, and no instrument term is among the candidates."
+ },
+ {
+  "column": "col_48",
+  "term": null,
+  "reason": "A unit that could belong to several of the unit candidates."
+ },
+ {
+  "column": "col_6",
+  "term": "geo_loc_name",
+  "reason": "Values follow the country: region place-name format."
+ },
+ {
+  "column": "col_36",
+  "term": null,
+  "reason": "Integer values do not clearly identify any candidate."
+ },
+ {
+  "column": "col_13",
+  "term": null,
+  "reason": "Collection device, and no device term is among the candidates."
+ },
+ {
+  "column": "col_51",
+  "term": "neg_cont_type",
+  "reason": "Value is a negative control type from the allowed list."
+ },
+ {
+  "column": "col_57",
+  "term": null,
+  "reason": "8 bp index sequences could be forward or reverse MIDs."
+ },
+ {
+  "column": "col_38",
+  "term": null,
+  "reason": "Numbers 15 to 3000 do not clearly identify any candidate."
+ },
+ {
+  "column": "col_43",
+  "term": null,
+  "reason": "Values near 2000 match no candidate."
+ },
+ {
+  "column": "col_72",
+  "term": null,
+  "reason": "Vehicle names are logistics data."
+ },
+ {
+  "column": "col_8",
+  "term": "env_broad_scale",
+  "reason": "Marine biome is a broad-scale ENVO term."
+ },
+ {
+  "column": "col_18",
+  "term": "samp_store_dur",
+  "reason": "A six-month ISO duration fits sample storage time."
+ },
+ {
+  "column": "col_15",
+  "term": null,
+  "reason": "Unit could belong to samp_size or samp_vol_we_dna_ext."
+ },
+ {
+  "column": "col_95",
+  "term": null,
+  "reason": "Small integers do not clearly identify any candidate."
+ },
+ {
+  "column": "col_44",
+  "term": null,
+  "reason": "A unit that could belong to several of the unit candidates."
+ },
+ {
+  "column": "col_7",
+  "term": "eventDate",
+  "reason": "ISO 8601 date-times with offset are sampling event dates."
+ },
+ {
+  "column": "col_67",
+  "term": null,
+  "reason": "Primer name, and no primer name term is among the candidates."
+ },
+ {
+  "column": "col_61",
+  "term": null,
+  "reason": "Large integers match no candidate."
+ },
+ {
+  "column": "col_64",
+  "term": "pcr_primer_forward",
+  "reason": "Value is the 515F-Y forward primer sequence."
+ },
+ {
+  "column": "col_49",
+  "term": null,
+  "reason": "Small decimals do not clearly identify any candidate."
+ },
+ {
+  "column": "col_1",
+  "term": "samp_name",
+  "reason": "Unique replicate-level sample names."
+ },
+ {
+  "column": "col_59",
+  "term": "filename2",
+  "reason": "Unique R2 fastq file names are reverse read files."
+ },
+ {
+  "column": "col_92",
+  "term": null,
+  "reason": "Weather notes, and no weather term is among the candidates."
+ },
+ {
+  "column": "col_66",
+  "term": null,
+  "reason": "Primer name, and no primer name term is among the candidates."
+ },
+ {
+  "column": "col_78",
+  "term": null,
+  "reason": "Small integers do not clearly identify any candidate."
+ },
+ {
+  "column": "col_30",
+  "term": null,
+  "reason": "Volumes, and no volume term is among the candidates."
+ },
+ {
+  "column": "col_39",
+  "term": null,
+  "reason": "Values 4 to 30 could be temperature or latitude."
+ },
+ {
+  "column": "col_65",
+  "term": "pcr_primer_reverse",
+  "reason": "Value is the 926R reverse primer sequence."
+ },
+ {
+  "column": "col_50",
+  "term": null,
+  "reason": "A unit that could belong to several of the unit candidates."
+ },
+ {
+  "column": "col_20",
+  "term": null,
+  "reason": "Storage room, and no storage location term is among the candidates."
+ },
+ {
+  "column": "col_87",
+  "term": null,
+  "reason": "Y/N flags do not clearly identify any candidate."
+ },
+ {
+  "column": "col_54",
+  "term": "lib_id",
+  "reason": "Unique marker-and-plate IDs identify amplicon libraries."
+ },
+ {
+  "column": "col_22",
+  "term": null,
+  "reason": "Prefilter note, and no prefilter term is among the candidates."
+ },
+ {
+  "column": "col_75",
+  "term": null,
+  "reason": "Staff initials match no candidate."
+ },
+ {
+  "column": "col_85",
+  "term": null,
+  "reason": "Y/N flags do not clearly identify any candidate."
+ },
+ {
+  "column": "col_12",
+  "term": null,
+  "reason": "Sampling protocol link, and no collection method term is among the candidates."
+ },
+ {
+  "column": "col_53",
+  "term": null,
+  "reason": "Run-style IDs match no candidate."
+ },
+ {
+  "column": "col_35",
+  "term": null,
+  "reason": "Extraction kit name, and no kit term is among the candidates."
+ },
+ {
+  "column": "col_63",
+  "term": null,
+  "reason": "Target subfragment, and no subfragment term is among the candidates."
+ },
+ {
+  "column": "col_14",
+  "term": null,
+  "reason": "Volumes, and no volume term is among the candidates."
+ },
+ {
+  "column": "col_55",
+  "term": null,
+  "reason": "Sequencing run names match no candidate."
+ },
+ {
+  "column": "col_62",
+  "term": "target_gene",
+  "reason": "Value is a target gene from the allowed list."
+ },
+ {
+  "column": "col_83",
+  "term": null,
+  "reason": "Y/N flags do not clearly identify any candidate."
+ },
+ {
+  "column": "col_74",
+  "term": null,
+  "reason": "Small integers do not clearly identify any candidate."
+ },
+ {
+  "column": "col_4",
+  "term": "decimalLongitude",
+  "reason": "Values -80 to -86 are western longitudes."
+ },
+ {
+  "column": "col_2",
+  "term": "samp_category",
+  "reason": "Values are sample categories from the allowed list."
+ },
+ {
+  "column": "col_9",
+  "term": "env_local_scale",
+  "reason": "Ocean zones are local-scale ENVO terms."
+ },
+ {
+  "column": "col_89",
+  "term": null,
+  "reason": "Vehicle names are logistics data."
+ },
+ {
+  "column": "col_3",
+  "term": null,
+  "reason": "Physical sample IDs, and no sample ID term is among the candidates."
+ },
+ {
+  "column": "col_94",
+  "term": null,
+  "reason": "Vehicle names are logistics data."
+ },
+ {
+  "column": "col_82",
+  "term": null,
+  "reason": "Staff initials match no candidate."
+ },
+ {
+  "column": "col_58",
+  "term": "filename",
+  "reason": "Unique R1 fastq file names are forward read files."
+ },
+ {
+  "column": "col_11",
+  "term": null,
+  "reason": "0/1 values could fit several Boolean candidates."
+ },
+ {
+  "column": "col_86",
+  "term": null,
+  "reason": "Staff initials match no candidate."
+ },
+ {
+  "column": "col_73",
+  "term": null,
+  "reason": "Weather notes, and no weather term is among the candidates."
+ },
+ {
+  "column": "col_70",
+  "term": null,
+  "reason": "Project code, and no project term is among the candidates."
+ },
+ {
+  "column": "col_41",
+  "term": null,
+  "reason": "pH-like values match no candidate."
+ },
+ {
+  "column": "col_79",
+  "term": null,
+  "reason": "Y/N flags do not clearly identify any candidate."
+ },
+ {
+  "column": "col_42",
+  "term": null,
+  "reason": "Values 34 to 37 could be salinity or latitude."
+ },
+ {
+  "column": "col_37",
+  "term": null,
+  "reason": "Integer values do not clearly identify any candidate."
+ },
+ {
+  "column": "col_60",
+  "term": null,
+  "reason": "Sequence archive links, and no associatedSequences term is among the candidates."
+ },
+ {
+  "column": "col_31",
+  "term": null,
+  "reason": "Unit could belong to samp_size or samp_vol_we_dna_ext."
+ },
+ {
+  "column": "col_84",
+  "term": null,
+  "reason": "Y/N flags do not clearly identify any candidate."
+ },
+ {
+  "column": "col_24",
+  "term": "filter_material",
+  "reason": "Value is a filter material from the allowed list."
+ },
+ {
+  "column": "col_68",
+  "term": "platform",
+  "reason": "Value is a sequencing platform from the allowed list."
+ },
+ {
+  "column": "col_52",
+  "term": null,
+  "reason": "Assay names, and no assay term is among the candidates."
+ },
+ {
+  "column": "col_93",
+  "term": null,
+  "reason": "Y/N flags do not clearly identify any candidate."
+ },
+ {
+  "column": "col_21",
+  "term": null,
+  "reason": "Processing description, and no processing term is among the candidates."
+ },
+ {
+  "column": "col_34",
+  "term": null,
+  "reason": "Extraction protocol link, and no extraction method term is among the candidates."
+ },
+ {
+  "column": "col_56",
+  "term": null,
+  "reason": "8 bp index sequences could be forward or reverse MIDs."
+ },
+ {
+  "column": "col_91",
+  "term": null,
+  "reason": "Colour labels match no candidate."
+ },
+ {
+  "column": "col_23",
+  "term": null,
+  "reason": "Pore size, and no pore size term is among the candidates."
+ },
+ {
+  "column": "col_5",
+  "term": "decimalLatitude",
+  "reason": "Values near 27 with three decimals are station latitudes."
+ },
+ {
+  "column": "col_25",
+  "term": null,
+  "reason": "Filter product name, and no filter name term is among the candidates."
+ },
+ {
+  "column": "col_81",
+  "term": null,
+  "reason": "Small integers do not clearly identify any candidate."
+ },
+ {
+  "column": "col_10",
+  "term": "env_medium",
+  "reason": "Sea water and marine sediment are ENVO material terms."
+ },
+ {
+  "column": "col_88",
+  "term": null,
+  "reason": "Cost code is an admin field."
+ },
+ {
+  "column": "col_19",
+  "term": null,
+  "reason": "Storage room, and no storage location term is among the candidates."
+ },
+ {
+  "column": "col_46",
+  "term": null,
+  "reason": "A unit that could belong to several of the unit candidates."
+ },
+ {
+  "column": "col_32",
+  "term": "nucl_acid_ext_lysis",
+  "reason": "Values are lysis approaches from the allowed list."
+ },
+ {
+  "column": "col_80",
+  "term": null,
+  "reason": "Small integers do not clearly identify any candidate."
+ },
+ {
+  "column": "col_71",
+  "term": null,
+  "reason": "Staff initials match no candidate."
+ },
+ {
+  "column": "col_40",
+  "term": null,
+  "reason": "Small decimals do not clearly identify any candidate."
+ }
+]

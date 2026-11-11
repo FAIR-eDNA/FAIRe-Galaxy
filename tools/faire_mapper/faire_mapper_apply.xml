@@ -1,0 +1,1095 @@
+<tool id="faire_mapper_apply" name="FAIRe mapper: apply mapping" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="@PROFILE@" license="MIT">
+    <description>write a FAIRe workbook from a sample sheet and its crosswalk</description>
+    <macros>
+        <import>macros.xml</import>
+        <import>faire_guide.xml</import>
+    </macros>
+    <expand macro="creator"/>
+    <expand macro="requirements"/>
+    <version_command>python '$__tool_directory__/faire_mapper_apply.py' --version</version_command>
+    <command detect_errors="exit_code"><![CDATA[
+#set $table_name = str($table.element_identifier).replace("'", "")
+#set $crosswalk_name = str($crosswalk.element_identifier).replace("'", "")
+python '$__tool_directory__/faire_mapper_apply.py'
+    @TABLE_ARGS@
+    --crosswalk '$crosswalk'
+    --checklist '$__tool_directory__/checklist/FAIRe_checklist_v1.0.2.xlsx'
+    --template '$__tool_directory__/checklist/FAIRe_checklist_v1.0.2_FULLtemplate.xlsx'
+    --assay_type '$assay_type'
+    #if $sample_types:
+        --sample_types '$sample_types'
+    #end if
+    --project_id '$project_id'
+    #if str($assay_name).strip():
+        --assay_name '$assay_name'
+    #end if
+    #if str($country).strip():
+        --country '$country'
+    #end if
+    --date_order '$date_order'
+    $include_review
+    #if $project_values:
+        --project_values '$project_values'
+    #end if
+    #if $req_lev:
+        --req_lev 'M,$req_lev'
+    #else:
+        --req_lev 'M'
+    #end if
+    $drop_unmapped
+    #for $o in $otu_tables:
+        #set $oname = str($o.otu.element_identifier).replace("'", "")
+        --otu '$o.otu' --otu_name '$oname' --otu_sheet '$o.otu_sheet' --otu_assay '$o.otu_assay' --otu_run '$o.otu_run'
+        --otu_assay_column '$o.otu_assay_column' --otu_curated_column '$o.otu_curated_column'
+        --otu_lineage '$o.otu_lineage' --otu_stage '$o.otu_stage' --otu_layout '$o.otu_layout'
+        #if $o.taxa:
+            --taxa '$o.taxa' --taxa_sheet '$o.taxa_sheet'
+        #else:
+            --taxa '' --taxa_sheet ''
+        #end if
+    #end for
+    #for $l in $library_tables:
+        #set $lname = str($l.library.element_identifier).replace("'", "")
+        --library '$l.library' --library_name '$lname' --library_sheet '$l.library_sheet'
+        --library_assay '$l.library_assay' --library_filter '$l.library_filter' --library_run '$l.library_run'
+    #end for
+    --table_name '$table_name'
+    --crosswalk_name '$crosswalk_name'
+    --output faire.xlsx
+    --log '$log'
+    ]]></command>
+    <inputs>
+        <expand macro="table_input"/>
+        <param name="crosswalk" type="data" format="tabular,csv,xlsx,txt" label="Crosswalk"
+            help="The crosswalk (SSSOM) from FAIRe mapper: propose mapping, after review; edited in a spreadsheet and saved as Excel, CSV or tab-separated text is fine. Rows marked skos:exactMatch are applied: accepted, confirmed and model matches. To confirm a match for review, change its skos:closeMatch to skos:exactMatch. To stop a column being matched, delete its row; the column is then kept as a user-defined field unless you tick the option below to leave such columns out."/>
+        <param name="assay_type" type="select" label="Assay type">
+            <option value="metabarcoding" selected="true">Metabarcoding</option>
+            <option value="targeted">Targeted (qPCR or ddPCR)</option>
+        </param>
+        <param name="sample_types" type="select" multiple="true" optional="true" display="checkboxes" label="Sample types"
+            help="Leaves out the FAIRe fields specific to other sample types. Tick none to include all.">
+            <option value="Water">Water</option>
+            <option value="Soil">Soil</option>
+            <option value="Sediment">Sediment</option>
+            <option value="Air">Air</option>
+            <option value="HostAssociated">Host-associated</option>
+            <option value="MicrobialMatBiofilm">Microbial mat or biofilm</option>
+            <option value="SymbiontAssociated">Symbiont-associated</option>
+        </param>
+        <param name="project_id" type="text" label="Project ID" help="A short identifier with no spaces, as FAIRe asks (letters, digits, _ or -).">
+            <validator type="regex" message="Use letters, digits, _ or - only">^[A-Za-z0-9_-]+$</validator>
+        </param>
+        <param name="assay_name" type="text" value="" optional="true" label="Assay name(s)"
+            help="Separate several with commas, for example MiFish, crust16S. With one assay, the name is written to projectMetadata and to every sample; with several, each gets a column in projectMetadata, as FAIRe-ator makes them.">
+            <validator type="regex" message="Use letters, digits, _ or - in names, separated by commas">^\s*([A-Za-z0-9_-]+\s*(,\s*[A-Za-z0-9_-]+\s*)*)?$</validator>
+        </param>
+        <param name="country" type="text" value="" optional="true" label="Country or sea for geo_loc_name (optional)"
+            help="Put first in geo_loc_name when no column of the table gives a country or sea, for example Australia or Coral Sea Islands (INSDC names).">
+            <validator type="regex" message="Letters, spaces, commas, brackets, apostrophes and hyphens only">^[A-Za-z ,()'-]*$</validator>
+        </param>
+        <param name="date_order" type="select" label="Dates such as 06/09/2017"
+            help="Used only when no date in a column settles it (a value such as 13/09/2017 can only be day first).">
+            <option value="stop" selected="true">Stop and ask me</option>
+            <option value="dmy">Day first (6 September 2017)</option>
+            <option value="mdy">Month first (9 June 2017)</option>
+        </param>
+        <param name="include_review" type="boolean" truevalue="--include_review" falsevalue="" checked="false"
+            label="Also apply the matches for review (skos:closeMatch)"
+            help="Use this for a first draft. The log lists every match applied, so you can check them."/>
+        <param name="project_values" type="data" format="tabular,csv,xlsx,txt" optional="true" label="Values for the whole project (optional)"
+            help="Things true of the whole study, such as the primers, extraction kit or sequencing platform: a table (Excel, CSV or tab-separated) with the columns term (a FAIRe term name) and value, and optionally status and assay. Rows whose status is not supported or confirmed are left out. A project-level term goes to projectMetadata; a sample-level term is written for every sample. With several assays, a row with an assay name goes to that assay's column of projectMetadata (primers or target gene, say). A column of your sample table takes precedence."/>
+        <param name="req_lev" type="select" multiple="true" optional="true" display="checkboxes" label="Requirement levels to include"
+            help="Mandatory fields are always included.">
+            <option value="HR" selected="true">Highly recommended</option>
+            <option value="R" selected="true">Recommended</option>
+            <option value="O" selected="true">Optional</option>
+        </param>
+        <param name="drop_unmapped" type="boolean" truevalue="--drop_unmapped" falsevalue="" checked="false"
+            label="Leave out columns that are not matched to a FAIRe term"
+            help="By default, a column with no skos:exactMatch row in the crosswalk (no row, or a skos:closeMatch row not confirmed) is kept as a user-defined field at the end of sampleMetadata, as FAIRe allows."/>
+        <repeat name="otu_tables" title="OTU or ASV table" min="0" default="0"
+            help="Reads per sequence (or per taxon) and sample, one table per assay. Sample names must match the samp_name column (or lib_id).">
+            <param name="otu" type="data" format="tabular,csv,xlsx,txt" label="OTU or ASV table"
+                help="Samples as columns (one row per ASV, with its ID or its sequence first; taxonomy and sequence columns may follow the counts), or samples as rows (one column per ASV or taxon, as in a published matrix of reads per taxon; sample details after the counts are left out)."/>
+            <param name="otu_sheet" type="text" value="" optional="true" label="Excel sheet (OTU table)" help="Leave empty for the first sheet.">
+                <validator type="regex" message="Sheet names cannot contain quotes">^[^'"]*$</validator>
+            </param>
+            <param name="otu_layout" type="select" label="Layout of this table"
+                help="Leave on Detect it unless the log says the table was read the wrong way round. Your choice then overrides the detection.">
+                <option value="detect" selected="true">Detect it</option>
+                <option value="columns">Samples as columns (one row per sequence or taxon)</option>
+                <option value="rows">Samples as rows (one row per sample)</option>
+                <option value="long">Long form (one row per sample and sequence)</option>
+            </param>
+            <param name="otu_assay" type="text" value="" optional="true" label="Assay of this table"
+                help="One of the assay names above. Needed when several assays are named.">
+                <validator type="regex" message="Letters, digits, _ or - only">^[A-Za-z0-9_-]*$</validator>
+            </param>
+            <param name="otu_assay_column" type="text" value="" optional="true" label="Column that gives each row's assay (optional)"
+                help="For a table that holds several assays, such as Wilderlab's (its column target): one table is written for each assay, named by the column's values. Leave the assay of this table empty. If the assay names above are empty too, they are taken from this column.">
+                <validator type="regex" message="Column names cannot contain quotes">^[^'"]*$</validator>
+            </param>
+            <param name="otu_run" type="text" value="" optional="true" label="Sequencing run ID (seq_run_id) (optional)"
+                help="Used when the table has no library or run columns: the tool then writes one experimentRunMetadata row per sample of this table, with samp_name, assay_name and this run ID, and lib_id made from those three.">
+                <validator type="regex" message="Letters, digits, _, - or . only">^[A-Za-z0-9_.-]*$</validator>
+            </param>
+            <param name="taxa" type="data" format="tabular,csv,xlsx,txt" optional="true" label="Taxonomy table (optional)"
+                help="One row per ASV or OTU, keyed by its ID (or its sequence): FAIRe columns (kingdom ... specificEpithet, scientificName), rank columns (Kingdom ... Species, as DADA2 writes), or one lineage column (k__Animalia; p__Chordata ...). Taxonomy columns in the OTU table itself are read too; with neither, names in a table of reads per taxon are used."/>
+            <param name="taxa_sheet" type="text" value="" optional="true" label="Excel sheet (taxonomy table)">
+                <validator type="regex" message="Sheet names cannot contain quotes">^[^'"]*$</validator>
+            </param>
+            <param name="otu_lineage" type="text" value="" optional="true" label="Lineage column to use (optional)"
+                help="When the table has several lineage columns, such as PR2 tax and Silva 138.1 tax, the one that gives the taxonomy. Leave empty for the first; the others are kept in identificationRemarks.">
+                <validator type="regex" message="Column names cannot contain quotes">^[^'"]*$</validator>
+            </param>
+            <param name="otu_curated_column" type="text" value="" optional="true" label="Column of curated names (optional)"
+                help="For an ASV table with a column giving each ASV's curated name. The tool uses your curated names; it does not curate. On its own, such a table is written twice, as FAIRe asks: as the raw tables, with every ASV, and as the final tables, where taxaFinal has a row for each ASV that has a curated name, and otuFinal sums the reads of each name under its most abundant ASV. ASVs left without a curated name (those removed in curation, such as off-target or contaminant sequences) stay in the raw tables only. If your curated names are in a separate table (for example one that holds only the curated ASVs), also provide the ASV table before curation as another OTU table, written as &quot;otuRaw and taxaRaw&quot;, and set this table's &quot;Write this table as&quot; to &quot;otuFinal and taxaFinal&quot;. This table then gives only the final tables, and each ASV's sequence comes from the raw table.">
+                <validator type="regex" message="Column names cannot contain quotes">^[^'"]*$</validator>
+            </param>
+            <param name="otu_stage" type="select" label="Write this table as"
+                help="FAIRe keeps both: the tables before filtering and curation (raw) and the final tables. Add the same assay twice to give both, such as an ASV table as raw and its curated table as final. A final table without sequences takes them from the raw table, for rows with the same seq_id and the same reads (or fewer).">
+                <option value="final" selected="true">otuFinal and taxaFinal</option>
+                <option value="raw">otuRaw and taxaRaw</option>
+            </param>
+        </repeat>
+        <repeat name="library_tables" title="Library table" min="0" default="0"
+            help="Which sequence files belong to which sample: the run report of your study from ENA or the SRA, the SRA submission sheet, or your own run sheet. Fills experimentRunMetadata with lib_id, filename and filename2, their checksums, and associatedSequences (links to the run, BioSample and BioProject).">
+            <param name="library" type="data" format="tabular,csv,xlsx,txt" label="Library table"
+                help="From ENA: the study's read_run file report (TSV), with library_name, run_accession, sample_accession, study_accession, fastq_ftp and fastq_md5 (or submitted_ftp and submitted_md5). From the SRA: RunInfo, or the SRA submission sheet. Your own sheet: columns such as sample name, library ID, filename, filename2 and md5. Each library is matched to a sample by a sample name column, or by a library name that starts with the sample name (M159_16SFish matches M159)."/>
+            <param name="library_sheet" type="text" value="" optional="true" label="Excel sheet (library table)"
+                help="Leave empty for the first sheet that names libraries or files.">
+                <validator type="regex" message="Sheet names cannot contain quotes">^[^'"]*$</validator>
+            </param>
+            <param name="library_assay" type="text" value="" optional="true" label="Assays of these libraries"
+                help="One or more of the assay names above, separated by commas. A library that holds the amplicons of two assays gets one row for each, each with its own lib_id. Needed when several assays are named.">
+                <validator type="regex" message="Letters, digits, _ or - in names, separated by commas">^\s*([A-Za-z0-9_-]+\s*(,\s*[A-Za-z0-9_-]+\s*)*)?$</validator>
+            </param>
+            <param name="library_filter" type="text" value="" optional="true" label="Only the libraries whose name holds (optional)"
+                help="For example 16SFish, to keep the 16S libraries of a report that lists every library of the study. Not case sensitive.">
+                <validator type="regex" message="Letters, digits, spaces, _, - or . only">^[A-Za-z0-9_. -]*$</validator>
+            </param>
+            <param name="library_run" type="text" value="" optional="true" label="Sequencing run ID (seq_run_id) (optional)"
+                help="Used when the table has no run column. Otherwise the run ID of the OTU table of the same assay is used.">
+                <validator type="regex" message="Letters, digits, _, - or . only">^[A-Za-z0-9_.-]*$</validator>
+            </param>
+        </repeat>
+    </inputs>
+    <outputs>
+        <data name="workbook" format="xlsx" from_work_dir="faire.xlsx" label="${tool.name} on ${on_string}: FAIRe workbook"/>
+        <data name="log" format="txt" label="${tool.name} on ${on_string}: log"/>
+    </outputs>
+    <tests>
+        <!-- A reviewed crosswalk: combined place names, a number and its unit, dates, durations -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="assay_name" value="COIElasmo"/>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet3.xml">
+                        <has_text text="Australia: Great Barrier Reef, Lizard Island"/>
+                        <has_text text="2017-09-06"/>
+                        <has_text text="P316D"/>
+                        <has_text text="&lt;t&gt;mL&lt;/t&gt;"/>
+                        <has_text text="&lt;v&gt;0.45&lt;/v&gt;"/>
+                        <has_text text="&lt;t&gt;Notes&lt;/t&gt;"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/worksheets/sheet2.xml">
+                        <has_text text="lizard_test"/>
+                        <has_text text="FAIRe_checklist_v1.0.2.xlsx"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="'Country' + 'Reef' + 'Site' to geo_loc_name (sampleMetadata), combined in this order"/>
+                    <has_text text="read day first, as 13/09/2017 shows"/>
+                    <has_text text="'Volume filtered' to samp_size_unit (the unit)"/>
+                    <has_text text="'Control' to neg_cont_0_1: skos:closeMatch (for review)"/>
+                    <has_text text="kept as user-defined fields in sampleMetadata: Control, Notes"/>
+                    <has_text text="samp_category (sampleMetadata)"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Matches for review and values for the whole project -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="assay_name" value="COIElasmo, Fish16S"/>
+            <param name="include_review" value="true"/>
+            <param name="project_values" value="apply_project_values.tsv" ftype="tabular"/>
+            <param name="drop_unmapped" value="true"/>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet3.xml">
+                        <has_text text="sea water [ENVO:00002149]"/>
+                        <has_text text="COIElasmo | Fish16S"/>
+                        <not_has_text text="&lt;t&gt;Notes&lt;/t&gt;"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/worksheets/sheet2.xml">
+                        <has_text text="&lt;t&gt;assay2&lt;/t&gt;"/>
+                        <has_text text="&lt;t&gt;Fish16S&lt;/t&gt;"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="neg_cont_0_1 holds one value per project, but the column has 2"/>
+                    <has_text text="pcr_0_1 = 1 (projectMetadata)"/>
+                    <has_text text="project value samp_size = 2: a column of the table gives this term"/>
+                    <has_text text="project values with status review, not applied: pcr_primer_forward"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- A crosswalk edited in a spreadsheet and saved as Excel -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="crosswalk" value="apply_reef_crosswalk_edited.xlsx" ftype="xlsx"/>
+            <param name="project_id" value="lizard_test"/>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="crosswalk: apply_reef_crosswalk_edited.xlsx, 13 rows"/>
+                    <has_text text="'Country' + 'Reef' + 'Site' to geo_loc_name (sampleMetadata), combined in this order"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Dates that fit day first and month first: stops unless told which -->
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="table" value="apply_dates_ambiguous.csv"/>
+            <param name="crosswalk" value="apply_dates_ambiguous.sssom.tsv" ftype="tabular"/>
+            <param name="project_id" value="dates"/>
+            <assert_stderr>
+                <has_text text="dates such as 06/09/2017 can be read day first or month first"/>
+            </assert_stderr>
+        </test>
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_dates_ambiguous.csv"/>
+            <param name="crosswalk" value="apply_dates_ambiguous.sssom.tsv" ftype="tabular"/>
+            <param name="project_id" value="dates"/>
+            <param name="date_order" value="mdy"/>
+            <param name="country" value="Australia"/>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet3.xml">
+                        <has_text text="2017-06-09"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="read month first, as set on the form"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- OTU table with samples as columns and a lineage column; run rows made from it -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="assay_name" value="COIElasmo"/>
+            <repeat name="otu_tables">
+                <param name="otu" value="otu_asv_table.tsv" ftype="tabular"/>
+                <param name="otu_run" value="reef_run1"/>
+            </repeat>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/workbook.xml">
+                        <has_text text="name=&quot;otuFinal&quot;"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/worksheets/sheet7.xml">
+                        <has_text text="&lt;t&gt;asv_1&lt;/t&gt;"/>
+                        <has_text text="&lt;v&gt;1520&lt;/v&gt;"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/worksheets/sheet6.xml">
+                        <has_text text="&lt;t&gt;Lutjanus carponotatus&lt;/t&gt;"/>
+                        <has_text text="&lt;v&gt;0.99&lt;/v&gt;"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/worksheets/sheet4.xml">
+                        <has_text text="&lt;t&gt;reef_run1&lt;/t&gt;"/>
+                        <has_text text="&lt;t&gt;LIZ_01_COIElasmo_reef_run1&lt;/t&gt;"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="otu_asv_table.tsv: samples as columns; 4 sequences or taxa, 4 samples"/>
+                    <has_text text="otu_asv_table.tsv: 2 empty cells written as 0"/>
+                    <has_text text="otu_asv_table.tsv: taxonomy from the OTU table (taxonomy, Confidence)"/>
+                    <has_text text="experimentRunMetadata: 4 rows made from the OTU tables (samp_name, assay_name, seq_run_id)"/>
+                    <has_text text="lib_id is the library name, assay_name and seq_run_id (e.g. LIZ_01_COIElasmo_reef_run1), as FAIRe takes a library to be one amplicon of a sample; samp_name stands in for the library name in 4 rows"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Two assays: a matrix of reads per taxon (samples as rows) and a DADA2 table with its taxonomy -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="assay_name" value="COIElasmo,Fish16S"/>
+            <repeat name="otu_tables">
+                <param name="otu" value="otu_by_sample.csv" ftype="csv"/>
+                <param name="otu_assay" value="Fish16S"/>
+                <param name="otu_stage" value="raw"/>
+            </repeat>
+            <repeat name="otu_tables">
+                <param name="otu" value="otu_dada2.tsv" ftype="tabular"/>
+                <param name="otu_assay" value="COIElasmo"/>
+                <param name="taxa" value="otu_dada2_taxa.tsv" ftype="tabular"/>
+                <param name="otu_stage" value="raw"/>
+            </repeat>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/workbook.xml">
+                        <has_text text="name=&quot;otuRaw_Fish16S&quot;"/>
+                        <has_text text="name=&quot;taxaRaw_COIElasmo&quot;"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/worksheets/sheet6.xml">
+                        <has_text text="&lt;t&gt;other: subfamily&lt;/t&gt;"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/worksheets/sheet8.xml">
+                        <has_text text="&lt;t&gt;Plectropomus leopardus&lt;/t&gt;"/>
+                        <has_text text="&lt;t&gt;ASV1&lt;/t&gt;"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="otu_by_sample.csv: samples as rows; 4 sequences or taxa, 4 samples"/>
+                    <has_text text="otu_by_sample.csv: columns after the counts were left out (sample details): Site depth"/>
+                    <has_text text="otu_by_sample.csv: WARNING 1 samples are not in sampleMetadata, kept: LIZ_99"/>
+                    <has_text text="dna_sequence (mandatory in FAIRe) is empty for 4 of 4 rows; the table has reads summed per taxon"/>
+                    <has_text text="otu_dada2.tsv: the identifiers are DNA sequences"/>
+                    <has_text text="otu_dada2.tsv: taxonomy from the taxonomy table"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- An NCBI BioSample sheet: comment lines, MIxS lat_lon, one depth, yes/no controls, dates with
+             midnight; an ENA run report as the library table; an OTU table named after the fastq files -->
+        <test expect_num_outputs="2">
+            <param name="table" value="mixs_sheet.tsv" ftype="tabular"/>
+            <param name="crosswalk" value="mixs_sheet.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="assay_name" value="COIElasmo"/>
+            <param name="country" value="Australia"/>
+            <repeat name="otu_tables">
+                <param name="otu" value="otu_fastq_names.tsv" ftype="tabular"/>
+                <param name="otu_run" value="reef_run1"/>
+            </repeat>
+            <repeat name="library_tables">
+                <param name="library" value="library_ena_report.tsv" ftype="tabular"/>
+                <param name="library_filter" value="COI"/>
+            </repeat>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet3.xml">
+                        <has_text text="&lt;v&gt;-14.68472&lt;/v&gt;"/>
+                        <has_text text="&lt;v&gt;145.44247&lt;/v&gt;"/>
+                        <has_text text="&lt;t&gt;2017-09-06&lt;/t&gt;"/>
+                        <has_text text="&lt;t&gt;negative control&lt;/t&gt;"/>
+                        <not_has_text text="T00:00"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/worksheets/sheet4.xml">
+                        <has_text text="&lt;t&gt;LIZ_01_COI_COIElasmo_reef_run1&lt;/t&gt;"/>
+                        <has_text text="&lt;t&gt;reef_run1&lt;/t&gt;"/>
+                        <has_text text="&lt;t&gt;ERR9999901_1.fastq.gz&lt;/t&gt;"/>
+                        <has_text text="&lt;t&gt;a1b2c3d4e5f60718293a4b5c6d7e8f91&lt;/t&gt;"/>
+                        <has_text text="https://www.ebi.ac.uk/ena/browser/view/ERR9999901 | https://www.ebi.ac.uk/ena/browser/view/SAMEA9999901"/>
+                        <not_has_text text="LIZ_01_16S"/>
+                        <not_has_text text="LIZ_99"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/worksheets/sheet7.xml">
+                        <has_text text="&lt;t&gt;LIZ_01&lt;/t&gt;"/>
+                        <not_has_text text="LIZ_01_S1_L001"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="skipped 2 comment lines (starting with #) above the header"/>
+                    <has_text text="'*lat_lon' to decimalLatitude (the latitude) (sampleMetadata)"/>
+                    <has_text text="'*depth' to maximumDepthInMeters (sampleMetadata)"/>
+                    <has_text text="the time 00:00:00 on every date left out"/>
+                    <has_text text="yes written as negative control (1 rows), no as sample"/>
+                    <has_text text="neg_cont_0_1 = 1 (projectMetadata)"/>
+                    <has_text text="checksum_method = MD5 (projectMetadata)"/>
+                    <has_text text="5 of 6 libraries have 'COI' in their name"/>
+                    <has_text text="4 rows for 4 samples, matched by start of the library name (4)"/>
+                    <has_text text="1 libraries match no samp_name and are left out: LIZ_99_COI"/>
+                    <has_text text="1 files beside a read pair (reads that could not be paired) left out"/>
+                    <has_text text="4 names read as sample names without Illumina's sample number and lane ('LIZ_01_S1_L001' as 'LIZ_01')"/>
+                    <has_text text="the library tables name Illumina MiSeq (4 libraries)"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- The SRA submission sheet as the library table: the instructions sheet is skipped -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="assay_name" value="COIElasmo,Fish16S"/>
+            <repeat name="library_tables">
+                <param name="library" value="library_sra_sheet.xlsx" ftype="xlsx"/>
+                <param name="library_assay" value="COIElasmo"/>
+                <param name="library_run" value="reef_run2"/>
+            </repeat>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet4.xml">
+                        <has_text text="&lt;t&gt;LIZ_FB_COI_COIElasmo_reef_run2&lt;/t&gt;"/>
+                        <has_text text="&lt;t&gt;LIZ_FB_S4_L001_R2_001.fastq.gz&lt;/t&gt;"/>
+                        <has_text text="&lt;t&gt;reef_run2&lt;/t&gt;"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="sheet SRA_data read, the first that names libraries or files"/>
+                    <has_text text="4 rows for 4 samples, matched by sample name (4)"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Libraries that hold two amplicons in the same files: a lib_id for each amplicon -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="assay_name" value="COIElasmo,Fish16S"/>
+            <repeat name="library_tables">
+                <param name="library" value="library_two_amplicons.tsv" ftype="tabular"/>
+                <param name="library_assay" value="COIElasmo,Fish16S"/>
+                <param name="library_run" value="reef_run1"/>
+            </repeat>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet4.xml">
+                        <has_text text="&lt;t&gt;LIZ_01_16S_COI_COIElasmo_reef_run1&lt;/t&gt;"/>
+                        <has_text text="&lt;t&gt;LIZ_01_16S_COI_Fish16S_reef_run1&lt;/t&gt;"/>
+                        <has_text text="&lt;t&gt;ERR9999911_1.fastq.gz&lt;/t&gt;"/>
+                        <not_has_text text="&lt;t&gt;LIZ_01_16S_COI&lt;/t&gt;"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="4 rows for 2 samples"/>
+                    <has_text text="2 libraries hold several amplicons in the same files (e.g. LIZ_01_16S_COI: COIElasmo and Fish16S), so each amplicon has its own lib_id"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- PR2 and SILVA lineages with Wang classifier confidences: PR2 first, then SILVA chosen -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="assay_name" value="Euk18S"/>
+            <repeat name="otu_tables">
+                <param name="otu" value="otu_pr2_silva.csv" ftype="csv"/>
+            </repeat>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet6.xml">
+                        <has_text text="&lt;t&gt;Paracalanus parvus&lt;/t&gt;"/>
+                        <has_text text="&lt;t&gt;Dinoflagellata&lt;/t&gt;"/>
+                        <has_text text="&lt;t&gt;other: PR2 subdivision&lt;/t&gt;"/>
+                        <has_text text="&lt;t&gt;other: domain&lt;/t&gt;"/>
+                        <has_text text="&lt;v&gt;0.96&lt;/v&gt;"/>
+                        <has_text text="classified with PR2, whose levels above genus are not Linnaean ranks"/>
+                        <has_text text="also classified as Silva 138.1 tax: Eukaryota(100);Arthropoda(100)"/>
+                        <not_has_text text="&lt;t&gt;Dinophyta"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="lineages read from 'PR2 tax' as PR2 levels. FAIRe's rank terms are Linnaean ranks"/>
+                    <has_text text="lowest rank named: species 1"/>
+                </assert_contents>
+            </output>
+        </test>
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="assay_name" value="Euk18S"/>
+            <repeat name="otu_tables">
+                <param name="otu" value="otu_pr2_silva.csv" ftype="csv"/>
+                <param name="otu_lineage" value="Silva 138.1 tax"/>
+            </repeat>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet6.xml">
+                        <has_text text="&lt;t&gt;Calanoida&lt;/t&gt;"/>
+                        <has_text text="&lt;t&gt;Mediophyceae&lt;/t&gt;"/>
+                        <not_has_text text="&lt;t&gt;Calanoida_fa"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="lineages read from 'Silva 138.1 tax' as SILVA ranks (phylum to genus)"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- One assay twice: an ASV table as raw, and a curated table (reads merged per name, no
+             sequences) as final, which takes its sequences from the raw table where the reads agree -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="assay_name" value="Fish16S"/>
+            <repeat name="otu_tables">
+                <param name="otu" value="otu_raw_asv.csv" ftype="csv"/>
+                <param name="otu_stage" value="raw"/>
+            </repeat>
+            <repeat name="otu_tables">
+                <param name="otu" value="otu_curated.csv" ftype="csv"/>
+                <param name="otu_stage" value="final"/>
+            </repeat>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/workbook.xml">
+                        <has_text text="name=&quot;taxaRaw&quot;"/>
+                        <has_text text="name=&quot;otuRaw&quot;"/>
+                        <has_text text="name=&quot;taxaFinal&quot;"/>
+                        <has_text text="name=&quot;otuFinal&quot;"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/worksheets/sheet5.xml">
+                        <has_text text="&lt;t&gt;Trachurus novaezelandiae&lt;/t&gt;"/>
+                        <has_text text="AGAGTTTGATCCTGGCTCAGAACGAACGCTGGCGGCATGCCTAA"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/worksheets/sheet7.xml">
+                        <has_text text="&lt;t&gt;Trachurus&lt;/t&gt;"/>
+                        <has_text text="&lt;t&gt;Trachurus Sp&lt;/t&gt;"/>
+                        <has_text text="&lt;t&gt;Diaphus Sp1&lt;/t&gt;"/>
+                        <has_text text="&lt;t&gt;Sardinops sagax&lt;/t&gt;"/>
+                        <has_text text="GACCCTATGGAGCTTTAGACGCTAAGGTAGCCCAACCAGTTTCA"/>
+                        <has_text text="more reads than ASV_1 in otu_raw_asv.csv"/>
+                        <has_text text="GACCCTATGGAGCTTTAGACACTAGGTTAACCGAATCTAACCGT"/>
+                        <not_has_text text="Trachurus novaezelandiae"/>
+                        <not_has_text text="AGAGTTTGATCCTGGCTCAGAACGAACGCTGGCGGCATGCCTAA"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/worksheets/sheet8.xml">
+                        <has_text text="&lt;v&gt;960&lt;/v&gt;"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="otu_raw_asv.csv: written as otuRaw and taxaRaw (assay Fish16S)"/>
+                    <has_text text="otu_curated.csv: written as otuFinal and taxaFinal (assay Fish16S)"/>
+                    <has_text text="otu_curated.csv: columns not used (no FAIRe taxonomy term): Common_Name, Sp_Level"/>
+                    <has_text text="2 names such as 'Trachurus Sp' or 'Diaphus Sp1' are named to their first word"/>
+                    <has_text text="WARNING 1 name has a genus that differs from the genus column; the name's genus is written. Check for spelling mistakes: Emmelicthys nitidus (genus column Emmelichthys)"/>
+                    <has_text text="dna_sequence taken from otu_raw_asv.csv for 4 rows: the sequence of the ASV each row is named after; 1 row holds the reads of several ASVs"/>
+                    <has_text text="WARNING FAIRe's taxaFinal lists every ASV, one per row, and this table has one row per taxon"/>
+                    <has_text text="experimentRunMetadata: 4 rows made from the OTU tables"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- An ASV table with a column of curated names: raw tables with every ASV; taxaFinal one row per
+             curated ASV; otuFinal summed per name under its most abundant ASV -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="assay_name" value="Fish16S"/>
+            <repeat name="otu_tables">
+                <param name="otu" value="otu_asv_curated.csv" ftype="csv"/>
+                <param name="otu_curated_column" value="New_Name"/>
+            </repeat>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/workbook.xml">
+                        <has_text text="name=&quot;otuRaw&quot;"/>
+                        <has_text text="name=&quot;otuFinal&quot;"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/worksheets/sheet6.xml">
+                        <has_text text="&lt;t&gt;ASV_5&lt;/t&gt;"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/worksheets/sheet7.xml">
+                        <has_text text="&lt;t&gt;ASV_3&lt;/t&gt;"/>
+                        <has_text text="reads summed in otuFinal under ASV_1, the most abundant ASV of Sardinops sagax"/>
+                        <not_has_text text="AGAGTTTGATCCTGGCTCAGAACGAACGCTGGCGGCATGCCTAA"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/worksheets/sheet8.xml">
+                        <has_text text="&lt;v&gt;960&lt;/v&gt;"/>
+                        <not_has_text text="&lt;t&gt;ASV_3&lt;/t&gt;"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="otu_asv_curated.csv (raw): written as otuRaw and taxaRaw (assay Fish16S)"/>
+                    <has_text text="otu_asv_curated.csv (final): curated names from 'New_Name': 4 of 5 ASVs have one, in 3 taxa (1 with several ASVs)"/>
+                    <has_text text="the ASV without a curated name is in the raw tables only"/>
+                    <has_text text="otu_asv_curated.csv (final): written as otuFinal and taxaFinal (assay Fish16S)"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- An ASV table as raw, and a curated ASV table (curated names, no sequences, sample columns
+             named S_<sample>) as final: the final tables from the curated table, sequences from the raw -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="assay_name" value="Fish16S"/>
+            <repeat name="otu_tables">
+                <param name="otu" value="otu_asv_raw.csv" ftype="csv"/>
+                <param name="otu_stage" value="raw"/>
+            </repeat>
+            <repeat name="otu_tables">
+                <param name="otu" value="otu_asv_curated_names.csv" ftype="csv"/>
+                <param name="otu_stage" value="final"/>
+                <param name="otu_curated_column" value="New_Name"/>
+            </repeat>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet6.xml">
+                        <has_text text="&lt;t&gt;ASV_6&lt;/t&gt;"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/worksheets/sheet7.xml">
+                        <has_text text="&lt;t&gt;ASV_3&lt;/t&gt;"/>
+                        <has_text text="GACCCTATGGAGCTTTAGACACTAGGTTAACCGAATCTAACCAT"/>
+                        <has_text text="reads summed in otuFinal under ASV_1, the most abundant ASV of Sardinops sagax"/>
+                        <has_text text="&lt;t&gt;Spinycheek Lanternfish&lt;/t&gt;"/>
+                        <not_has_text text="&lt;t&gt;ASV_6&lt;/t&gt;"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/worksheets/sheet8.xml">
+                        <has_text text="&lt;v&gt;960&lt;/v&gt;"/>
+                        <not_has_text text="&lt;t&gt;ASV_3&lt;/t&gt;"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="otu_asv_curated_names.csv: 4 column names read as sample names without the prefix 'S_' ('S_LIZ_01' as 'LIZ_01')"/>
+                    <has_text text="otu_asv_curated_names.csv: curated names, written as the final tables only: the raw tables are otu_asv_raw.csv"/>
+                    <has_text text="otu_asv_curated_names.csv: dna_sequence taken from otu_asv_raw.csv for 4 rows"/>
+                    <has_text text="WARNING 1 name does not read as a scientific name, such as a common name: 'Spinycheek Lanternfish'. The rank columns name the taxon"/>
+                    <not_has_text text="WARNING dna_sequence"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- A control with "missing: not collected" values: written as "not applicable: control sample"; a sample's stays -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef_controls.csv"/>
+            <param name="crosswalk" value="apply_reef_controls.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="assay_name" value="Fish16S"/>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet3.xml">
+                        <has_text text="not applicable: control sample"/>
+                        <has_text text="missing: not collected"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="'missing: not collected' written as 'not applicable: control sample' in 3 cells of 1 control sample"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Two assays: values for each assay in its projectMetadata column, and drop-down lists -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="assay_name" value="COIElasmo,Fish16S"/>
+            <param name="project_values" value="project_values_by_assay.tsv" ftype="tabular"/>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet2.xml">
+                        <has_text text="&lt;t&gt;ACCAACCACAAAGANATNGGCAC&lt;/t&gt;"/>
+                        <has_text text="&lt;t&gt;GACCCTATGGAGCTTTAGAC&lt;/t&gt;"/>
+                        <has_text text="&lt;t&gt;MiSeq Reagent Kit v2 (500 cycles)&lt;/t&gt;"/>
+                        <has_text text="type=&quot;list&quot;"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/worksheets/sheet3.xml">
+                        <has_text text="'Drop-down values'!$E$5:$I$5"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="pcr_primer_forward = ACCAACCACAAAGANATNGGCAC (projectMetadata, assay COIElasmo)"/>
+                    <has_text text="pcr_primer_forward = GACCCTATGGAGCTTTAGAC (projectMetadata, assay Fish16S)"/>
+                    <has_text text="project value pcr_cycles for assay 'MiFish': not one of the assay names (COIElasmo, Fish16S); skipped"/>
+                    <has_text text="drop-down lists added to"/>
+                    <not_has_text text="- pcr_primer_forward (projectMetadata)"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- One table for two assays (Wilderlab's layout): split by its target column, with a repeated
+             sample column, names given with their NCBI ranks, short sequences; a depth range -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef_ranges.csv"/>
+            <param name="crosswalk" value="apply_reef_ranges.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="lizard_test"/>
+            <repeat name="otu_tables">
+                <param name="otu" value="otu_wilderlab.csv" ftype="csv"/>
+                <param name="otu_assay_column" value="target"/>
+                <param name="otu_run" value="wl_run1"/>
+            </repeat>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/workbook.xml">
+                        <has_text text="name=&quot;otuFinal_LG&quot;"/>
+                        <has_text text="name=&quot;taxaFinal_RJ&quot;"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="assays LG,RJ (from the assay column of the OTU table)"/>
+                    <has_text text="otu_wilderlab.csv: WARNING 1 column names appear more than once (LIZ_02)"/>
+                    <has_text text="otu_wilderlab.csv: the column 'target' gives each row's assay; 2 assays (LG, RJ), each written as its own table; 1 rows with no assay left out"/>
+                    <has_text text="otu_wilderlab.csv (LG): 4 names given with their rank, written to their rank term; 1 named root or the like (no assignment)"/>
+                    <has_text text="ranks not in Darwin Core written as other: clade (1)"/>
+                    <has_text text="otu_wilderlab.csv (RJ): the identifiers are DNA sequences; written as dna_sequence"/>
+                    <has_text text="1 such as 'unclassified Paracalanus' named for the group"/>
+                    <has_text text="'Depth (m)' to minimumDepthInMeters (sampleMetadata): 1 ranges written as their minimum (12-15)"/>
+                    <has_text text="'Depth (m)' to maximumDepthInMeters (sampleMetadata): 1 ranges written as their maximum (12-15)"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- An OTU table in long form: one row per sample and sequence -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="assay_name" value="COIElasmo"/>
+            <repeat name="otu_tables">
+                <param name="otu" value="otu_long.csv" ftype="csv"/>
+                <param name="otu_run" value="reef_run1"/>
+            </repeat>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/workbook.xml">
+                        <has_text text="name=&quot;otuFinal&quot;"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/worksheets/sheet7.xml">
+                        <has_text text="&lt;v&gt;1520&lt;/v&gt;"/>
+                        <has_text text="&lt;v&gt;13&lt;/v&gt;"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/worksheets/sheet6.xml">
+                        <has_text text="&lt;t&gt;Lutjanus carponotatus&lt;/t&gt;"/>
+                        <has_text text="GACCCTATGGAGCTTTAGACACTAGGTTAACCGAATCTAACCGT"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="otu_long.csv: long form (one row per sample and sequence: sample, ASV, reads); 3 sequences or taxa, 4 samples"/>
+                    <has_text text="otu_long.csv: 1 row repeats a sample and sequence; their counts are added"/>
+                    <has_text text="otu_long.csv: columns that vary within a sequence were left out (sample details): site_depth"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- An OTU table whose sample names do not match samp_name -->
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
+            <param name="project_id" value="lizard_test"/>
+            <repeat name="otu_tables">
+                <param name="otu" value="messy_edna.csv" ftype="csv"/>
+            </repeat>
+            <assert_stderr>
+                <has_text text="no column headers or first-column values match samp_name in the sample table"/>
+            </assert_stderr>
+        </test>
+        <!-- The sample table given as an OTU table: stops, and says what the file looks like -->
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="assay_name" value="COIElasmo"/>
+            <repeat name="otu_tables">
+                <param name="otu" value="apply_reef.csv"/>
+            </repeat>
+            <assert_stderr>
+                <has_text text="OTU table 'apply_reef.csv': no read counts were found"/>
+                <has_text text="It looks like a sample table (one row per sample, with sample details)"/>
+                <has_text text="give it as 'Your table' in FAIRe mapper"/>
+            </assert_stderr>
+        </test>
+        <!-- A taxonomy table given as an OTU table: stops, and says where it goes -->
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="assay_name" value="COIElasmo"/>
+            <repeat name="otu_tables">
+                <param name="otu" value="otu_dada2_taxa.tsv" ftype="tabular"/>
+            </repeat>
+            <assert_stderr>
+                <has_text text="It looks like a taxonomy table"/>
+                <has_text text="give it as 'Taxonomy table', beside its OTU table"/>
+            </assert_stderr>
+        </test>
+        <!-- Raw and final set the wrong way round, and an OTU table given as the taxonomy table: warnings -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="assay_name" value="Fish16S"/>
+            <repeat name="otu_tables">
+                <param name="otu" value="otu_raw_asv.csv" ftype="csv"/>
+                <param name="otu_stage" value="final"/>
+                <param name="taxa" value="otu_asv_raw.csv" ftype="csv"/>
+            </repeat>
+            <repeat name="otu_tables">
+                <param name="otu" value="otu_curated.csv" ftype="csv"/>
+                <param name="otu_stage" value="raw"/>
+            </repeat>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="WARNING 'otu_raw_asv.csv' is written as final but has more sequences or taxa than 'otu_curated.csv', written as raw (6 against 4 rows"/>
+                    <has_text text="swap 'Write this table as' for them"/>
+                    <has_text text="otu_raw_asv.csv: WARNING about its taxonomy table: It looks like an OTU or ASV table"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- The layout set by hand: right (read as set) and wrong (stops and names the setting) -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="assay_name" value="COIElasmo"/>
+            <repeat name="otu_tables">
+                <param name="otu" value="otu_asv_table.tsv" ftype="tabular"/>
+                <param name="otu_layout" value="columns"/>
+            </repeat>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="otu_asv_table.tsv: read with the samples as columns, as set"/>
+                </assert_contents>
+            </output>
+        </test>
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="assay_name" value="COIElasmo"/>
+            <repeat name="otu_tables">
+                <param name="otu" value="otu_asv_table.tsv" ftype="tabular"/>
+                <param name="otu_layout" value="rows"/>
+            </repeat>
+            <assert_stderr>
+                <has_text text="'Layout of this table' is samples as rows, but no value in the first column matches samp_name"/>
+            </assert_stderr>
+        </test>
+    </tests>
+    <help><![CDATA[
+@EARLY_VERSION@
+**What it does**
+
+This tool writes a FAIRe metadata workbook from your table and the crosswalk made by **FAIRe
+mapper: propose mapping**, which is the table, checked by you, that pairs each column of your table
+with a FAIRe term. The workbook has the same layout that FAIRe-ator makes (README, projectMetadata,
+sampleMetadata, the sheets for the assay type, and the drop-down values), so it can go straight to
+**FAIRe-fier** for checking and then on to the submission tools.
+
+The tool writes each mapped column to its FAIRe term. Where FAIRe needs values in a set form, it
+converts them:
+
+- **Dates** become ISO 8601 dates, so 12-Feb-19 becomes 2019-02-12. If a column's dates could be
+  read either day first or month first (06/09/2017), the tool stops unless you tell it which. A
+  single value such as 13/09/2017 settles it for the whole column.
+- **Durations** become ISO 8601 durations: "2 days" becomes P2D, and 316 under a header such as
+  *Days frozen* becomes P316D.
+- **A number and its unit** in one cell ("1 L") are split between the term and its unit term
+  (samp_size and samp_size_unit). Where the term has a set unit, the tool keeps just the number, so
+  "0.2 micron" for size_frac becomes 0.2, and millimetres are converted to µm.
+- **Place names in several columns** are combined into geo_loc_name, in the order given in the
+  crosswalk: "Australia: Great Barrier Reef, Lizard Island". If no column gives the country, set it
+  on the form.
+- **Latitude and longitude in one cell** (MIxS lat_lon, "40.57773667 S 148.7301917 E") are split
+  into decimalLatitude and decimalLongitude, with south and west written as negative numbers.
+- **Yes/no** values become 1 and 0, allowed values take the checklist's spelling, and country names
+  take the INSDC spelling. A yes/no column that marks the controls (``value_part`` *negative control
+  if yes*) is written to samp_category as *negative control* or *sample*.
+- **Dates saved with a time of midnight** (2023-06-30 00:00:00, as Excel and many scripts save
+  them) are written as dates only.
+- **"missing: not collected" in a control** (a negative or positive control, or a PCR standard) is
+  written as "not applicable: control sample", which is FAIRe's term for a value that a control
+  does not have.
+- **A column with one value for a project-level term** is written once, to projectMetadata.
+
+Columns with no ``skos:exactMatch`` row are kept as user-defined fields, as FAIRe allows, unless you
+tick *Leave out columns that are not matched to a FAIRe term*.
+
+@HELP_INPUTS@
+
+-----
+
+**Inputs**
+
+- **Your table**, as you gave it to *propose mapping*.
+- **Crosswalk**: the SSSOM crosswalk from *propose mapping*. The tool applies the rows marked
+  ``skos:exactMatch``, which are the accepted, confirmed and model matches. It leaves out the rows
+  marked for review (``skos:closeMatch``) unless you tick the option to apply them. You can edit the
+  crosswalk to confirm a match (change ``skos:closeMatch`` to ``skos:exactMatch``), to change the
+  term (``object_label``), or to stop a column being matched (delete its row).
+
+  Two columns of the crosswalk say how to build values. ``combine_order`` numbers the columns that
+  together make geo_loc_name; edit it to change the order of the parts. ``value_part`` says which
+  part of each cell a term takes: the number or the unit of "1 L", the latitude or the longitude of
+  a MIxS lat_lon, or *negative control if yes*. A column can have several rows, one for each term it
+  fills, so one depth column fills both minimumDepthInMeters and maximumDepthInMeters.
+- **Project ID, assay names, sample types and requirement levels**, as in FAIRe-ator.
+- **Values for the whole project** (optional): a table with the columns ``term`` and ``value``, and
+  optionally ``status`` and ``assay``, such as the values found in the methods text. Only rows with
+  the status *supported* or *confirmed*, or with no status, are applied. With several assays, a row
+  that gives an assay name (as given in *Assay name(s)*) goes to that assay's column of
+  projectMetadata. This means values that differ between assays, such as the primers and the target
+  gene, each sit with their own assay. Rows without an assay go to project_level.
+- **OTU or ASV tables** (optional; one per assay, or two per assay, raw and final). These hold the
+  reads of each sequence or taxon in each sample.
+
+  The tool works out whether the samples are columns or rows from the sample names, which must
+  match samp_name or lib_id, or be their Illumina file names (M108_S7_L001 for M108), or carry a
+  prefix that every sample column has (S_M108 for M108). If the log says a table was read the wrong
+  way round, set its *Layout of this table*.
+
+  A table in long form, with one row per sample and sequence (and columns such as *sample*, *ASV*
+  and *reads*), is turned into one row per sequence. Counts on repeated rows are added together,
+  and columns that vary within a sequence are left out. A table that holds several assays, with a
+  column giving each row's assay (Wilderlab's *target*), is split by that column (*Column that gives
+  each row's assay*). A sample column that appears twice is used once, with a warning. A name given
+  with its rank (NCBI's names and ranks, as Wilderlab gives them) fills its rank term. *root* means
+  no assignment, so no name is written, and *unclassified Paracalanus* is named Paracalanus.
+
+  With the samples as columns, the first column is the ASV ID or the sequence itself (as DADA2
+  writes it), and taxonomy, confidence and sequence columns may follow the counts. With the samples
+  as rows (a published matrix of reads per taxon, say), the counts end at the first column that is
+  not counts or that names a sample detail (*Site depth*), and the columns from there on are left
+  out. Empty cells are written as 0.
+- **Taxonomy table** (optional, one for each OTU table). This can hold FAIRe columns, rank columns
+  (Kingdom ... Species) or a lineage column (``k__Animalia; p__Chordata; ...``), and is keyed by the
+  ASV ID or its sequence.
+
+  FAIRe's rank terms (kingdom to species) are Linnaean ranks, so the tool fills them fully only for
+  Linnaean classifications, such as NCBI or BOLD taxonomy, whose names typically carry Linnaean
+  ranks. Lineages from PR2 and SILVA without rank labels, as mothur and the Wang classifier write
+  them (``Eukaryota(100);Obazoa(100);...``), are read by position. From SILVA the tool takes the
+  phylum to genus, and from PR2 only the genus and species, since PR2's levels in between are not
+  Linnaean ranks (its class can be Arthropoda, for example). An ASV named only above genus in PR2
+  gets that name as scientificName, with taxonRank *other: PR2 division* (or another PR2 level),
+  and identificationRemarks on each PR2 row says that PR2 was used. Add the PR2 version you used
+  (for example PR2 v5.0.0) as otu_db in your values for the whole project.
+
+  Placeholders such as *Dinophyta_XX*, *Calanoida_fa* or *_unclassified* are skipped, and the
+  classifier's confidence for the name given becomes confidence_score. The lineage itself is kept
+  in verbatimIdentification. If there are several lineage columns, the first (or the one named on
+  the form) gives the taxonomy, and the others are kept in identificationRemarks.
+
+  A name column (scientificName, or a curated name such as *New_Name*) gives the rank too. Binomials
+  are species, and names such as *Trachurus Sp* or *Diaphus Sp1* are named to their first word (the
+  genus Trachurus) and kept as written in verbatimIdentification. A name that reads as a common
+  name (*Atlantic Salmon*) is kept in verbatimIdentification, the rank columns name the taxon, and
+  the log lists it for you to check. With no taxonomy, the tool uses the names in a table of reads
+  per taxon: binomials as species, names ending in -idae as families, -iformes as orders, and other
+  single words as genera.
+- **Raw and final tables.** FAIRe keeps the tables from before curation (*otuRaw*, *taxaRaw*) and
+  after it (*otuFinal*, *taxaFinal*). The raw tables hold every ASV. taxaFinal lists every ASV of
+  the final taxa, one per row, and otuFinal sums the reads of each taxon's ASVs under the ID of its
+  most abundant ASV.
+
+  The simplest input for these four tables is an ASV table with a column that gives each ASV's
+  curated name (*Column of curated names*). From that one table, the tool writes otuRaw, taxaRaw,
+  otuFinal and taxaFinal. You can also give the assay two OTU tables: the ASV table, written as
+  otuRaw and taxaRaw, and a curated table with one row per taxon, written as otuFinal and taxaFinal
+  (set with *Write this table as* for each). Each final row then takes the sequence of the ASV it is
+  named after from the raw table. A row with more reads than that ASV holds several ASVs. In that
+  case identificationRemarks says so, and the log asks for the curated name of each ASV so that
+  taxaFinal can list them all.
+
+  If your curated names are in a separate ASV table, such as one of the curated ASVs only and
+  without sequences, give it as final with its *Column of curated names*, and the ASV table before
+  curation as raw. The final tables then come from the curated table, and each ASV's sequence from
+  the raw table.
+
+  When neither the table nor a library table gives the libraries, the tool writes one
+  experimentRunMetadata row for each sample of each OTU table, with the assay name and the run ID
+  you give, and samp_name standing in for the library name in lib_id (see below).
+- **Library tables** (optional). These say which sequence files belong to which sample. You can
+  give the run report of your study from ENA (the *read_run* file report: on the study's ENA page,
+  choose the columns library_name, run_accession, sample_accession, study_accession, fastq_ftp and
+  fastq_md5) or from the SRA (RunInfo), the SRA submission sheet, or your own run sheet. The tool
+  matches each library to a sample by a sample name column, or by a library name that starts with
+  the sample name (M159_16SFish_LerayCOI matches M159). Libraries of other samples are left out and
+  listed in the log.
+
+  The tool writes one experimentRunMetadata row for each library and assay, with lib_id, filename
+  and filename2, checksum_filename and checksum_filename2, and associatedSequences as links to the
+  run, the BioSample and the BioProject. It also fills platform, lib_layout and checksum_method in
+  projectMetadata when the libraries agree, and reports the instrument for you to add with its OBI
+  ID. ENA's fastq_ftp files are ENA's copies of the reads, named after the run
+  (SRR33695780_1.fastq.gz), with their own checksums; submitted_ftp and submitted_md5 give the files
+  as you submitted them. The library tables take the place of the run columns in your table, but
+  any values in those columns that the library tables do not give are kept.
+- **lib_id.** FAIRe defines a library as "an amplicon of a sample with unique MIDs", so each row of
+  experimentRunMetadata is one amplicon of one sample in one sequencing run. The tool writes lib_id
+  as the library name, the assay name and the run ID, joined by underscores
+  (M097_16SFish_LerayCOI_Fish16S_AGRF_2024-12). A library that holds the amplicons of several
+  assays in one set of files, as in the SEA-MES 16S and COI data, gets a lib_id for each amplicon,
+  and the rows share the files. The log lists such libraries. The names are long, but they are
+  machine readable, and FAIRe2NCBI and FAIRe2ENA take the assay and run off again so that the
+  archives get the library's own name.
+- **A file in the wrong field.** If a file given as an OTU, taxonomy or library table looks like
+  another kind of file, the run stops or warns, and says what the file looks like and which field
+  it belongs in. It also warns when a table written as final has more sequences or reads than the
+  raw table of the same assay, as happens when *Write this table as* is set the wrong way round.
+  **FAIRe mapper: identify your files** can tell you what each of your files is before you start.
+
+**Outputs**
+
+- **FAIRe workbook** (.xlsx). The OTU and taxonomy tables are added as *otuFinal* and *taxaFinal*,
+  or as *otuRaw* and *taxaRaw*, as set for each table. When there are several assays, the assay name
+  is added to the sheet names (*otuFinal_MiFish*), as in the FAIRe examples.
+- **Log**. This lists the inputs; each column written, with the conversion and an example; the
+  values for the whole project; what was left out and why; warnings, such as values that could not
+  be converted or repeated sample names; and the **mandatory terms still empty**, which are the next
+  things to fill in.
+
+-----
+
+**Not yet done by this tool**
+
+- The tool does not look up the ranks above a name. For a table of reads per taxon, use **edna2obis:
+  match taxa** to fill them from WoRMS or GBIF. ``dna_sequence`` stays empty when neither the table
+  nor a raw table of the same assay gives it.
+- Cell comments are not added to the sheets. Drop-down lists are added, in the same way FAIRe-ator
+  adds them, from the *Drop-down values* sheet.
+- ``checkls_ver`` is written the way FAIRe-ator writes it (*FAIRe_checklist_v1.0.2.xlsx*).
+  FAIRe-fier reports this as an error until the FAIRe authors settle its format.
+- Values from the table and the methods text are written to *project_level*. For values that differ
+  between assays, add an ``assay`` column to the values for the whole project, or move the values to
+  the assay columns yourself.
+
+@HELP_FAIRE_GUIDE@
+
+@HELP_ABOUT@
+    ]]></help>
+    <expand macro="citations"/>
+</tool>

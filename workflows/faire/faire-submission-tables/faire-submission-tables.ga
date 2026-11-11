@@ -1,0 +1,231 @@
+{
+    "name": "FAIRe: check a workbook and make submission tables",
+    "a_galaxy_workflow": "true",
+    "format-version": "0.1",
+    "annotation": "From a filled-in FAIRe workbook (a FAIRe-ator template, or the output of \"FAIRe mapper: write\nand check a FAIRe workbook\"): checks it with FAIRe-fier, and makes the NCBI BioSample and SRA\ntables, the ENA sample XML and the QIIME 2 metadata and manifests. The ENA experiment and run\nXML need the sample receipt ENA returns, so run \"FAIRe2ENA: experiments and runs\" afterwards.\nNothing is submitted.\n",
+    "tags": [],
+    "license": "MIT",
+    "release": "0.1",
+    "uuid": "1de36135-9f50-4a40-ae1f-ee27e3e9e302",
+    "creator": [
+        {
+            "name": "FAIRe Galaxy project contributors",
+            "class": "Organization"
+        }
+    ],
+    "comments": [],
+    "steps": {
+        "0": {
+            "id": 0,
+            "name": "workbook",
+            "type": "data_input",
+            "label": "workbook",
+            "annotation": "A FAIRe workbook.",
+            "tool_state": "{\"name\": \"workbook\", \"format\": [\"xlsx\"]}",
+            "position": {
+                "top": 0,
+                "left": 0
+            },
+            "input_connections": {},
+            "inputs": [
+                {
+                    "name": "workbook",
+                    "description": ""
+                }
+            ],
+            "outputs": [],
+            "workflow_outputs": [],
+            "post_job_actions": {}
+        },
+        "1": {
+            "id": 1,
+            "name": "center_name",
+            "type": "parameter_input",
+            "label": "center_name",
+            "annotation": "Your institution as registered with your ENA Webin account, for example CSIRO.",
+            "tool_state": "{\"name\": \"center_name\", \"parameter_type\": \"text\"}",
+            "position": {
+                "top": 10,
+                "left": 10
+            },
+            "input_connections": {},
+            "inputs": [
+                {
+                    "name": "center_name",
+                    "description": ""
+                }
+            ],
+            "outputs": [],
+            "workflow_outputs": [],
+            "post_job_actions": {}
+        },
+        "2": {
+            "id": 2,
+            "name": "fairefier",
+            "type": "tool",
+            "label": "check",
+            "annotation": "FAIRe-fier: errors and warnings against the FAIRe checklist.",
+            "tool_state": "{\"__page__\": 0}",
+            "tool_id": "fairefier",
+            "position": {
+                "top": 20,
+                "left": 20
+            },
+            "input_connections": {
+                "input_file": [
+                    {
+                        "id": 0,
+                        "output_name": "output"
+                    }
+                ]
+            },
+            "inputs": [],
+            "outputs": [],
+            "workflow_outputs": [
+                {
+                    "label": "fairefier_issues",
+                    "output_name": "issues"
+                },
+                {
+                    "label": "fairefier_summary",
+                    "output_name": "summary"
+                }
+            ],
+            "post_job_actions": {}
+        },
+        "3": {
+            "id": 3,
+            "name": "faire2ncbi_biosample",
+            "type": "tool",
+            "label": "biosample",
+            "annotation": "The NCBI BioSample table (organism marine metagenome unless the workbook gives one; change it on the run form).",
+            "tool_state": "{\"__page__\": 0}",
+            "tool_id": "faire2ncbi_biosample",
+            "position": {
+                "top": 30,
+                "left": 30
+            },
+            "input_connections": {
+                "input_file": [
+                    {
+                        "id": 0,
+                        "output_name": "output"
+                    }
+                ]
+            },
+            "inputs": [],
+            "outputs": [],
+            "workflow_outputs": [
+                {
+                    "label": "ncbi_biosample_table",
+                    "output_name": "biosample_table"
+                }
+            ],
+            "post_job_actions": {}
+        },
+        "4": {
+            "id": 4,
+            "name": "faire2ncbi_sra",
+            "type": "tool",
+            "label": "sra",
+            "annotation": "The NCBI SRA metadata table, with the instrument from the workbook.",
+            "tool_state": "{\"__page__\": 0}",
+            "tool_id": "faire2ncbi_sra",
+            "position": {
+                "top": 40,
+                "left": 40
+            },
+            "input_connections": {
+                "input_file": [
+                    {
+                        "id": 0,
+                        "output_name": "output"
+                    }
+                ]
+            },
+            "inputs": [],
+            "outputs": [],
+            "workflow_outputs": [
+                {
+                    "label": "ncbi_sra_table",
+                    "output_name": "sra_table"
+                }
+            ],
+            "post_job_actions": {}
+        },
+        "5": {
+            "id": 5,
+            "name": "faire2ena_sample",
+            "type": "tool",
+            "label": "ena_samples",
+            "annotation": "ENA SAMPLE and SUBMISSION XML (marine metagenome, taxon 408172, unless changed).",
+            "tool_state": "{\"__page__\": 0}",
+            "tool_id": "faire2ena_sample",
+            "position": {
+                "top": 50,
+                "left": 50
+            },
+            "input_connections": {
+                "input_file": [
+                    {
+                        "id": 0,
+                        "output_name": "output"
+                    }
+                ],
+                "center_name": [
+                    {
+                        "id": 1,
+                        "output_name": "output"
+                    }
+                ]
+            },
+            "inputs": [],
+            "outputs": [],
+            "workflow_outputs": [
+                {
+                    "label": "ena_samples_xml",
+                    "output_name": "samples_xml"
+                },
+                {
+                    "label": "ena_submission_xml",
+                    "output_name": "submission_xml"
+                }
+            ],
+            "post_job_actions": {}
+        },
+        "6": {
+            "id": 6,
+            "name": "faire2qiime",
+            "type": "tool",
+            "label": "qiime",
+            "annotation": "QIIME 2 sample metadata and manifests, one per assay.",
+            "tool_state": "{\"__page__\": 0, \"sample_name_column\": \"lib_id\", \"manifests\": {\"write_manifests\": \"yes\", \"absolute_path_sequences\": \"/path/to/sequences\"}}",
+            "tool_id": "faire2qiime",
+            "position": {
+                "top": 60,
+                "left": 60
+            },
+            "input_connections": {
+                "input_file": [
+                    {
+                        "id": 0,
+                        "output_name": "output"
+                    }
+                ]
+            },
+            "inputs": [],
+            "outputs": [],
+            "workflow_outputs": [
+                {
+                    "label": "qiime_metadata",
+                    "output_name": "metadata"
+                },
+                {
+                    "label": "qiime_manifests",
+                    "output_name": "manifest"
+                }
+            ],
+            "post_job_actions": {}
+        }
+    }
+}

@@ -1,0 +1,30 @@
+- doc: A single-assay FAIRe workbook (four samples from the GOMECC-4 example)
+  job:
+    workbook:
+      class: File
+      path: test-data/faire_ncbi_single_assay.xlsx
+      filetype: xlsx
+    center_name: CSIRO
+  outputs:
+    fairefier_summary:
+      asserts:
+        has_text:
+          text: sampleMetadata
+    ncbi_biosample_table:
+      asserts:
+        has_n_lines:
+          n: 16
+    ncbi_sra_table:
+      asserts:
+        has_text:
+          text: library_ID
+    ena_samples_xml:
+      asserts:
+        has_text:
+          text: "<SAMPLE "
+    qiime_metadata:
+      element_tests:
+        noaa-aoml-gomecc4_16S-V4V5:
+          asserts:
+            has_text:
+              text: GOMECC16S_Neg1
