@@ -36,3 +36,4 @@ otu_raw_description	ASVs from DADA2 (file 4 of the data record), with the prelim
 otu_final_description	Fish only: taxonomic assignments curated by the authors at the ASV level, with the reads of the ASVs given the same name summed under the most abundant of them, giving 235 fish taxa.	Fish16S
 target_subfragment	not applicable	Fish16S
 nucl_acid_amp	https://www.nespmarinecoastal.edu.au/publication/environmental-dna-for-measuring-offshore-marine-biodiversity-what-can-dna-in-water-collected-from-the-rv-investigator-tell-us/	Fish16S
+samp_vol_we_dna_ext_unit	mL	
