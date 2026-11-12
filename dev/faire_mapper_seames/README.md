@@ -104,7 +104,8 @@ For Wilderlab:
   for them.
 - `reviewer_decisions_WL.tsv`: confirms the control column, deletes sample_title and Location.
 - `project_values_WL.tsv`: from section 5 of the consolidated methods, the 12 assays' genes,
-  targets and primers. The primer names and references (as DOIs) of 9 assays are from Wilderlab's
+  targets and primers, and the unit (mL) of the extraction volume, which `make_WL_table.py` gives in
+  mL (added 12 November, for ENA). The primer names and references (as DOIs) of 9 assays are from Wilderlab's
   assay details table of 11 June 2025 (ECOSCAN_assay_details_250611.xlsx, which you supplied); LG,
   RJ and XN are not in it. The annealing temperatures of the same 9 assays are from Wilderlab's
   assay details table of 9 July 2026 ([Wilderlab_assay_details_260709.xlsx](https://s3.ap-southeast-2.amazonaws.com/wilderlab.resources/methods/Wilderlab_assay_details_260709.xlsx)): 58 °C for WV and RV,

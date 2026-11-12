@@ -140,3 +140,4 @@ pcr_cond	95 °C for 3 min, then 38 cycles of 95 °C for 5 s, annealing for 10 s 
 target_gene	COI	XN
 pcr_primer_forward	DACWGGWTGAACWGTWTAYCCHCC	XN
 pcr_primer_reverse	TANACYTCNGGRTGNCCRAARAAYCA	XN
+samp_vol_we_dna_ext_unit	mL	
