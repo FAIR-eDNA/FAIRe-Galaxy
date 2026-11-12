@@ -26,7 +26,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
 
 ## Status
 
-- Version 0.5.0. `planemo lint`: passes with no warnings. `pyflakes`: clean.
+- Version 0.5.1. `planemo lint`: passes with no warnings. `pyflakes`: clean.
 - Goes to Galaxy Australia as an early version with the wrapped FAIRe tools (decided 6 November
   2026). Each tool's help starts with a note saying so, which asks users to check the results and
   send problems to the Galaxy Australia help desk (to confirm with Galaxy Australia, question 8).
@@ -43,6 +43,12 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   independent answer keys (`dev/faire_mapper_real_datasets/`, `dev/faire_mapper_australian_datasets/`,
   summarised below), and end to end on CSIRO's SEA-MES data (`dev/faire_mapper_seames/`). Not yet
   tried on datasets from Australian labs that already have a FAIRe version.
+- New in 0.5.1 (12 November 2026): each crosswalk comment says, in plain sentences and the same
+  order, what the FAIRe term means (from the checklist), why it was proposed (with the table's own
+  values), what apply mapping will do with the values, and, for rows to review, what to check. A
+  yes/no control column explains why it goes to samp_category and how many rows become controls.
+  Apply mapping writes `checkls_ver` as the number 1, as the checklist defines it and the FAIRe
+  examples use it; the README sheet names the exact checklist.
 - New in 0.5.0, from the SEA-MES trial: comment lines above the header (NCBI and ENA sheets) are
   skipped; MIxS lat_lon is split into decimalLatitude and decimalLongitude; one depth fills both
   depth terms; a yes/no control column goes to samp_category; dates saved at midnight lose the time;
@@ -367,8 +373,8 @@ the sample table, whose values fill what they do not give. ENA's fastq_ftp files
 Round trip: the CPR_2015 FAIRe example's otuFinal and taxaFinal, read back through the tool, give the
 same counts and taxonomy (stray spaces trimmed; scientificName and taxonRank added where empty). Not
 yet done: drop-down lists and cell comments in the sheets, ranks above a bare taxon name (edna2obis's
-*match taxa* can fill them), and values that differ between assays (all go to *project_level*). `checkls_ver` is written as FAIRe-ator writes it, which FAIRe-fier reports as an
-error until the FAIRe authors settle its format.
+*match taxa* can fill them), and values that differ between assays (all go to *project_level*). `checkls_ver` is written as the number 1, which FAIRe-fier accepts (FAIRe-ator writes the file
+name, which it does not).
 
 ### Adding a language model
 

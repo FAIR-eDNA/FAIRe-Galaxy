@@ -33,7 +33,7 @@ from pathlib import Path
 
 import pandas as pd
 
-__version__ = '0.5.0'
+__version__ = '0.5.1'
 
 MISSING = {'', 'na', 'n/a', 'nan', 'none', 'null', '-', '--', '?', 'not applicable', 'missing',
            'not collected', 'not provided', 'unknown'}
@@ -932,6 +932,10 @@ class Candidate:
     name_score: float
     value_score: float
     evidence: str
+    name_why: str = ''      # the parts of the evidence, for the comment a reviewer reads
+    value_why: str = ''
+    level_why: str = ''
+    from_desc: bool = False
 
 
 HEAD_ENDS = re.compile(r"\s(?:that|which|who|whom|whose|where|when|of|for|used|from|in|at|on|to|by|with|based|"
@@ -990,7 +994,8 @@ def score_column(p, terms, scorer, header_tokens, desc_tokens=None):
         name_bit = '' if ns < 0.3 else (f'description has the {nwhy} ({ns:.2f})' if from_desc
                                         else f'header matches {nwhy} ({ns:.2f})')
         bits = [b for b in (name_bit, vwhy, lwhy) if b]
-        out.append(Candidate(t.name, round(score, 3), round(ns, 3), round(vf, 3), '; '.join(bits)))
+        out.append(Candidate(t.name, round(score, 3), round(ns, 3), round(vf, 3), '; '.join(bits),
+                             nwhy if ns >= 0.3 else '', vwhy, lwhy, from_desc))
     out.sort(key=lambda c: c.score, reverse=True)
     return out
 
@@ -1029,6 +1034,7 @@ class Proposal:
     unit_term: str = ''    # a unit term filled from the same cells ("1 L" fills samp_size and samp_size_unit)
     value_part: str = ''   # which part of each cell the term takes: number, latitude, or a conversion
     also: list = field(default_factory=list)   # other (term, value_part, note) filled from the same column
+    comment: str = ''      # what a reviewer reads in the crosswalk (reader_comment)
 
     def also_terms(self):
         return [a[0] for a in self.also]
@@ -1090,6 +1096,165 @@ def shortlist_length(cands, k, k_close):
     if k_close and k_close > k and len(cands) > k and cands[0].score - cands[k - 1].score < CLOSE:
         return k_close
     return k
+
+
+# ------------------------------------------------------------------ comments for the reviewer
+# Each crosswalk row explains itself in the same order: the FAIRe term and what it means, why the
+# mapper chose it, what the apply mapping tool will do with the values, and (for rows to review)
+# what the reviewer should check. Plain sentences with the reviewer's own values; scores stay in
+# the confidence column.
+
+BOOL_YES, BOOL_NO = {'1', 'yes', 'y', 'true', 't', '1.0'}, {'0', 'no', 'n', 'false', 'f', '0.0'}
+# Hints the reviewer has to act on; the apply mapping tool carries out the others itself.
+PERSON_HINTS = ('add ENVO', 'set ', 'project-level value')
+
+
+def strength(score):
+    return 'strong' if score >= 0.9 else ('moderate' if score >= ACCEPT else 'weak')
+
+
+def _sentence(text):
+    text = str(text).strip()
+    if not text:
+        return ''
+    text = text[0].upper() + text[1:]
+    return text if text[-1] in '.?!' else text + '.'
+
+
+def term_gloss(t):
+    """The first sentence of the checklist's description, and the allowed values when there are few."""
+    d = re.sub(r'\s+', ' ', t.description).strip()
+    m = re.match(r'(.+?[.?!])(?:\s|$)', d)
+    d = m.group(1) if m else d
+    if len(d) > 200:
+        d = d[:197].rsplit(' ', 1)[0] + '...'
+    vocab = [v.strip() for v in t.vocab if str(v).strip()]
+    if vocab and len(vocab) <= 8 and not any(v.startswith('http') for v in vocab):
+        shown = ['other (describe it)' if v == 'other:' else v for v in vocab]
+        d = _sentence(d) + ' Allowed values: ' + ', '.join(shown)
+    return _sentence(d)
+
+
+def name_phrase(c):
+    """Why the column name points to the term, in words."""
+    if not c.name_why:
+        return ''
+    first = re.split(r'[;,] ', c.name_why)[0]
+    label = first.split("'")[1] if "'" in first else ''
+    what = (f"the FAIRe term's own name ('{label}')" if first.startswith('term name')
+            else f"'{label}', another name for this FAIRe term")
+    if c.from_desc:
+        text = f"the column's description mentions {what}"
+    elif c.name_score >= 0.95:
+        text = f'the column name matches {what}'
+    else:
+        text = f'the column name partly matches {what}'
+    if 'description names other terms' in c.name_why:
+        text += ", although the column's description points to other FAIRe terms"
+    return text
+
+
+def _examples(p, n=3):
+    ex = [e if len(e) <= 28 else e[:25] + '...' for e in p.examples[:n]]
+    return ', '.join(ex)
+
+
+def _value_problem(why):
+    for prefix in ('conflict: ', 'check values: '):
+        if why.startswith(prefix):
+            return why[len(prefix):]
+    return ''
+
+
+def reader_comment(pr, p, c, t, ctx):
+    """The comment a reviewer reads for one crosswalk row (see the block comment above)."""
+    review = pr.route == 'review'
+    why, happens, check = [], [], []
+    if pr.route == 'confirmed':
+        why.append('set by a reviewer')
+    elif pr.route == 'model':
+        why.append(pr.evidence)
+        check.append('a language model chose this FAIRe term. Confirm it, change it, or delete this row')
+    elif pr.column in ctx['flags']:
+        was, kind, yes, no, n_yes, n_no, example = ctx['flags'][pr.column]
+        why.append(f"{strength(pr.score)} match. The column holds {' and '.join(yes + no)}, and its name is "
+                   f"close to {was}. That FAIRe term is one yes/no for the whole project, but these values "
+                   f"change from row to row, so the mapper reads them as marking which rows are controls")
+        happens.append(f"{'/'.join(yes)} ({n_yes} rows) becomes '{kind}' and {'/'.join(no)} ({n_no} rows) "
+                       f"becomes 'sample'" + (f' (for example, {example} becomes {kind})' if example else ''))
+        ctype = 'neg_cont_type' if kind.startswith('neg') else 'pos_cont_type'
+        eg = ctx['control_example'].get(ctype, '')
+        check.append(f"are all the {'/'.join(yes)} rows {kind}s? If so, confirm this row, then give each control a "
+                     f"{ctype}" + (f" (for example '{eg}')" if eg else ''))
+    else:
+        if pr.column in ctx['unit_notes']:
+            why.append(f"this column holds the {ctx['unit_notes'][pr.column]}")
+        elif c is not None:
+            bits = [f'{strength(pr.score)} match', name_phrase(c)]
+            vwhy = re.split(r': split into ', c.value_why)[0]
+            problem = _value_problem(vwhy)
+            if p.n_values and not problem and vwhy and vwhy != 'no values':
+                bits.append(vwhy)
+                if '(' not in vwhy and p.examples:
+                    bits.append(f'for example: {_examples(p)}')
+            elif p.n_values and p.examples:
+                bits.append(f'values include {_examples(p)}')
+            why.append(' '.join(_sentence(b) for b in bits if b))
+            problems = []
+            if problem:
+                problems.append(f'the values may not suit this FAIRe term ({problem})')
+            level = c.level_why if 'varies between rows' in c.level_why else ctx['level_notes'].get(pr.column, '')
+            if level:
+                problems.append(f'this FAIRe term holds one value for the whole project or assay, but the column '
+                                f'has {p.n_unique} different values')
+            if problems:
+                check.extend(problems)
+                check.append('delete this row unless you are sure the column holds what the FAIRe term describes')
+            if not p.n_values:
+                check.append('the column is empty in your table. Delete this row, or fill the column and '
+                             'propose the mapping again')
+        if pr.column in ctx['clashes']:
+            check.append(f"another column, '{ctx['clashes'][pr.column]}', was given the same FAIRe term and matches "
+                         f"it better. Keep one of them")
+        if pr.part:
+            note = ctx['part_notes'].get(pr.column, '')
+            happens.append(f"this column is part {pr.part} of {pr.term}, joined with "
+                           + note.split(', with ', 1)[1].split(';')[0] + ' (country or sea name first, then '
+                           'broader places before narrower ones)' if ', with ' in note else '')
+            if 'is a guess' in note:
+                check.append('the order of the parts is a guess, as some columns have the same number of '
+                             'different values. Check the combine_order numbers')
+            elif review:
+                check.append(f'the columns that build {pr.term} are applied together. Confirm or delete them '
+                             f'together')
+        for h in [x.strip() for x in pr.hint.split(';') if x.strip()]:
+            if h.startswith(PERSON_HINTS):
+                check.append(h)
+            else:
+                happens.append(f'the tool will {h}')
+        if pr.value_part == 'latitude' and p.examples:
+            ll = parse_lat_lon(p.examples[0])
+            if ll:
+                happens.append(f'for example, {p.examples[0]} becomes {ll[0]} and {ll[1]}')
+    if review and not check:
+        rival = next((x for x in ctx['rivals'].get(pr.column, []) if x != pr.term), '')
+        check.append('confirm this row if the column holds what the FAIRe term describes. Otherwise change the '
+                     'FAIRe term' + (f' (another possible one is {rival})' if rival else '') + ' or delete the row')
+    parts = [f'FAIRe term: {pr.term}. {term_gloss(t)}' if t else f'FAIRe term: {pr.term}.']
+    if why:
+        parts.append('Why: ' + ' '.join(_sentence(w) for w in why if w))
+    if happens:
+        parts.append('What happens: ' + ' '.join(_sentence(h) for h in happens if h))
+    if check:
+        parts.append('Check: ' + ' '.join(_sentence(x) for x in check if x)
+                     + (' To confirm, change skos:closeMatch to skos:exactMatch.' if review and p.n_values else ''))
+    return ' '.join(parts)
+
+
+def also_comment(pr, term, note, t):
+    return (f'FAIRe term: {term}. {term_gloss(t) if t else ""} Why: Same column as the {pr.term} row above. '
+            f'What happens: {_sentence(note)}'
+            + (' Check: confirm or delete it together with that row.' if pr.route == 'review' else ''))
 
 
 def propose(df, terms, k=5, overrides=None, answered_by=None, descriptions=None, k_close=10):
@@ -1261,7 +1426,7 @@ def propose(df, terms, k=5, overrides=None, answered_by=None, descriptions=None,
             del assigned_term[term]
             assigned_col[col], assigned_term['samp_category'] = 'samp_category', col
             flags[col] = (term, score_for(col, term))
-    proposals = []
+    proposals, level_notes = [], {}
     for p in profiles:
         cands = scored[p.column]
         term = assigned_col.get(p.column)
@@ -1308,6 +1473,7 @@ def propose(df, terms, k=5, overrides=None, answered_by=None, descriptions=None,
             route = 'review'
             if 'varies between rows' not in c.evidence:
                 level_note = f'{p.n_unique} different values, but the term holds one value per project or assay'
+        level_notes[p.column] = level_note
         if bases.get(p.column) and route == 'accept':
             base_prop = next((x for x in proposals if x.column == bases[p.column]), None)
             if base_prop is not None and base_prop.route != 'accept':
@@ -1344,6 +1510,32 @@ def propose(df, terms, k=5, overrides=None, answered_by=None, descriptions=None,
                 if pr.route == 'accept':
                     pr.route = 'review'
                     pr.evidence += '; for review with the other parts'
+    # What the reviewer reads in the crosswalk.
+    id_col = assigned_term.get('samp_name')
+    flag_info = {}
+    for col, (was, _s) in flags.items():
+        kind = CONTROL_FLAGS[was]
+        vals = [str(v).strip() for v in df[col] if not (v is None or (isinstance(v, float) and math.isnan(v)))]
+        yes = list(dict.fromkeys(v for v in vals if v.lower() in BOOL_YES))
+        no = list(dict.fromkeys(v for v in vals if v.lower() in BOOL_NO))
+        example = ''
+        if id_col is not None and id_col in df:
+            hit = df.loc[df[col].astype(str).str.strip().str.lower().isin(BOOL_YES), id_col]
+            example = str(hit.iloc[0]) if len(hit) else ''
+        flag_info[col] = (was, kind, yes, no, sum(v.lower() in BOOL_YES for v in vals),
+                          sum(v.lower() in BOOL_NO for v in vals), example)
+    ctx = {'flags': flag_info, 'unit_notes': unit_notes, 'part_notes': part_notes, 'clashes': clashes,
+           'level_notes': level_notes,
+           'rivals': {col: [x.term for x in cands if x.term not in assigned_term and x.score >= REVIEW]
+                      for col, cands in scored.items()},
+           'control_example': {n: next((v for v in by_name[n].vocab if v and 'negative' in v and v != 'site negative'),
+                                       by_name[n].vocab[0] if by_name[n].vocab else '')
+                               for n in ('neg_cont_type', 'pos_cont_type') if n in by_name}}
+    for pr in proposals:
+        if pr.term:
+            c = next((x for x in scored[pr.column] if x.term == pr.term), None)
+            pr.comment = reader_comment(pr, prof[pr.column], c, by_name.get(pr.term), ctx)
+            pr.also = [(term, part, also_comment(pr, term, note, by_name.get(term))) for term, part, note in pr.also]
     return profiles, proposals
 
 
@@ -1392,7 +1584,9 @@ def write_sssom(proposals, path, source_name, checklist_name):
         '#   - slot_name: value_part',
         '#     property: urn:faire-mapper:value_part',
         '#     type_hint: xsd:string',
-        '# comment: combine_order numbers the columns that together build one value, in order',
+        '# comment: each row\'s comment says what the FAIRe term means, why it was proposed, what the',
+        '#   apply mapping tool will do with the values and, for rows to review, what to check.',
+        '#   combine_order numbers the columns that together build one value, in order',
         '#   (geo_loc_name is country, then region, then locality). value_part says which part of each',
         '#   cell a term takes: number or unit (1 L fills samp_size and samp_size_unit), latitude or',
         '#   longitude (MIxS lat_lon), or a conversion (negative control if yes). The apply mapping',
@@ -1412,14 +1606,14 @@ def write_sssom(proposals, path, source_name, checklist_name):
             'object_label': p.term,
             'mapping_justification': 'semapv:ManualMappingCuration' if p.route == 'confirmed' else 'semapv:CompositeMatching',
             'confidence': round(p.score, 3),
-            'comment': f'{p.route}; {p.evidence}' + (f'; hint: {p.hint}' if p.hint else ''),
+            'comment': p.comment or (f'{p.route}; {p.evidence}' + (f'; hint: {p.hint}' if p.hint else '')),
             'combine_order': p.part or '',
             'value_part': p.value_part,
         }
         rows.append(row)
         for term, part, note in p.also:
             rows.append({**row, 'object_id': f'FAIRe:{term}', 'object_label': term,
-                         'comment': f'{p.route}; {note}', 'value_part': part})
+                         'comment': note if note.startswith('FAIRe term:') else f'{p.route}; {note}', 'value_part': part})
     cols = ['subject_id', 'subject_label', 'predicate_id', 'object_id', 'object_label',
             'mapping_justification', 'confidence', 'comment', 'combine_order', 'value_part']
     with open(path, 'w', encoding='utf-8') as f:

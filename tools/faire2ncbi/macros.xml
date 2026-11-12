@@ -2,7 +2,7 @@
     <!-- Upstream has no tagged releases. The version is the date of the pinned
          commit (aomlomics/FAIRe2NCBI ef62f3da0281596d926b1aaa6c7c6c4c728d9d90). -->
     <token name="@TOOL_VERSION@">2026.07.23</token>
-    <token name="@VERSION_SUFFIX@">2</token>
+    <token name="@VERSION_SUFFIX@">3</token>
     <token name="@PROFILE@">23.0</token>
     <xml name="requirements">
         <requirements>

@@ -168,6 +168,10 @@ Evidence for each is in the wrapper's test data or the upstream code at the pinn
 - **FAIRe-ator layout not read in SRA mode**: no platform is found for `assay1`, `assay2`
   columns, so it asks "Enter platform value" for each assay, and the target gene and primers in
   design_description would be "NA" (item 2 above).
+- **Empty terms written into design_description**: an empty `target_subfragment` or
+  `nucl_acid_amp`, or a FAIRe missing value such as `not applicable`, gives "gene NA region" and
+  "using protocol at NA" (`FAIRe2SRA.py` line 2308). Since version 2026.07.23+galaxy3 the wrapper
+  leaves those phrases out.
 - **associatedSequences filter in BioSample mode** is only offered on the grouping-field path
   (`FAIRe2BioSample.py` line 2741).
 - **Units dropped** when a column holds `not applicable: control sample` or similar (item 6).

@@ -198,7 +198,7 @@ python '$__tool_directory__/faire_mapper_apply.py'
                     </has_archive_member>
                     <has_archive_member path="xl/worksheets/sheet2.xml">
                         <has_text text="lizard_test"/>
-                        <has_text text="FAIRe_checklist_v1.0.2.xlsx"/>
+                        <not_has_text text="FAIRe_checklist_v1.0.2.xlsx"/>
                     </has_archive_member>
                 </assert_contents>
             </output>
@@ -1081,8 +1081,9 @@ tick *Leave out columns that are not matched to a FAIRe term*.
   nor a raw table of the same assay gives it.
 - Cell comments are not added to the sheets. Drop-down lists are added, in the same way FAIRe-ator
   adds them, from the *Drop-down values* sheet.
-- ``checkls_ver`` is written the way FAIRe-ator writes it (*FAIRe_checklist_v1.0.2.xlsx*).
-  FAIRe-fier reports this as an error until the FAIRe authors settle its format.
+- ``checkls_ver`` is written as the number 1, as the checklist defines it and the FAIRe examples
+  use it. The README sheet names the exact checklist (*FAIRe_checklist_v1.0.2.xlsx*). FAIRe-ator
+  writes the file name here, which FAIRe-fier reports as an error.
 - Values from the table and the methods text are written to *project_level*. For values that differ
   between assays, add an ``assay`` column to the values for the whole project, or move the values to
   the assay columns yourself.
