@@ -26,7 +26,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
 
 ## Status
 
-- Version 0.5.1. `planemo lint`: passes with no warnings. `pyflakes`: clean.
+- Version 0.6.0. `planemo lint`: passes with no warnings. `pyflakes`: clean.
 - Goes to Galaxy Australia as an early version with the wrapped FAIRe tools (decided 6 November
   2026). Each tool's help starts with a note saying so, which asks users to check the results and
   send problems to the Galaxy Australia help desk (to confirm with Galaxy Australia, question 8).
@@ -43,6 +43,18 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   independent answer keys (`dev/faire_mapper_real_datasets/`, `dev/faire_mapper_australian_datasets/`,
   summarised below), and end to end on CSIRO's SEA-MES data (`dev/faire_mapper_seames/`). Not yet
   tried on datasets from Australian labs that already have a FAIRe version.
+- New in 0.6.0 (12 November 2026), from the day-night trial (`dev/faire_mapper_daynight/`): a
+  column of times of day (Excel time cells, or 10:00, 4 pm) is proposed as verbatimEventTime, and
+  apply mapping joins each time to its date in eventDate, with the UTC offset given on its form
+  (*UTC offset of the times of collection*), or Z when the column's name says UTC, as FAIRe's
+  eventDate is the date and time of sampling.
+  When an OTU table's first column repeats (eDNAFlow's LCA output starts with its rank columns), the
+  sequence IDs are taken from the column named as them (OTU, ASV, seq_id ...). Each OTU table can
+  have a FASTA file of its sequences. A values file whose rows leave off empty fields at the end is
+  read. A range (178-228) is accepted where the checklist allows one (ampliconSize). Controls are
+  not given the project values FAIRe asks only of samples (the habitat terms), and their empty
+  mandatory cells are written as "not applicable: control sample". The log's list of empty
+  mandatory terms follows each term's condition (neg_cont_type for the negative controls only).
 - New in 0.5.1 (12 November 2026): each crosswalk comment says, in plain sentences and the same
   order, what the FAIRe term means (from the checklist), why it was proposed (with the table's own
   values), what apply mapping will do with the values, and, for rows to review, what to check. A
@@ -619,7 +631,9 @@ errors: *Sample* (file names) matched *sampler* (fixed on 5 November: it now goe
 20 are accepted); a column of station codes joined geo_loc_name; and *Filtered by* took recordedBy
 from *Collected by*. After review, and with the primers and methods
 from the report as values for the whole project, the 18S workbook went through every tool;
-FAIRe-fier passed sampleMetadata and reported only `checkls_ver` in projectMetadata.
+FAIRe-fier passed sampleMetadata and reported only `checkls_ver` in projectMetadata. With 0.6.0
+(12 November), the 18S table's *Collection Time (UTC)* goes to verbatimEventTime and its times join
+the dates in eventDate, with Z, as the column's name says UTC.
 
 The COI table then joined the 16S workbook as a second assay (11,643 ASVs, not curated), with the
 values that differ between the assays given an assay column. Every tool takes the two-assay
@@ -850,5 +864,8 @@ wrong field and the layout setting; all 49 tests passed in Galaxy `release_26.1`
 | apply mapping | 23 | Raw and final the wrong way round, and an OTU table given as the taxonomy table: a warning for each, naming the setting | passed |
 | apply mapping | 24 | *Layout of this table* set to samples as columns: read as set | passed |
 | apply mapping | 25 | *Layout of this table* set to samples as rows for a table with samples as columns: stops, naming the setting | passed |
+| apply mapping | 26 (12 Nov) | Day-night layouts: a time column joined to the dates in eventDate at +10:00; the habitat project values written as "not applicable: control sample" for the two controls, and the extraction blank's empty eventDate and geo_loc_name too; a values file with no trailing tabs; ampliconSize 178-228 accepted; no empty neg_cont_type reported for the samples; an LCA output with the OTU column after the ranks, its sequences from a FASTA file | see below |
+| apply mapping | 27 (12 Nov) | A time column named *Collection Time (UTC)*, with no offset given: joined to the dates with Z | see below |
+| map | 9 (12 Nov) | Excel time cells in a Time column: verbatimEventTime (times of day), with a note that apply mapping joins them to the dates | see below |
 | identify | 1 | Eight files: sample, OTU, taxonomy, library, dictionary, text, curated OTU table and crosswalk, each named with its reason | passed |
 | identify | 2 | Two Excel files: each sheet on its own (the SRA sheet's library sheet, a primer register); no sample table found | passed |

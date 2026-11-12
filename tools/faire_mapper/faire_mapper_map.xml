@@ -245,6 +245,23 @@ python '$__tool_directory__/faire_mapper.py' map
                 <has_text text="no sheet called 'Field data'. Sheets: Samples, Read me"/>
             </assert_stderr>
         </test>
+        <!-- A time of day in its own column (Excel time cells) is the time of collection: verbatimEventTime,
+             which apply mapping joins to the date in eventDate (day-night trial, 12 November 2026) -->
+        <test expect_num_outputs="5">
+            <param name="table" value="apply_reef_times.xlsx" ftype="xlsx"/>
+            <param name="sample_types" value="Water"/>
+            <output name="report">
+                <assert_contents>
+                    <has_line_matching expression="^Time\tverbatimEventTime\tsampleMetadata\taccept\t.*times of day.*"/>
+                    <has_line_matching expression="^Date\teventDate\tsampleMetadata\taccept\t.*"/>
+                </assert_contents>
+            </output>
+            <output name="crosswalk">
+                <assert_contents>
+                    <has_text_matching expression="Time.*verbatimEventTime.*joins these times to the dates in eventDate"/>
+                </assert_contents>
+            </output>
+        </test>
     </tests>
     <help><![CDATA[
 @EARLY_VERSION@

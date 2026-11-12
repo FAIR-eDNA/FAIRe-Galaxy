@@ -4,7 +4,7 @@
         <!-- Upstream has no tagged releases. The version is the date of the pinned
              commit (aomlomics/faire2qiime 13e87de). -->
         <token name="@TOOL_VERSION@">2026.07.23</token>
-        <token name="@VERSION_SUFFIX@">2</token>
+        <token name="@VERSION_SUFFIX@">3</token>
         <import>faire_guide.xml</import>
     </macros>
     <creator>
@@ -206,6 +206,26 @@ cp log.txt '$log'
             <output name="log">
                 <assert_contents>
                     <has_text text="single assay 'ssu16sv4v5-emp'"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- target_subfragment "not applicable" (FAIRe's term for no value, as for a fish 16S marker with no
+             named region) is read as empty, so the files are named by the gene alone, not 16S-not -->
+        <test expect_num_outputs="2">
+            <param name="input_file" value="faire_subfragment_na.xlsx"/>
+            <conditional name="manifests">
+                <param name="write_manifests" value="no"/>
+            </conditional>
+            <output_collection name="metadata" type="list" count="1">
+                <element name="noaa-aoml-gomecc4_16S">
+                    <assert_contents>
+                        <has_n_lines n="5"/>
+                    </assert_contents>
+                </element>
+            </output_collection>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="target_subfragment 'not applicable' read as empty, as FAIRe's term for no value"/>
                 </assert_contents>
             </output>
         </test>

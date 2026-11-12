@@ -27,6 +27,9 @@ python '$__tool_directory__/faire_mapper_apply.py'
         --country '$country'
     #end if
     --date_order '$date_order'
+    #if str($utc_offset).strip():
+        --utc_offset '$utc_offset'
+    #end if
     $include_review
     #if $project_values:
         --project_values '$project_values'
@@ -42,6 +45,12 @@ python '$__tool_directory__/faire_mapper_apply.py'
         --otu '$o.otu' --otu_name '$oname' --otu_sheet '$o.otu_sheet' --otu_assay '$o.otu_assay' --otu_run '$o.otu_run'
         --otu_assay_column '$o.otu_assay_column' --otu_curated_column '$o.otu_curated_column'
         --otu_lineage '$o.otu_lineage' --otu_stage '$o.otu_stage' --otu_layout '$o.otu_layout'
+        #if $o.otu_sequences:
+            #set $sname = str($o.otu_sequences.element_identifier).replace("'", "")
+            --otu_sequences '$o.otu_sequences' --otu_sequences_name '$sname'
+        #else:
+            --otu_sequences '' --otu_sequences_name ''
+        #end if
         #if $o.taxa:
             --taxa '$o.taxa' --taxa_sheet '$o.taxa_sheet'
         #else:
@@ -93,6 +102,10 @@ python '$__tool_directory__/faire_mapper_apply.py'
             <option value="dmy">Day first (6 September 2017)</option>
             <option value="mdy">Month first (9 June 2017)</option>
         </param>
+        <param name="utc_offset" type="text" value="" optional="true" label="UTC offset of the times of collection (optional)"
+            help="When your table gives the time of collection in its own column (matched to verbatimEventTime), the tool joins each time to its date in eventDate, as FAIRe asks for the date and time of sampling. Give the offset of the local time from UTC, such as +10:00 for Australian Eastern Standard Time or +11:00 for Australian Eastern Daylight Time, so the time is unambiguous. Leave empty to write local times without an offset.">
+            <validator type="regex" message="An offset such as +11:00, -04:00 or Z">^(Z|[+-](0\d|1[0-4]):[0-5]\d)?$</validator>
+        </param>
         <param name="include_review" type="boolean" truevalue="--include_review" falsevalue="" checked="false"
             label="Also apply the matches for review (skos:closeMatch)"
             help="Use this for a first draft. The log lists every match applied, so you can check them."/>
@@ -133,6 +146,8 @@ python '$__tool_directory__/faire_mapper_apply.py'
                 help="Used when the table has no library or run columns: the tool then writes one experimentRunMetadata row per sample of this table, with samp_name, assay_name and this run ID, and lib_id made from those three.">
                 <validator type="regex" message="Letters, digits, _, - or . only">^[A-Za-z0-9_.-]*$</validator>
             </param>
+            <param name="otu_sequences" type="data" format="fasta" optional="true" label="Sequences of this table (FASTA, optional)"
+                help="For a table that names its sequences (ASV_1, ASV_2 ...) but does not hold them, such as an LCA output: a FASTA file whose headers are those names. FAIRe needs each sequence (dna_sequence in taxaRaw and taxaFinal). Sequences in the FASTA file that the table does not list are left out."/>
             <param name="taxa" type="data" format="tabular,csv,xlsx,txt" optional="true" label="Taxonomy table (optional)"
                 help="One row per ASV or OTU, keyed by its ID (or its sequence): FAIRe columns (kingdom ... specificEpithet, scientificName), rank columns (Kingdom ... Species, as DADA2 writes), or one lineage column (k__Animalia; p__Chordata ...). Taxonomy columns in the OTU table itself are read too; with neither, names in a table of reads per taxon are used."/>
             <param name="taxa_sheet" type="text" value="" optional="true" label="Excel sheet (taxonomy table)">
@@ -897,6 +912,70 @@ python '$__tool_directory__/faire_mapper_apply.py'
             <assert_stderr>
                 <has_text text="'Layout of this table' is samples as rows, but no value in the first column matches samp_name"/>
             </assert_stderr>
+        </test>
+        <!-- From the day-night trial (12 November 2026): the time of collection in its own column joined
+             to the date in eventDate, with the UTC offset; controls not given the habitat values of the
+             samples, and their empty mandatory cells given "not applicable: control sample"; a values
+             file with no trailing tabs; an amplicon size given as a range; an LCA output whose OTU
+             column follows the rank columns, with its sequences in a FASTA file -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef_times.xlsx" ftype="xlsx"/>
+            <param name="crosswalk" value="apply_reef_times.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="reef_times"/>
+            <param name="assay_name" value="Fish16S,COILeray"/>
+            <param name="country" value="Australia"/>
+            <param name="utc_offset" value="+10:00"/>
+            <param name="project_values" value="apply_reef_times_values.tsv" ftype="tabular"/>
+            <repeat name="otu_tables">
+                <param name="otu" value="otu_lca_ranks.tsv" ftype="tabular"/>
+                <param name="otu_assay" value="Fish16S"/>
+                <param name="otu_run" value="reef_run1"/>
+                <param name="otu_sequences" value="otu_lca_ranks.fasta" ftype="fasta"/>
+            </repeat>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet3.xml">
+                        <has_text text="2017-09-06T10:00+10:00"/>
+                        <has_text text="2017-09-06T22:00+10:00"/>
+                        <has_text text="not applicable: control sample"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="eventDate: the times in 'Time' (verbatimEventTime) joined to the dates, with the UTC offset +10:00, in 4 rows (e.g. '2017-09-06' at '10:00' as '2017-09-06T10:00+10:00')"/>
+                    <has_text_matching expression="env_broad_scale, env_local_scale, env_medium: written as 'not applicable: control sample' for the 2 controls"/>
+                    <has_text_matching expression="'not applicable: control sample' written in the 2 empty mandatory cells of 1 control \(eventDate, geo_loc_name\)"/>
+                    <has_text text="ampliconSize = 178-228 (projectMetadata, assay Fish16S)"/>
+                    <not_has_text text="ampliconSize = 178-228 (projectMetadata, assay Fish16S) (not an allowed value)"/>
+                    <not_has_text text="neg_cont_type (sampleMetadata; mandatory if samp_category = negative control): empty in"/>
+                    <has_text text="otu_lca_ranks.tsv: the sequence IDs are in the column 'OTU'"/>
+                    <has_text text="otu_lca_ranks.tsv: dna_sequence from otu_lca_ranks.fasta for 3 of 3 sequences"/>
+                    <not_has_text text="dna_sequence (mandatory in FAIRe) is empty"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- A time column whose name says UTC: joined to the dates with Z, when no offset is given -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_times_utc.csv"/>
+            <param name="crosswalk" value="apply_times_utc.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="reef_times"/>
+            <param name="assay_name" value="Fish16S"/>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet3.xml">
+                        <has_text text="2017-09-06T00:30Z"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="joined to the dates, with the UTC offset Z (the column name says UTC), in 2 rows"/>
+                    <not_has_text text="the times have no UTC offset"/>
+                </assert_contents>
+            </output>
         </test>
     </tests>
     <help><![CDATA[

@@ -1,0 +1,16 @@
+term	value	assay
+project_contact	A. Person (a.person@example.org)
+env_broad_scale	marine biome [ENVO:00000447]
+env_local_scale	marine subtidal rocky reef [ENVO:01000150]
+env_medium	ocean water [ENVO:00002149]
+samp_size	1
+samp_size_unit	L
+pcr_0_1	1
+target_gene	16S rRNA (LSU mitochondria)	Fish16S
+ampliconSize	178-228	Fish16S
+pcr_primer_forward	GACCCTATGGAGCTTTAGAC	Fish16S
+pcr_primer_reverse	CGCTGTTATCCCTADRGTAACT	Fish16S
+target_gene	COI	COILeray
+ampliconSize	313	COILeray
+pcr_primer_forward	GGWACWGGWTGAACWGTWTAYCCYCC	COILeray
+pcr_primer_reverse	TAIACYTCIGGRTGICCRAARAAYCA	COILeray

@@ -1,0 +1,349 @@
+# Sections 2.1 to 2.3 of West et al. (2024) Environmental DNA 6: e70018,
+# https://doi.org/10.1002/edn3.70018 (CC BY 4.0), as text from the PDF.
+
+2.1   |   Day/Night UVC and eDNA Surveys
+Tandem underwater visual census (UVC) and environmental
+DNA (eDNA) surveys were conducted at three coastal temperate
+reef sites: Fortescue Bay, Tinderbox Marine Reserve, and Waubs
+Bay, Bicheno in Tasmania, Australia, in the summer months of
+November 2021, February and March 2022 (Figure 1a, Table S1
+for coordinate information). Each site was surveyed using tandem eDNA/UVC methods every 6 h (four times within a 24-­h
+period; time-­points: 10 am, 4 pm, 10 pm, and 4 am). The 10 am
+and 4 pm time points were within daylight hours; the 10 pm
+and 4 am time points were during the night (see Table S1 for
+recorded sunrise and sunset times). The shallow rocky reef
+surveyed in Fortescue Bay was characterized by large granite
+boulders, dominated mostly by the macroalgae Ecklonia radiata, with a mix of understory species. The section of reef surveyed at the Tinderbox Marine Reserve was characterized by a
+sandstone rocky foundation, dominated by E. radiata with a diverse composition of red, green, and brown macroalgae species
+forming a complex understory. Following a sloping gradient, the
+
+et al. 2023 for a recent review of decay rates in seawater). These
+wide-­ranging decay estimates likely reflect variation in measured (mesocosm and field) temperatures, in addition to other
+environmental factors such as microbial activity/abundance
+and dissolved oxygen levels (Scriver et al. 2023). Despite the
+potential for eDNA to be widely dispersed by tidal and oceanic
+currents during its decay period, several field applications with
+extensive sampling over small geographic ranges have indicated
+that eDNA signals are highly localized (Baetscher et al. 2024;
+Jeunen et al. 2019; Lafferty et al. 2021; Murakami et al. 2019;
+Shea and Boehm 2024; Stat et al. 2019; West et al. 2020). This
+indicates that recently shed eDNA may diffuse and dissipate beyond the level of detection (LOD) before eDNA decay naturally
+occurs. Simply put, an eDNA signal may disappear within 1–2 h
+of being produced.
+
+(c)
+
+(b)
+AUSTRALIA
+
+5m
+2m
+
+5m
+
+5m
+
+1m
+
+1m
+
+LAUNCESTON
+
+TASMANIA
+
+50
+
+Waubs Bay, Bicheno
+
+m
+
+50
+50
+
+m
+50
+
+m
+
+m
+
+5 x 1L eDNA
+end of transect
+
+5m
+2m
+
+Tinderbox Marine Reserve
+HOBART
+
+Fortescue Bay
+5 x 1L eDNA
+start of transect
+
+FIGURE 1    |    (a) Location of 24-­h eDNA/UVC survey sites in Tasmania, Australia (n = 3; denoted by circles). Sites were surveyed using the Reef
+Life Survey UVC diver transect methods for (b) fish and (c) cryptic fish and invertebrates, in tandem with eDNA seawater collection at the start and
+end of the transects (total 10 × 1 L eDNA samples per time point, per site). Each site was surveyed every 6-­h (four times within a 24-­h period) using
+the tandem eDNA/UVC methods (time points: 10 am, 4 pm, 10 pm, 4 am).
+
+reef led to a deep sand edge, intermittently dispersed by mixed
+species seagrass meadows. This reef also composed a variety of
+free-­standing sponges and other sessile invertebrate species. On
+the east coast, the reef surveyed in Waubs Bay was comprised
+of low-­profile, flat-­slab granite rock, undulating gently down to
+a sand edge, dominated by E. radiata with minimal understory
+macroalgae species.
+
+water was filtered between the day and night intervals at each
+site to serve as a filtration control and detect any carry over
+contamination. At the conclusion of sampling, filtrate membranes were kept cool at ~5°C and transported to CSIRO Marine
+Laboratories in Hobart, Tasmania, then stored at −80°C until
+extracted.
+
+Standardized UVC-­
+diver transect surveys followed the Reef
+Life Survey methodology (Edgar et al. 2020). Surveys were conducted by an experienced 2-­person dive team to categorize the
+assemblage composition of fishes and macro-­invertebrates (i.e.,
+species exceeding 2.5 cm when mature). Visual observations
+were made along a 50-­m transect line set at a 5-­m depth contour,
+which was deployed at the commencement of the first sampling
+event. The identity and abundance of the broader fish assemblage were quantified within 5 m belts either side of the transect
+line (i.e., 500 m2 total survey area; Figure 1b), observations of
+the cryptobenthic fish and macro-­invertebrate assemblage was
+constrained to 1 m belts (i.e., 100 m2 total; Figure 1c) to assist in
+detection of these more cryptic species. Upon completion, the
+transect line was left in place, identified by a surface marker
+float to assist with site relocation for night surveys. Surveys undertaken at night followed the same sampling protocol as day.
+Detection of nocturnal species was facilitated by LED white
+light dive torches (1300 lm, 120° beam, Big blue AL1300XWP).
+Any species not identifiable in situ were photographed and identified postsurvey using appropriate field guides.
+
+2.2   |   Laboratory Processing of eDNA
+
+Five eDNA seawater samples were collected by divers adjacent
+to the seafloor (depth of 5 m) at the start and end of the transects using bleach-­sterilized Nalgene bottles (total 10 × 1 L eDNA
+samples per time point, per site). Seawater eDNA samples were
+then individually filtered across 0.45 μm 47 mm MF-­Millipore
+mixed cellulose ester (MCE) membranes using a Masterflex
+L/S Variable-­Speed Digital Drive pump within 1 h of collection.
+A 10% bleach solution was used to clean filtration equipment
+between time points at a site, followed by a rinse in Milli-­Q
+(MilliporeSigma) water. A one-­liter sample of the Milli-­Q rinse
+
+DNA was extracted from half of each filter membrane within
+2 months of collection using the DNeasy Blood and Tissue
+Kit (Qiagen) with the following modifications: 540 μL of ATL
+lysis buffer, 60 μL of Proteinase K and a 3-­h digest at 56°C.
+Postdigestion, 300 μL of the digested solution was combined
+with 300 μL of buffer AL and 300 μL of ethanol. An extraction
+blank was processed in parallel with every set of 23 x 1 L samples
+to detect any cross-­contamination. Two previously published
+metabarcoding assays (16S Fish and COI Leray, see Table 1)
+were employed to amplify fish (teleosts and elasmobranchs) and
+invertebrates from mixed environmental samples.
+Quantitative PCR (qPCR) was performed in a two-­step library preparation protocol. In the first-­stage qPCR, respective
+primer sequences were flanked by a unique (dual) index (6 bp
+in length) and a Nextera-­style overhang sequence (Forward
+overhang P5-­
+t ag: 5′ TCGTCGGCAGCGTCAGATGTGTATA
+AGAGACAG-­[locus-­specific sequence] 3′; Reverse overhang
+P7-­
+t ag: 5′ GTCTCGTGGGCTCGGAGATGTGTATAAGAGA
+CAG-­[locus-­specific sequence] 3′). First-­stage qPCR reactions
+were prepared in a dedicated pre-­P CR room at the CSIRO
+Marine Laboratories, Hobart, and carried out in 25 μL containing, in final concentration: 1× QIAGEN Multiplex PCR Master
+Mix (QIAGEN Multiplex PCR Kit), 0.4 μM each of forward and
+reverse primers (Integrated DNA Technologies, Australia),
+1× EvaGreen Dye (Biotium), 2 μL of eDNA template (neat),
+and made to volume with Ultrapure Distilled Water (Life
+Technologies). Each qPCR was performed on a QuantStudio
+5 Real-­T ime PCR System (Thermo Fisher Scientific) under the
+
+(a)
+
+Leray et al. (2013)
+46
+
+Berry et al. (2017)
+54
+
+Deagle et al. (2007)
+
+Primer reference
+Annealing
+temperature (°C)
+
+Sequencing reads were demultiplexed and trimmed into their respective samples using Cutadapt (v4.5; Martin 2011). Sample data
+were then quality filtered (minimum sequence length = 100 bp,
+maximum expected errors = 2, no ambiguous nucleotides), denoised, filtered for chimeras, and dereplicated (pool = “pseudo”)
+using the DADA2 package (Callahan et al. 2016) in R (v4.2.1; R
+Core Team 2015). This generated an amplicon sequence variant (ASV) fasta and count table; the former was queried against
+NCBI's GenBank nucleotide database (accessed in August 2023;
+Benson et al. 2005) using BLASTn (minimum percentage identity of 85%, query coverage (qCov) of 96%, maximum target sequences of 10) using Petrichor, a HPC cluster based at the CSIRO.
+Taxonomic assignment of ASVs was performed using the lowest
+common ancestor (LCA) Python script in eDNAFlow (Mousavi-­
+Derazmahalleh et al. 2021). In this pipeline, BLAST matches required a threshold qCov of 96%, a minimum percentage identity
+of 85%, and a difference (Diff) of 1. A species-­level assignment
+required a minimum percentage identity of 98% with a qCov of
+100%. In cases where an ASV had multiple top hits within 1%
+similarity of each other, the assigned taxonomy was collapsed
+back to the lowest common ancestor. ASVs were then merged
+by taxonomy using the phyloseq (v1.24.2) “tax_glom” function
+(McMurdie and Holmes 2013) in R. Individual replicates were
+not subsampled to an equal read depth, as ASV accumulation
+within individual samples plateaued with the high level of sequencing read depth afforded by the Illumina NovaSeq platform
+(Figure S1; see ‘Section 3.1’).
+
+TAIACYTCIGGRTGICCRAARAAYCA
+jgHCO2198
+
+Note: Target length indicates length of amplicon without primers.
+
+GGWACWGGWTGAACWGTWTAYCCYCC
+mlCOIintF
+Metazoans
+COI Leray
+
+CGCTGTTATCCCTADRGTAACT
+16S2R-­degenerate
+
+313
+
+178–228
+GACCCTATGGAGCTTTAGAC
+Fish
+16S Fish
+
+16SF/D
+
+Target
+length (bp)
+Oligonucleotide sequence (5′-­3′)
+Primer name
+Target taxa
+PCR assay
+
+TABLE 1    |    PCR assay information for eDNA metabarcoding.
+
+2.3   |   Bioinformatic Processing of eDNA Sequences
+
+To make the eDNA dataset comparable with the taxa being documented in the standardized UVC-­diver transect survey method,
+we extracted fish (teleost and elasmobranch) and invertebrate
+eDNA detections from both the 16S Fish and COI Leray datasets. These were consolidated into two taxonomic abundance
+matrices (1. fish, and 2. macroinvertebrates). Two different semiquantitative metrics were used to summarize eDNA detections:
+(1) presence-­absence data for each eDNA replicate per timepoint
+(n = 10) per site was summed to provide a count of replicate detections (n/10 replicates) and (2) proportional read abundance
+of each taxa across the same 10 replicates (n/1). While analyzed
+independently, these two semiquantitative eDNA datasets have
+a strong, positive correlation (Spearman rank correlation coefficient ρ = 0.762, p = 0.001). UVC taxonomic abundance matrices
+with observational count data for 1. fishes and 2. macroinvertebrates were generated for comparative analyses with the
+eDNA data.
+
+following conditions: initial denaturation at 95°C for 15 min,
+followed by 40 cycles of 95°C for 30 s, 46°C–54°C for 1 min 30 s
+(see respective annealing temperatures in Table 1), and 72 °C
+for 1 min 30 s, with a final extension for 10 min at 72 °C. First-­
+stage amplicons were then sent to the Australian Genome
+Research Facility (AGRF) for second-­
+stage PCR, whereby
+Nextera-­style index primers (containing overhang, dual 8 bp
+index tag [i5 and i7], and P5 and P7 regions that bind to the
+Illumina flowcell) were applied. Second-­stage amplicons were
+then cleaned, pooled, and normalized prior to sequencing on
+an Illumina NovaSeq 6000 platform (SP flow cell: 500 cycle,
+2 × 250 bp) at AGRF.
+
+Taxa accumulation by UVC survey and eDNA replicate per
+site was plotted using the vegan (v2.6.4) “specaccum” function (Oksanen et al. 2019) in R. Observed taxonomic richness
+of both fish and macroinvertebrates was tested for significant
+variation between survey methods (UVC and eDNA), the three
+sampling sites (Fortescue Bay, Tinderbox Marine Reserve, and
+Waubs Bay, Bicheno), and time surveyed (day and night) using
+a three-­way ANOVA and graphed using the ggplot2 package
+(Wickham 2016) in R.
+Community compositional variation in fishes and macroinvertebrates was analyzed on a combined UVC/eDNA dataset (converted to presence-­absence) and standalone quantitative UVC
+(count) and semiquantitative eDNA (proportional read abundance [n/1] and count of replicate detections [n/10]) datasets.
+The standalone datasets were analyzed separately to retain the
+quantitative and semiquantitative metrics of the two methods,
+which, when combined, were normalized to presence-­absence.
+The combined UVC/eDNA presence-­absence matrix was converted to a Jaccard similarity matrix; the standalone UVC
+count, eDNA proportional read abundance, and eDNA count of
+replicate detection were converted to Bray–Curtis dissimilarity
+matrices in PRIMER v7 (Clarke and Gorley 2015). These similarity matrices were then tested for compositional variation by a
+distance-­based linear routine (DistLM) using a step-­w ise selection procedure and adjusted R 2 criterion in the PERMANOVA+
+add-­on (Anderson, Gorley, and Clarke 2008) of PRIMER v7.
+Predictor variables included survey method (UVC/eDNA), site
+(Fortescue Bay, Tinderbox Marine Reserve, and Waubs Bay,
+Bicheno), and time of sampling (day/night).
+For both fish and macroinvertebrates, community composition was visualized by principal coordinate analysis (PCO) in
+PRIMER v7. Pearson correlation coefficients were calculated between individual taxa and the PCO axes; correlation coefficients
+> 0.5 and < −0.5 were regarded as indicating strong positive and
+strong negative correlations, respectively. Taxa with a strong
+correlation to the PCO1 and/or PCO2 ordination axes (representative of the top two predictor variables with the highest proportion of explained variance) were overlaid as vectors on the
+PCO plots; line direction and length illustrating direction and
+strength of taxa correlation, respectively. The detection profiles
+of the top species driving dissimilarity between day and night in
+the UVC dataset were plotted over the time intervals with count
+data from UVC, eDNA proportional abundance (n/1) and eDNA
+replicate detections (n/10). This indicated whether reef species
+with strong diel activity, as observed by UVC, produced varying
+levels of eDNA detectability across 24-­h or whether the diurnal/
+nocturnal species maintained a basal level of eDNA detection,
+irrespective of sampling time.
+
+3   |   Results
+3.1   |   eDNA Sequencing Statistics
+The two metabarcoding assays applied across the 132 seawater
+eDNA extracts and controls yielded a total of 113,830,822 sequencing reads. The mean number of quality filtered sequencing
+
+reads per replicate sample (excluding filtration controls and
+blanks) was 482,503 ± 258,374 (SD) for the 16S Fish assay and
+283,728 ± 186,0.18 (SD) for the COI Leray assay (Table S2). No
+sequencing reads from the filtration and extraction blanks
+made it through bioinformatic processing. Human eDNA from
+the divers during collection or sample processing was detected
+in both the 16S and COI datasets, however at very low levels
+(average read depth per sample was 0.0004% and 0.13%, respectively). Fish and macroinvertebrate detections were extracted
+from the filtered datasets of the two assays (consistent with
+macrofauna targeted by RLS methods only) and were then consolidated across the replicates (n = 10) from each time interval
+per site (Table S3). Regarding the eDNA taxonomic assignments,
+only 50/115 eDNA-­detected fish taxa and 23/47 eDNA-­detected
+macroinvertebrate taxa could be confidently provided at a
+species level (match identity > 98%, qCov 100%); the remaining taxa assignments were provided at a genus or family level.
+Comparatively, nearly all UVC taxonomic assignments for both
+fish (36/37) and macroinvertebrates (32/32), were provided at a
+species level.
+
+3.2   |   Observed Fish and Macroinvertebrate
+Richness
+The UVC method observed a total of 37 fish taxa (36 species-­
+level, 1 genus-­level) and 32 macroinvertebrate taxa (all species-­
+level) across the three combined Tasmanian temperate reef sites.
+Of this, 27 fish taxa and 24 macroinvertebrate taxa were detected
+solely by the UVC method, such as Dotalabrus aurantiacus,
+Hippocampus abdominalis, Mugil cephalus, Plagusia chabrus,
+Macroctopus maorum, and Turbo undulatus. Comparatively, the
+eDNA method detected a total of 115 fish taxa (50 species-­level,
+56 genus-­level, and 9 family-­level) and 47 macroinvertebrate
+taxa (23 species-­level, 16 genus-­level, and 8 family-­level). Of
+this, 105 fish taxa and 39 macroinvertebrate taxa were detected
+solely by the eDNA method. It should be noted that comparison of species-­level detections between methods is hampered to
+some degree due to the many eDNA taxonomic assignments at a
+genus and family level only. For example, Conger detected in the
+eDNA dataset probably corresponds to Conger verreauxi as it is
+the only regional species in that genus. Despite this limitation,
+eDNA did overall detect more fish species (n = 50) than UVC;
+this included species unobserved by UVC, such as Lotella rhacina, Galeorhinus galeus, Girella tricuspidata, and Chironemus
+georgianus. The eDNA method did not detect as many macroinvertebrate species (n = 23) as UVC; however, it detected
+unique species not reported by UVC such as Cenolia tasmaniae,
+Meridiastra calcar, and the invasive sea star Asterias amurensis.
+Overall taxa accumulation per site, plotted over the 24-­
+h
+period, indicated a steady increase of observed unique taxa
+with each successive UVC survey and sampled eDNA (n = 10)
+replicated every 6 h (Figure 2). This steady increase in observed taxa represents either under-­sampling where species
+detection was not maximized per time interval and/or diel
+variation where taxa are newly observed between the time
+intervals. Observed fish richness was significantly higher
+using eDNA than UVC (p < 0.001; Figure 3a; Table S4). It
+was also higher during the day survey intervals than at
+night for UVC (p = 0.004; Table S5); however, this day/night

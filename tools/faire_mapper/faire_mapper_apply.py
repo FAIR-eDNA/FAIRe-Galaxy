@@ -328,6 +328,7 @@ DEPTH_RANGE = re.compile(r'^\s*(\d+(\.\d+)?)\s*(?:-|–|to)\s*(\d+(\.\d+)?)\s*m?
 
 
 CONTROL_CATEGORIES = {'negative control', 'positive control', 'pcr standard'}
+CONTROL_NA = 'not applicable: control sample'
 
 
 def control_rows(sample_out, n):
@@ -339,6 +340,53 @@ def control_rows(sample_out, n):
     neg = sample_out.get('neg_cont_type') or [''] * n
     pos = sample_out.get('pos_cont_type') or [''] * n
     return [str(cats[i]).strip().lower() in CONTROL_CATEGORIES or given(neg[i]) or given(pos[i]) for i in range(n)]
+
+
+# A UTC offset as ISO 8601 writes it (+11:00, -04:00 or Z).
+UTC_OFFSET_RE = re.compile(r'^(Z|[+-](0\d|1[0-4]):[0-5]\d)$')
+TIME_24_RE = re.compile(r'^([01]?\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$')
+TIME_AMPM_RE = re.compile(r'^(1[0-2]|0?[1-9])(?::([0-5]\d))?(?::([0-5]\d))?\s*([ap])\.?\s*m\.?$', re.I)
+# FAIRe's description of a term that takes a range of numbers (ampliconSize: "A range can be entered
+# separated by a hyphen").
+NUMBER_RANGE = re.compile(r'^\s*(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)\s*$')
+
+
+def time_of_day(v):
+    """(hour, minute, second) of a time of day: an Excel time cell, or text such as 10:00, 22:30:00,
+    4 pm or 4:30 pm. None for anything else."""
+    if isinstance(v, dt.time):
+        return v.hour, v.minute, v.second
+    if _blank(v) or fm.is_missing(v):
+        return None
+    s = str(v).strip()
+    m = TIME_24_RE.match(s)
+    if m:
+        return int(m.group(1)), int(m.group(2)), int(m.group(3) or 0)
+    m = TIME_AMPM_RE.match(s)
+    if m:
+        h = int(m.group(1)) % 12 + (12 if m.group(4).lower() == 'p' else 0)
+        return h, int(m.group(2) or 0), int(m.group(3) or 0)
+    return None
+
+
+def read_fasta(path):
+    """{sequence ID (the first word of each header): sequence} from a FASTA file."""
+    seqs, name, parts = {}, None, []
+    with open(path, encoding='utf-8-sig', errors='replace') as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith('>'):
+                if name is not None:
+                    seqs[name] = ''.join(parts).upper()
+                name, parts = fo.norm_id(line[1:].split()[0]) if line[1:].split() else '', []
+            elif line and name is not None:
+                parts.append(line)
+    if name is not None:
+        seqs[name] = ''.join(parts).upper()
+    if not seqs:
+        raise StopError(f'{Path(path).name}: no sequences found; a FASTA file has a line starting with > before '
+                        f'each sequence')
+    return seqs
 
 
 def convert_value(v, t, notes_seen):
@@ -368,6 +416,9 @@ def convert_value(v, t, notes_seen):
         return s, s
     if k in ('latitude', 'longitude', 'number', 'integer'):
         n = _number(s)
+        if n is None and 'range can be entered' in (t.description or '').lower() and NUMBER_RANGE.match(s):
+            m = NUMBER_RANGE.match(s)
+            return f'{m.group(1)}-{m.group(2)}', None
         return (n, None) if n is not None else (s, s)
     if k == 'termlabel' and not fm.TERMLABEL_RE.match(s):
         return s, s
@@ -426,6 +477,9 @@ def build_workbook(args, df, rows, terms, by_name, log):
     sample_types = [s.strip() for s in args.sample_types.split(',')] if args.sample_types else None
     assays = [a.strip() for a in args.assay_name.split(',') if a.strip()] if args.assay_name else []
     profiles = {c: fm.profile_column(c, df[c]) for c in df.columns}
+    offset = (getattr(args, 'utc_offset', '') or '').strip()
+    if offset and not UTC_OFFSET_RE.match(offset):
+        raise StopError(f"the UTC offset '{offset}' is not in the form +11:00, -04:00 or Z")
 
     # ---- sampleMetadata columns
     sm = filter_columns(tpl['sampleMetadata'], args.assay_type, req_lev, sample_types, checklist)
@@ -606,12 +660,44 @@ def build_workbook(args, df, rows, terms, by_name, log):
                 log.add('Warnings', f"'{col}' to {term}: {len(problems)} values {why}, e.g. "
                         + ', '.join(f"'{x}'" for x in uniq[:3]))
 
+    # ---- times of day in a column of their own (verbatimEventTime), joined to the dates in eventDate,
+    # as FAIRe's eventDate is "the date and time of sampling" (2008-01-23T19:23-06:00)
+    if 'verbatimEventTime' in written and 'eventDate' in sample_out:
+        times, dates = sample_out['verbatimEventTime'], sample_out['eventDate']
+        tcol = next((r['column'] for r in rows if r['term'] == 'verbatimEventTime'), 'the time column')
+        says_utc = bool(re.search(r'\b(UTC|GMT)\b', str(tcol), re.I))
+        join_offset = offset or ('Z' if says_utc else '')
+        # Excel time cells come as 10:00:00: written as 10:00, FAIRe's example form
+        sample_out['verbatimEventTime'] = [fm.time_text(v) if isinstance(v, dt.time) or TIME_24_RE.match(str(v).strip())
+                                           else v for v in times]
+        joined, example = 0, None
+        for i in range(n):
+            hms, d = time_of_day(times[i]), str(dates[i]).strip()
+            if hms is None or _blank(dates[i]) or not re.match(r'^\d{4}-\d{2}-\d{2}$', d):
+                continue
+            stamp = f'{d}T{hms[0]:02d}:{hms[1]:02d}' + (f':{hms[2]:02d}' if hms[2] else '') + join_offset
+            example = example or (d, fm.time_text(times[i]), stamp)
+            dates[i] = stamp
+            joined += 1
+        if joined:
+            log.add('Columns written', f"eventDate: the times in '{tcol}' (verbatimEventTime) joined to the dates"
+                    + (f', with the UTC offset {join_offset}' if join_offset else '')
+                    + (' (the column name says UTC)' if join_offset and not offset else '')
+                    + f", in {joined} rows (e.g. '{example[0]}' at '{example[1]}' as '{example[2]}')")
+            if says_utc and offset and offset != 'Z':
+                log.add('Warnings', f"eventDate: the column name '{tcol}' says UTC, but the offset given is {offset}; "
+                                    f"check which is right")
+            if not join_offset:
+                log.add('Warnings', 'eventDate: the times have no UTC offset, so they are local times; give the '
+                                    'offset on the form (for example +11:00 for Australian Eastern Daylight Time)')
+
     # ---- values for the whole project or for every sample (e.g. from the methods text)
     if args.project_values:
         pv = fm.read_table(args.project_values).astype(object).where(lambda x: x.notna(), '')
         pv.columns = [str(c).strip().lower() for c in pv.columns]
         pv = pv.map(lambda v: str(v) if v != '' else '')
-        held_values = {}
+        held_values, for_samples_only = {}, []
+        ctrl = control_rows(sample_out, n)
         if not {'term', 'value'} <= set(pv.columns):
             raise StopError('the project values file needs the columns term and value')
         for r in pv.to_dict('records'):
@@ -655,7 +741,13 @@ def build_workbook(args, df, rows, terms, by_name, log):
             if term in project_terms and t.level == 'project':
                 project[term] = v
             elif term in sample_out:
-                sample_out[term] = [v] * n
+                cond = str(t.condition).lower()
+                if any(ctrl) and 'unless' in cond and 'negative control' in cond:
+                    # FAIRe asks samples, not controls, for this term (env_broad_scale, say)
+                    sample_out[term] = [CONTROL_NA if c else v for c in ctrl]
+                    for_samples_only.append(term)
+                else:
+                    sample_out[term] = [v] * n
             elif term in run_terms:
                 run_out[term] = [v] * n
             else:
@@ -664,6 +756,9 @@ def build_workbook(args, df, rows, terms, by_name, log):
             written.add(term)
             where = 'projectMetadata' if term in project and project[term] == v else 'every sample'
             log.add('Project values', f'{term} = {str(v)[:80]} ({where})' + (' (not an allowed value)' if problem else ''))
+        if for_samples_only:
+            log.add('Project values', f"{', '.join(for_samples_only)}: written as '{CONTROL_NA}' for the "
+                    f"{sum(ctrl)} controls, as FAIRe asks only the samples for them")
         for status, counts in held_values.items():
             log.add('Left out', f'project values with status {status}, not applied: '
                     + ', '.join(f'{t} ({k})' if k > 1 else t for t, k in counts.items()))
@@ -799,6 +894,27 @@ def build_workbook(args, df, rows, terms, by_name, log):
                 log.add('Warnings', f"{t['label']}: classified with PR2; name PR2 and its version in otu_db "
                                     f"(projectMetadata), e.g. PR2 v5.0.0")
 
+    # ---- controls: their empty mandatory cells (a term FAIRe asks of every row, such as eventDate or
+    # geo_loc_name) are given "not applicable: control sample", FAIRe's term for them
+    ctrl = control_rows(sample_out, n)
+    if any(ctrl):
+        filled, cells, ctrl_rows = [], 0, set()
+        for term in sample_terms:
+            cond = str(by_name[term].condition) if term in by_name else ''
+            if str(sm[term].iloc[0]) != 'M' or (cond and cond != 'nan') or term == 'assay_name':
+                continue
+            for i in range(n):
+                if ctrl[i] and _blank(sample_out[term][i]):
+                    sample_out[term][i] = CONTROL_NA
+                    cells += 1
+                    ctrl_rows.add(i)
+                    if term not in filled:
+                        filled.append(term)
+        if cells:
+            k = len(ctrl_rows)
+            log.add('Columns written', f"'{CONTROL_NA}' written in the {cells} empty mandatory cells of {k} "
+                    f"control{'s' if k > 1 else ''} ({', '.join(sorted(filled, key=str.lower))})")
+
     # ---- checks
     if 'samp_name' not in written:
         raise StopError('no column is mapped to samp_name, which FAIRe needs to identify each sample')
@@ -828,16 +944,28 @@ def build_workbook(args, df, rows, terms, by_name, log):
                 continue   # given for every assay
             log.add('Mandatory terms with no value', f'{term} (projectMetadata{when(term)})'
                     + (f": no value for {', '.join(missing)}" if len(assays) > 1 and len(missing) < len(assays) else ''))
+    cats = [str(c).strip().lower() for c in (sample_out.get('samp_category') or [''] * n)]
     for term in sample_terms:
         lvl = str(sm[term].iloc[0])
         if lvl != 'M':
             continue
         vals = sample_out[term]
-        empty = sum(_blank(v) for v in vals)
-        if empty == n:
+        # Only the rows the condition applies to: neg_cont_type is needed for the negative controls only,
+        # and env_broad_scale for the samples only.
+        cond = str(by_name[term].condition).strip().lower() if term in by_name else ''
+        needed = list(range(n))
+        if cond.startswith('if samp_category = '):
+            needed = [i for i in range(n) if cats[i] == cond.split('=', 1)[1].strip()]
+            if not needed:
+                continue
+        elif 'unless' in cond and 'samp_category' in cond:
+            needed = [i for i in range(n) if not ctrl[i]]
+        empty = sum(_blank(vals[i]) for i in needed)
+        if empty == len(needed) == n:
             log.add('Mandatory terms with no value', f'{term} (sampleMetadata{when(term)})')
         elif empty:
-            log.add('Mandatory terms with no value', f'{term} (sampleMetadata{when(term)}): empty in {empty} of {n} rows')
+            log.add('Mandatory terms with no value', f'{term} (sampleMetadata{when(term)}): empty in {empty} of '
+                    f'{len(needed)} rows' + (' it applies to' if len(needed) < n else ''))
     if 'experimentRunMetadata' in other and not run_out and not run_rows:
         log.add('Mandatory terms with no value', 'experimentRunMetadata has no rows: no column of the table is a '
                                                  'library or run term (lib_id, seq_run_id, filename ...)')
@@ -1134,6 +1262,7 @@ def read_otu_tables(args, sample_out, run_out, other, assays, log, terms, table_
                                                      pad(args.otu_assay), pad(args.otu_name), pad(args.otu_run))
     lineages = pad(args.otu_lineage)
     layouts = pad(getattr(args, 'otu_layout', None))
+    fastas, fasta_names = pad(getattr(args, 'otu_sequences', None)), pad(getattr(args, 'otu_sequences_name', None))
     given = list(args.otu_stage or [])
     stages = [('Raw' if (given[0] if len(given) == 1 else (pad(given)[i] or 'final')) == 'raw' else 'Final')
               for i in range(k)] if given else ['Final'] * k
@@ -1186,6 +1315,15 @@ def read_otu_tables(args, sample_out, run_out, other, assays, log, terms, table_
                 cc = match[0]
             counts, ann, seqs, orientation = fo.read_otu(path, sheets[i], samples, lib_to_samp, say, label,
                                                          is_detail, frame=frame, layout=layouts[i].strip() or 'detect')
+            if fastas[i].strip():
+                fasta = read_fasta(fastas[i])
+                fname = fasta_names[i] or Path(fastas[i]).name
+                found = [x for x in counts.index if x in fasta]
+                for x in found:
+                    seqs.setdefault(x, fasta[x])
+                absent = [x for x in counts.index if x not in fasta]
+                say(f'{label}: dna_sequence from {fname} for {len(found)} of {len(counts.index)} sequences'
+                    + (f"; {len(absent)} IDs are not in it (e.g. {', '.join(absent[:3])})" if absent else ''))
             if counts.shape[0] == 0 or counts.shape[1] == 0:
                 raise StopError(f"OTU table '{label}': no read counts were found ({orientation}, "
                                 f"{counts.shape[0]} sequences or taxa, {counts.shape[1]} samples)."
@@ -1479,6 +1617,11 @@ def main(argv=None):
     ap.add_argument('--drop_unmapped', action='store_true', help='leave out columns with no skos:exactMatch row in the crosswalk')
     ap.add_argument('--otu', action='append', help='OTU or ASV table (reads per sequence or taxon and sample); repeat '
                                                    'for each assay')
+    ap.add_argument('--otu_sequences', action='append', help='FASTA file of the sequences of each OTU table, '
+                    'keyed by its sequence IDs (empty for none)')
+    ap.add_argument('--otu_sequences_name', action='append', help='name of each FASTA file for the log')
+    ap.add_argument('--utc_offset', default='', help='UTC offset of the times of collection (+11:00, -04:00 or Z), '
+                    'added when a column of times is joined to the dates in eventDate')
     ap.add_argument('--otu_sheet', action='append', help='Excel sheet of each OTU table (empty for the first sheet)')
     ap.add_argument('--otu_name', action='append', help='name of each OTU table for the log')
     ap.add_argument('--otu_assay', action='append', help='assay of each OTU table (one of --assay_name)')

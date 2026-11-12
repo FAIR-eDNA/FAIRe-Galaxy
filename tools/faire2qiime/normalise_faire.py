@@ -91,6 +91,29 @@ def check_filled(sheets, columns):
                      f"(for example {', '.join(names)}). Add them, or turn off the option that needs them.")
 
 
+# FAIRe's terms for a value that is not given. FAIRe2QIIME names its files by target_gene and
+# target_subfragment, so 'not applicable' would give 16S-not.
+MISSING_TERMS = ('not applicable', 'missing', 'not collected', 'not provided', 'restricted access')
+NAMING_TERMS = ('target_gene', 'target_subfragment')
+
+
+def blank_missing_terms(pm, term_col):
+    """Empty the cells of target_gene and target_subfragment that hold a FAIRe missing-value term."""
+    terms = pm[pm.columns[term_col]].astype(str).str.strip()
+    for term in NAMING_TERMS:
+        seen = []
+        for r in pm.index[terms == term]:
+            for c in range(len(pm.columns)):
+                v = pm.iat[r, c]
+                if c != term_col and isinstance(v, str) and v.strip().lower().startswith(MISSING_TERMS):
+                    pm.iat[r, c] = None
+                    if v.strip() not in seen:
+                        seen.append(v.strip())
+        for v in seen:
+            print(f"INFO: {term} '{v}' read as empty, as FAIRe's term for no value, so the output files are not "
+                  f"named after it")
+
+
 def norm_name(name):
     return re.sub(r'[^a-z0-9]', '', str(name).lower())
 
@@ -170,6 +193,7 @@ def normalise(path_in, path_out, columns=(), filled=()):
             print("INFO: projectMetadata already has assay columns named by assay_name")
 
     match_assay_names(pm, sheets)
+    blank_missing_terms(pm, term_col)
     # Only the three metadata sheets, which is all FAIRe2QIIME reads: OTU and taxonomy sheets can be large,
     # and FAIRe2QIIME opens the workbook once for each sheet it reads.
     write_values({name: sheets[name] for name in ('projectMetadata', 'sampleMetadata', 'experimentRunMetadata')},

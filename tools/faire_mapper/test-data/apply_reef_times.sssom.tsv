@@ -1,0 +1,9 @@
+subject_id	subject_label	predicate_id	object_id	object_label	mapping_justification
+local:Sample_ID	Sample ID	skos:exactMatch	FAIRe:samp_name	samp_name	semapv:ManualMappingCuration
+local:Site	Site	skos:exactMatch	FAIRe:geo_loc_name	geo_loc_name	semapv:ManualMappingCuration
+local:Time	Time	skos:exactMatch	FAIRe:verbatimEventTime	verbatimEventTime	semapv:ManualMappingCuration
+local:Latitude	Latitude	skos:exactMatch	FAIRe:decimalLatitude	decimalLatitude	semapv:ManualMappingCuration
+local:Longitude	Longitude	skos:exactMatch	FAIRe:decimalLongitude	decimalLongitude	semapv:ManualMappingCuration
+local:Date	Date	skos:exactMatch	FAIRe:eventDate	eventDate	semapv:ManualMappingCuration
+local:Sample_type	Sample type	skos:exactMatch	FAIRe:samp_category	samp_category	semapv:ManualMappingCuration
+local:Control_type	Control type	skos:exactMatch	FAIRe:neg_cont_type	neg_cont_type	semapv:ManualMappingCuration

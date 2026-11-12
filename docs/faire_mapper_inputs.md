@@ -39,7 +39,10 @@ do a better job if you:
 
 - put one value in each cell;
 - give units in the header ("Volume (mL)") or with each value ("1 L");
-- keep a column that says which rows are controls, and what kind of control each one is;
+- keep a column that says which rows are controls, and what kind of control each one is (the tools
+  cannot tell controls from samples by their names);
+- give the time of collection as a time (10:00), in its own column or with the date; the tool joins
+  a time column to the dates, and asks for the UTC offset on its form;
 - use the same sample names as in your OTU table.
 
 **Data dictionary** (recommended, for the *propose mapping* tool). A data dictionary is a list of
@@ -99,6 +102,10 @@ If you curated the taxonomy, add a column to your ASV table that gives each ASV 
 and choose that column on the form (*Column of curated names*). The tool then writes FAIRe's raw
 tables, with every ASV, and its final tables: taxaFinal with one row per ASV, and otuFinal with each
 taxon's reads summed under its most abundant ASV.
+
+**ASV sequences** (for the *apply mapping* tool), if your OTU table names its sequences (ASV_1,
+ASV_2 ...) but does not hold them, as LCA outputs such as eDNAFlow's do: the FASTA file from your
+pipeline, whose headers are those names. FAIRe needs each sequence (dna_sequence).
 
 **Library table** (optional, for the *apply mapping* tool). This table says which sequence files
 belong to which sample. It can be your study's run report from ENA or the SRA, the SRA submission

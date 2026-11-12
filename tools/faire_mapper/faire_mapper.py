@@ -33,7 +33,7 @@ from pathlib import Path
 
 import pandas as pd
 
-__version__ = '0.5.1'
+__version__ = '0.6.0'
 
 MISSING = {'', 'na', 'n/a', 'nan', 'none', 'null', '-', '--', '?', 'not applicable', 'missing',
            'not collected', 'not provided', 'unknown'}
@@ -104,6 +104,8 @@ SYNONYMS = {
                      'reef', 'island', 'state', 'province', 'territory'],
     'eventDate': ['date', 'collection date', 'sampling date', 'sample date', 'date time',
                   'event date', 'date collected', 'time sampled'],
+    'verbatimEventTime': ['time', 'collection time', 'sampling time', 'sample time', 'time collected',
+                          'time of collection', 'time of sampling', 'local time', 'event time', 'time of day'],
     'env_broad_scale': ['biome', 'broad habitat', 'broad environment'],
     'env_local_scale': ['habitat', 'local habitat', 'environmental feature', 'local environment'],
     'env_medium': ['environmental medium', 'sample material', 'medium', 'substrate', 'matrix'],
@@ -367,6 +369,8 @@ DATE_FORMATS = [
     ('%d %b %Y', 'dd Mon yyyy'), ('%d-%b-%Y', 'dd-Mon-yyyy'), ('%d-%b-%y', 'dd-Mon-yy'),
     ('%d %B %Y', 'dd Month yyyy'), ('%m/%d/%Y', 'mm/dd/yyyy'), ('%Y-%m', 'yyyy-mm'),
 ]
+# A time of day: 10:00, 22:30:00, 4:00 pm, 10am (a column of its own, beside a column of dates).
+TIME_OF_DAY_RE = re.compile(r'^(([01]?\d|2[0-3])(:[0-5]\d){1,2}(\s?[ap]\.?m\.?)?|(1[0-2]|0?[1-9])\s?[ap]\.?m\.?)$', re.I)
 ISO_OFFSET_RE = re.compile(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(Z|[+-]\d{2}:?\d{2})$')
 
 # A number and its unit in one cell, e.g. "1 L", "0.2 micron", "-20 °C".
@@ -538,6 +542,7 @@ class ColumnProfile:
     boolean_frac: float = 0.0
     duration_frac: float = 0.0
     duration_human_frac: float = 0.0
+    time_frac: float = 0.0
     filename_frac: float = 0.0
     read_pair: str = ''
     quantity_frac: float = 0.0
@@ -560,7 +565,8 @@ class ColumnProfile:
                            ('ENVO-style label', self.termlabel_frac), ('place name', self.geoloc_frac),
                            ('country or sea name', self.country_frac),
                            ('boolean', self.boolean_frac), ('ISO duration', self.duration_frac),
-                           ('duration', self.duration_human_frac), ('sequence file', self.filename_frac),
+                           ('duration', self.duration_human_frac), ('time of day', self.time_frac),
+                           ('sequence file', self.filename_frac),
                            ('latitude and longitude in one cell', self.latlon_frac)):
             if frac >= 0.7:
                 tags.append(name)
@@ -627,6 +633,8 @@ def profile_column(column, series):
     p.boolean_frac = round(sum(s.lower() in BOOL for s in strs) / n, 3)
     p.duration_frac = round(sum(bool(ISO_DUR_RE.match(s)) for s in strs) / n, 3)
     p.duration_human_frac = round(sum(bool(HUMAN_DUR_RE.match(s)) for s in strs) / n, 3)
+    # Excel time cells (read as datetime.time) or text such as 10:00 or 4 pm
+    p.time_frac = round(sum(isinstance(v, dt.time) or bool(TIME_OF_DAY_RE.match(s)) for v, s in zip(vals, strs)) / n, 3)
     files = [s for s in strs if FILE_RE.search(s)]
     p.filename_frac = round(len(files) / n, 3)
     if files:
@@ -822,6 +830,10 @@ def value_fit(p: ColumnProfile, t: Term):
             pair_ok = (t.name == 'filename' and p.read_pair != 'reverse') or (t.name == 'filename2' and p.read_pair != 'forward')
             return (1.0, f'sequence file names ({p.read_pair or "read"} reads)') if pair_ok else (0.3, 'sequence files of the other read')
         return 0.0, 'conflict: not sequence file names'
+    if t.name == 'verbatimEventTime' and p.time_frac >= 0.8:
+        return 1.0, f"times of day ({', '.join(time_text(v) for v in p.distinct[:3])})"
+    if p.time_frac >= 0.8 and k in ('duration', 'date', 'number', 'integer', 'number_or_vocab'):
+        return 0.0, 'conflict: values are times of day'
     if dna >= 0.8:
         return 0.0, 'conflict: values are DNA sequences'
     if p.filename_frac >= 0.8:
@@ -900,6 +912,18 @@ def value_fit(p: ColumnProfile, t: Term):
     if num >= 0.9 or p.date_frac >= 0.8:
         return 0.25, 'numbers or dates in a text field'
     return 0.5, ''
+
+
+def time_text(v):
+    """A time of day as hh:mm (10:00:00 and an Excel time cell of 10:00 both as 10:00), or the text as
+    written when it is in another form (4 pm)."""
+    if isinstance(v, (dt.time, dt.datetime)):
+        return v.strftime('%H:%M') + (v.strftime(':%S') if v.second else '')
+    s = str(v).strip()
+    m = re.match(r'^(\d{1,2}):(\d{2})(?::(\d{2}))?$', s)
+    if m:
+        return f'{int(m.group(1)):02d}:{m.group(2)}' + (f':{m.group(3)}' if m.group(3) and m.group(3) != '00' else '')
+    return s
 
 
 def quantity_fit(p, t):
@@ -1232,6 +1256,10 @@ def reader_comment(pr, p, c, t, ctx):
                 check.append(h)
             else:
                 happens.append(f'the tool will {h}')
+        if pr.term == 'verbatimEventTime' and p.time_frac >= 0.8:
+            happens.append('apply mapping joins these times to the dates in eventDate, adding the UTC offset if '
+                           'you give one on its form (10:00 on 2021-11-01, with +11:00, becomes '
+                           '2021-11-01T10:00+11:00)')
         if pr.value_part == 'latitude' and p.examples:
             ll = parse_lat_lon(p.examples[0])
             if ll:
@@ -1896,6 +1924,18 @@ def _separator(lines):
         n = len(rows[0])
         if n > best_n and all(len(r) == n for r in rows[1:]):
             best, best_n = sep, n
+    if best_n == 1:
+        # Rows that leave off empty fields at the end (term<TAB>value under a header with an assay
+        # column, as a text editor may save them): the separator that gives every row 2 fields or
+        # more, and none more than the header.
+        for sep in ('\t', ';', '|', ','):
+            try:
+                rows = [r for r in csv.reader(sample.splitlines(), delimiter=sep) if r]
+            except csv.Error:
+                continue
+            rows = rows[:-1] if len(rows) > 2 else rows
+            if rows and len(rows[0]) > 1 and all(2 <= len(r) <= len(rows[0]) for r in rows[1:]):
+                return sep
     return best
 
 

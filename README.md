@@ -12,10 +12,10 @@ tables into a FAIRe workbook. The Galaxy eDNA Lab is at edna.dev.gvl.org.au.
 | `tools/fairefier` | FAIRe-fier (with a new command-line version) | [csiro/FAIRe-fier](https://github.com/csiro/FAIRe-fier) | Lint clean; 6/6 tests pass; outputs identical to the web app; offer the command line upstream |
 | `tools/faire2ena` | FAIRe2ENA: samples; FAIRe2ENA: experiments and runs | [FAIR-eDNA/FAIRe2ENA](https://github.com/FAIR-eDNA/FAIRe2ENA) | Lint clean; 13/13 tests pass; runs can be chosen by assay or sequencing run, and a library holding several assays gets one run; adds the units ENA's checklist asks for, and the size-fraction fields the right way round; paired-end and single-end runs; ENA's test server accepted samples, study, experiments and runs for three SEA-MES 18S samples |
 | `tools/faire2ncbi` | FAIRe2NCBI: BioSample; FAIRe2NCBI: SRA | [aomlomics/FAIRe2NCBI](https://github.com/aomlomics/FAIRe2NCBI) | Lint clean; 20/20 tests pass; a library holding several assays gets one SRA row; needs a trial in the NCBI Submission Portal |
-| `tools/faire2qiime` | FAIRe2QIIME | [aomlomics/faire2qiime](https://github.com/aomlomics/faire2qiime) | Lint clean; 7/7 tests pass; needs a trial importing its files into QIIME 2 |
+| `tools/faire2qiime` | FAIRe2QIIME | [aomlomics/faire2qiime](https://github.com/aomlomics/faire2qiime) | Lint clean; 8/8 tests pass; needs a trial importing its files into QIIME 2 |
 | `tools/faire2mdt` | FAIRe2MDT | [FAIR-eDNA/FAIRe2MDT](https://github.com/FAIR-eDNA/FAIRe2MDT) | Lint clean; 6/6 tests pass; leaves out control samples, as GBIF asks; ran on 11 assay and run combinations of the FAIRe examples; MDT trial reached an archive GBIF can index; CC BY 4.0 licence copied in (`LICENSE.upstream`) |
 | `tools/edna2obis` | edna2obis: match taxa; edna2obis: build Darwin Core tables | [aomlomics/edna2obis](https://github.com/aomlomics/edna2obis) | Lint clean; 14/14 tests pass (Galaxy 26.1, with internet access); one request at a time to WoRMS and GBIF by default, at most 4; needs a trial on Galaxy Australia and an IPT |
-| `tools/faire_mapper` | FAIRe mapper: identify your files (says what each file is and where it goes); profile columns; propose mapping; find primers; build primer table; apply mapping (writes a FAIRe workbook); ask a language model (optional answers for the columns to review) (plus a model script for methods text) | New code, from the project's `faire_mapper` prototype; bundled primer table from Takahashi et al. 2023 and a bacteria and archaea register | Lint clean; 49/49 tests pass (Galaxy 26.1); benchmarked, tried on four Dryad datasets, two Australian datasets, the SEA-MES record (16S, COI, 18S and Wilderlab) and nine FAIRe examples; model step not yet run against the API |
+| `tools/faire_mapper` | FAIRe mapper: identify your files (says what each file is and where it goes); profile columns; propose mapping; find primers; build primer table; apply mapping (writes a FAIRe workbook); ask a language model (optional answers for the columns to review) (plus a model script for methods text) | New code, from the project's `faire_mapper` prototype; bundled primer table from Takahashi et al. 2023 and a bacteria and archaea register | Lint clean; 52/52 tests pass (Galaxy 26.1); benchmarked, tried on four Dryad datasets, two Australian datasets, the SEA-MES record (16S, COI, 18S and Wilderlab), the day-night study of West et al. 2024 (16S and COI, `dev/faire_mapper_daynight/`) and nine FAIRe examples; model step not yet run against the API |
 
 Each tool directory has its own README with what the wrapper adds, upstream issues found, and the
 steps still needed before deployment.
@@ -30,7 +30,7 @@ Notes for Galaxy Australia and other evaluators.
   which repository.
 - **Installing.** Each folder under `tools/` is one ToolShed repository with its own tests
   (`planemo test tools/FOLDER`). The tools are not on the ToolShed yet, as the owner account is still
-  to be chosen. Dependencies come from conda (conda-forge and bioconda) or containers. All 118 tool
+  to be chosen. Dependencies come from conda (conda-forge and bioconda) or containers. All 122 tool
   tests pass on Galaxy release_26.1 in this repository's checks; the tools were also tested on
   release_25.0. Tools use profile 23.0, except *FAIRe mapper: ask a language model* (25.1, for
   Galaxy's credentials).
@@ -40,6 +40,11 @@ Notes for Galaxy Australia and other evaluators.
   report. `DATA=demo/seames dev/faire_mapper_seames/run.sh OUTDIR` runs the FAIRe mapper, FAIRe-fier,
   FAIRe2NCBI, FAIRe2ENA, FAIRe2QIIME and (with R) FAIRe2MDT on it in about a minute. The three
   workflows in `workflows/faire/` chain the tools, each with its own tests.
+- **A second worked dataset.** `demo/daynight` is a small copy of the day-night study of West et al.
+  2024 (two assays, 120 samples and their controls; CC BY-NC 4.0, as its README says), in the
+  authors' own formats: an eDNAFlow LCA output and a FASTA file per assay, and a sample sheet with the
+  time in its own column. `DATA=demo/daynight dev/faire_mapper_daynight/run.sh OUTDIR` runs the FAIRe
+  mapper, FAIRe-fier, FAIRe2ENA, FAIRe2NCBI and FAIRe2QIIME on it.
 - **Worked example.** `docs/walkthroughs/seames_18s_to_ena.md` follows three SEA-MES 18S samples
   from the lab's spreadsheet, through the FAIRe mapper, FAIRe-fier and FAIRe2ENA, to a submission
   that ENA's test service accepted. It ran the scripts the Galaxy tools wrap from the command line,
