@@ -88,6 +88,12 @@ python '$__tool_directory__/faire2ena_galaxy.py' sample
                     <not_has_text text="&lt;TAG&gt;nitrate&lt;/TAG&gt;"/>
                     <!-- pH is a number with no unit; the control's "not applicable" is left out -->
                     <has_n_elements_with_path path=".//SAMPLE_ATTRIBUTE[TAG='ph']" n="3"/>
+                    <!-- size fraction (12 November 2026): FAIRe's size_frac is the filter that retains
+                         the sample, ENA's lower threshold, in µm; "no pre-filter" is not a number -->
+                    <has_text_matching expression="&lt;TAG&gt;size-fraction lower threshold&lt;/TAG&gt;\s*&lt;VALUE&gt;0.22&lt;/VALUE&gt;\s*&lt;UNITS&gt;µm&lt;/UNITS&gt;"/>
+                    <has_n_elements_with_path path=".//SAMPLE_ATTRIBUTE[TAG='size-fraction lower threshold']" n="3"/>
+                    <not_has_text text="&lt;TAG&gt;size-fraction upper threshold&lt;/TAG&gt;"/>
+                    <not_has_text text="sizefraction"/>
                 </assert_contents>
             </output>
             <output name="submission_xml">
@@ -100,6 +106,9 @@ python '$__tool_directory__/faire2ena_galaxy.py' sample
                     <has_text text="converted 3 eventDate value(s)"/>
                     <has_text text="wrote 4 sample(s)"/>
                     <has_text_matching expression="'nitrate' left out for 3 sample.*nitrate_unit 'µmol/kg'"/>
+                    <has_text_matching expression="'size-fraction upper threshold' left out for 3 sample.*size_frac_low is not a number"/>
+                    <!-- upstream's count of XML lines, which it calls samples, is not shown -->
+                    <not_has_text text="Generated ENA XML with"/>
                 </assert_contents>
             </output>
         </test>
@@ -125,6 +134,9 @@ python '$__tool_directory__/faire2ena_galaxy.py' sample
                     <has_n_elements_with_path path=".//SAMPLE_ATTRIBUTE[TAG='dissolved oxygen']" n="3"/>
                     <has_n_elements_with_path path=".//SAMPLE_ATTRIBUTE[TAG='dissolved oxygen'][VALUE='193.443']" n="2"/>
                     <has_text_matching expression="&lt;TAG&gt;dissolved inorganic carbon&lt;/TAG&gt;\s*&lt;VALUE&gt;2033190&lt;/VALUE&gt;\s*&lt;UNITS&gt;µg/L&lt;/UNITS&gt;"/>
+                    <!-- a 20 µm pre-filter (size_frac_low) is ENA's upper threshold -->
+                    <has_n_elements_with_path path=".//SAMPLE_ATTRIBUTE[TAG='size-fraction upper threshold']" n="1"/>
+                    <has_text_matching expression="&lt;TAG&gt;size-fraction upper threshold&lt;/TAG&gt;\s*&lt;VALUE&gt;20&lt;/VALUE&gt;\s*&lt;UNITS&gt;µm&lt;/UNITS&gt;"/>
                 </assert_contents>
             </output>
             <output name="log">
@@ -217,13 +229,24 @@ runs**.
   to 1.54 L, 0.5 µM nitrate to 0.5 µmol/L). A value that is not
   a number, or a size or volume with no unit, is left out and listed in the log; fill it in
   sampleMetadata and run the tool again to include it.
+- size_frac (the filter that retains the sample) becomes ENA's *size-fraction lower threshold*, and
+  size_frac_low (a pre-filter) its *upper threshold*, both in µm, as ENA's checklist defines them.
 
 -----
 
 **Submitting to ENA**
 
-Test your submission on the ENA test server first, which deletes submissions after 24 hours.
-Download both XML files and submit them with the
+Try your submission on ENA's test service first. It checks a submission as the real service does,
+and deletes it within a day.
+
+1. Download the SAMPLE XML and the SUBMISSION XML from Galaxy.
+2. Log in to the Webin Portal with your Webin account: the test service is at
+   https://wwwdev.ebi.ac.uk/ena/submit/webin/ and the real one at https://www.ebi.ac.uk/ena/submit/webin/.
+3. Open *Submit XMLs*, add the SUBMISSION XML and the SAMPLE XML, and submit them.
+4. ENA shows a receipt (XML) with an accession for each sample. Save it as a file and upload it to
+   Galaxy: **FAIRe2ENA: experiments and runs** needs it.
+
+You can also submit the files with the
 `Webin REST service <https://ena-docs.readthedocs.io/en/latest/submit/general-guide/programmatic.html>`_,
 for example::
 
@@ -231,8 +254,9 @@ for example::
         -F "SUBMISSION=@submission.xml" -F "SAMPLE=@samples.xml" \
         wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/
 
-For the real submission, use www.ebi.ac.uk in place of wwwdev.ebi.ac.uk. Save the XML that ENA
-returns, as this is the receipt the next tool needs.
+For the real submission, use www.ebi.ac.uk in place of wwwdev.ebi.ac.uk. ENA's reply is the
+receipt. In a trial on 11 November 2026 the REST service refused one Webin account (HTTP 403) that
+the Webin Portal accepted; if this happens to you, use the portal.
 
 @HELP_FAIRE_GUIDE@
 

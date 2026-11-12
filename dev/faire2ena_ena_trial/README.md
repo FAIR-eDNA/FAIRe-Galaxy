@@ -51,6 +51,13 @@ the samples go to ENA without them, and FAIRe2ENA's log lists them.
 Submitted on 12 November 2026 through the test Webin Portal, with the chemistry fix: accepted
 (ERS32843391 to ERS32843393).
 
+The accepted XML shows a fault ENA did not refuse: the filter size (size_frac, 0.22 µm) went in as
+"sizefraction upper threshold", with no unit. ENA's water checklist spells the label with a hyphen,
+so ENA kept it as an extra attribute, and it defines the upper threshold as the pre-filter: the
+filter that retains the sample is the lower threshold. The driver now writes it as
+*size-fraction lower threshold* in µm (tool README, item 12). Rerun on the same three samples, the
+sample XML differs from the accepted one only in that attribute.
+
 ## Experiments and runs (12 November 2026)
 
 For the three 18S samples, with a new test study (PRJEB129763). In place of the real reads (already
@@ -65,10 +72,12 @@ ERX17512957) and three runs (ERR18120619 to ERR18120621). The test portal reads 
 
 Three Wilderlab-sequenced samples (M217, M251, M292) give clean sample XML, once the trial gives
 their extraction volume its unit (mL, in `project_values_WL.tsv`). Their runs are single-end, which
-FAIRe2ENA does not yet support (tool README, step 11).
+FAIRe2ENA could not write until 12 November 2026 (tool README, item 13). The workbook has
+lib_layout *single end*, but no file names yet, as the Wilderlab reads are not in ENA's run report
+for the BioProject; a test of the runs needs their file names, or made-up ones.
 
 ## Still to do
 
-- Single-end runs, for Wilderlab data.
-- Find the cause of the 403 from the Webin REST service, which the tool's help describes for
-  submitting.
+- Try single-end runs on the test server, with Wilderlab file names (made-up reads will do).
+- Find the cause of the 403 from the Webin REST service. The tools' help now leads with the
+  Webin Portal's XML upload, which worked, and gives curl as the alternative.
