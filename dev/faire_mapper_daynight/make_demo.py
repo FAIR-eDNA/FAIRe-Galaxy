@@ -3,10 +3,10 @@
 Usage: python make_demo.py DATA_DIR OUT_DIR
 
 DATA_DIR holds the study's files as the authors provide them (README.md): the sample sheet, the two
-LCA outputs, the two FASTA files, the fastq ReadMe (eDNA_fastq_READ_ME.txt) and the paper
-(West_2024.pdf). OUT_DIR gets:
+LCA outputs, the two FASTA files, the fastq ReadMe (eDNA_fastq_READ_ME.txt), the portal's list of
+the fastq files (fastq_file_names.txt) and the paper (West_2024.pdf). OUT_DIR gets:
 
-- the sample sheet and the fastq ReadMe as they are;
+- the sample sheet, the fastq ReadMe and the list of fastq files as they are;
 - each LCA output with every sample column but only the TOP sequences with the most reads, and
   each FASTA file with the sequences of those rows;
 - methods.txt: sections 2.1 to 2.3 of the paper (with Table 1), as pdftotext writes them, without
@@ -25,6 +25,7 @@ import pandas as pd
 TOP = 150
 SHEET = 'Day_night_Tasmania_sample_data.xlsx'
 README = 'eDNA_fastq_READ_ME.txt'
+FILES = 'fastq_file_names.txt'
 
 
 def cut_assay(src, out, assay):
@@ -64,7 +65,7 @@ def methods(src, out):
 def main():
     src, out = sys.argv[1:3]
     os.makedirs(out, exist_ok=True)
-    for name in (SHEET, README):
+    for name in (SHEET, README, FILES):
         shutil.copyfile(os.path.join(src, name), os.path.join(out, name))
     for assay in ('16S', 'COI'):
         cut_assay(src, out, assay)

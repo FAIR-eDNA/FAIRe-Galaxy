@@ -5,14 +5,17 @@
 #   (needs python with pandas and openpyxl). DIR holds the files as the authors provide them:
 #   Day_night_Tasmania_sample_data.xlsx, Day_night_16S_LCA_output.txt, Day_night_COI_LCA_output.txt,
 #   Day_night_16S_ASV.fasta, Day_night_COI_ASV.fasta, and the paper as West_2024.pdf (Environmental
-#   DNA 6: e70018, CC BY), or its methods as methods.txt.
+#   DNA 6: e70018, CC BY), or its methods as methods.txt, and the portal's list of the fastq files
+#   as fastq_file_names.txt (the copy in demo/daynight is used if DIR has none). FILES can name
+#   another list of the files, such as md5sum's output with their checksums.
 #   1. propose mapping on the sample sheet as published
 #   2. prepare_table.py: what a person adds before mapping (9B for the second 8B, a sample type and
 #      control type column, a row for the extraction blank in the 16S table)
 #   3. propose mapping on that sheet, then review.py applies the reviewer's decisions
 #   4. find primers on the paper's methods
-#   5. apply mapping: both LCA outputs as otuFinal and taxaFinal, with their FASTA files, the times
-#      joined to the dates at +11:00, and the values from the paper (project_values.tsv)
+#   5. apply mapping: both LCA outputs as otuFinal and taxaFinal, with their FASTA files, the fastq
+#      files as each assay's libraries, the times joined to the dates at +11:00, and the values from
+#      the paper (project_values.tsv)
 #   6. FAIRe-fier, then FAIRe2ENA samples, FAIRe2NCBI BioSample and FAIRe2QIIME
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
@@ -27,6 +30,8 @@ for f in Day_night_Tasmania_sample_data.xlsx Day_night_16S_LCA_output.txt Day_ni
     [ -e "$d/$f" ] || { echo "Missing $d/$f (README.md)" >&2; exit 1; }
 done
 [ -e "$d/methods.txt" ] || [ -e "$d/West_2024.pdf" ] || { echo "Missing $d/methods.txt or West_2024.pdf" >&2; exit 1; }
+files="${FILES:-$d/fastq_file_names.txt}"
+[ -e "$files" ] || files="$repo/demo/daynight/fastq_file_names.txt"
 py="${PYTHON:-python -I -W ignore}"
 mkdir -p "$out/mapper" "$out/faire" "$out/convert/ena_samples" "$out/convert/ncbi_biosample" "$out/convert/qiime/out"
 
@@ -55,6 +60,10 @@ $py "$tools/faire_mapper_apply.py" "$out/mapper/samples_prepared.xlsx" --crosswa
     --otu_sequences "$d/Day_night_16S_ASV.fasta" \
     --otu "$d/Day_night_COI_LCA_output.txt" --otu_assay COI_Leray --otu_run AGRF_NovaSeq6000_SP \
     --otu_sequences "$d/Day_night_COI_ASV.fasta" \
+    --library "$files" --library_assay 16S_Fish --library_filter 16S_Fish \
+    --library_run AGRF_NovaSeq6000_SP \
+    --library "$files" --library_assay COI_Leray --library_filter COI_Leray \
+    --library_run AGRF_NovaSeq6000_SP \
     -o "$out/faire/daynight.xlsx" --log "$out/faire/daynight.log"
 
 echo "== 6. FAIRe-fier and conversions"

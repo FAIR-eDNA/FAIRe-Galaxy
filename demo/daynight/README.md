@@ -27,7 +27,7 @@ species fluctuations on diver transects. *Environmental DNA* 6: e70018,
 **Changes made** (as both licences ask): the two LCA outputs keep every sample column but only the
 150 sequences of each assay with the most reads, and the two FASTA files only those sequences;
 `methods.txt` is the paper's text from the PDF, without the publisher's download notes. The sample
-sheet and the fastq ReadMe are as published. `dev/faire_mapper_daynight/make_demo.py` makes the
+sheet, the fastq ReadMe and the list of fastq files are as published. `dev/faire_mapper_daynight/make_demo.py` makes the
 set from the full files, so the cut can be checked and repeated.
 
 ## Files
@@ -39,3 +39,4 @@ set from the full files, so the cut can be checked and repeated.
 | `Day_night_16S_ASV.fasta`, `Day_night_COI_ASV.fasta` | The sequences of those ASVs |
 | `eDNA_fastq_READ_ME.txt` | The ReadMe of the reads on the Data Access Portal: how the fastq files are named |
 | `methods.txt` | The paper's methods, for *find primers* and the project values |
+| `fastq_file_names.txt` | The portal's list of the 478 fastq files (13 GB, not included), one per line with its folder. No checksums |

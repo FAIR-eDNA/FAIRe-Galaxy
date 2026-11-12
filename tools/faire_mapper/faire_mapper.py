@@ -1691,6 +1691,76 @@ def adjudication_requests(profiles, proposals, terms, descriptions=None):
     return reqs
 
 
+# Sample names that read as controls (Filt_control_3_4, Extbl19_4, NTC, Field blank 2 ...)
+CONTROL_NAME_RE = re.compile(r'control|blank|negative|\bneg\b|\bntc\b|extbl|ext_bl|\bmock\b', re.I)
+# Terms that say which rows are controls
+CONTROL_TERMS = {'samp_category', 'neg_cont_type', 'pos_cont_type', *CONTROL_FLAGS}
+REVIEW_COLUMNS = ['check', 'columns', 'rows', 'what_to_do']
+
+
+def _first(items, k=10):
+    return ', '.join(items[:k]) + (f' and {len(items) - k} more' if len(items) > k else '')
+
+
+def _row_span(rows, n):
+    return f'row {rows[0]} of {n}' if len(rows) == 1 else f'rows {rows[0]} to {rows[-1]} of {n}'
+
+
+def review_list(df, profiles, proposals):
+    """What only a person can decide: a sample name used twice, controls named but not marked, columns
+    of notes, and times of collection with no time zone. One row each, with what to do. The tool
+    flags these and changes nothing."""
+    out = []
+    mapped = [pr for pr in proposals if pr.route != 'no match']
+    name_col = next((pr.column for pr in mapped if pr.term == 'samp_name'), None)
+    if name_col is not None and name_col in df.columns:
+        names = [str(v).strip() for v in df[name_col].tolist() if not is_missing(v)]
+        counts = pd.Series(names).value_counts() if names else pd.Series(dtype=int)
+        repeats = [f'{k} ({v} rows)' for k, v in counts.items() if v > 1]
+        if repeats:
+            other = next((p.column for p in profiles if p.column != name_col and p.unique_per_row
+                          and p.n_values == len(df) and p.filename_frac < 0.5 and p.numeric_frac < 0.5), None)
+            out.append(['repeated sample names', name_col, _first(repeats),
+                        'FAIRe needs one row per sample. Give each sample its own name in the table (a typing '
+                        'slip, such as 8B for 9B, or a replicate letter or number), then propose mapping again'
+                        + (f'. Or, if {other} (a different value on every row) names the samples, map it to '
+                           f'samp_name instead' if other else '')])
+        marked = any(pr.term in CONTROL_TERMS or CONTROL_TERMS & set(pr.also_terms()) for pr in mapped)
+        controls = list(dict.fromkeys(n for n in names if CONTROL_NAME_RE.search(n)))
+        if controls and not marked:
+            out.append(['controls not marked', name_col, _first(controls),
+                        'These names read as controls, but no column says which rows are controls, and the '
+                        'tool does not decide from names. Add a sample type column (sample or negative control) '
+                        'and a control type column (field, extraction or PCR negative ...), then propose mapping '
+                        'again'])
+    n = len(df)
+    for c in df.columns:
+        if str(c).startswith('Unnamed: '):   # no header (pandas names it), so never mapped
+            continue
+        rows = [i + 1 for i, v in enumerate(df[c].tolist()) if not is_missing(v) and str(v).strip()]
+        if n >= 6 and rows and len(rows) < n and rows[-1] <= max(5, n // 10):
+            out.append(['notes, not sample values', str(c), _row_span(rows, n),
+                        'Values only in the first rows, so they may be notes about the whole study. If so, '
+                        'leave the column out (delete its row in the crosswalk) and give anything FAIRe needs from them '
+                        '(recordedBy, for example) as a project value. If they belong to those rows only, keep '
+                        'the column'])
+    # The times that go into eventDate: a column matched to verbatimEventTime, or eventDate with times
+    timed = {pr.column for pr in mapped if pr.term in ('verbatimEventTime', 'eventDate')}
+    for p in profiles:
+        if p.column not in timed or not p.n_values or re.search(r'\b(UTC|GMT)\b', p.column, re.I):
+            continue
+        if p.time_frac >= 0.8 or p.date_format == 'ISO date-time':
+            zone = re.search(r'\(([A-Z]{2,4}T)\)', p.column)
+            out.append(['times with no time zone', p.column,
+                        f"{p.n_values} rows ({', '.join(time_text(v) for v in p.examples[:3])} ...)",
+                        (f'The column name gives the time zone ({zone.group(1)}), but the times have no UTC '
+                         f'offset. Give the offset of {zone.group(1)} on apply mapping\'s form' if zone else
+                         'The times have no UTC offset. Give it on apply mapping\'s form (+11:00 for '
+                         'Australian Eastern Daylight Time, for example)')
+                        + ', or eventDate will hold local times with no offset'])
+    return out
+
+
 DICT_NAME_COLS = {'column', 'columnname', 'variable', 'variablename', 'field', 'fieldname', 'name', 'header',
                   'attribute', 'columnheader', 'parameter'}
 DICT_DESC_COLS = {'description', 'definition', 'meaning', 'explanation', 'details', 'notes', 'comment',
@@ -2037,6 +2107,8 @@ def cmd_map(args):
     reqs = adjudication_requests(profiles, proposals, terms, descriptions)
     with open(out / 'adjudication_requests.json', 'w') as f:
         json.dump(reqs, f, indent=1)
+    review = review_list(df, profiles, proposals)
+    pd.DataFrame(review, columns=REVIEW_COLUMNS).to_csv(out / 'review_list.tsv', sep='\t', index=False)
     counts = rep.route.value_counts().to_dict()
     summary = {'table': Path(args.table).name, 'checklist': Path(args.checklist).name, 'columns': len(proposals),
                'accept': counts.get('accept', 0), 'review': counts.get('review', 0),
@@ -2044,6 +2116,7 @@ def cmd_map(args):
                'model': counts.get('model', 0),
                'terms_considered': len(terms),
                'missing_mandatory': int(len(missing_mandatory(terms, proposals, args.assay_type))),
+               'to_decide': len(review),
                'read_notes': df.attrs.get('read_notes', []) + dict_notes,
                'faire_mapper_version': __version__}
     if args.gold:
@@ -2059,6 +2132,8 @@ def cmd_map(args):
     print(f"INFO: {summary['columns']} columns: {summary['accept']} accept, {summary['review']} review, "
           f"{summary['no_match']} no match, {summary['confirmed']} confirmed, {summary['model']} chosen by a model; "
           f"{summary['missing_mandatory']} mandatory FAIRe terms not covered")
+    for check, col, rows, _ in review:
+        print(f'INFO: to decide: {check} ({col}: {rows})')
     if args.gold:
         print('INFO: evaluation ' + json.dumps(summary['evaluation']))
     return 0

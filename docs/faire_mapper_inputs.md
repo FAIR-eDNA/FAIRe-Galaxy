@@ -88,7 +88,9 @@ If you have more than one assay, add an `assay` column for the values that diffe
 such as the primers. Rows without an assay apply to the whole project.
 
 To see which terms you still need to find, look at the *mandatory terms not covered* output of the
-*propose mapping* tool.
+*propose mapping* tool. Its *things to decide* output lists what only you can settle before applying
+the mapping: a sample name used on more than one row, controls named but not marked in a column,
+columns of notes, and times with no time zone.
 
 **OTU or ASV table** (for the *apply mapping* tool), one for each assay. This table holds the reads
 of each sequence or taxon in each sample. The samples can be columns (as in an ASV table, or DADA2's
@@ -109,8 +111,15 @@ pipeline, whose headers are those names. FAIRe needs each sequence (dna_sequence
 
 **Library table** (optional, for the *apply mapping* tool). This table says which sequence files
 belong to which sample. It can be your study's run report from ENA or the SRA, the SRA submission
-sheet, or your own run sheet. The tool matches each library to a sample by its sample name, or by a
-library name that starts with the sample name (M159_16SFish matches M159). It then fills in the
+sheet, or your own run sheet. A list of your fastq files also works: one name per line, with or
+without a header, and an md5 column if you have the checksums. The checksum file a sequencing provider sends (md5sum's output,
+with the checksum and the file name on each line) is read as it is, and so is the CSV from Windows
+PowerShell (`Get-FileHash -Algorithm MD5 *.fastq.gz | Export-Csv md5.csv`, run in the folder of
+reads). The tool pairs the forward and reverse files by their read number (1A_16S_Fish_R1.fastq.gz
+and 1A_16S_Fish_R2.fastq.gz are library 1A_16S_Fish), and matches each library to a sample by its
+sample name, or by a library name that starts with the sample name (M159_16SFish matches M159).
+Where the files name a sample differently from your table (FB1 for *Field blank 1*), add a sample
+name column to the list and fill it for those rows. The tool then fills in the
 library IDs, file names, checksums and links to the archive records in experimentRunMetadata. FAIRe
 treats a library as one amplicon of a sample, so each lib_id is made of the library name, the assay
 and the run (M159_16SFish_LerayCOI_Fish16S_RUN1), and a library that holds the amplicons of two

@@ -67,10 +67,11 @@ python '$__tool_directory__/faire_mapper.py' map
         <data name="missing" format="tabular" from_work_dir="out/missing_mandatory.tsv" label="${tool.name} on ${on_string}: mandatory terms not covered"/>
         <data name="requests" format="json" from_work_dir="out/adjudication_requests.json" label="${tool.name} on ${on_string}: columns to review"/>
         <data name="summary" format="json" from_work_dir="out/summary.json" label="${tool.name} on ${on_string}: summary"/>
+        <data name="review" format="tabular" from_work_dir="out/review_list.tsv" label="${tool.name} on ${on_string}: things to decide"/>
     </outputs>
     <tests>
         <!-- The prototype's sample sheet: water metabarcoding -->
-        <test expect_num_outputs="5">
+        <test expect_num_outputs="6">
             <param name="table" value="messy_edna.csv"/>
             <param name="sample_types" value="Water"/>
             <output name="report">
@@ -107,7 +108,7 @@ python '$__tool_directory__/faire_mapper.py' map
             </output>
         </test>
         <!-- Excel sheet with a title row above the headers; held-out style headers -->
-        <test expect_num_outputs="5">
+        <test expect_num_outputs="6">
             <param name="table" value="survey_sheet.xlsx"/>
             <param name="sheet" value="Samples"/>
             <param name="header_row" value="2"/>
@@ -132,7 +133,7 @@ python '$__tool_directory__/faire_mapper.py' map
             </output>
         </test>
         <!-- Answers from a reviewer are applied first -->
-        <test expect_num_outputs="5">
+        <test expect_num_outputs="6">
             <param name="table" value="messy_edna.csv"/>
             <param name="sample_types" value="Water"/>
             <param name="responses" value="messy_edna_responses.json"/>
@@ -153,7 +154,7 @@ python '$__tool_directory__/faire_mapper.py' map
             </output>
         </test>
         <!-- Semicolon-separated Windows-1252 text with decimal commas and Excel serial dates -->
-        <test expect_num_outputs="5">
+        <test expect_num_outputs="6">
             <param name="table" value="reef_stations_semicolon.csv" ftype="txt"/>
             <param name="sample_types" value="Water"/>
             <output name="report">
@@ -172,7 +173,7 @@ python '$__tool_directory__/faire_mapper.py' map
             </output>
         </test>
         <!-- A data dictionary in a README: descriptions change two matches -->
-        <test expect_num_outputs="5">
+        <test expect_num_outputs="6">
             <param name="table" value="apply_reef.csv"/>
             <param name="sample_types" value="Water"/>
             <param name="dictionary" value="apply_reef_readme.md" ftype="txt"/>
@@ -195,7 +196,7 @@ python '$__tool_directory__/faire_mapper.py' map
             </output>
         </test>
         <!-- A data dictionary as a table, with units -->
-        <test expect_num_outputs="5">
+        <test expect_num_outputs="6">
             <param name="table" value="apply_reef.csv"/>
             <param name="sample_types" value="Water"/>
             <param name="dictionary" value="apply_reef_dictionary.csv" ftype="csv"/>
@@ -212,7 +213,7 @@ python '$__tool_directory__/faire_mapper.py' map
             </output>
         </test>
         <!-- An NCBI BioSample sheet: comment lines, MIxS lat_lon, one depth, a yes/no control column -->
-        <test expect_num_outputs="5">
+        <test expect_num_outputs="6">
             <param name="table" value="mixs_sheet.tsv" ftype="tabular"/>
             <param name="sample_types" value="Water"/>
             <output name="crosswalk">
@@ -247,7 +248,7 @@ python '$__tool_directory__/faire_mapper.py' map
         </test>
         <!-- A time of day in its own column (Excel time cells) is the time of collection: verbatimEventTime,
              which apply mapping joins to the date in eventDate (day-night trial, 12 November 2026) -->
-        <test expect_num_outputs="5">
+        <test expect_num_outputs="6">
             <param name="table" value="apply_reef_times.xlsx" ftype="xlsx"/>
             <param name="sample_types" value="Water"/>
             <output name="report">
@@ -259,6 +260,21 @@ python '$__tool_directory__/faire_mapper.py' map
             <output name="crosswalk">
                 <assert_contents>
                     <has_text_matching expression="Time.*verbatimEventTime.*joins these times to the dates in eventDate"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- The review list: what only a person can decide (a sample name used twice, controls named but
+             not marked, columns of notes, times with no time zone), with what to do about each -->
+        <test expect_num_outputs="6">
+            <param name="table" value="map_review.csv"/>
+            <param name="sample_types" value="Water"/>
+            <output name="review">
+                <assert_contents>
+                    <has_line_matching expression="^repeated sample names\tSample ID\t2B \(2 rows\)\t.*"/>
+                    <has_line_matching expression="^controls not marked\tSample ID\tFiltration control 1 \+ 2\t.*sample type column.*"/>
+                    <has_line_matching expression="^notes, not sample values\tCollected by\trows 1 to 2 of 11\t.*"/>
+                    <has_line_matching expression="^notes, not sample values\tInformation:\trows 1 to 3 of 11\t.*"/>
+                    <has_line_matching expression="^times with no time zone\tTime\t.*UTC offset.*"/>
                 </assert_contents>
             </output>
         </test>
@@ -341,6 +357,13 @@ maximumDepthInMeters. A yes/no column that says which samples are controls, unde
   methods text, and the rest are questions to ask the data provider.
 - **columns to review**: the review and no-match columns, with their values and candidate terms, in
   a form that a reviewer or a language model can answer.
+- **things to decide**: what only a person can decide before applying the mapping, each with what to
+  do about it: a sample name used on more than one row; sample names that read as controls
+  (*Filtration control 1 + 2*, *Extbl19_4*) when no column says which rows are controls; columns
+  with values only in the first rows, which may be notes about the whole study; and times of
+  collection (the column matched to verbatimEventTime or eventDate) with no time zone. The tool
+  lists these and changes nothing. The list has only its header row when there is nothing to
+  decide.
 - **summary**: the number of columns in each route.
 
 -----

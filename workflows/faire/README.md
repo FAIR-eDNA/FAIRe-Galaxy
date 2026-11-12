@@ -7,7 +7,7 @@ Each folder holds the workflow to import (`.ga`), its source in Galaxy's YAML fo
 
 | Workflow | Inputs | Steps | Outputs |
 |---|---|---|---|
-| `faire-propose-mapping`: FAIRe mapper: propose a mapping | your sample table; the methods as text | profile columns; propose mapping; find primers | column profile; mapping report; crosswalk to review; mandatory terms not covered; primer candidates |
+| `faire-propose-mapping`: FAIRe mapper: propose a mapping | your sample table; the methods as text | profile columns; propose mapping; find primers | column profile; mapping report; crosswalk to review; mandatory terms not covered; things to decide; primer candidates |
 | `faire-write-workbook`: FAIRe mapper: write and check a FAIRe workbook | the sample table; the reviewed crosswalk; values for the whole project (optional); an OTU or ASV table; project ID; assay name | apply mapping; FAIRe-fier | FAIRe workbook; apply mapping log; FAIRe-fier issues and summary |
 | `faire-submission-tables`: FAIRe: check a workbook and make submission tables | a FAIRe workbook; ENA centre name | FAIRe-fier; FAIRe2NCBI BioSample; FAIRe2NCBI SRA; FAIRe2ENA samples; FAIRe2QIIME | FAIRe-fier issues and summary; NCBI BioSample and SRA tables; ENA SAMPLE and SUBMISSION XML; QIIME 2 metadata and manifests |
 

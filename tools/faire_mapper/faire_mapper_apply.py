@@ -1085,12 +1085,19 @@ def build_workbook(args, df, rows, terms, by_name, log):
     return {'samples': n, 'terms': len(written), 'user_fields': len(user_fields)}
 
 
-def amplicon_lib_id(base, assay, run):
+def amplicon_lib_id(base, assay, run, shared=False):
     """M097_16SFish_LerayCOI, Fish16S, AGRF_2024-12 -> M097_16SFish_LerayCOI_Fish16S_AGRF_2024-12:
-    the library name, then the assay and the sequencing run, unless it already ends with them."""
+    the library name, then the assay and the sequencing run, unless it already ends with them. A name
+    that ends with the assay (1A_16S_Fish, as the day-night study names its files) gets the run only,
+    unless the library holds several amplicons (shared), when each lib_id names its assay."""
     tail = '_'.join(str(x).strip() for x in (assay, run) if not _blank(x))
     base = str(base).strip()
-    return base if not tail or base == tail or base.endswith('_' + tail) else f'{base}_{tail}'
+    if not tail or base == tail or base.endswith('_' + tail):
+        return base
+    a = '' if _blank(assay) else str(assay).strip()
+    if a and base.endswith('_' + a) and not _blank(run) and not shared:
+        return f'{base}_{str(run).strip()}'
+    return f'{base}_{tail}'
 
 
 def amplicon_lib_ids(rows, log, section):
@@ -1098,17 +1105,21 @@ def amplicon_lib_ids(rows, log, section):
     ('an amplicon of a sample with unique MIDs'): the library name (samp_name when there is none),
     assay_name and seq_run_id. A library that holds several amplicons, or was sequenced in several
     runs, gets a lib_id for each, and its rows keep the same files."""
-    from_samp, shared, example = 0, {}, None
+    from_samp, shared, example, todo = 0, {}, None, []
     for r in rows:
         base = r.get('lib_id')
         if _blank(base):
             if _blank(r.get('samp_name')):
                 continue
             base, from_samp = r['samp_name'], from_samp + 1
+        key = None
         if not _blank(r.get('filename')):
             key = (str(base).strip(), str(r.get('samp_name')), str(r['filename']), str(r.get('filename2') or ''))
             shared.setdefault(key, []).append(str(r.get('assay_name') or ''))
-        r['lib_id'] = amplicon_lib_id(base, r.get('assay_name'), r.get('seq_run_id'))
+        todo.append((r, base, key))
+    for r, base, key in todo:
+        r['lib_id'] = amplicon_lib_id(base, r.get('assay_name'), r.get('seq_run_id'),
+                                      shared=key is not None and len(set(shared[key])) > 1)
         example = example or r['lib_id']
     if not example:
         return

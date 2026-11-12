@@ -1,0 +1,8 @@
+Fish16S_fastq_files/LIZ_01_Fish16S_R1.fastq.gz
+Fish16S_fastq_files/LIZ_01_Fish16S_R2.fastq.gz
+Fish16S_fastq_files/LIZ_02_Fish16S_R1.fastq.gz
+Fish16S_fastq_files/LIZ_02_Fish16S_R2.fastq.gz
+Fish16S_fastq_files/LIZ_03_Fish16S_R1.fastq.gz
+Fish16S_fastq_files/LIZ_03_Fish16S_R2.fastq.gz
+Fish16S_fastq_files/LIZ_FB_Fish16S_R1.fastq.gz
+Fish16S_fastq_files/LIZ_FB_Fish16S_R2.fastq.gz

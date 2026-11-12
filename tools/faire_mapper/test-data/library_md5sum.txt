@@ -1,0 +1,8 @@
+ab01ab01ab01ab01ab01ab01ab01ab01  LIZ_01_Fish16S_R1.fastq.gz
+ab02ab02ab02ab02ab02ab02ab02ab02  LIZ_01_Fish16S_R2.fastq.gz
+ab11ab11ab11ab11ab11ab11ab11ab11  LIZ_02_Fish16S_R1.fastq.gz
+ab12ab12ab12ab12ab12ab12ab12ab12  LIZ_02_Fish16S_R2.fastq.gz
+ab21ab21ab21ab21ab21ab21ab21ab21  LIZ_03_Fish16S_R1.fastq.gz
+ab22ab22ab22ab22ab22ab22ab22ab22  LIZ_03_Fish16S_R2.fastq.gz
+ab31ab31ab31ab31ab31ab31ab31ab31  LIZ_FB_Fish16S_R1.fastq.gz
+ab32ab32ab32ab32ab32ab32ab32ab32  LIZ_FB_Fish16S_R2.fastq.gz

@@ -71,6 +71,11 @@ def main(argv=None):
     items = []
     for path, name, fmt in zip(args.file, names, formats):
         name = name or Path(path).name
+        files, form = fl.read_file_list(path)
+        if files is not None:   # md5sum's output or a list of file names: no header, so not a table otherwise
+            items.append({'name': name, 'sheet': '', 'df': files, 'error': '', 'fmt': fmt, 'path': path,
+                          'file_list': form})
+            continue
         try:
             sheets = sheets_of(path)
         except Exception as e:   # not a readable spreadsheet
@@ -103,6 +108,8 @@ def main(argv=None):
                 kind, why = 'unknown', [it['error'] or 'could not be read as a table']
         else:
             kind, why = fk.describe(it['df'], known, term_names, faire_terms)
+            if it.get('file_list') and kind == 'library':
+                why = [fl.FILE_LIST_NOTES[it['file_list']]] + why
             if kind in ('unknown', 'text') and (it['fmt'] == 'txt' or Path(it['name']).suffix.lower() in ('.txt', '.md')):
                 kind, why = fk.describe_text(it['path'])
         nxt = NEXT[kind]

@@ -12,7 +12,13 @@ The files copy the layouts of the day-night study's inputs, with made-up reef sa
 - apply_reef_times_values.tsv: values for the whole project and two assays, with no trailing tab on
   the rows without an assay, an amplicon size given as a range, and habitat terms for every sample;
 - otu_lca_ranks.tsv: an eDNAFlow LCA output (domain to species, then the OTU column, then one
-  column per sample), and otu_lca_ranks.fasta: its ASV sequences.
+  column per sample), and otu_lca_ranks.fasta: its ASV sequences;
+- library_file_list.csv: a list of fastq files with their MD5s, as Windows PowerShell's
+  Get-FileHash -Algorithm MD5 | Export-Csv writes it (a #TYPE line, then Algorithm, Hash and the
+  full Path): the forward and reverse reads of four libraries, named, as the day-night study names
+  its files, with the assay at the end (LIZ_01_Fish16S); library_md5sum.txt: the same files as
+  md5sum writes them (checksum, two spaces, file name); library_file_names.txt: their names only,
+  one per line with their folder, as the Data Access Portal lists the day-night study's files.
 
 It also writes tools/faire2qiime/test-data/faire_subfragment_na.xlsx: faire_single_assay.xlsx with
 target_subfragment 'not applicable' (FAIRe's term for no value), as for a fish 16S marker with no
@@ -78,6 +84,24 @@ FASTA = {
 }
 
 
+def file_list():
+    """The same eight files as Windows PowerShell's Get-FileHash -Algorithm MD5 | Export-Csv writes
+    them (a #TYPE line, then Algorithm, Hash and the full Path), and as md5sum writes them (the
+    checksum, two spaces and the file name, with no header)."""
+    files = [(f'{sample}_Fish16S_R{read}.fastq.gz', i, read)
+             for i, sample in enumerate(('LIZ_01', 'LIZ_02', 'LIZ_03', 'LIZ_FB')) for read in (1, 2)]
+    with open(os.path.join(OUT, 'library_file_list.csv'), 'w', encoding='utf-8', newline='') as f:
+        f.write('#TYPE Microsoft.PowerShell.Commands.FileHashInfo\r\n"Algorithm","Hash","Path"\r\n')
+        for name, i, read in files:
+            f.write(f'"MD5","{(str(i) + str(read)) * 16}","C:\\Users\\lab\\reads\\{name}"\r\n')
+    with open(os.path.join(OUT, 'library_md5sum.txt'), 'w', encoding='utf-8') as f:
+        for name, i, read in files:
+            f.write(f'{("ab" + str(i) + str(read)) * 8}  {name}\n')
+    with open(os.path.join(OUT, 'library_file_names.txt'), 'w', encoding='utf-8') as f:
+        for name, i, read in files:
+            f.write(f'Fish16S_fastq_files/{name}\n')
+
+
 def main():
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -118,3 +142,4 @@ def qiime_subfragment():
 if __name__ == '__main__':
     main()
     qiime_subfragment()
+    file_list()

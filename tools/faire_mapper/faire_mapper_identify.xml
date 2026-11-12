@@ -56,6 +56,17 @@ python '$__tool_directory__/faire_mapper_identify.py'
                 <has_text text="no sample table was found"/>
             </assert_stdout>
         </test>
+        <!-- A checksum file as md5sum writes it, and a list of file names, one per line (no header in
+             either): library tables, not text -->
+        <test expect_num_outputs="1">
+            <param name="files" value="library_md5sum.txt,library_file_names.txt" ftype="txt"/>
+            <output name="report">
+                <assert_contents>
+                    <has_line_matching expression="^library_md5sum\.txt\t\tlibrary table\t.*checksums and file names, as md5sum writes them.*"/>
+                    <has_line_matching expression="^library_file_names\.txt\t\tlibrary table\t.*a list of sequence file names, one per line.*"/>
+                </assert_contents>
+            </output>
+        </test>
     </tests>
     <help><![CDATA[
 @EARLY_VERSION@

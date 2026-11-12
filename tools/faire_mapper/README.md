@@ -9,7 +9,7 @@ Developed by Oliver Berry (CSIRO), with Claude (Anthropic).
 | Tool | Galaxy ID | Input | Outputs |
 |---|---|---|---|
 | FAIRe mapper: profile columns | `faire_mapper_profile` | CSV, TSV or Excel table | one row per column describing its values |
-| FAIRe mapper: propose mapping | `faire_mapper_map` | the table, optional answers file | mapping report, SSSOM crosswalk, mandatory terms not covered, columns to review, summary |
+| FAIRe mapper: propose mapping | `faire_mapper_map` | the table, optional answers file | mapping report, SSSOM crosswalk, mandatory terms not covered, columns to review, things to decide, summary |
 | FAIRe mapper: find primers | `faire_primers_find` | methods text, or primer names and citations; optional own primer table | candidate primer pairs with sequences, references and sources |
 | FAIRe mapper: build primer table | `faire_primers_build` | primer spreadsheets or TSVs | a primer table (added to the bundled one, or new), problems found |
 | FAIRe mapper: apply mapping | `faire_mapper_apply` | the table, the reviewed crosswalk, optional values for the whole project, optional OTU and taxonomy tables, optional library tables | FAIRe workbook in the FAIRe-ator layout, with OTU and taxonomy sheets; log |
@@ -55,6 +55,16 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   not given the project values FAIRe asks only of samples (the habitat terms), and their empty
   mandatory cells are written as "not applicable: control sample". The log's list of empty
   mandatory terms follows each term's condition (neg_cont_type for the negative controls only).
+  Propose mapping has a new output, *things to decide*: what only a person can decide, each with
+  what to do about it (a sample name used on more than one row, sample names that read as controls
+  when no column marks the controls, columns with values only in the first rows, and times with no
+  time zone). It lists them and changes nothing; the propose-mapping workflow gives it as
+  *things_to_decide*. A plain list of fastq files, one per line with or without a header (as
+  CSIRO's Data Access Portal lists a collection's files), works as a library table, and so do
+  md5sum's checksum files and the CSV from PowerShell's Get-FileHash: the files are paired into
+  libraries by their read number (R1 and R2), and *identify your files* names such lists as
+  library tables. A library name that already ends with the assay name
+  (1A_16S_Fish) gets only the run added in lib_id, unless the library holds several assays.
 - New in 0.5.1 (12 November 2026): each crosswalk comment says, in plain sentences and the same
   order, what the FAIRe term means (from the checklist), why it was proposed (with the table's own
   values), what apply mapping will do with the values, and, for rows to review, what to check. A
@@ -789,6 +799,25 @@ test.
 - `otu_pr2_silva.csv`: four zOTUs by the apply_reef samples, with PR2 and SILVA lineages and Wang
   classifier confidences in the form of the SEA-MES 18S table (lineages from that table; sequences
   made up).
+- `apply_reef_times.xlsx`, `apply_reef_times.sssom.tsv` and `apply_reef_times_values.tsv`: four
+  made-up reef samples, a field blank and an extraction blank in the layout of the day-night study's
+  sheet (the time of collection in its own column of Excel time cells), their crosswalk, and values
+  for the whole project and two assays (no trailing tabs, an amplicon size as a range). Made by
+  `dev/faire_mapper_daynight/make_testdata.py`.
+- `otu_lca_ranks.tsv` and `otu_lca_ranks.fasta`: an eDNAFlow LCA output (domain to species, the
+  OTU column, then the samples) for those samples, and its ASV sequences. Made up, by the same
+  script.
+- `apply_times_utc.csv` and `apply_times_utc.sssom.tsv`: two samples with a *Collection Time (UTC)*
+  column, as in the SEA-MES 18S table.
+- `library_file_list.csv` and `library_md5sum.txt`: eight fastq files with made-up MD5s, as Windows
+  PowerShell's `Get-FileHash -Algorithm MD5 | Export-Csv` writes them (a #TYPE line, then
+  Algorithm, Hash and the full path) and as md5sum writes them, named with the assay at the end as
+  the day-night study names its files (LIZ_01_Fish16S_R1.fastq.gz); and `library_file_names.txt`:
+  their names only, one per line with a folder, as the Data Access Portal lists files. By the same
+  script.
+- `map_review.csv`: 11 rows in the form of the day-night study's sheet: a sample name used twice,
+  a filtration control named but not marked, notes in the first rows of two columns, and times with
+  no time zone.
 - `primer_methods_sequences.txt`: a methods text with primer sequences: the TAReuk 18S V4 pair, an
   Illumina overhang, and a made-up pair on rows of their own.
 - `survey_sheet.xlsx`: 15 rows of a held-out benchmark table (eDNA provider form style), on a sheet
@@ -818,7 +847,9 @@ November the model tool was added, with 5 tests (a preview with and without a se
 providing no model, own service without credentials, and an unreachable service, the last two
 passing credentials as Galaxy would); all 42 tests passed in Galaxy `release_26.1` here. On 7
 November the identify tool was added, with 2 tests, and 5 apply mapping tests for files in the
-wrong field and the layout setting; all 49 tests passed in Galaxy `release_26.1` here.
+wrong field and the layout setting; all 49 tests passed in Galaxy `release_26.1` here. On 12
+November (0.6.0) the day-night trial added 5 apply mapping tests, 2 propose mapping tests and 1
+identify test; all 57 tests passed in Galaxy `release_25.0` here.
 
 | Tool | Test | Checks | Result |
 |---|---|---|---|
@@ -864,8 +895,13 @@ wrong field and the layout setting; all 49 tests passed in Galaxy `release_26.1`
 | apply mapping | 23 | Raw and final the wrong way round, and an OTU table given as the taxonomy table: a warning for each, naming the setting | passed |
 | apply mapping | 24 | *Layout of this table* set to samples as columns: read as set | passed |
 | apply mapping | 25 | *Layout of this table* set to samples as rows for a table with samples as columns: stops, naming the setting | passed |
-| apply mapping | 26 (12 Nov) | Day-night layouts: a time column joined to the dates in eventDate at +10:00; the habitat project values written as "not applicable: control sample" for the two controls, and the extraction blank's empty eventDate and geo_loc_name too; a values file with no trailing tabs; ampliconSize 178-228 accepted; no empty neg_cont_type reported for the samples; an LCA output with the OTU column after the ranks, its sequences from a FASTA file | see below |
-| apply mapping | 27 (12 Nov) | A time column named *Collection Time (UTC)*, with no offset given: joined to the dates with Z | see below |
-| map | 9 (12 Nov) | Excel time cells in a Time column: verbatimEventTime (times of day), with a note that apply mapping joins them to the dates | see below |
+| apply mapping | 26 | Day-night layouts: a time column joined to the dates in eventDate at +10:00; the habitat project values written as "not applicable: control sample" for the two controls, and the extraction blank's empty eventDate and geo_loc_name too; a values file with no trailing tabs; ampliconSize 178-228 accepted; no empty neg_cont_type reported for the samples; an LCA output with the OTU column after the ranks, its sequences from a FASTA file | passed |
+| apply mapping | 27 | A time column named *Collection Time (UTC)*, with no offset given: joined to the dates with Z | passed |
+| apply mapping | 28 | A list of fastq files with their MD5s as PowerShell's Get-FileHash and Export-Csv write it (a #TYPE line; Algorithm, Hash and the full Windows path): paired into four libraries by read number, file names without their folders, checksums written and checksum_method MD5, lib_id LIZ_01_Fish16S_reef_run1 (the assay not repeated) | passed |
+| apply mapping | 29 | The same files as a list of names, one per line with their folder and no header (as the Data Access Portal lists them): read as a file list, paired, folders taken off, no checksum_method | passed |
+| apply mapping | 30 | The same files as md5sum writes them (no header): read as a checksum list, paired, checksums written | passed |
+| map | 9 | Excel time cells in a Time column: verbatimEventTime (times of day), with a note that apply mapping joins them to the dates | passed |
+| map | 10 | A sheet in the day-night study's form: the *things to decide* list gives a repeated sample name, a filtration control not marked as a control, two columns of notes and the times with no time zone | passed |
 | identify | 1 | Eight files: sample, OTU, taxonomy, library, dictionary, text, curated OTU table and crosswalk, each named with its reason | passed |
 | identify | 2 | Two Excel files: each sheet on its own (the SRA sheet's library sheet, a primer register); no sample table found | passed |
+| identify | 3 | A checksum file as md5sum writes it, and a list of file names with no header: library tables, not text | passed |
