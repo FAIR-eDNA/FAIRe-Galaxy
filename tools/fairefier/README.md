@@ -124,7 +124,7 @@ To the FAIRe checklist and FAIRe-ator authors:
    FAIRe-ator template fails FAIRe-fier. A version such as `1.0.2` also fails as a number. The
    field needs to become text (for example `v1.0.2`), or FAIRe-ator needs to write a number. The
    Galaxy tool reads either form when choosing a checklist, and its help tells users about the
-   error.
+   error. The FAIRe mapper writes the number 1 since version 0.5.1.
 
 ## Before deployment on Galaxy Australia
 

@@ -42,6 +42,9 @@ import faire_mapper_otu as fo  # noqa: E402
 
 __version__ = fm.__version__
 CHECKLIST_NAME = 'FAIRe_checklist_v1.0.2.xlsx'
+# The checklist defines checkls_ver as a number (example 1.2) and FAIRe-fier rejects anything else,
+# so write the major version, as the FAIRe example workbooks do. The README sheet names the exact file.
+CHECKLIST_NUMBER = 1
 SECTIONS_OUT = {'metabarcoding': ('Targeted assay detection',),
                 'targeted': ('Library preparation sequencing', 'Bioinformatics', 'OTU/ASV')}
 OTHER_SHEETS = {'metabarcoding': ('experimentRunMetadata', 'taxaRaw', 'taxaFinal'),
@@ -448,7 +451,7 @@ def build_workbook(args, df, rows, terms, by_name, log):
     pm = pm[~pm['section'].isin(SECTIONS_OUT.get(args.assay_type, ()))]
     pm = pm[pm['requirement_level_code'].isin(req_lev)].reset_index(drop=True)
     project_terms = list(pm['term_name'])
-    project = {'project_id': args.project_id, 'assay_type': args.assay_type, 'checkls_ver': CHECKLIST_NAME}
+    project = {'project_id': args.project_id, 'assay_type': args.assay_type, 'checkls_ver': CHECKLIST_NUMBER}
     if len(assays) == 1:
         project['assay_name'] = assays[0]
     by_assay = {a: {} for a in assays}   # values for one assay, in its projectMetadata column
@@ -844,8 +847,8 @@ def build_workbook(args, df, rows, terms, by_name, log):
             if empty:
                 log.add('Mandatory terms with no value', f'{term} (experimentRunMetadata)'
                         + (f': empty in {empty} of {len(run_rows)} rows' if empty < len(run_rows) else ''))
-    log.add('Warnings', 'checkls_ver is written as FAIRe-ator writes it (FAIRe_checklist_v1.0.2.xlsx); FAIRe-fier '
-                        'reports this as an error until the FAIRe authors settle the format')
+    log.add('Project values', f'checkls_ver is written as the number {CHECKLIST_NUMBER}, as the checklist defines it; the README '
+            f'sheet names the exact checklist ({CHECKLIST_NAME})')
 
     # ---- write
     wb = Workbook()

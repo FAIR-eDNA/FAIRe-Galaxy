@@ -142,6 +142,18 @@ def is_missing_term(value):
     return str(value).strip().lower().startswith(INSDC_MISSING)
 
 
+_NO_VALUE = r'(?:NA|(?:' + '|'.join(INSDC_MISSING) + r')(?::[^;]*?)?)'
+_NO_SUBFRAGMENT = re.compile(r' gene ' + _NO_VALUE + r' region using ')
+_NO_PROTOCOL = re.compile(r' using protocol at ' + _NO_VALUE + r'(?=;|$)')
+
+
+def tidy_design_description(text):
+    """FAIRe2SRA fills its sentence with NA for an empty target_subfragment or nucl_acid_amp
+    ("gene NA region", "using protocol at NA"). Leave those phrases out, as they say nothing."""
+    text = _NO_SUBFRAGMENT.sub(' gene using ', str(text))
+    return _NO_PROTOCOL.sub('', text)
+
+
 def split_list(text):
     return [v.strip() for v in (text or '').split(',') if v.strip()]
 
@@ -959,6 +971,7 @@ def run_sra(args, tee):
         table = table.drop(columns=['biosample_accession'])
         info("added a sample_name column to link each run to its BioSample, and removed the empty "
              "biosample_accession column")
+    table['design_description'] = table['design_description'].map(tidy_design_description)
     table.drop(columns=['_samp']).to_csv(args.output, sep='\t', index=False)
     write_config(answerer.record, notes, 'SRA', args.config_out)
     info(f"wrote {len(table)} SRA row(s) for {table['library_ID'].nunique()} libraries")
