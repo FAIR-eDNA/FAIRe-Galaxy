@@ -48,9 +48,27 @@ which FAIRe2ENA wrote without units or as "Unknown", like the fields above. Item
 README now covers the chemistry fields too. The 18S sources give no units for oxygen and nitrite, so
 the samples go to ENA without them, and FAIRe2ENA's log lists them.
 
+Submitted on 12 November 2026 through the test Webin Portal, with the chemistry fix: accepted
+(ERS32843391 to ERS32843393).
+
+## Experiments and runs (12 November 2026)
+
+For the three 18S samples, with a new test study (PRJEB129763). In place of the real reads (already
+public in ENA), six small made-up fastq.gz files of 100 read pairs each, with the same file names,
+went to the Webin upload area through Windows File Explorer's FTP. A copy of the workbook was given
+their MD5 checksums, and *FAIRe2ENA: experiments and runs* made the experiment and run XML from it
+and the sample receipt, with instrument NextSeq 1000 (as ENA's run report gives for these runs).
+The test Webin Portal's XML upload accepted all of it: three experiments (ERX17512955 to
+ERX17512957) and three runs (ERR18120619 to ERR18120621). The test portal reads the same upload area.
+
+## Wilderlab
+
+Three Wilderlab-sequenced samples (M217, M251, M292) give clean sample XML, once the trial gives
+their extraction volume its unit (mL, in `project_values_WL.tsv`). Their runs are single-end, which
+FAIRe2ENA does not yet support (tool README, step 11).
+
 ## Still to do
 
-- Experiments and runs, from the sample receipt (*FAIRe2ENA: experiments and runs*). Runs need
-  the fastq files in the test upload area.
+- Single-end runs, for Wilderlab data.
 - Find the cause of the 403 from the Webin REST service, which the tool's help describes for
   submitting.

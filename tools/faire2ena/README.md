@@ -17,8 +17,9 @@ Upstream: [FAIR-eDNA/FAIRe2ENA](https://github.com/FAIR-eDNA/FAIRe2ENA) at commi
 - `planemo test`: all tests pass in Galaxy 25.0 (summary at the end of this file).
 - ENA's test server, 11 November 2026: three SEA-MES samples submitted through the test Webin
   Portal were checked by ENA and refused for missing units and an "Unknown" value. With item 11
-  below, ENA accepted them the same day (`dev/faire2ena_ena_trial/README.md`). Experiments and runs
-  are not yet tried there.
+  below, ENA accepted them the same day (`dev/faire2ena_ena_trial/README.md`). On 12 November, with
+  three SEA-MES 18S samples, ENA's test server accepted the whole chain: samples, study,
+  experiments and runs (with small made-up read files in place of the real reads).
 
 ## Files
 
@@ -150,7 +151,11 @@ These are worth raising with the FAIRe2ENA authors. If they are fixed upstream, 
    Galaxy, upload a few fastq files, submit experiments and runs. The test data here uses invented
    accessions and checksums, so it only proves the XML is well formed. Started 11 November 2026 with
    three SEA-MES samples (`dev/faire2ena_ena_trial/README.md`): ENA accepted the samples, after
-   item 11, through the Webin Portal. Experiments and runs are next.
+   item 11, through the Webin Portal. Done for paired-end runs on 12 November 2026, with three
+   SEA-MES 18S samples and small made-up read files: ENA accepted samples, study, experiments and
+   runs. Still to do with a real Australian dataset and real reads, and through the Webin REST
+   service the tool's help describes (it refused the account with HTTP 403; the Webin Portal's XML
+   upload worked).
 4. **Fill in `.shed.yml`.** Set `owner` (the ToolShed account that will publish it). Add the
    maintainers to the `<creator>` block in `macros.xml`.
 5. **Publish to the ToolShed.** Use the Test ToolShed first (`planemo shed_create` and
@@ -176,7 +181,10 @@ These are worth raising with the FAIRe2ENA authors. If they are fixed upstream, 
 
 10. Support other ENA checklists (soil, sediment, host-associated). This needs new field mappings
     upstream.
-11. Support single-end runs and other platforms.
+11. Support single-end runs and other platforms. Wilderlab sequences single-end (SEA-MES's Wilderlab
+    samples were sequenced in one direction on a NextSeq 1000), so its data cannot get past the
+    sample step until this is done: upstream always writes PAIRED, and the driver stops on a run
+    with no second file.
 12. Compute MD5 checksums in Galaxy when the reads are already in the user's history.
 
 ## Test data
