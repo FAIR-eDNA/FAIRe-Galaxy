@@ -1,7 +1,7 @@
 # Submitting FAIRe data to ENA from Galaxy
 
-5 November 2026. FAIRe2ENA writes ENA XML, and the user then submits it with curl outside Galaxy,
-after a round trip for the sample receipt. The IUC's **ENA Upload** tool could do the submission
+5 November 2026. FAIRe2ENA writes ENA XML, and the user then submits it outside Galaxy, through the
+Webin Portal's XML upload or with curl, after a round trip for the sample receipt. The IUC's **ENA Upload** tool could do the submission
 inside Galaxy, with one new converter from the FAIRe workbook. Galaxy Australia has since said
 that its users can store ENA Webin credentials in Galaxy (November 2026).
 

@@ -219,6 +219,54 @@ python '$__tool_directory__/faire2ena_galaxy.py' run
                 <has_text text="no runs with seq_run_id 'RUN99'. Sequencing runs in the workbook: 20220613_Amplicon_PE250, 20220718_18S-Amplicon_PE250, 20220831_16S-Amplicon_PE250"/>
             </assert_stderr>
         </test>
+        <!-- Single-end reads (lib_layout 'single end'): one file per run, SINGLE layout -->
+        <test expect_num_outputs="4">
+            <param name="input_file" value="faire_single_end.xlsx"/>
+            <param name="receipt_file" value="ena_sample_receipt.xml"/>
+            <param name="study_accession" value="PRJEB99999"/>
+            <param name="center_name" value="CSIRO"/>
+            <param name="instrument_model" value="Illumina MiSeq"/>
+            <conditional name="assay">
+                <param name="assay_select" value="one"/>
+                <param name="assay_name" value="ssu16sv4v5-emp"/>
+            </conditional>
+            <output name="experiments_xml">
+                <assert_contents>
+                    <is_valid_xml/>
+                    <has_n_elements_with_path path="./EXPERIMENT" n="3"/>
+                    <has_n_elements_with_path path="./EXPERIMENT/DESIGN/LIBRARY_DESCRIPTOR/LIBRARY_LAYOUT/SINGLE" n="3"/>
+                    <not_has_text text="PAIRED"/>
+                </assert_contents>
+            </output>
+            <output name="runs_xml">
+                <assert_contents>
+                    <is_valid_xml/>
+                    <has_n_elements_with_path path="./RUN" n="3"/>
+                    <has_n_elements_with_path path="./RUN/DATA_BLOCK/FILES/FILE" n="3"/>
+                    <not_has_text text="_R2_"/>
+                    <not_has_text text="nan"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="3 single-end run(s) (lib_layout 'single end')"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Single-end lib_layout, but the rows give a reverse-read file -->
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="input_file" value="faire_single_end.xlsx"/>
+            <param name="receipt_file" value="ena_sample_receipt.xml"/>
+            <param name="study_accession" value="PRJEB99999"/>
+            <param name="center_name" value="CSIRO"/>
+            <conditional name="assay">
+                <param name="assay_select" value="one"/>
+                <param name="assay_name" value="ssu18sv9-emp"/>
+            </conditional>
+            <assert_stderr>
+                <has_text text="filename2 is given, but lib_layout is 'single end'"/>
+            </assert_stderr>
+        </test>
         <!-- Unknown assay name -->
         <test expect_exit_code="1" expect_failure="true">
             <param name="input_file" value="faire_two_assays.xlsx"/>
@@ -262,7 +310,8 @@ listed in the log.
 
 - **EXPERIMENT XML**: one experiment for each sequencing library, with the library's own name as
   its alias (plus the assay name, if you choose).
-- **RUN XML**: the forward and reverse fastq files and their MD5 checksums.
+- **RUN XML**: the fastq files and their MD5 checksums: forward and reverse for paired-end reads,
+  one file for single-end reads.
 - **SUBMISSION XML** (action ADD) and a **log**.
 
 FAIRe defines a library as "an amplicon of a sample with unique MIDs". This means a library that
@@ -276,23 +325,44 @@ would then repeat, it keeps the run, or failing that the whole lib_id.
 
 **Checks before conversion**
 
+The library layout comes from lib_layout in projectMetadata (the assay's own column, or else the
+project_level column). With 'paired end', or no value, each run needs filename and filename2. With
+'single end', each run needs filename only, and filename2 must be empty.
+
 The tool stops, with a list of the problems, if any included row has an empty file name, a missing
-or malformed MD5 checksum, or a lib_id that is not unique, because ENA would reject these.
+or malformed MD5 checksum, a second file in a single-end library, or a lib_id that is not unique,
+because ENA would reject these.
 
 **Limitations**
 
-- The tool writes only paired-end Illumina amplicon libraries (LIBRARY_STRATEGY AMPLICON,
-  LIBRARY_SOURCE METAGENOMIC, LIBRARY_SELECTION PCR).
-- It does not upload the read files themselves. Upload them to your Webin upload area first, using
-  ENA's FTP or Aspera instructions, then submit these XML files with the Webin REST service, for
-  example::
+- The tool writes only Illumina amplicon libraries (LIBRARY_STRATEGY AMPLICON, LIBRARY_SOURCE
+  METAGENOMIC, LIBRARY_SELECTION PCR), paired-end or single-end.
+
+-----
+
+**Submitting to ENA**
+
+The tool does not upload the read files themselves.
+
+1. Upload the fastq.gz files to your Webin upload area (``webin2.ebi.ac.uk``), with your Webin
+   account and password, using an FTP program such as FileZilla, or ENA's FTP or Aspera
+   instructions. On Windows, File Explorer can open ``ftp://webin2.ebi.ac.uk`` directly. The test
+   and real services read the same upload area. If you put the files in a folder there, give it
+   as the *FTP sub-directory* above.
+2. Download the EXPERIMENT, RUN and SUBMISSION XML from Galaxy.
+3. Log in to the Webin Portal (test: https://wwwdev.ebi.ac.uk/ena/submit/webin/, real:
+   https://www.ebi.ac.uk/ena/submit/webin/), open *Submit XMLs*, add the three files and submit
+   them. ENA checks that each file is in the upload area with the stated MD5.
+
+You can also submit the files with the Webin REST service, for example::
 
     curl --proto-default https -u Webin-XXXXX:PASSWORD -F "SUBMISSION=@submission.xml" \
         -F "EXPERIMENT=@experiments.xml" -F "RUN=@runs.xml" \
         wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/
 
-  This address is ENA's test server. For the real submission, use www.ebi.ac.uk in place of
-  wwwdev.ebi.ac.uk.
+This address is ENA's test server. For the real submission, use www.ebi.ac.uk in place of
+wwwdev.ebi.ac.uk. In a trial on 11 November 2026 the REST service refused one Webin account (HTTP
+403) that the Webin Portal accepted; if this happens to you, use the portal.
 
 @HELP_FAIRE_GUIDE@
 

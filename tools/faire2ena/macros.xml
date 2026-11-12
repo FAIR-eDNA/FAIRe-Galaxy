@@ -2,7 +2,7 @@
     <!-- Upstream has no tagged releases. The version is the date of the
          pinned commit (FAIR-eDNA/FAIRe2ENA 29d0c98669a3ad9ba1c855b3dbf32d71e9e03c0c). -->
     <token name="@TOOL_VERSION@">2025.11.12</token>
-    <token name="@VERSION_SUFFIX@">1</token>
+    <token name="@VERSION_SUFFIX@">2</token>
     <token name="@PROFILE@">23.0</token>
     <xml name="requirements">
         <requirements>

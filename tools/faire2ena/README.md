@@ -19,7 +19,9 @@ Upstream: [FAIR-eDNA/FAIRe2ENA](https://github.com/FAIR-eDNA/FAIRe2ENA) at commi
   Portal were checked by ENA and refused for missing units and an "Unknown" value. With item 11
   below, ENA accepted them the same day (`dev/faire2ena_ena_trial/README.md`). On 12 November, with
   three SEA-MES 18S samples, ENA's test server accepted the whole chain: samples, study,
-  experiments and runs (with small made-up read files in place of the real reads).
+  experiments and runs (with small made-up read files in place of the real reads). The trials also
+  showed the size-fraction fields going in under the wrong names and the wrong way round, and
+  Wilderlab's single-end runs stopping the run tool: items 12 and 13 fix these.
 
 ## Files
 
@@ -102,6 +104,23 @@ before and after them:
     a nitrate in µmol/kg is left out of ENA's µmol/L and listed. Water current is left out, as FAIRe
     gives m/s and ENA takes m3/s or knots. Upstream's second copies of five concentrations (for
     example *dissolved_oxygen*, beside *dissolved oxygen*) are removed.
+12. **Size fraction** (12 November 2026, from the 18S samples). ERC000024 defines its
+    *size-fraction lower threshold* as "the mesh/pore size used to retain the sample" and its
+    *upper threshold* as "the mesh/pore size used to pre-filter/pre-sort the sample", in mm, µm or
+    nm. FAIRe's size_frac is the "filtering pore size used in sample filtration" and size_frac_low
+    the pre-filter, both in µm. Upstream writes size_frac as the upper threshold and size_frac_low as
+    the lower one, under labels without the hyphen, so ENA kept them as extra attributes with no
+    unit (the SEA-MES 18S samples went in with "sizefraction upper threshold" 0.22). The driver
+    writes size_frac as the lower threshold and size_frac_low as the upper, with µm, and leaves out
+    a value that is not a number (such as *no pre-filter*), listing it in the log.
+13. **Single-end runs** (12 November 2026, for Wilderlab data). Upstream writes every experiment
+    as PAIRED. The run tool takes the layout from lib_layout in projectMetadata (the assay's column,
+    or else project_level). For *single end*, it writes SINGLE and one file per run, and stops if
+    a row also gives filename2; for *paired end* or no value, it works as before; any other value
+    stops the run. The SEA-MES Wilderlab workbook has lib_layout *single end*, as the FAIRe mapper
+    writes it.
+14. **Log.** Upstream's "Generated ENA XML with N samples" counts the XML lines (282 for three
+    samples), so the driver leaves it out of the log and gives its own count.
 
 ## Upstream issues to report
 
@@ -122,13 +141,14 @@ These are worth raising with the FAIRe2ENA authors. If they are fixed upstream, 
   fields with a fixed FAIRe unit get no UNITS (item 11).
 - *sizefraction lower threshold* and *sizefraction upper threshold* do not match the checklist's
   labels (*size-fraction lower threshold*, *size-fraction upper threshold*), so ENA keeps them as
-  extra attributes, without units. FAIRe's size_frac_low and size_frac also seem to map the wrong
-  way round: FAIRe's size_frac is the filter that retains the sample (ENA's lower threshold).
-  Not yet changed in the driver.
-- The "Generated ENA XML with N samples" message counts XML lines, not samples.
+  extra attributes, without units. FAIRe's size_frac and size_frac_low also map the wrong way
+  round: by ERC000024's definitions, size_frac (the filter that retains the sample) is the lower
+  threshold (item 12).
+- The "Generated ENA XML with N samples" message counts XML lines, not samples (item 14).
 - Empty `filename2` or checksum cells become `nan` in the RUN XML (item 5).
 - `--assay` adds a suffix without filtering rows (item 6).
-- Taxon, checklist (ERC000024 water), platform (Illumina) and library layout (paired) are fixed.
+- Taxon, checklist (ERC000024 water), platform (Illumina) and library layout (paired) are fixed;
+  the driver handles the taxon (item 3) and single-end runs (item 13).
   A tagged release and a pip or bioconda package would also help (see below).
 
 ## Before deployment on Galaxy Australia
@@ -153,9 +173,9 @@ These are worth raising with the FAIRe2ENA authors. If they are fixed upstream, 
    three SEA-MES samples (`dev/faire2ena_ena_trial/README.md`): ENA accepted the samples, after
    item 11, through the Webin Portal. Done for paired-end runs on 12 November 2026, with three
    SEA-MES 18S samples and small made-up read files: ENA accepted samples, study, experiments and
-   runs. Still to do with a real Australian dataset and real reads, and through the Webin REST
-   service the tool's help describes (it refused the account with HTTP 403; the Webin Portal's XML
-   upload worked).
+   runs. Still to do with a real Australian dataset and real reads, and for single-end runs
+   (item 13). The help now leads with the Webin Portal's XML upload, which worked; the Webin REST
+   service refused the account with HTTP 403, for reasons not yet known.
 4. **Fill in `.shed.yml`.** Set `owner` (the ToolShed account that will publish it). Add the
    maintainers to the `<creator>` block in `macros.xml`.
 5. **Publish to the ToolShed.** Use the Test ToolShed first (`planemo shed_create` and
@@ -175,16 +195,14 @@ These are worth raising with the FAIRe2ENA authors. If they are fixed upstream, 
 9. **Look at submitting from inside Galaxy.** The ToolShed has an ENA upload tool based on
    ena-upload-cli that keeps Webin credentials in the user's Galaxy preferences. Check whether it
    suits Galaxy Australia; if so, these XML files (or tables derived from them) could feed it, and
-   users would not need curl.
+   users would not need the Webin Portal or curl.
 
 ### Could do later
 
 10. Support other ENA checklists (soil, sediment, host-associated). This needs new field mappings
     upstream.
-11. Support single-end runs and other platforms. Wilderlab sequences single-end (SEA-MES's Wilderlab
-    samples were sequenced in one direction on a NextSeq 1000), so its data cannot get past the
-    sample step until this is done: upstream always writes PAIRED, and the driver stops on a run
-    with no second file.
+11. Support other platforms (Oxford Nanopore, PacBio and others). Upstream writes ILLUMINA for every
+    run. Single-end Illumina runs are supported since 12 November 2026 (item 13).
 12. Compute MD5 checksums in Galaxy when the reads are already in the user's history.
 
 ## Test data
@@ -207,7 +225,10 @@ they share.
 `test-data/faire_ena_units.xlsx` is `faire_two_assays.xlsx` with an empty sample size for
 GOMECC4_27N_Sta1_DCM_A, an empty extraction-volume unit for GOMECC4_27N_Sta1_DCM_B, and a storage
 temperature of *ambient temperature* and a sample size of 2 kg for GOMECC4_BROWNSVILLE_Sta63_DCM_A
-(tests item 11). Written by `dev/faire2ena_ena_trial/make_testdata.py`.
+(tests item 11). GOMECC4_27N_Sta1_DCM_A also has a 20 µm pre-filter (size_frac_low; item 12).
+`test-data/faire_single_end.xlsx` is `faire_two_assays.xlsx` with lib_layout *single end* and no
+reverse-read file or checksum in the 16S rows; the 18S rows keep theirs (tests item 13). Both are
+written by `dev/faire2ena_ena_trial/make_testdata.py`.
 
 `test-data/ena_sample_receipt.xml` is a made-up ENA receipt with invented accessions
 (ERS9999901 to ERS9999903) for the three seawater samples. The control is left out on purpose so
@@ -224,7 +245,9 @@ planemo test faire2ena/
 ## planemo test results
 
 Run on 3 November 2026, and again on 5 November with the sequencing-run filter and the joining of shared libraries, with planemo 0.75.47 against Galaxy `release_25.0`, with dependencies
-resolved through conda (python 3.12, pandas 2.2.3, openpyxl 3.1.5). All tests passed.
+resolved through conda (python 3.12, pandas 2.2.3, openpyxl 3.1.5). All tests passed. On 12 November
+the tests for items 12 to 14 were written first and failed (in planemo's numbering: sample tests 1 and 2, run tests 7 and
+8), then passed with the fix, with the other 9 tests unchanged: 13 of 13.
 
 | Tool | Test | Checks | Result |
 |---|---|---|---|
@@ -241,3 +264,7 @@ resolved through conda (python 3.12, pandas 2.2.3, openpyxl 3.1.5). All tests pa
 | faire2ena_run | 4 | One sequencing run, all assays: 2 experiments, unregistered control skipped | passed |
 | faire2ena_run | 5 | Unknown sequencing run: stops and lists the runs in the workbook | passed |
 | faire2ena_run | 6 | Unknown assay name: stops and lists available assays | passed |
+| faire2ena_sample | 1 (12 Nov, size fraction) | Also size_frac 0.22 as *size-fraction lower threshold* in µm; "no pre-filter" left out and listed; no *sizefraction* labels; upstream's count of XML lines not in the log | passed |
+| faire2ena_sample | 4 (12 Nov, size fraction) | Also a 20 µm pre-filter as *size-fraction upper threshold* | passed |
+| faire2ena_run | single end (12 Nov) | lib_layout *single end*: 3 experiments with SINGLE, 3 runs with one file each, no `nan` | passed |
+| faire2ena_run | single end, second file (12 Nov) | lib_layout *single end* with filename2 given: stops with advice | passed |

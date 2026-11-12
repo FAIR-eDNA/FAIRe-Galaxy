@@ -16,12 +16,16 @@ without modifying them, and adds:
     and files), as ENA takes each set of files once, with the lab's name for the library as the
     aliases (FAIRe's lib_id is one amplicon of a sample; the FAIRe mapper writes it as the
     library name, assay_name and seq_run_id, so those two are taken off);
-  * the units and plain numbers ENA's checklist asks for (see ENA_UNITS below).
+  * the units and plain numbers ENA's checklist asks for (see FIXED_UNITS below), and the
+    checklist's size-fraction fields the right way round (SIZE_FRACTIONS);
+  * single-end runs, when lib_layout is 'single end' (upstream writes only paired-end runs).
 """
 
 import argparse
+import contextlib
 import datetime
 import decimal
+import io
 import os
 import re
 import sys
@@ -147,6 +151,18 @@ VARIABLE_UNITS = {
 }
 # Upstream also writes the extraction volume under this misspelt name, as "<value> <unit>" or "Unknown".
 MISSPELT = 'sample volume for weight for DNA extraction'
+# ERC000024 (read on 12 November 2026) defines its size-fraction lower threshold as "the mesh/pore size
+# used to retain the sample. Materials smaller than the size threshold are excluded from the sample",
+# and its upper threshold as "the mesh/pore size used to pre-filter/pre-sort the sample. Materials
+# larger than the size threshold are excluded". FAIRe's size_frac is the "filtering pore size used in
+# sample filtration" and size_frac_low the pre-filter, both in µm (FAIRe checklist v1.0.2). So
+# {ENA attribute: FAIRe term}. Upstream writes them the other way round, under labels without the
+# hyphen (UPSTREAM_SIZE), which ENA keeps as extra attributes with no unit.
+SIZE_FRACTIONS = {
+    'size-fraction lower threshold': 'size_frac',
+    'size-fraction upper threshold': 'size_frac_low',
+}
+UPSTREAM_SIZE = ('sizefraction lower threshold', 'sizefraction upper threshold')
 
 
 def is_missing_term(value):
@@ -191,7 +207,7 @@ def fix_ena_values(ena_data, faire_data, notes):
     are optional in ERC000024) and noted as {(attribute, reason): {sample, ...}}."""
     name = str(faire_data.get('samp_name'))
     units = {}
-    for extra in (MISSPELT,) + UPSTREAM_EXTRA:
+    for extra in (MISSPELT,) + UPSTREAM_EXTRA + UPSTREAM_SIZE:
         ena_data.pop(extra, None)
 
     def leave_out(attribute, reason):
@@ -239,6 +255,15 @@ def fix_ena_values(ena_data, faire_data, notes):
             leave_out(attribute, f"{unit_term} '{unit}' cannot be converted to ENA's {' or '.join(ena_units)}")
         else:
             ena_data[attribute], units[attribute] = ena_number(value, conversion[1]), conversion[0]
+    for attribute, term in SIZE_FRACTIONS.items():
+        value = faire_data.get(term)
+        if is_blank(value) or is_missing_term(value):
+            continue
+        number = ena_number(value)
+        if number is None:
+            leave_out(attribute, f'{term} is not a number')
+        else:
+            ena_data[attribute], units[attribute] = number, 'µm'
     for attribute, (term, reason) in NO_ENA_UNIT.items():
         if attribute in ena_data:
             if is_missing_term(ena_data[attribute]):
@@ -341,9 +366,18 @@ def run_sample(args):
         lines.append("Fill these terms in sampleMetadata and run the tool again.")
         fail('\n'.join(lines))
 
-    upstream_sample.process_faire_df(
-        df, args.output_file, project_name, taxon_id=str(args.taxon_id), center_name=args.center_name
-    )
+    # Upstream's own summary counts XML lines and calls them samples ("Generated ENA XML with 282
+    # samples" for 3), so it is left out; its warnings are passed on, and the count is given below.
+    upstream_log = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(upstream_log):
+            upstream_sample.process_faire_df(
+                df, args.output_file, project_name, taxon_id=str(args.taxon_id), center_name=args.center_name
+            )
+    finally:
+        for line in upstream_log.getvalue().splitlines():
+            if not line.startswith('Generated ENA XML with '):
+                print(line)
     if not calls['xml']:
         fail("FAIRe2ENA no longer writes samples through generate_ena_xml, so the wrapper could not add "
              "ENA's units. The wrapper needs updating for this FAIRe2ENA version.")
@@ -459,6 +493,60 @@ def join_shared_libraries(df):
     return out.drop(columns=['_orig', '_name', '_run', '_key']), joined, assays, problems, bad, notes
 
 
+PROJECT_COLUMNS = ('requirement_level_code', 'section', 'term_name', 'project_level')
+
+
+def text(value):
+    return '' if is_blank(value) else str(value).strip()
+
+
+def library_layouts(path):
+    """lib_layout from projectMetadata: ({assay_name: layout} for assays with their own value, the
+    project_level value). FAIRe's values are 'paired end', 'single end' and 'other: ...'."""
+    pm = read_sheet(path, 'projectMetadata')
+    if 'term_name' not in pm.columns:
+        return {}, ''
+    terms = pm['term_name'].astype(str).str.strip()
+    layout_rows, assay_rows = pm[terms == 'lib_layout'], pm[terms == 'assay_name']
+    if layout_rows.empty:
+        return {}, ''
+    layout = layout_rows.iloc[0]
+    project = text(layout['project_level']) if 'project_level' in pm.columns else ''
+    per_assay = {}
+    if not assay_rows.empty:
+        for column in pm.columns:
+            if column not in PROJECT_COLUMNS and text(assay_rows.iloc[0][column]) and text(layout[column]):
+                per_assay[text(assay_rows.iloc[0][column])] = text(layout[column])
+    return per_assay, project
+
+
+def layout_kind(value):
+    """'paired', 'single' or 'other' for a lib_layout value; an empty one is paired, as upstream
+    writes every run as paired-end."""
+    value = value.lower()
+    if not value or value.startswith('paired'):
+        return 'paired'
+    return 'single' if value.startswith('single') else 'other'
+
+
+def write_single_end(counts):
+    """While upstream writes experiments, give the single-end ones (run_data['_layout'] 'single') a
+    SINGLE layout in place of the PAIRED one upstream always writes. Counts them in counts['single']."""
+    generate = upstream_run.generate_experiment_xml
+
+    def generate_experiment_xml(run_data, *args, **kwargs):
+        xml = generate(run_data, *args, **kwargs)
+        if run_data.get('_layout') == 'single':
+            if xml.count('<PAIRED/>') != 1:
+                fail("FAIRe2ENA no longer writes the library layout as <PAIRED/>, so the wrapper could not "
+                     "write single-end runs. The wrapper needs updating for this FAIRe2ENA version.")
+            counts['single'] += 1
+            xml = xml.replace('<PAIRED/>', '<SINGLE/>')
+        return xml
+
+    upstream_run.generate_experiment_xml = generate_experiment_xml
+
+
 def run_run(args):
     df = read_sheet(args.input_file, 'experimentRunMetadata', skiprows=2)
     for col in ('samp_name', 'lib_id', 'assay_name', 'filename', 'filename2'):
@@ -487,6 +575,9 @@ def run_run(args):
         print(f"INFO: kept {len(df)} row(s) with seq_run_id in: {', '.join(wanted)}")
 
     df, joined, assays, join_problems, bad, join_notes = join_shared_libraries(df)
+    per_assay, project_layout = library_layouts(args.input_file)
+    df['_lib_layout'] = df['assay_name'].apply(lambda a: per_assay.get(text(a), project_layout))
+    df['_layout'] = df['_lib_layout'].apply(layout_kind)
     if joined:
         print(f"INFO: joined the rows of {joined} libraries that hold several assays ({' and '.join(assays)}): "
               "one experiment and run each")
@@ -505,9 +596,21 @@ def run_run(args):
             selected[col] = None
     for _, row in selected.iterrows():
         label = row['lib_id'] if not is_blank(row['lib_id']) else row['samp_name']
-        for name_col, sum_col in (('filename', 'checksum_filename'), ('filename2', 'checksum_filename2')):
+        if row['_layout'] == 'other':
+            problems.append(f"{label}: lib_layout is '{row['_lib_layout']}', and ENA's runs need 'paired end' or "
+                            "'single end'")
+            continue
+        files = [('filename', 'checksum_filename')]
+        if row['_layout'] == 'paired':
+            files.append(('filename2', 'checksum_filename2'))
+        elif not is_blank(row['filename2']):
+            problems.append(f"{label}: filename2 is given, but lib_layout is 'single end'. Set lib_layout to "
+                            "'paired end' in projectMetadata, or leave filename2 empty")
+        for name_col, sum_col in files:
             if is_blank(row[name_col]):
-                problems.append(f"{label}: {name_col} is empty (only paired-end runs are supported)")
+                problems.append(f"{label}: {name_col} is empty" + (
+                    " (for single-end reads, set lib_layout to 'single end' in projectMetadata)"
+                    if name_col == 'filename2' else ''))
             elif is_blank(row[sum_col]) or not md5.match(str(row[sum_col]).strip()):
                 problems.append(f"{label}: {sum_col} is missing or is not an MD5 checksum")
     aliases = selected['lib_id'].where(~selected['lib_id'].apply(is_blank), selected['samp_name']).astype(str)
@@ -542,6 +645,12 @@ def run_run(args):
     for col in ('checksum_filename', 'checksum_filename2'):
         if col in df.columns:
             df[col] = df[col].apply(lambda v: v if is_blank(v) else str(v).strip().lower())
+    # Upstream writes a second FILE whenever filename2 is truthy, which an empty cell (NaN) is.
+    for col in ('filename2', 'checksum_filename2'):
+        if col in df.columns:
+            df[col] = df[col].apply(lambda v: '' if is_blank(v) else v)
+    counts = {'single': 0}
+    write_single_end(counts)
 
     suffix = args.assay_name if args.add_assay_suffix else None
     if suffix and selected['lib_id'].astype(str).str.endswith(suffix).all():
@@ -557,6 +666,8 @@ def run_run(args):
         args.instrument_model,
         suffix,
     )
+    if counts['single']:
+        print(f"INFO: {counts['single']} single-end run(s) (lib_layout 'single end'): one file each")
     if args.submission_file:
         with open(args.submission_file, 'w', encoding='utf-8') as f:
             f.write(SUBMISSION_XML)
