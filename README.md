@@ -40,6 +40,10 @@ Notes for Galaxy Australia and other evaluators.
   report. `DATA=demo/seames dev/faire_mapper_seames/run.sh OUTDIR` runs the FAIRe mapper, FAIRe-fier,
   FAIRe2NCBI, FAIRe2ENA, FAIRe2QIIME and (with R) FAIRe2MDT on it in about a minute. The three
   workflows in `workflows/faire/` chain the tools, each with its own tests.
+- **Worked example.** `docs/walkthroughs/seames_18s_to_ena.md` follows three SEA-MES 18S samples
+  from the lab's spreadsheet, through the FAIRe mapper, FAIRe-fier and FAIRe2ENA, to a submission
+  that ENA's test service accepted. It ran the scripts the Galaxy tools wrap from the command line,
+  so it shows the steps and their outputs, not Galaxy itself.
 - **Network.** Only *edna2obis: match taxa* needs the internet, to look up names in WoRMS and GBIF.
   It sends one request at a time by default, and at most 4.
 - **Language model (optional).** *FAIRe mapper: ask a language model* needs a model service: one
