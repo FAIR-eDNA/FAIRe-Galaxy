@@ -92,7 +92,48 @@ FIXED_UNITS = {
     'temperature': ('temp', 'ºC', True),
     'salinity': ('salinity', 'psu', False),
     'sample storage temperature': ('samp_store_temp', '°C', True),
+    # added 12 November 2026, from the FAIRe checklist's units and ERC000024's
+    'chlorophyll': ('chlorophyll', 'mg/m3', False),
+    'light intensity': ('light_intensity', 'lux', False),
+    'suspended particulate matter': ('suspend_part_matter', 'mg/L', False),
+    'turbidity': ('turbidity', 'NTU', False),
+    'total depth of water column': ('tot_depth_water_col', 'm', False),
+    'elevation': ('elev', 'm', True),
+    'ph': ('ph', None, False),  # a number, with no unit
 }
+# FAIRe gives water_current in m/s; ERC000024 takes only m3/s or knot.
+NO_ENA_UNIT = {'water current': ('water_current', "water_current is in m/s, and ENA takes only m3/s or knot")}
+# Concentrations have a FAIRe unit term ({term}_unit). {ENA attribute: (FAIRe term, ENA units)}, with
+# ERC000024's units. A FAIRe unit is converted when only a power of ten separates it from an ENA unit
+# (UNIT_SCALES); mass, moles, litres and kilograms are not converted into one another.
+CONCENTRATIONS = {
+    'dissolved oxygen': ('diss_oxygen', ['µmol/kg']),
+    'nitrate': ('nitrate', ['µmol/L']),
+    'nitrite': ('nitrite', ['µmol/L']),
+    'dissolved inorganic carbon': ('diss_inorg_carb', ['µg/L']),
+    'dissolved inorganic nitrogen': ('diss_inorg_nitro', ['µg/L']),
+    'dissolved organic carbon': ('diss_org_carb', ['µmol/L']),
+    'dissolved organic nitrogen': ('diss_org_nitro', ['µg/L', 'mg/L']),
+    'total dissolved nitrogen': ('tot_diss_nitro', ['µg/L']),
+    'total inorganic nitrogen': ('tot_inorg_nitro', ['µg/L']),
+    'total nitrogen concentration': ('tot_nitro', ['µmol/L']),
+    'total particulate carbon': ('tot_part_carb', ['µmol/L', 'µg/L']),
+    'particulate organic carbon': ('part_org_carb', ['µg/L']),
+    'particulate organic nitrogen': ('part_org_nitro', ['µg/L']),
+    'organic carbon': ('org_carb', ['µmol/L']),
+    'organic matter': ('org_matter', ['µg/L']),
+    'organic nitrogen': ('org_nitro', ['µg/L']),
+}
+# {unit, as unit_key gives it: (kind, size in µmol/L, µg/L or µmol/kg)}
+UNIT_SCALES = {
+    'µm': ('mol/L', '1'), 'µmol/l': ('mol/L', '1'), 'mmol/m3': ('mol/L', '1'), 'µmol/m3': ('mol/L', '0.001'),
+    'mol/m3': ('mol/L', '1000'), 'mmol/l': ('mol/L', '1000'), 'mol/l': ('mol/L', '1000000'),
+    'µg/l': ('g/L', '1'), 'mg/m3': ('g/L', '1'), 'mg/l': ('g/L', '1000'),
+    'µmol/kg': ('mol/kg', '1'), 'mmol/kg': ('mol/kg', '1000'),
+}
+# Upstream also writes these, as "<value> <unit>" or "Unknown", beside the checklist's attributes.
+UPSTREAM_EXTRA = ('dissolved_inorganic_carbon', 'dissolved_inorganic_nitrogen', 'dissolved_organic_carbon',
+                  'dissolved_organic_nitrogen', 'dissolved_oxygen')
 # Sample size and extraction volume have a FAIRe unit term. {ENA attribute: (FAIRe value term,
 # FAIRe unit term, {FAIRe unit, lower case: (ENA unit, factor)})}, from the units FAIRe allows
 # (mL, L, mg, g, kg, cm2, m2, cm3, m3) to the ones ENA allows.
@@ -114,6 +155,22 @@ def is_missing_term(value):
                                                   'restricted access'))
 
 
+def unit_key(unit):
+    """A unit written as UNIT_SCALES has it: lower case, no spaces, and µ for u, μ or the micro sign."""
+    text = str(unit).strip().lower().replace(' ', '').replace('μ', 'µ')
+    return 'µ' + text[1:] if text.startswith('u') else text
+
+
+def concentration_factor(unit, ena_units):
+    """(ENA unit, factor) to convert a value in this FAIRe unit, or None."""
+    faire = UNIT_SCALES.get(unit_key(unit))
+    for ena_unit in ena_units:
+        ena = UNIT_SCALES[unit_key(ena_unit)]
+        if faire and faire[0] == ena[0]:
+            return ena_unit, str(decimal.Decimal(faire[1]) / decimal.Decimal(ena[1]))
+    return None
+
+
 def ena_number(value, factor='1', signed=False):
     """The value as a plain number ENA accepts (times factor), or None if it is not one."""
     if is_blank(value) or isinstance(value, bool):
@@ -129,12 +186,13 @@ def ena_number(value, factor='1', signed=False):
 
 
 def fix_ena_values(ena_data, faire_data, notes):
-    """Make the attributes in FIXED_UNITS and VARIABLE_UNITS plain numbers ENA accepts, and return
-    {attribute: unit} for them. Values that cannot be made so are left out (all are optional in
-    ERC000024) and noted as {(attribute, reason): {sample, ...}}."""
+    """Make the attributes in FIXED_UNITS, VARIABLE_UNITS and CONCENTRATIONS plain numbers ENA
+    accepts, and return {attribute: unit} for them. Values that cannot be made so are left out (all
+    are optional in ERC000024) and noted as {(attribute, reason): {sample, ...}}."""
     name = str(faire_data.get('samp_name'))
     units = {}
-    ena_data.pop(MISSPELT, None)
+    for extra in (MISSPELT,) + UPSTREAM_EXTRA:
+        ena_data.pop(extra, None)
 
     def leave_out(attribute, reason):
         ena_data.pop(attribute, None)
@@ -145,7 +203,9 @@ def fix_ena_values(ena_data, faire_data, notes):
             continue
         number = ena_number(ena_data[attribute], signed=signed)
         if number is not None:
-            ena_data[attribute], units[attribute] = number, unit
+            ena_data[attribute] = number
+            if unit:
+                units[attribute] = unit
         elif is_missing_term(ena_data[attribute]):
             ena_data.pop(attribute)
         else:
@@ -164,6 +224,27 @@ def fix_ena_values(ena_data, faire_data, notes):
         else:
             ena_unit, factor = conversions[str(unit).strip().lower()]
             ena_data[attribute], units[attribute] = ena_number(value, factor), ena_unit
+    for attribute, (term, ena_units) in CONCENTRATIONS.items():
+        value, unit_term = faire_data.get(term), f'{term}_unit'
+        unit = faire_data.get(unit_term)
+        if is_blank(value) or is_missing_term(value):
+            ena_data.pop(attribute, None)
+            continue
+        conversion = None if is_blank(unit) else concentration_factor(unit, ena_units)
+        if ena_number(value) is None:
+            leave_out(attribute, f'{term} is not a number')
+        elif is_blank(unit):
+            leave_out(attribute, f'{unit_term} is empty')
+        elif conversion is None:
+            leave_out(attribute, f"{unit_term} '{unit}' cannot be converted to ENA's {' or '.join(ena_units)}")
+        else:
+            ena_data[attribute], units[attribute] = ena_number(value, conversion[1]), conversion[0]
+    for attribute, (term, reason) in NO_ENA_UNIT.items():
+        if attribute in ena_data:
+            if is_missing_term(ena_data[attribute]):
+                ena_data.pop(attribute)
+            else:
+                leave_out(attribute, reason)
     return units
 
 

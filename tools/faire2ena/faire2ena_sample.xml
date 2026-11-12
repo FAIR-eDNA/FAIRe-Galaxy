@@ -78,6 +78,16 @@ python '$__tool_directory__/faire2ena_galaxy.py' sample
                     <has_n_elements_with_path path=".//SAMPLE_ATTRIBUTE[TAG='temperature']" n="3"/>
                     <has_n_elements_with_path path=".//SAMPLE_ATTRIBUTE[TAG='temperature']/UNITS" n="3"/>
                     <has_n_elements_with_path path=".//SAMPLE_ATTRIBUTE[TAG='amount or size of sample collected']" n="3"/>
+                    <!-- chemistry fields (12 November 2026): FAIRe's own units, or the unit term -->
+                    <has_text_matching expression="&lt;TAG&gt;dissolved oxygen&lt;/TAG&gt;\s*&lt;VALUE&gt;193.443&lt;/VALUE&gt;\s*&lt;UNITS&gt;µmol/kg&lt;/UNITS&gt;"/>
+                    <has_text_matching expression="&lt;TAG&gt;chlorophyll&lt;/TAG&gt;\s*&lt;VALUE&gt;0.036&lt;/VALUE&gt;\s*&lt;UNITS&gt;mg/m3&lt;/UNITS&gt;"/>
+                    <has_text_matching expression="&lt;TAG&gt;total depth of water column&lt;/TAG&gt;\s*&lt;VALUE&gt;623&lt;/VALUE&gt;\s*&lt;UNITS&gt;m&lt;/UNITS&gt;"/>
+                    <not_has_text text="dissolved_oxygen"/>
+                    <not_has_text text="dissolved_inorganic_carbon"/>
+                    <!-- nitrate in µmol/kg cannot become ENA's µmol/L without the water's density -->
+                    <not_has_text text="&lt;TAG&gt;nitrate&lt;/TAG&gt;"/>
+                    <!-- pH is a number with no unit; the control's "not applicable" is left out -->
+                    <has_n_elements_with_path path=".//SAMPLE_ATTRIBUTE[TAG='ph']" n="3"/>
                 </assert_contents>
             </output>
             <output name="submission_xml">
@@ -89,6 +99,7 @@ python '$__tool_directory__/faire2ena_galaxy.py' sample
                 <assert_contents>
                     <has_text text="converted 3 eventDate value(s)"/>
                     <has_text text="wrote 4 sample(s)"/>
+                    <has_text_matching expression="'nitrate' left out for 3 sample.*nitrate_unit 'µmol/kg'"/>
                 </assert_contents>
             </output>
         </test>
@@ -107,10 +118,18 @@ python '$__tool_directory__/faire2ena_galaxy.py' sample
                     <has_text_matching expression="&lt;TAG&gt;amount or size of sample collected&lt;/TAG&gt;\s*&lt;VALUE&gt;2&lt;/VALUE&gt;\s*&lt;UNITS&gt;kg&lt;/UNITS&gt;"/>
                     <has_n_elements_with_path path=".//SAMPLE_ATTRIBUTE[TAG='sample volume or weight for DNA extraction']" n="2"/>
                     <has_n_elements_with_path path=".//SAMPLE_ATTRIBUTE[TAG='sample storage temperature']" n="2"/>
+                    <!-- chemistry units converted: µM to µmol/L, mmol/kg to µmol/kg, mg/L to µg/L -->
+                    <has_n_elements_with_path path=".//SAMPLE_ATTRIBUTE[TAG='nitrate']" n="1"/>
+                    <has_text_matching expression="&lt;TAG&gt;nitrate&lt;/TAG&gt;\s*&lt;VALUE&gt;0&lt;/VALUE&gt;\s*&lt;UNITS&gt;µmol/L&lt;/UNITS&gt;"/>
+                    <has_text_matching expression="&lt;TAG&gt;nitrite&lt;/TAG&gt;\s*&lt;VALUE&gt;0.00878&lt;/VALUE&gt;\s*&lt;UNITS&gt;µmol/L&lt;/UNITS&gt;"/>
+                    <has_n_elements_with_path path=".//SAMPLE_ATTRIBUTE[TAG='dissolved oxygen']" n="3"/>
+                    <has_n_elements_with_path path=".//SAMPLE_ATTRIBUTE[TAG='dissolved oxygen'][VALUE='193.443']" n="2"/>
+                    <has_text_matching expression="&lt;TAG&gt;dissolved inorganic carbon&lt;/TAG&gt;\s*&lt;VALUE&gt;2033190&lt;/VALUE&gt;\s*&lt;UNITS&gt;µg/L&lt;/UNITS&gt;"/>
                 </assert_contents>
             </output>
             <output name="log">
                 <assert_contents>
+                    <has_text_matching expression="'nitrate' left out for 1 sample.*nitrate_unit is empty.*GOMECC4_BROWNSVILLE_Sta63_DCM_A"/>
                     <has_text_matching expression="sample volume or weight for DNA extraction.*1 sample.*samp_vol_we_dna_ext_unit is empty.*GOMECC4_27N_Sta1_DCM_B"/>
                     <has_text_matching expression="sample storage temperature.*1 sample.*not a number.*GOMECC4_BROWNSVILLE_Sta63_DCM_A"/>
                     <has_text text="wrote 4 sample(s)"/>
@@ -191,9 +210,11 @@ runs**.
   any mandatory fields that are empty, and their collection date becomes "not provided".
 - If a mandatory field is empty for a real sample and the script has no default for it, the tool
   stops and lists the samples and the FAIRe terms to fill in.
-- ENA wants temperature, salinity, storage temperature, sample size and extraction volume as plain
-  numbers with a unit. The tool adds the units (taking samp_size_unit and samp_vol_we_dna_ext_unit
-  for the last two, and converting, for example, 1540 mL of sample to 1.54 L). A value that is not
+- ENA wants temperature, salinity, storage temperature, sample size, extraction volume and the
+  chemistry fields (oxygen, nutrients, carbon, chlorophyll and others) as plain numbers with a unit.
+  The tool adds the units, from FAIRe's own units or the matching *_unit term (samp_size_unit,
+  nitrate_unit and so on), converting where only a power of ten separates them (1540 mL of sample
+  to 1.54 L, 0.5 µM nitrate to 0.5 µmol/L). A value that is not
   a number, or a size or volume with no unit, is left out and listed in the log; fill it in
   sampleMetadata and run the tool again to include it.
 

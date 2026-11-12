@@ -91,6 +91,16 @@ before and after them:
     control sample*, are left out without a note. It also removes upstream's second, misspelt copy
     of the extraction volume. The units are added while upstream writes each sample, and the run
     stops if upstream no longer writes them the way the driver expects.
+    Extended on 12 November 2026, when SEA-MES 18S samples showed the same fault in the chemistry
+    fields: chlorophyll (mg/m3), light intensity (lux), suspended particulate matter (mg/L),
+    turbidity (NTU), total depth of water column and elevation (m), from FAIRe's fixed units; pH as a
+    number with no unit; and 16 concentrations with a FAIRe unit term (dissolved oxygen, nitrate,
+    nitrite, dissolved and particulate carbon and nitrogen, organic matter), in ERC000024's units. A
+    concentration is converted only when a power of ten separates the units (µM to µmol/L, mmol/kg
+    to µmol/kg, mg/L to µg/L); per litre and per kilogram, or moles and grams, are not converted, so
+    a nitrate in µmol/kg is left out of ENA's µmol/L and listed. Water current is left out, as FAIRe
+    gives m/s and ENA takes m3/s or knots. Upstream's second copies of five concentrations (for
+    example *dissolved_oxygen*, beside *dissolved oxygen*) are removed.
 
 ## Upstream issues to report
 
@@ -105,6 +115,10 @@ These are worth raising with the FAIRe2ENA authors. If they are fixed upstream, 
   sample size written as text with a fixed unit of litres, and "Unknown" for an empty value
   (`combine_value_with_unit`, and `if samp_size:` is true for an empty cell, which pandas reads as
   NaN). ENA refuses all of these (item 11).
+- The same for the concentrations with a FAIRe unit term: `unit_mappings` writes "<value> <unit>"
+  or "Unknown", in place of the plain value for nitrate and nitrite and as a second attribute with
+  an underscore name for five others (*dissolved_oxygen*). Chlorophyll, turbidity and the other
+  fields with a fixed FAIRe unit get no UNITS (item 11).
 - *sizefraction lower threshold* and *sizefraction upper threshold* do not match the checklist's
   labels (*size-fraction lower threshold*, *size-fraction upper threshold*), so ENA keeps them as
   extra attributes, without units. FAIRe's size_frac_low and size_frac also seem to map the wrong
@@ -210,6 +224,8 @@ resolved through conda (python 3.12, pandas 2.2.3, openpyxl 3.1.5). All tests pa
 | faire2ena_sample | 2 | Freshwater taxon; date conversion off gives upstream behaviour | passed |
 | faire2ena_sample | 3 | Custom taxon ID | passed |
 | faire2ena_sample | 1 (11 Nov) | Also ENA's units: ºC, psu, °C, sample size 1540 ml as 1.54 L, extraction volume in mL; no misspelt copy; the control's "not applicable" values left out | passed |
+| faire2ena_sample | 1 (12 Nov) | Also dissolved oxygen 193.443 µmol/kg, chlorophyll in mg/m3, water depth in m; nitrate, nitrite and DIC in µmol/kg left out (ENA wants per litre) and listed; no *dissolved_oxygen* copy; the control's pH left out | passed |
+| faire2ena_sample | 4 (12 Nov) | Also nitrate 0 µM as 0 µmol/L, dissolved oxygen 0.193443 mmol/kg as 193.443 µmol/kg, DIC 2033.19 mg/L as 2033190 µg/L, nitrate with no unit left out and listed | passed |
 | faire2ena_sample | 4 | Empty sample size left out (no "Unknown"); extraction volume with no unit and storage temperature "ambient temperature" left out and listed in the log; 2 kg kept in kg | passed |
 | faire2ena_run | 1 | One assay with suffix and FTP folder: 3 experiments, 3 runs, 6 files, unregistered control skipped, no `nan` | passed |
 | faire2ena_run | 2 | All assays, each library holding both: 3 experiments and 3 runs, unregistered control skipped | passed |

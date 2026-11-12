@@ -41,6 +41,13 @@ With both, the three samples carry units for all five attributes, and no "Unknow
 samples test accessions (ERS32837772 to ERS32837774, submission ERA37798767), which the test
 service discards within a day.
 
+## 18S samples (12 November 2026)
+
+Three 2 L samples of the SEA-MES 18S set (S001, S003, S005) carry dissolved oxygen and nitrite,
+which FAIRe2ENA wrote without units or as "Unknown", like the fields above. Item 11 of the tool
+README now covers the chemistry fields too. The 18S sources give no units for oxygen and nitrite, so
+the samples go to ENA without them, and FAIRe2ENA's log lists them.
+
 ## Still to do
 
 - Experiments and runs, from the sample receipt (*FAIRe2ENA: experiments and runs*). Runs need
