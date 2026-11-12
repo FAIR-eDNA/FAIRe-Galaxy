@@ -212,7 +212,7 @@ runs**.
   stops and lists the samples and the FAIRe terms to fill in.
 - ENA wants temperature, salinity, storage temperature, sample size, extraction volume and the
   chemistry fields (oxygen, nutrients, carbon, chlorophyll and others) as plain numbers with a unit.
-  The tool adds the units, from FAIRe's own units or the matching *_unit term (samp_size_unit,
+  The tool adds the units, from FAIRe's own units or the matching unit term (samp_size_unit,
   nitrate_unit and so on), converting where only a power of ten separates them (1540 mL of sample
   to 1.54 L, 0.5 µM nitrate to 0.5 µmol/L). A value that is not
   a number, or a size or volume with no unit, is left out and listed in the log; fill it in
