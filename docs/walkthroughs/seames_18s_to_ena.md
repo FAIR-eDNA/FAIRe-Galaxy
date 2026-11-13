@@ -98,6 +98,12 @@ however strong the match. FAIRe's sampling depth terms and `tot_depth_water_col`
 so the comment names them, says what each means, and asks whether the column is the depth the sample
 was taken from or the depth of the water at the site.
 
+Since version 0.7.0, a column with no FAIRe term gets a MIxS or Darwin Core term whose name matches,
+for review, as the FAIRe guidelines ask. In this table, *Phosphate*, *Silicate* and *Pressure* get
+MIxS's phosphate, silicate and pressure, and *Ammonia* gets MIxS's ammonium, which is close but not
+the same name. Once a reviewer confirms one, apply mapping names the user-defined field after the
+term. The other 14 columns with no FAIRe term (Voyage, CTD #, Hours from noon and so on) get none.
+
 ## Step 3. Review
 
 *A person, in a spreadsheet*

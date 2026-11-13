@@ -29,6 +29,7 @@ python '$__tool_directory__/faire_mapper.py' map
     #end if
     --shortlist $shortlist
     --shortlist_close $shortlist_close
+    $other_terms
     --outdir out
     ]]></command>
     <inputs>
@@ -57,6 +58,9 @@ python '$__tool_directory__/faire_mapper.py' map
             help="Leave empty for the first sheet.">
             <validator type="regex" message="Sheet names cannot contain quotes">^[^'"]*$</validator>
         </param>
+        <param name="other_terms" type="boolean" truevalue="" falsevalue="--no_other_terms" checked="true"
+            label="Suggest MIxS or Darwin Core terms for columns with no FAIRe term"
+            help="As the FAIRe guidelines ask. Each suggestion is for review: once you confirm it in the crosswalk, apply mapping names the column after the term."/>
         <param name="shortlist" type="integer" value="5" min="1" max="20" label="Candidate terms listed per column"/>
         <param name="shortlist_close" type="integer" value="10" min="1" max="20" label="Candidate terms listed when no term clearly leads"
             help="Used when the last of the candidates above scores within 0.1 of the first. Set it to the same number as above to always list that many."/>
@@ -181,7 +185,7 @@ python '$__tool_directory__/faire_mapper.py' map
                 <assert_contents>
                     <has_line_matching expression="^Notes\tsamp_weather\tsampleMetadata\treview\t.*"/>
                     <has_line_matching expression="^Site\tgeo_loc_name\tsampleMetadata\treview\t.*"/>
-                    <has_line_matching expression="^Days frozen\tsamp_store_dur\tsampleMetadata\taccept\t.*P316D.*number of days the water was frozen before filtering.$"/>
+                    <has_line_matching expression="^Days frozen\tsamp_store_dur\tsampleMetadata\taccept\t.*P316D.*number of days the water was frozen before filtering\.\t$"/>
                 </assert_contents>
             </output>
             <output name="requests">
@@ -317,6 +321,46 @@ python '$__tool_directory__/faire_mapper.py' map
                 </assert_contents>
             </output>
         </test>
+        <!-- Columns with no FAIRe term get a MIxS or Darwin Core term whose name matches, for review
+             (mixs_dwc_terms.tsv). Field bottle number is not given Darwin Core's fieldNumber, as "bottle"
+             has no match in the term's name -->
+        <test expect_num_outputs="6">
+            <param name="table" value="map_other_terms.csv"/>
+            <param name="sample_types" value="Water"/>
+            <output name="crosswalk">
+                <assert_contents>
+                    <has_text text="#   MIXS: https://w3id.org/mixs/"/>
+                    <has_line_matching expression="^local:Phosphate__uM_\tPhosphate \(uM\)\tskos:closeMatch\tMIXS:0000505\tphosphate\t.*MIxS term: phosphate \(MIXS:0000505\)\. Concentration of phosphate\. MIxS gives it in micromole per liter\. MIxS has it in its water, sediment.*No FAIRe term fits this column.*adds the unit from the column name to each value, as MIxS writes them \(0\.21 uM\).*"/>
+                    <has_line_matching expression="^local:Ammonia\tAmmonia\tskos:closeMatch\tMIXS:0000427\tammonium\t.*the column name is close to the MIxS term's own name \('ammonium'\).*check their unit.*"/>
+                    <has_line_matching expression="^local:Silicate\tSilicate\tskos:closeMatch\tMIXS:0000184\tsilicate\t.*"/>
+                    <has_line_matching expression="^local:Pressure__dbar_\tPressure \(dbar\)\tskos:closeMatch\tMIXS:0000412\tpressure\t.*\(10\.2 dbar\).*"/>
+                    <not_has_text text="fieldNumber"/>
+                    <not_has_text text="local:Voyage"/>
+                </assert_contents>
+            </output>
+            <output name="report">
+                <assert_contents>
+                    <has_line_matching expression="^Phosphate \(uM\)\t\t\tno match\t.*\tMIxS: phosphate \(1\.00\)$"/>
+                </assert_contents>
+            </output>
+            <output name="summary">
+                <assert_contents>
+                    <has_text text="&quot;other_standard&quot;: 4"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- The same table with the suggestions turned off -->
+        <test expect_num_outputs="6">
+            <param name="table" value="map_other_terms.csv"/>
+            <param name="sample_types" value="Water"/>
+            <param name="other_terms" value="false"/>
+            <output name="crosswalk">
+                <assert_contents>
+                    <not_has_text text="MIXS:0000505"/>
+                    <not_has_text text="local:Phosphate"/>
+                </assert_contents>
+            </output>
+        </test>
     </tests>
     <help><![CDATA[
 @EARLY_VERSION@
@@ -342,7 +386,8 @@ outcomes, shown in the *route* column of the mapping report:
 
 - **accept**: a strong match, clearly ahead of the alternatives;
 - **review**: a plausible match that a person should check, listed with the alternatives;
-- **no match**: nothing fits well enough, so the column is left out;
+- **no match**: no FAIRe term fits well enough (the column is kept under its own name, as a
+  user-defined field, unless apply mapping is set to leave such columns out);
 - **confirmed**: a match set by a person in your answers file;
 - **model**: a match chosen by a language model in your answers file (answers marked
   ``"by": "model:..."``). Check these, because only a person can confirm a match.
@@ -353,6 +398,19 @@ are a number and its unit in one cell ("1 L"), latitude and longitude in one cel
 maximumDepthInMeters. A yes/no column that says which samples are controls, under a header such as
 *Control_Neg*, is matched to samp_category, with yes written as *negative control* and no as
 *sample*. Empty columns are not matched.
+
+**MIxS and Darwin Core terms for columns with no FAIRe term.** The FAIRe guidelines ask for a MIxS or
+Darwin Core term, where one exists, before a made-up name. For a column with no FAIRe match, the tool
+looks for one whose name matches the column's, and adds it to the crosswalk for review, with its own
+identifier (*MIXS:0000505* for phosphate, *dwc:verbatimDepth*). The terms come with the tool
+(``mixs_dwc_terms.tsv``), so Galaxy needs no web access: 745 MIxS terms (v7.0.1) and 95 Darwin Core
+terms (the record-level, Event, Location and MaterialEntity terms of Simple Darwin Core) that FAIRe
+does not have. Every word of the column's name must match the term's name, or be a common word such
+as *sample*: *Phosphate (uM)* gets MIxS phosphate, *Ammonia* gets ammonium (close, so check it), and
+*Field bottle number* gets nothing, although Darwin Core has fieldNumber. Once you confirm a row,
+apply mapping names the column after the term. For a MIxS number, which MIxS writes with its unit
+(0.7 micromole per liter), it adds the unit from the column name, in brackets at its end, to each
+value. Untick *Suggest MIxS or Darwin Core terms* to leave them out.
 
 @HELP_INPUTS@
 
@@ -385,8 +443,9 @@ maximumDepthInMeters. A yes/no column that says which samples are controls, unde
 - **mapping report**: one row for each column, giving the proposed term, its FAIRe sheet, the route,
   the score and the evidence. It also gives hints for reformatting (for example converting
   dd/mm/yyyy dates, or a unit found in a header), the shortlist of candidates (five, or ten when no
-  term clearly leads), how columns combine or split, and the column's description from the data
-  dictionary.
+  term clearly leads), how columns combine or split, the column's description from the data
+  dictionary, and, for a column with no FAIRe term, the MIxS or Darwin Core term suggested
+  (*other_standard*).
 - **crosswalk (SSSOM)**: the proposed and confirmed matches in the
   `SSSOM <https://mapping-commons.github.io/sssom/>`_ format, which you can reuse with later
   datasets.
@@ -406,7 +465,8 @@ maximumDepthInMeters. A yes/no column that says which samples are controls, unde
   volume extracted, the taxa the primers amplify and the taxa the study set out to detect), with how
   to tell them apart. The tool lists these and changes nothing. The list has only its header row when there is nothing to
   decide.
-- **summary**: the number of columns in each route.
+- **summary**: the number of columns in each route, and the number with a MIxS or Darwin Core term
+  (*other_standard*).
 
 -----
 
