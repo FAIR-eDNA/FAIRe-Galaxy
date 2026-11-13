@@ -1,8 +1,11 @@
 # Worked example: SEA-MES 18S data to ENA
 
-Three seawater samples from CSIRO's SEA-MES eDNA survey, followed from the lab's own spreadsheet,
-through the FAIRe tools in this repository, to a submission accepted by the European Nucleotide
-Archive's test service: samples, study, experiments and runs.
+Three seawater samples from CSIRO's SEA-MES eDNA survey, followed from the lab's own files, through
+the FAIRe tools in this repository, to a submission accepted by the European Nucleotide Archive's
+test service: samples, study, experiments and runs. The FAIRe workbook is built from several inputs:
+the lab's sample details, its ASV table, ENA's run report, values for the whole project and a
+reviewer's decisions (*What goes in*, below). Other labs will have other files, in other layouts;
+these are the ones SEA-MES published.
 
 > **This is a worked example, not a Galaxy run.** It uses real data (the SEA-MES data record, CC BY
 > 4.0) and the same scripts the Galaxy tools wrap, run from the command line by
@@ -13,7 +16,8 @@ Archive's test service: samples, study, experiments and runs.
 
 | | |
 |---|---|
-| Data | SEA-MES 18S rRNA (V4) metabarcoding, 202 samples |
+| Data | SEA-MES 18S rRNA (V4) metabarcoding, 202 samples and 6 controls |
+| Inputs | ASV table with sample details, ENA's run report, the methods, project values, review decisions |
 | Submitted | S001, S003 and S005 |
 | When | 11 and 12 November 2026; steps 1 to 5 updated for FAIRe mapper 0.7.3 on 13 November |
 | Where | ENA's test service, through the Webin Portal |
@@ -32,6 +36,26 @@ Archive's test service: samples, study, experiments and runs.
 | 8 | FTP | Puts the read files in the Webin upload area |
 | 9 | FAIRe2ENA: experiments and runs | Writes ENA's experiment and run XML |
 | 10 | ENA Webin Portal | Accepts the experiments and runs |
+
+## What goes in
+
+Each output is built from these inputs. Three come from the published data record and ENA; two come
+from people, and would come from any lab using the tools. Which files a lab has, and their layouts,
+differ from lab to lab: separate OTU and taxonomy tables, a sample sheet, a sequencing facility's run
+sheet. *FAIRe mapper: identify your files* says what each file looks like and which step it goes to.
+
+| Input | Where it came from | What it gives | Used in |
+|---|---|---|---|
+| 18S ASV table (data record file 7) | The lab, published | Read counts of 16,901 ASVs in 202 samples, with PR2 and SILVA lineages; below them, 37 rows of sample details, which a short script turns into the sample table | Steps 1, 2, 4 |
+| ENA's run report for PRJNA1263580 | ENA, downloaded | Each library's name, fastq files and MD5 checksums, and the six control libraries sequenced with the samples | Steps 1, 4, 9 |
+| The methods (the project's final report) | The lab, published | Primers, PCR, sequencing, storage and bioinformatics, read by *find primers* and by a person | Step 4, through the project values |
+| Values for the whole project (`project_values_18S.tsv`) | A person, from the methods and the 10 L samples' BioSample sheet | Project terms no table holds: project name and contact, primers, protocols, env_medium, storage temperature | Step 4 |
+| The reviewer's decisions | A person, in the review sheet | Accept, Reject or Change for each column of the sample table | Steps 3, 4 |
+| Tool settings | A person, on each tool's form | Sample type, assay, the sites' UTC offset; for ENA, the centre name, taxon, study accession and sequencer | Steps 2, 4, 6, 9 |
+| ENA's sample receipt | ENA, after step 7 | The sample accessions, so each experiment points to its sample | Step 9 |
+
+The FAIRe workbook (step 4) is the one file every later step reads: FAIRe-fier checks it, and both
+FAIRe2ENA tools convert it.
 
 ## One sample, end to end
 
@@ -58,8 +82,9 @@ they sit in the FAIRe workbook, and as they went to ENA:
 
 ## Step 1. The lab's files
 
-Everything starts from CSIRO's published data record for SEA-MES (Deagle et al. 2025). Nothing in
-it is in FAIRe format. For 18S, three of its files were used (`demo/seames` holds a small copy):
+Everything starts from CSIRO's published data record for SEA-MES (Deagle et al. 2025) and ENA's
+report of its reads. Nothing in them is in FAIRe format. For 18S, three files were used
+(`demo/seames` holds a small copy), with two inputs from people:
 
 - **The 18S ASV table**: the number of reads of each of 16,901 ASVs (rows) in each of 202 samples
   (columns), with each ASV's PR2 and SILVA lineage. Below the read counts sit 37 rows of sample
@@ -70,6 +95,8 @@ it is in FAIRe format. For 18S, three of its files were used (`demo/seames` hold
 - **ENA's run report** for the SEA-MES BioProject (PRJNA1263580): each library's name, fastq file
   names and MD5 checksums.
 - **The methods**, from the project's final report: primers, PCR, sequencing and bioinformatics.
+- **From people**: the values for the whole project, typed from the methods and the 10 L samples'
+  BioSample sheet (`project_values_18S.tsv`), and the reviewer's decisions (step 3).
 
 ## Step 2. Propose mapping
 
