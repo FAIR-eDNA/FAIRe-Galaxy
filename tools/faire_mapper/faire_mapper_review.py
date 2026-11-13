@@ -258,10 +258,15 @@ def is_review_sheet(path):
     return f'name="{REVIEW}"' in names and f'name="{DETAILS}"' in names
 
 
-def read_review_sheet(path, by_name, other_terms, log):
+def _matches(n):
+    return f"{n} match{'' if n == 1 else 'es'} for review"
+
+
+def read_review_sheet(path, by_name, other_terms, log, include_review=False):
     """The crosswalk for apply mapping, from a review sheet's decisions: Accept applies the proposed
     term (a FAIRe term, or a MIxS or Darwin Core term), Reject keeps the column as its own term, Change
-    applies the replacement term, and no decision keeps the mapper's call."""
+    applies the replacement term, and no decision keeps the mapper's call (its matches for review are
+    applied with include_review, as for a crosswalk)."""
     with open(path, 'rb') as f:   # a file object, as Galaxy's file names end in .dat
         wb = load_workbook(io.BytesIO(f.read()), data_only=True)
     ws = wb[REVIEW]
@@ -272,6 +277,7 @@ def read_review_sheet(path, by_name, other_terms, log):
     at = {h: i for i, h in enumerate(head)}
     details = pd.read_excel(path, sheet_name=DETAILS, dtype=str, engine='openpyxl').fillna('')
     rows, counts, problems, seen = [], {'Accept': 0, 'Reject': 0, 'Change': 0, '': 0}, [], set()
+    undecided = {'none': 0, 'review': 0, 'applied': 0, 'accept': 0}   # rows with no decision, by the mapper's call
     # Rows are read by their input term, so they can be sorted or filtered in any order.
     for r in ws.iter_rows(min_row=2, values_only=True):
         column = str(r[at[INPUT]] or '').strip()
@@ -309,6 +315,9 @@ def read_review_sheet(path, by_name, other_terms, log):
                          'comment': 'changed by the reviewer', 'combine_order': '', 'value_part': ''})
         else:
             rows += main
+            undecided['accept' if any(x['predicate_id'] == 'skos:exactMatch' for x in main)
+                      else 'applied' if include_review and any(str(x['object_id']).startswith('FAIRe:') for x in main)
+                      else 'review' if main else 'none'] += 1
     # In the crosswalk's order (the table's), however the rows of the sheet were sorted
     order = {c: i for i, c in enumerate(dict.fromkeys(details['subject_label'].str.strip()))}
     rows.sort(key=lambda x: order.get(str(x['subject_label']).strip(), len(order)))
@@ -316,7 +325,13 @@ def read_review_sheet(path, by_name, other_terms, log):
     if gone:
         problems.append(f"{len(gone)} columns with a proposed term have no row in the review sheet, so they are kept as "
                         f"their own terms: " + fm._first(gone, 10))
+    kept = ' and '.join(x for x in (f"{undecided['none']} with no proposed term" if undecided['none'] else '',
+                                    _matches(undecided['review']) if undecided['review'] else '') if x)
+    detail = '; '.join(x for x in (f'{kept}, kept as your own terms' if kept else '',
+                                   f"{_matches(undecided['applied'])}, applied as you asked"
+                                   if undecided['applied'] else '',
+                                   f"{undecided['accept']} of the mapper's accepted matches, applied"
+                                   if undecided['accept'] else '') if x)
     log(f"review sheet: {counts['Accept']} accepted, {counts['Reject']} rejected, {counts['Change']} changed"
-        + (f", {counts['']} with no decision (the mapper's accepted matches applied, its matches for review "
-           f"left out)" if counts[''] else ''))
+        + (f", {counts['']} with no decision ({detail})" if counts[''] else ''))
     return pd.DataFrame(rows, columns=fm.CROSSWALK_COLUMNS).fillna(''), problems

@@ -48,7 +48,11 @@ model is used, as agreed; the tools are built so one can be added later (see bel
     decision with its input term, and lists the columns in the table's order; the replacement
     drop-down finds its list by the row's input term (Excel leaves drop-downs where they were when it
     sorts rows). A column whose row was deleted is kept as its own term, and the log says so. Tested
-    with sorted and shuffled sheets, including headings that start with *.
+    with sorted and shuffled sheets, including headings that start with *. Tested in Excel too: a
+    sheet sorted and saved there keeps its drop-downs, and apply mapping reads it.
+  - The log says what happened to the rows with no decision: those with no proposed term and the
+    matches for review are kept as their own terms (or the matches for review applied, with that
+    option), and the mapper's accepted matches are applied.
   - *How to review* says where the rows come from, without naming the steps a workflow runs unseen:
     from the files provided, each row is one column heading (input term) of the sample metadata,
     named, the table with one row per sample. It says the values for the whole project (primers,
@@ -926,7 +930,10 @@ test.
   no term (*Voyage*) and a depth. Made up.
 - `apply_review_sheet.xlsx`: the review sheet propose mapping writes for that table, with decisions:
   Change to *phosphate (MIxS term)* for *Water phosphate*, Accept for *Silicate*, Change to
-  tot_depth_water_col for *Depth (m)*, and Reject for *Voyage*.
+  tot_depth_water_col for *Depth (m)*, and Reject for *Voyage*. Its rows are sorted, rows to review
+  first.
+- `apply_review_sheet_undecided.xlsx`: the same sheet with no decision for *Depth (m)*, *Silicate*,
+  *Voyage* and *Date*, one of each kind of row.
 - `map_review.csv`: 11 rows in the form of the day-night study's sheet: a sample name used twice,
   a filtration control named but not marked, notes in the first rows of two columns, and times with
   no time zone.
@@ -966,7 +973,9 @@ test (commonly confused terms) and one apply mapping test (checkls_ver kept as g
 apply mapping's note on the confused terms in an existing test. 0.7.0 adds two propose mapping tests
 and one apply mapping test (MIxS and Darwin Core terms), and one of each for the review sheet; all 15
 propose mapping, 35 apply mapping and 3 identify tests pass in Galaxy `release_25.0` here, and so does
-the propose-mapping workflow test.
+the propose-mapping workflow test. 0.7.2 adds one apply mapping test (rows with no decision); all 15
+propose mapping and 36 apply mapping tests pass in Galaxy `release_25.0` here, and so do both workflow
+tests.
 
 | Tool | Test | Checks | Result |
 |---|---|---|---|
@@ -1027,7 +1036,8 @@ the propose-mapping workflow test.
 | map | 13 | Columns with no FAIRe term: MIxS phosphate (with the unit from the column name), silicate, pressure and ammonium (close) for review, with MIxS identifiers and the curie map; Voyage and Field bottle number get none; the report's other_standard column and the summary's count | passed |
 | map | 14 | The same table with *Suggest MIxS or Darwin Core terms* unticked: no MIxS rows | passed |
 | map | 15 | The review sheet: its five sheets (Choices hidden), the mapper's call, the decision and replacement drop-downs, a MIxS term as a proposal, and a MIxS term first in the replacement list of a FAIRe match for review | passed |
-| apply mapping | 35 | The review sheet as the crosswalk: Accept for a MIxS term, Change to the MIxS term offered for a wrong FAIRe match, Change to tot_depth_water_col, Reject keeping the column's own term, and the count of decisions in the log | passed |
+| apply mapping | 35 | The review sheet as the crosswalk, its rows sorted: Accept for a MIxS term, Change to the MIxS term offered for a wrong FAIRe match, Change to tot_depth_water_col, Reject keeping the column's own term, and the count of decisions in the log | passed |
+| apply mapping | 36 | The review sheet with four rows left with no decision and matches for review applied: the log says what happened to each kind of row | passed |
 | apply mapping | 34 | Confirmed MIxS terms name the user-defined fields with unmatched columns left out: phosphate with the unit added to each value (0.21 uM), ammonium typed in by the reviewer; silicate, still for review, left out and listed | passed |
 | identify | 1 | Eight files: sample, OTU, taxonomy, library, dictionary, text, curated OTU table and crosswalk, each named with its reason | passed |
 | identify | 2 | Two Excel files: each sheet on its own (the SRA sheet's library sheet, a primer register); no sample table found | passed |
