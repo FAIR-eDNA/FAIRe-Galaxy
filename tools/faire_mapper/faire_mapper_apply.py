@@ -778,6 +778,9 @@ def build_workbook(args, df, rows, terms, by_name, log):
                 continue
             t = by_name[term]
             v, problem = convert_value(value, t, None)
+            if term == 'checkls_ver':
+                # Kept as the submitter wrote it (a number stays a number), whatever the checklist's type
+                v, problem = _number_or_text(value), False
             if term in project_terms and t.level == 'project':
                 project[term] = v
             elif term in sample_out:
@@ -1027,9 +1030,20 @@ def build_workbook(args, df, rows, terms, by_name, log):
             if empty:
                 log.add('Mandatory terms with no value', f'{term} (experimentRunMetadata)'
                         + (f': empty in {empty} of {len(run_rows)} rows' if empty < len(run_rows) else ''))
-    log.add('Project values', (f'checkls_ver is written as the number {checklist_ver}' if isinstance(checklist_ver, int)
-                               else f"checkls_ver is written as the text '{checklist_ver}'")
-            + f', as the checklist defines it; the README sheet names the exact checklist ({checklist_name})')
+    given = project.get('checkls_ver')
+    if given != checklist_ver:
+        # The submitter's own value, from a column or the values for the whole project, kept as written.
+        numeric = by_name.get('checkls_ver') is not None and by_name['checkls_ver'].kind in ('number', 'integer')
+        log.add('Project values', f"checkls_ver is written as given ({given}); the README sheet names the checklist "
+                                  f"used ({checklist_name})")
+        if numeric and not isinstance(given, (int, float)):
+            log.add('Warnings', f"checkls_ver '{given}' is kept as given, but {checklist_name} defines it as a number, "
+                                f"so FAIRe-fier will report it (FAIRe checklist v2 makes it text). Give "
+                                f"{checklist_ver} for this checklist")
+    else:
+        log.add('Project values', (f'checkls_ver is written as the number {checklist_ver}' if isinstance(checklist_ver, int)
+                                   else f"checkls_ver is written as the text '{checklist_ver}'")
+                + f', as the checklist defines it; the README sheet names the exact checklist ({checklist_name})')
 
     # ---- write
     wb = Workbook()
@@ -1549,6 +1563,16 @@ def _write_otu_sheet(wb, name, counts, bold):
     for c in ws[1]:
         c.font = bold
     ws.freeze_panes = 'B2'
+
+
+def _number_or_text(s):
+    """A value as written: 1.2 as the number 1.2, v2.0.0 as the text."""
+    s = str(s).strip()
+    try:
+        f = float(s)
+    except ValueError:
+        return s
+    return int(f) if re.fullmatch(r'[-+]?\d+', s) else f
 
 
 def _maybe_number(values, s):

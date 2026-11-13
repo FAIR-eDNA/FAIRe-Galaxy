@@ -1,0 +1,4 @@
+# A values file that gives the checklist version as text, as FAIRe checklist v2 will have it
+term	value
+project_name	Lizard Island reef survey
+checkls_ver	v2.0.0

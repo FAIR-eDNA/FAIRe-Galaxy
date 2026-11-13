@@ -1122,6 +1122,28 @@ python '$__tool_directory__/faire_mapper_apply.py'
                 </assert_contents>
             </output>
         </test>
+        <!-- A checklist version given by the submitter is kept as written, even as text for a checklist
+             that defines it as a number, with a warning -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="project_values" value="apply_checkls_ver.tsv" ftype="tabular"/>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet2.xml">
+                        <has_text text="v2.0.0"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="checkls_ver is written as given (v2.0.0); the README sheet names the checklist used (FAIRe_checklist_v1.0.2.xlsx)"/>
+                    <has_text text="checkls_ver 'v2.0.0' is kept as given, but FAIRe_checklist_v1.0.2.xlsx defines it as a number, so FAIRe-fier will report it"/>
+                </assert_contents>
+            </output>
+        </test>
     </tests>
     <help><![CDATA[
 @EARLY_VERSION@
@@ -1316,11 +1338,14 @@ tick *Leave out columns that are not matched to a FAIRe term*.
   nor a raw table of the same assay gives it.
 - Cell comments are not added to the sheets. Drop-down lists are added, in the same way FAIRe-ator
   adds them, from the *Drop-down values* sheet.
-- ``checkls_ver`` is written as the checklist defines it. FAIRe checklist v1.0.2 defines it as a
-  number, so it is written as 1, as the FAIRe examples have it; a checklist that defines it as text
-  (FAIRe v2) gets the full version, such as v2.0.0, from the checklist's file name. The README sheet
-  names the exact checklist (*FAIRe_checklist_v1.0.2.xlsx*). FAIRe-ator writes the file name here,
-  which FAIRe-fier reports as an error.
+- ``checkls_ver`` is kept as written when you give it (in the values for the whole project, or a
+  column): a number stays a number, and text such as v2.0.0 stays text. If you do not give it, it
+  is written as the checklist defines it. FAIRe checklist v1.0.2 defines it as a number, so it is
+  written as 1, as the FAIRe examples have it; a checklist that defines it as text (FAIRe v2) gets
+  the full version, such as v2.0.0, from the checklist's file name. Text given for a checklist that
+  defines a number is kept, and the log warns that FAIRe-fier will report it. The README sheet names
+  the exact checklist (*FAIRe_checklist_v1.0.2.xlsx*). FAIRe-ator writes the file name here, which
+  FAIRe-fier reports as an error.
 - Values from the table and the methods text are written to *project_level*. For values that differ
   between assays, add an ``assay`` column to the values for the whole project, or move the values to
   the assay columns yourself.

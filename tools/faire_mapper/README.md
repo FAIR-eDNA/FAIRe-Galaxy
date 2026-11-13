@@ -58,7 +58,9 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   collection date before formatting") when it converts them for eventDate, as Oliver Berry asked.
   Apply mapping writes checkls_ver as the checklist it's given defines it: the number 1 for v1.0.2,
   as before, or the version as text (v2.0.0, from the file name) for a checklist that defines it as
-  text, as FAIRe checklist v2 will.
+  text, as FAIRe checklist v2 will. A checkls_ver the submitter gives (in the values for the whole
+  project, or a column) is kept as written, as Oliver Berry asked; text given for a checklist that
+  defines a number is kept, with a warning that FAIRe-fier will report it.
 - New in 0.6.0 (12 November 2026), from the day-night trial (`dev/faire_mapper_daynight/`): a
   column of times of day (Excel time cells, or 10:00, 4 pm) is proposed as verbatimEventTime, and
   apply mapping joins each time to its date in eventDate, with the UTC offset given on its form
@@ -829,6 +831,7 @@ test.
 - `otu_lca_ranks.tsv` and `otu_lca_ranks.fasta`: an eDNAFlow LCA output (domain to species, the
   OTU column, then the samples) for those samples, and its ASV sequences. Made up, by the same
   script.
+- `apply_checkls_ver.tsv`: values for the whole project that give checkls_ver as v2.0.0.
 - `apply_times_utc.csv` and `apply_times_utc.sssom.tsv`: two samples with a *Collection Time (UTC)*
   column, as in the SEA-MES 18S table.
 - `library_file_list.csv` and `library_md5sum.txt`: eight fastq files with made-up MD5s, as Windows
@@ -874,7 +877,8 @@ November the identify tool was added, with 2 tests, and 5 apply mapping tests fo
 wrong field and the layout setting; all 49 tests passed in Galaxy `release_26.1` here. On 12
 November (0.6.0) the day-night trial added 7 apply mapping tests, 3 propose mapping tests and 1
 identify test; all 60 tests passed in Galaxy `release_25.0` here. 0.6.1 adds one propose mapping
-test (commonly confused terms) and checks apply mapping's note on them in an existing test.
+test (commonly confused terms) and one apply mapping test (checkls_ver kept as given), and checks
+apply mapping's note on the confused terms in an existing test.
 
 | Tool | Test | Checks | Result |
 |---|---|---|---|
@@ -927,6 +931,7 @@ test (commonly confused terms) and checks apply mapping's note on them in an exi
 | apply mapping | 30 | A list of fastq files with their MD5s as PowerShell's Get-FileHash and Export-Csv write it (a #TYPE line; Algorithm, Hash and the full Windows path): paired into four libraries by read number, file names without their folders, checksums written and checksum_method MD5, lib_id LIZ_01_Fish16S_reef_run1 (the assay not repeated) | passed |
 | apply mapping | 31 | The same files as a list of names, one per line with their folder and no header (as the Data Access Portal lists them): read as a file list, paired, folders taken off, no checksum_method | passed |
 | apply mapping | 32 | The same files as md5sum writes them (no header): read as a checksum list, paired, checksums written | passed |
+| apply mapping | 33 | checkls_ver given as v2.0.0 in the values for the whole project: kept as written, with a warning that checklist v1.0.2 defines a number | passed |
 | map | 9 | Excel time cells in a Time column: verbatimEventTime (times of day), with a note that apply mapping joins them to the dates | passed |
 | map | 11 | Times in UTC only: *things to decide* lists them, with how to get local time | passed |
 | map | 12 | Sampling depth, water depth, volume filtered and volume extracted: all for review despite strong matches, each comment naming the terms it is confused with and the question that tells them apart, and all in *things to decide* | passed |
