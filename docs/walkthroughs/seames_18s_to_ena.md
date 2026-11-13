@@ -140,7 +140,12 @@ otuFinal and taxaFinal.
   SILVA v138.1 and PR2 v5.0.0, and the ENVO terms for seawater.
 - **Libraries:** ENA's run report gave a library for each of the 202 samples, with both fastq names
   and checksums. Fifteen other 18S libraries, such as a mock community and samples not in the ASV
-  table, were left out and listed.
+  table, were left out and listed. Six of them are controls sequenced with the samples: a
+  no-template control (a PCR negative), a mock community (ATCC1010) and a soil sample on each of the
+  two runs. They have reads at the archive but are not in the ASV table. Since 13 November 2026 the
+  sample table has a row for each (`make_2L_table.py`, given the run report), with its sample type
+  and control type, so the workbook has 208 samples, six of them controls, and only the nine 2 L
+  samples with no details in the record are left out.
 - **Taxonomy:** PR2 lineages, with 1,057 sequences named to species and 1,894 to genus. The SILVA
   lineages are kept in identificationRemarks.
 

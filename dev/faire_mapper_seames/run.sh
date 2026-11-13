@@ -16,7 +16,8 @@
 #   7. FAIRe2MDT (if RSCRIPT is set), FAIRe2QIIME, FAIRe2NCBI BioSample and SRA, FAIRe2ENA samples
 #      and runs; compare.py checks the NCBI tables against what the authors submitted
 #   8. 18S end to end: make_2L_table.py turns the sample details below the 18S counts into a sample
-#      table; find primers on the consolidated methods; then propose mapping, review, apply mapping (the 18S ASV table, whose columns are fastq
+#      table, with a row for each control library in the run report (not in the 18S table);
+#      find primers on the consolidated methods; then propose mapping, review, apply mapping (the 18S ASV table, whose columns are fastq
 #      file names, and ENA's run report as the library table), FAIRe-fier, FAIRe2MDT, FAIRe2QIIME,
 #      FAIRe2NCBI BioSample and SRA, and FAIRe2ENA samples and runs; compare.py checks the SRA table
 #      against the authors' SRA sheet for 18S (file 3)
@@ -119,7 +120,7 @@ echo "== 8. 18S end to end"
 s="$out/18S"
 mkdir -p "$s/mapper" "$s/faire" "$s/convert/qiime/out" "$s/convert/ncbi_biosample" "$s/convert/ncbi_sra" \
     "$s/convert/ena_samples" "$s/convert/ena_runs"
-python "$here/make_2L_table.py" "$d/7_SEA-MES_2025_EUK_18S_for_DAT.csv.gz" "$s/mapper/samples_18S.csv"
+python "$here/make_2L_table.py" "$d/7_SEA-MES_2025_EUK_18S_for_DAT.csv.gz" "$s/mapper/samples_18S.csv" "$report"
 python "$tools/faire_primers.py" text "$d/methods_consolidated.txt" -o "$s/mapper/primer_candidates.tsv"
 python "$tools/faire_mapper.py" map "$s/mapper/samples_18S.csv" --sample_types Water --checklist "$ck" \
     --assay_type metabarcoding -o "$s/mapper/samples_18S"

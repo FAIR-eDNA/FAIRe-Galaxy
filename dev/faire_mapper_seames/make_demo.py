@@ -16,7 +16,10 @@ column names. The COI table (file 6) is left out: the authors did not use it. Th
   Wilderlab's table names the N18 pair CN065 and CN066, a second time; the authors confirmed they
   are CN165 and CN166, and run.sh renames them;
 - four 2 L samples in the 18S and Wilderlab tables, and S099, which only Wilderlab's table has;
-- MQ1, the Milli-Q control that is in Wilderlab's table only.
+- MQ1, the Milli-Q control that is in Wilderlab's table only;
+- the six control libraries sequenced with the 18S samples (a no-template control, a mock community
+  and a soil sample on each of two runs), which have reads at the archive but are not in the 18S
+  table: their rows of the run report and the SRA sheet.
 
 Sequences with no reads in the kept samples are left out (except the ASVs the kept curated 16S
 rows are named after), and of the 18S and Wilderlab tables
@@ -41,6 +44,10 @@ DEEP_TOW = ['CN021', 'CN022', 'CN065', 'CN066', 'CN165', 'CN166']
 CONTROLS = ['M056', 'M172']   # two field controls with 16S and Wilderlab reads
 TWO_L = ['S029', 'S030', 'S035', 'S036']
 WL_ONLY = ['S099', 'MQ1']
+# The 18S control libraries, by the start of their names in the run report, and their sample names
+# in the SRA sheet
+CONTROLS_18S = ('NTC-', 'ATCC1010-', 'Soil-')
+CONTROLS_18S_SRA = {'NTC', 'ATCC1010', 'Soil'}
 COPY = ['ReadMe_Description.md', 'methods.txt', 'methods_consolidated.txt', 'dublincore-000065684v002.xml']
 PRIVATE = 'private/SEA_MES_Fish16S_ASV_Feb_27_2025_editColRename.csv'
 TOP = 300
@@ -169,7 +176,7 @@ def main(data, out):
     report['2'] = cut_ncbi_sheet(data / '2_SEA-MES_CN_samples_metadata_OCD.xlsx',
                                  out / '2_SEA-MES_CN_samples_metadata_OCD.xlsx', set(DEEP_TOW))
     report['3'] = cut_sra_sheet(data / '3_SRA_metadata_SEAMES_18S.xlsx', out / '3_SRA_metadata_SEAMES_18S.xlsx',
-                                keep)
+                                keep | CONTROLS_18S_SRA)
     # The curated rows first: the ASV each is named after stays in the ASV table, reads or not.
     report['5'] = cut_csv(data / '5_SEA_MES_Fish16S_Tax_Feb_27_2025.csv', out / '5_SEA_MES_Fish16S_Tax_Feb_27_2025.csv',
                           keep)
@@ -186,12 +193,13 @@ def main(data, out):
         names = [bare(x) for x in split_raw(fh.readline().rstrip('\r\n'))]
     report['7'] = cut_csv(data / '7_SEA-MES_2025_EUK_18S_for_DAT.csv.gz', out / '7_SEA-MES_2025_EUK_18S_for_DAT.csv.gz',
                           keep, recount=names.index('Total reads'), footer_after_blank=True, top=TOP)
-    # ENA's run report: the libraries of the kept samples
+    # ENA's run report: the libraries of the kept samples, and the 18S controls
     src = data / 'filereport_read_run_PRJNA1263580.tsv'
     lines = src.read_text(encoding='utf-8').split('\n')
     head = lines[0].split('\t')
     li = head.index('library_name')
-    kept = [lines[0]] + [x for x in lines[1:] if x and re.split(r'_', x.split('\t')[li])[0] in keep]
+    libs = [(x, x.split('\t')[li]) for x in lines[1:] if x]
+    kept = [lines[0]] + [x for x, lib in libs if lib.split('_')[0] in keep or lib.startswith(CONTROLS_18S)]
     (out / src.name).write_text('\n'.join(kept) + '\n', encoding='utf-8')
     report['run report'] = len(kept) - 1
     for name in COPY:

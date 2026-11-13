@@ -37,6 +37,7 @@ checked and repeated.
 | 2 L | S029, S030, S035, S036 | In the 18S and Wilderlab tables |
 | 2 L, no details | S099 | In Wilderlab's table only, with no sample details anywhere in the record |
 | Milli-Q control | MQ1 | In Wilderlab's table only, not in any sample sheet: 5 L of Milli-Q water filtered on the ship (a field negative) |
+| 18S controls | NTC-7C-1608411, ATCC1010-652C-1608410 and Soil-204C-1608412, each on runs BOD14795 and BOD14856 | Control libraries sequenced with the 18S samples (a no-template control, a mock community and a soil sample): reads at the archive, not in the 18S table. Kept in the run report and the SRA sheet (since 13 November 2026) |
 
 Sequences with no reads in these samples are left out, except the ASVs the kept curated 16S rows
 are named after. The 18S and Wilderlab tables keep the 300 sequences of each assay with the
@@ -52,12 +53,12 @@ of the repository; the trial then takes the final 16S tables from it, and from f
 |---|---|---|
 | `1_SEA-MES_M_samples_metadata_10L.xlsx` | 13 10 L samples, as the NCBI BioSample sheet | Skipping the 11 comment lines above the header; splitting MIxS *lat_lon*; a Y/N control column read as samp_category |
 | `2_SEA-MES_CN_samples_metadata_OCD.xlsx` | 6 deep-tow samples, 106 columns, most empty | Empty columns with FAIRe names; *lat_lon* with a redundant minus sign ("-41.844061 S") |
-| `3_SRA_metadata_SEAMES_18S.xlsx` | The SRA sheet's rows for these samples, formulas as values | What the authors submitted for 18S, to compare with FAIRe2NCBI's SRA table |
+| `3_SRA_metadata_SEAMES_18S.xlsx` | The SRA sheet's rows for these samples and the 18S controls, formulas as values | What the authors submitted for 18S, to compare with FAIRe2NCBI's SRA table |
 | `4_SEA-MES_16S_ASV_level_output_with_seq.csv` | 310 16S fish ASVs, sequences and preliminary BLAST taxonomy | The raw table (otuRaw and taxaRaw) |
 | `5_SEA_MES_Fish16S_Tax_Feb_27_2025.csv` | 48 curated fish taxa, reads summed per name, no sequences | The final table: each row takes the sequence of the ASV it is named after; 29 rows sum several ASVs; names such as *Trachurus Sp* |
 | `7_SEA-MES_2025_EUK_18S_for_DAT.csv.gz` | 300 18S zOTUs for 15 samples, PR2 and SILVA lineages | Fastq file names as column headers; 37 rows of sample details below the counts; PR2 ranks |
 | `8_WL_Full_SEA_MES_samples.csv.gz` | 2,862 sequences from Wilderlab's 12 assays, for 25 samples | One table for 12 assays (the *target* column); repeated column names, renamed by the trial as the authors confirmed; NCBI names and ranks, with *root* for no assignment |
-| `filereport_read_run_PRJNA1263580.tsv` | ENA's run report rows for these samples' 35 libraries | The library table: file names, checksums and accessions; each 16S library also holds the unused COI amplicons |
+| `filereport_read_run_PRJNA1263580.tsv` | ENA's run report rows for these samples' 35 libraries and the six 18S control libraries | The library table: file names, checksums and accessions; each 16S library also holds the unused COI amplicons |
 | `ReadMe_Description.md`, `dublincore-000065684v002.xml` | The record's ReadMe and metadata, unchanged | Values for the whole project (assays, primers, sequencing runs) |
 | `methods.txt`, `methods_consolidated.txt` | The report's methods, unchanged | Find primers and the methods step |
 
@@ -87,7 +88,10 @@ From the run on 6 November 2026 (mapper 0.5.0), with the private table:
 - **FAIRe2NCBI**: 13 BioSamples, with 15 of 20 fields identical to the authors' sheet and the other
   5 the same values with MIxS units; 13 SRA rows, one per library, matching ENA's report. **FAIRe2ENA**: 13 experiments and runs.
 - **18S**: a sample table made from the details below the counts (15 samples); 15 SRA rows matching
-  ENA's report and the authors' SRA sheet.
+  ENA's report and the authors' SRA sheet. Since 13 November 2026 the table also has the six control
+  libraries (a row each, from the run report), so the workbook has 21 samples, FAIRe-fier passes,
+  and the 21 SRA rows match ENA's report; the authors' sheet names the controls' libraries
+  differently (NTC_18S).
 - **Wilderlab**: 25 samples from the three sets, with the second CN065 and CN066 renamed CN165 and
   CN166; the table split into 12 assays; *root* rows left unnamed. FAIRe-fier reports 9 errors in
   sampleMetadata, all for S099 and MQ1, which have no details in the record (MQ1's date and place). FAIRe2MDT makes a
