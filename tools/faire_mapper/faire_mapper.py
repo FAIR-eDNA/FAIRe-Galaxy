@@ -34,7 +34,7 @@ from pathlib import Path
 
 import pandas as pd
 
-__version__ = '0.7.2'
+__version__ = '0.7.3'
 
 # Excel saves a drop-down that lists cells of another sheet (the review sheet's replacement terms) in a
 # newer form that openpyxl does not read. Only the cell values are read here, so the warning says
@@ -2333,6 +2333,7 @@ def cmd_profile(args):
 
 def cmd_map(args):
     df = read_table(args.table, args.sheet, args.header_row)
+    table_name = getattr(args, 'table_name', '') or Path(args.table).name
     sample_types = [s.strip() for s in args.sample_types.split(',')] if args.sample_types else None
     terms = load_checklist(args.checklist, assay_type=args.assay_type, sample_types=sample_types)
     overrides, answered_by = read_responses(args.responses, with_source=True) if args.responses else (None, None)
@@ -2354,7 +2355,7 @@ def cmd_map(args):
                          'other_standard': f'{p.other.source}: {p.other.name} ({p.other_score:.2f})' if p.other else ''}
                         for p in proposals])
     rep.to_csv(out / 'mapping_report.tsv', sep='\t', index=False)
-    write_sssom(proposals, out / 'crosswalk.sssom.tsv', Path(args.table).name, Path(args.checklist).name)
+    write_sssom(proposals, out / 'crosswalk.sssom.tsv', table_name, Path(args.checklist).name)
     pd.DataFrame(missing_mandatory(terms, proposals, args.assay_type),
                  columns=['term', 'sheet', 'condition', 'description', 'example', 'note']).to_csv(
         out / 'missing_mandatory.tsv', sep='\t', index=False)
@@ -2365,9 +2366,9 @@ def cmd_map(args):
     pd.DataFrame(review, columns=REVIEW_COLUMNS).to_csv(out / 'review_list.tsv', sep='\t', index=False)
     import faire_mapper_review   # here, as it imports this module
     faire_mapper_review.write_review_sheet(out / 'review_sheet.xlsx', proposals, profiles, terms, review,
-                                           Path(args.table).name, k=args.shortlist)
+                                           table_name, k=args.shortlist)
     counts = rep.route.value_counts().to_dict()
-    summary = {'table': Path(args.table).name, 'checklist': Path(args.checklist).name, 'columns': len(proposals),
+    summary = {'table': table_name, 'checklist': Path(args.checklist).name, 'columns': len(proposals),
                'accept': counts.get('accept', 0), 'review': counts.get('review', 0),
                'no_match': counts.get('no match', 0), 'confirmed': counts.get('confirmed', 0),
                'model': counts.get('model', 0),
@@ -2430,6 +2431,9 @@ def main(argv=None):
                                         'with "column: description" lines')
     m.add_argument('--dictionary_sheet', help='Excel sheet of the data dictionary (default: first sheet)')
     m.add_argument('--gold', help='TSV with columns column, term: known answers, to measure accuracy')
+    m.add_argument('--table_name', default='',
+                   help='the name of the table to show in the outputs (Galaxy gives its files other names); '
+                        'default: its file name')
     m.add_argument('-o', '--outdir', required=True)
     args = ap.parse_args(argv)
     return cmd_profile(args) if args.cmd == 'profile' else cmd_map(args)

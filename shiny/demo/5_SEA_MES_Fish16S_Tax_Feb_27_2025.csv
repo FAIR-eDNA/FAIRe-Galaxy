@@ -1,0 +1,49 @@
+OTU,phylum,class,order,family,genus,New_Name,Common_Name,Sp_Level,CN021,CN022,CN065,CN066,CN165,CN166,M056,M097,M099,M100,M106,M107,M108,M109,M153,M154,M155,M156,M172
+ASV_1,Chordata,Actinopteri,Carangiformes,Carangidae,Trachurus,Trachurus Sp,Mackerel Sp,N,1343,50430,0,0,0,0,146045,8027,35182,24014,0,0,7975,0,51183,0,5656,0,0
+ASV_2,Chordata,Actinopteri,Clupeiformes,Clupeidae,Sardinops,Sardinops sagax ,Australian Sardine,Y,261597,147114,97790,84958,0,0,0,27012,269873,128532,29314,0,38609,206374,27022,0,15849,0,0
+ASV_3,Chordata,Actinopteri,Perciformes,Emmelichthyidae,Emmelichthys,Emmelicthys nitidus,Redbait,Y,0,0,75,0,0,0,0,0,0,18120,0,0,0,4877,20798,0,0,5571,0
+ASV_4,Chordata,Actinopteri,Scombriformes,Scombridae,Scomber,Scomber australasicus,Blue Mackerel,Y,0,10221,0,0,0,2367,0,0,2311,4089,0,0,0,0,0,0,0,0,0
+ASV_7,Chordata,Actinopteri,Clupeiformes,Engraulidae,Engraulis,Engraulis australis,Australian Anchovy,Y,0,0,0,0,0,0,0,0,541854,278916,46206,14353,126649,165227,0,0,0,0,0
+ASV_5,Chordata,Actinopteri,Stomiiformes,Sternoptychidae,Maurolicus,Maurolicus Sp1,Pearlside Sp,N,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6447,0,0
+ASV_14,Chordata,Actinopteri,Perciformes,Triglidae,Lepidotrigla,Lepidotrigla Sp,Gurnard Sp,N,183,17537,0,0,0,0,0,0,0,0,19544,0,0,7613,9235,0,0,0,0
+ASV_10,Chordata,Actinopteri,Centrarchiformes,Cheilodactylidae,NA,Cheilodactylidae Sp,Morwong Sp,N,134,0,114553,219,0,0,0,7075,0,0,9151,21588,0,0,25955,6166,0,0,0
+ASV_6,Chordata,Actinopteri,Perciformes,Serranidae,Caesioperca,Caesioperca Sp,Perch Sp1,N,13,0,0,0,0,0,0,0,0,0,5755,36477,0,0,14707,0,0,0,0
+ASV_8,Chordata,Actinopteri,Perciformes,Platycephalidae,Platycephalus,Platycephalus richardsoni,Tiger Flathead,Y,0,0,0,0,0,0,0,15229,0,6913,93144,0,0,0,0,34318,0,0,0
+ASV_9,Chordata,Actinopteri,Aulopiformes,Paraulopidae,Paraulopus,Paraulopus nigripinnis,Blacktip Cucumberfish,Y,0,0,0,0,0,0,0,16506,10873,0,8395,34326,0,0,8092,16121,3785,0,0
+ASV_11,Chordata,Actinopteri,Scombriformes,Centrolophidae,Seriolella,Seriolella Sp,Warehou Sp,N,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8319,63529,15874,0
+ASV_12,Chordata,Actinopteri,Acropomatiformes,Acropomatidae,Verilus,Verilus anomalus,Threespine Cardinalfish,Y,0,0,0,0,3694,0,0,0,0,0,16361,0,0,0,0,0,0,0,0
+ASV_13,Chordata,Actinopteri,Uranoscopiformes,Pinguipedidae,Parapercis,Parapercis allporti,Barred Grubfish,Y,0,17813,0,0,0,0,0,10448,13782,0,0,0,0,0,0,0,0,0,0
+ASV_15,Chordata,Actinopteri,Anguilliformes,Congridae,Gnathophis,Gnathophis Sp,Conger Eel Sp2,N,0,0,0,0,0,0,0,7291,0,0,0,0,0,0,14882,0,0,0,0
+ASV_16,Chordata,Actinopteri,Perciformes,Sillaginidae,Sillago,Sillago flindersi,Eastern School Whiting,Y,0,0,0,0,0,0,0,0,0,0,11692,0,0,0,0,0,0,0,0
+ASV_24,Chordata,Actinopteri,Scombriformes,Gempylidae,Thyrsites,Thyrsites atun,Barracouta,Y,0,0,0,0,0,0,0,13070,0,0,0,0,0,0,0,7648,6122,0,0
+ASV_19,Chordata,Actinopteri,Myctophiformes,Myctophidae,Symbolophorus,Symbolophorus barnardi,Barnard's Lanternfish,Y,0,0,0,0,236438,184848,0,0,0,0,0,0,0,0,0,0,816,0,0
+ASV_44,Chordata,Actinopteri,Perciformes,Sebastidae,Helicolenus,Helicolenus Sp,Ocean Perch Sp,N,0,0,0,0,0,0,0,0,0,0,0,12725,0,0,0,10610,0,7100,0
+ASV_23,Chordata,Actinopteri,Argentiniformes,Argentinidae,Argentina,Argentina australiae,Silverside,Y,132,0,0,0,0,0,0,0,0,0,0,0,0,0,39038,20130,0,0,0
+ASV_22,Chordata,Actinopteri,Scombriformes,Gempylidae,Rexea,Rexea solandri,Eastern Gemfish,Y,0,0,101,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ASV_33,Chordata,Actinopteri,Myctophiformes,Myctophidae,Lampanyctodes,Lampanyctodes hectoris,Hector's Lanternfish,Y,0,0,0,0,0,0,0,0,0,43,0,0,0,0,0,0,23,919,0
+ASV_26,Chordata,Actinopteri,Gadiformes,Moridae,Pseudophycis,Pseudophycis breviuscula,Bastard Red Cod,Y,0,0,0,0,0,0,0,0,59854,0,3718,0,0,0,0,0,0,0,0
+ASV_28,Chordata,Actinopteri,Syngnathiformes,Callionymidae,Foetorepus,Foetorepus calauropomus,Common Stinkfish,Y,66,0,0,0,0,0,0,9507,0,0,0,18133,0,0,0,0,0,3074,0
+ASV_25,Chordata,Actinopteri,Ophidiiformes,Ophidiidae,Genypterus,Genypterus Sp,Ling Sp,N,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1936,0,0
+ASV_32,Chordata,Actinopteri,Tetraodontiformes,Diodontidae,Allomycterus,Allomycterus pilatus,Australian Burrfish,Y,0,0,0,0,0,0,0,0,0,0,8500,0,0,0,0,0,0,0,0
+ASV_36,Chordata,Actinopteri,Perciformes,Triglidae,Pterygotrigla,Pterygotrigla polyommata,Latchet,Y,0,0,0,0,0,0,0,0,0,0,0,14844,0,0,0,0,0,0,0
+ASV_38,Chordata,Chondrichthyes,Myliobatiformes,Urolophidae,Urolophus,Urolophus Sp3,Stingaree 3 ,Y,0,6749,15,0,0,0,0,0,0,0,0,0,0,0,733,0,0,488,135030
+ASV_51,Chordata,Actinopteri,Pleuronectiformes,Bothidae,Lophonectes,Lophonectes gallus,Crested Flounder,Y,0,0,0,0,0,0,0,0,0,0,0,0,0,13,0,0,0,0,0
+ASV_73,Chordata,Actinopteri,Acropomatiformes,Dinolestidae,Dinolestes,Dinolestes lewini,Longfin Pike,Y,69173,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ASV_90,Chordata,Actinopteri,Perciformes,Hoplichthyidae,Hoplichthys,Hoplichthys haswelli,Deepsea Flathead,Y,0,0,0,0,0,0,0,0,0,0,11057,0,0,0,0,0,0,0,0
+ASV_66,Chordata,Actinopteri,Perciformes,Scorpaenidae,Scorpaena,Scorpaena papillosa,Southern Red Scorpionfish,Y,0,0,0,0,0,0,0,17352,0,0,0,0,0,0,0,5405,0,0,0
+ASV_65,Chordata,Actinopteri,Perciformes,Triglidae,NA,Chelidonichthys kumu,Red Gurnard,Y,0,0,0,0,0,0,0,0,0,0,3106,35142,0,0,0,0,0,0,0
+ASV_80,Chordata,Actinopteri,Syngnathiformes,Centriscidae,Macroramphosus,Macroramphosus scolopax,Longspine Snipefish,Y,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3926,4784,0
+ASV_77,Chordata,Chondrichthyes,Myliobatiformes,Urolophidae,Urolophus,Urolophus Sp4,Stingaree 4,N,0,0,0,0,0,0,0,198,0,0,27,284,0,0,0,0,0,0,0
+ASV_88,Chordata,Actinopteri,Zeiformes,Zeidae,Zeus,Zeus faber,John Dory,Y,0,0,0,0,0,0,0,0,0,0,0,0,0,7045,0,7630,0,0,0
+ASV_101,Chordata,Chondrichthyes,Myliobatiformes,Urolophidae,Urolophus,Urolophus cruciatus,Banded Stingaree,Y,0,0,0,0,0,0,0,589,0,0,0,87,0,0,0,0,0,0,0
+ASV_110,Chordata,Chondrichthyes,Pristiophoriformes,Pristiophoridae,Pristiophorus,Pristiophorus cirratus,Longnose Sawshark,Y,0,0,0,0,0,0,0,0,0,0,0,1127,0,0,0,0,0,0,0
+ASV_120,Chordata,Chondrichthyes,Carcharhiniformes,Triakidae,Mustelus,Mustelus antarcticus,Gummy Shark,Y,0,0,0,0,0,0,0,445,0,0,363,0,1769,0,0,3998,0,0,0
+ASV_191,Chordata,Actinopteri,Tetraodontiformes,Monacanthidae,Nelusetta,Nelusetta ayraud,Ocean Leatherjacket,Y,0,0,0,0,0,0,0,0,0,0,5770,0,0,0,0,0,0,0,0
+ASV_283,Chordata,Actinopteri,Pleuronectiformes,Bothidae,Lophonectes,Bothidae Sp,Flounder Sp,N,0,0,0,0,0,0,0,0,0,0,0,0,0,0,11703,0,0,0,0
+ASV_214,Chordata,Chondrichthyes,Myliobatiformes,Urolophidae,Urolophus,Urolophus viridis,Greenback Stingaree,Y,0,0,0,16,0,0,0,463,0,0,0,0,0,0,0,0,0,0,0
+ASV_878,Chordata,Actinopteri,Labriformes,Labridae,Pseudolabrus,Pseudolabrus rubicundus,Rosy Wrasse,Y,0,0,0,0,0,0,0,0,0,0,0,13479,0,0,0,0,0,0,0
+ASV_286,Chordata,Actinopteri,Perciformes,Serranidae,NA,Serranidae Sp2,Perch Sp4,N,0,0,0,0,0,0,0,3710,0,0,0,0,0,0,0,0,0,0,0
+ASV_1119,Chordata,Chondrichthyes,Orectolobiformes,Parascylliidae,Parascyllium,Parascyllium ferrugineum,Rusty Catshark,Y,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,930,0,0
+ASV_1178,Chordata,Actinopteri,Lophiiformes,Brachionichthyidae,Brachionichthys,Brachionichthys Sp,Handfish,N,0,0,0,0,0,0,0,792,0,0,0,0,0,0,0,0,0,0,0
+ASV_1233,Chordata,Chondrichthyes,Rhinopristiformes,Rhinobatidae,Trygonorrhina,Trygonorrhina Sp,Fiddler Ray,N,0,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,0
+ASV_1309,Chordata,Actinopteri,Perciformes,Scorpaenidae,Phenacoscorpius,Scorpaenidae Sp,Scorpionfish,N,0,0,25,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0

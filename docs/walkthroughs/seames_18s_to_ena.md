@@ -1,8 +1,11 @@
 # Worked example: SEA-MES 18S data to ENA
 
-Three seawater samples from CSIRO's SEA-MES eDNA survey, followed from the lab's own spreadsheet,
-through the FAIRe tools in this repository, to a submission accepted by the European Nucleotide
-Archive's test service: samples, study, experiments and runs.
+Three seawater samples from CSIRO's SEA-MES eDNA survey, followed from the lab's own files, through
+the FAIRe tools in this repository, to a submission accepted by the European Nucleotide Archive's
+test service: samples, study, experiments and runs. The FAIRe workbook is built from several inputs:
+the lab's sample details, its ASV table, ENA's run report, values for the whole project and a
+reviewer's decisions (*What goes in*, below). Other labs will have other files, in other layouts;
+these are the ones SEA-MES published.
 
 > **This is a worked example, not a Galaxy run.** It uses real data (the SEA-MES data record, CC BY
 > 4.0) and the same scripts the Galaxy tools wrap, run from the command line by
@@ -13,9 +16,10 @@ Archive's test service: samples, study, experiments and runs.
 
 | | |
 |---|---|
-| Data | SEA-MES 18S rRNA (V4) metabarcoding, 202 samples |
+| Data | SEA-MES 18S rRNA (V4) metabarcoding, 202 samples and 6 controls |
+| Inputs | ASV table with sample details, ENA's run report, the methods, project values, review decisions |
 | Submitted | S001, S003 and S005 |
-| When | 11 and 12 November 2026 |
+| When | 11 and 12 November 2026; steps 1 to 5 updated for FAIRe mapper 0.7.3 on 13 November |
 | Where | ENA's test service, through the Webin Portal |
 
 ## The route
@@ -24,7 +28,7 @@ Archive's test service: samples, study, experiments and runs.
 |---|---|---|
 | 1 | (the data record) | The lab's files |
 | 2 | FAIRe mapper: propose mapping | Proposes a FAIRe term for each column |
-| 3 | A person, in a spreadsheet | Reviews the proposals |
+| 3 | A person, in the review sheet | Reviews the proposals |
 | 4 | FAIRe mapper: apply mapping | Writes the FAIRe workbook |
 | 5 | FAIRe-fier | Checks the workbook against the FAIRe checklist |
 | 6 | FAIRe2ENA: samples | Writes ENA's sample XML |
@@ -32,6 +36,26 @@ Archive's test service: samples, study, experiments and runs.
 | 8 | FTP | Puts the read files in the Webin upload area |
 | 9 | FAIRe2ENA: experiments and runs | Writes ENA's experiment and run XML |
 | 10 | ENA Webin Portal | Accepts the experiments and runs |
+
+## What goes in
+
+Each output is built from these inputs. Three come from the published data record and ENA; two come
+from people, and would come from any lab using the tools. Which files a lab has, and their layouts,
+differ from lab to lab: separate OTU and taxonomy tables, a sample sheet, a sequencing facility's run
+sheet. *FAIRe mapper: identify your files* says what each file looks like and which step it goes to.
+
+| Input | Where it came from | What it gives | Used in |
+|---|---|---|---|
+| 18S ASV table (data record file 7) | The lab, published | Read counts of 16,901 ASVs in 202 samples, with PR2 and SILVA lineages; below them, 37 rows of sample details, which a short script turns into the sample table | Steps 1, 2, 4 |
+| ENA's run report for PRJNA1263580 | ENA, downloaded | Each library's name, fastq files and MD5 checksums, and the six control libraries sequenced with the samples | Steps 1, 4, 9 |
+| The methods (the project's final report) | The lab, published | Primers, PCR, sequencing, storage and bioinformatics, read by *find primers* and by a person | Step 4, through the project values |
+| Values for the whole project (`project_values_18S.tsv`) | A person, from the methods and the 10 L samples' BioSample sheet | Project terms no table holds: project name and contact, primers, protocols, env_medium, storage temperature | Step 4 |
+| The reviewer's decisions | A person, in the review sheet | Accept, Reject or Change for each column of the sample table | Steps 3, 4 |
+| Tool settings | A person, on each tool's form | Sample type, assay, the sites' UTC offset; for ENA, the centre name, taxon, study accession and sequencer | Steps 2, 4, 6, 9 |
+| ENA's sample receipt | ENA, after step 7 | The sample accessions, so each experiment points to its sample | Step 9 |
+
+The FAIRe workbook (step 4) is the one file every later step reads: FAIRe-fier checks it, and both
+FAIRe2ENA tools convert it.
 
 ## One sample, end to end
 
@@ -42,7 +66,7 @@ they sit in the FAIRe workbook, and as they went to ENA:
 | Lab's column and value | FAIRe term and value | ENA attribute and value |
 |---|---|---|
 | Sample No. `S001` | `samp_name` S001 | sample alias S001 |
-| Collection Date `30/06/2023` | `eventDate` 2023-06-30 | collection date 2023-06-30 |
+| Collection Date `30/06/2023`, Collection Time (UTC) `08:06` | `eventDate` 2023-06-30T18:06+10:00 (local time) | collection date 2023-06-30T18:06+10 (the trial sent 2023-06-30; see step 6) |
 | Latitude, Longitude `-40.577, 148.7301833` | `decimalLatitude`, `decimalLongitude` | geographic location (latitude) and (longitude), in DD |
 | Locality `Flinders Island` | `geo_loc_name` Australia: Flinders Island | country Australia; region and locality Australia: Flinders Island |
 | Depth (m) `50` | `minimumDepthInMeters`, `maximumDepthInMeters` 50 | depth 50 m |
@@ -58,17 +82,21 @@ they sit in the FAIRe workbook, and as they went to ENA:
 
 ## Step 1. The lab's files
 
-Everything starts from CSIRO's published data record for SEA-MES (Deagle et al. 2025). Nothing in
-it is in FAIRe format. For 18S, three of its files were used (`demo/seames` holds a small copy):
+Everything starts from CSIRO's published data record for SEA-MES (Deagle et al. 2025) and ENA's
+report of its reads. Nothing in them is in FAIRe format. For 18S, three files were used
+(`demo/seames` holds a small copy), with two inputs from people:
 
 - **The 18S ASV table**: the number of reads of each of 16,901 ASVs (rows) in each of 202 samples
   (columns), with each ASV's PR2 and SILVA lineage. Below the read counts sit 37 rows of sample
   details (depth, coordinates, date, temperature, oxygen and so on), one column per sample. A short
-  script (`make_2L_table.py`) turns those rows into an ordinary sample table: 202 rows and 44
-  columns, with the lab's own column names.
+  script (`make_2L_table.py`) turns those rows into an ordinary sample table with the lab's own
+  column names, and adds a row for each of the six controls sequenced with the samples (from ENA's
+  run report): 208 rows and 47 columns.
 - **ENA's run report** for the SEA-MES BioProject (PRJNA1263580): each library's name, fastq file
   names and MD5 checksums.
 - **The methods**, from the project's final report: primers, PCR, sequencing and bioinformatics.
+- **From people**: the values for the whole project, typed from the methods and the 10 L samples'
+  BioSample sheet (`project_values_18S.tsv`), and the reviewer's decisions (step 3).
 
 ## Step 2. Propose mapping
 
@@ -81,91 +109,100 @@ to review. It works by rules, so the same table always gives the same proposals.
 *FAIRe mapper: ask a language model*, can give a second opinion on the columns for review. It was
 not used here.)
 
-Of the 44 columns, 20 were accepted, 5 went to review and 19 had no FAIRe term. Some examples:
+Of the 47 columns, the mapper accepted 22, sent 11 to review and found no term for 14. Some
+examples, as they appear in the review sheet (step 3):
 
-| Column | Proposed term | Score | Mapper's call | Mapper's reasoning (shortened) |
+| Input term | Proposed term | Score | Mapper's call | Mapper's reasoning (shortened) |
 |---|---|---|---|---|
-| Collection Date | `eventDate` | 1.00 | accept | Header matches 'collection date'. Dates written dd/mm/yyyy, so convert them to ISO 8601. |
-| Depth (m) | `minimumDepthInMeters`, `maximumDepthInMeters` | 1.00 | accept | Header matches 'depth'; numbers from 5 to 530. One depth for each sample fills both terms. |
+| Collection Date | `eventDate` | 1.00 | accept | The column name matches 'collection date'. Dates written dd/mm/yyyy, converted to ISO 8601. |
 | Latitude | `decimalLatitude` | 1.00 | accept | Decimal degrees within the latitude range (-42.165 to -36.367). |
-| Volume filtered | `samp_size`, `samp_size_unit` | 0.98 | accept | Values such as '2 L' split into a number and a unit. |
-| Sterivex Number | `input_read_count` | 0.45 | review | Header partly matches 'number read'; numbers 1 to 156. |
-| Nominal depth | `tot_depth_water_col` | 0.48 | review | Header partly matches 'total depth'; numbers 5 to 530. |
-| Phosphate | none | n/a | no match | FAIRe has no term for phosphate, so the column is kept as a user-defined field. |
+| Filtered by | `recordedBy` | 0.97 | accept | The column name matches 'filtered by'. One value (Sahan) for the whole table. |
+| Depth (m) | `minimumDepthInMeters` + `maximumDepthInMeters` | 1.00 | review | A strong match, sent to review because these terms and `tot_depth_water_col` are often confused. |
+| Volume filtered | `samp_size` + `samp_size_unit` | 0.97 | review | Values such as '2 L' split into a number and a unit; often confused with `samp_vol_we_dna_ext`. |
+| Nominal depth | `tot_depth_water_col` | 0.48 | review | The column name partly matches 'total depth'; numbers 5 to 530. |
+| Sterivex Number | `input_read_count` | 0.45 | review | The column name partly matches 'number read'; numbers 1 to 156. |
+| Phosphate | `phosphate` (MIxS term) | 1.00 | review | No FAIRe term fits, so the MIxS term of the same name, as the FAIRe guidelines ask. |
 
-Since version 0.6.1 (13 November 2026), *Depth (m)* and *Nominal depth* would both go to review,
-however strong the match. FAIRe's sampling depth terms and `tot_depth_water_col` are often confused,
-so the comment names them, says what each means, and asks whether the column is the depth the sample
-was taken from or the depth of the water at the site.
+FAIRe's sampling depth terms and `tot_depth_water_col` are often confused, as are `samp_size` and
+`samp_vol_we_dna_ext`, so the mapper always sends them to review, however strong the match, and its
+reasoning names the other terms, says what each means and asks which the column holds.
 
-Since version 0.7.0, a column with no FAIRe term gets a MIxS or Darwin Core term whose name matches,
-for review, as the FAIRe guidelines ask. In this table, *Phosphate*, *Silicate* and *Pressure* get
-MIxS's phosphate, silicate and pressure, and *Ammonia* gets MIxS's ammonium, which is close but not
-the same name. Once a reviewer confirms one, apply mapping names the user-defined field after the
-term. The other 14 columns with no FAIRe term (Voyage, CTD #, Hours from noon and so on) get none.
+For a column with no FAIRe term, the mapper looks for a MIxS or Darwin Core term whose name matches,
+as the FAIRe guidelines ask. Here *Phosphate*, *Silicate* and *Pressure* get MIxS's phosphate,
+silicate and pressure, and *Ammonia* gets MIxS's ammonium, which is close but not the same name. The
+other 14 columns (Voyage, CTD #, Hours from noon and so on) get none, and are kept as the lab's own
+terms (user-defined fields).
+
+Propose mapping also lists *additional checks to make*: here, that the collection times are in UTC
+(the workbook gives local time, so the UTC offset is needed) and the often confused terms.
 
 ## Step 3. Review
 
-*A person, in a spreadsheet*
+*A person, in the review sheet*
 
-Someone who knows the data checks the proposals. Here, seven were deleted (all five marked for
-review, and two the mapper had accepted) and one was added.
+Propose mapping writes a **review sheet**, an Excel workbook with one row for each column heading of
+the sample table (the input term). Each row gives the proposed FAIRe term, its score, the mapper's
+call (accept, review or no match) and its reasoning. The reviewer chooses Accept, Reject or Change
+from a drop-down, and for Change picks a replacement term from a second drop-down, with the column's
+best candidates first. Rows for review are shaded, and the mapper's accepted matches have Accept
+filled in already. Reject keeps the column as the lab's own term; a MIxS or Darwin Core term is used
+by accepting it. The rows can be sorted or filtered, for example to bring the rows for review to the
+top. In Galaxy, the reviewer downloads the sheet, fills it in and uploads it again for apply mapping.
+The Shiny app in `shiny/` shows the same sheet on screen.
 
-In Galaxy, the review is currently done in a spreadsheet. The reviewer downloads the crosswalk that
-propose mapping writes, edits it in Excel or similar, and uploads it again for apply mapping. To
-confirm a match marked for review, they change its `skos:closeMatch` to `skos:exactMatch`; to stop
-a column being matched, they delete its row. The tools don't yet offer a more interactive way to
-review. For this example, each decision went into a small table of column, action and reason
-(`dev/faire_mapper_seames/reviewer_decisions_18S.tsv`), and a short script (`review.py`) applied it
-to the crosswalk, so the review is on record.
+Here, someone who knows the data made the decisions, recorded with their reasons in
+`dev/faire_mapper_seames/reviewer_decisions_18S.tsv`. Two matches for review were accepted, five
+rejected, and two of the mapper's accepted matches rejected:
 
-Since version 0.7.0, propose mapping also writes a **review sheet**, as the FAIRe team suggested: an
-Excel workbook with one row per column, giving the input term, the proposed FAIRe term, the score,
-the mapper's reasoning, a decision (Accept, Reject or Change, from a drop-down) and a replacement
-term (a drop-down with the column's best candidates first, then every FAIRe term). Apply mapping
-takes the filled-in sheet in place of the crosswalk. Filled in with the decisions above, it gives
-the same workbook as the reviewed crosswalk.
-
-| Column | Decision | Reason |
+| Input term | Decision | Reason |
 |---|---|---|
-| Sample | delete | The fastq name of each sample (S001_S13_L001), not the sample material. |
-| Sterivex Number | delete | The number of the filter cartridge, not a read count. |
-| Sample ID | delete | A field label for each sample (SM1_CTD001_Bottom_a), not a material sample ID. |
-| Location | delete | Station codes, such as S2.1 (Flinders MP). Locality gives geo_loc_name on its own. |
-| Filtration Date | delete | The date of filtering, not the date the record changed. |
-| Filtered by | delete | Who filtered the water. Collected by gives recordedBy. |
-| Nominal depth | delete | The planned sampling depth, not the depth of the water column. |
-| Collected by | add `recordedBy` | The people who collected the samples. |
+| Depth (m) | Accept | The depth each sample was taken from (Nominal depth gives the planned depths, which are the same). |
+| Volume filtered | Accept | The volume of water collected and filtered for each sample. |
+| Sample | Reject | The fastq name of each sample (S001_S13_L001), not the sample material. |
+| Sterivex Number | Reject | The number of the filter cartridge, not a read count. |
+| Sample ID | Reject | A field label for each sample (SM1_CTD001_Bottom_a), not a material sample ID. |
+| Filtration Date | Reject | The date of filtering, not the date the record changed. |
+| Nominal depth | Reject | The planned sampling depth, not the depth of the water column. |
+| Location | Reject | Station codes, such as S2.1 (Flinders MP). Locality gives geo_loc_name on its own. |
+| Filtered by | Reject | Who filtered the water. FAIRe's recordedBy names the people responsible for the dataset. |
 
-Since 13 November 2026, *Collected by* is deleted too and kept as a user-defined field. FAIRe's
-recordedBy names the people responsible for the dataset, so apply mapping takes it from the person
-named in project_contact (Bruce Deagle), and writes project_contact as their email, as Oliver Berry
-asked.
+Apply mapping takes recordedBy from the person named in project_contact (Bruce Deagle), and writes
+project_contact as their email. The four MIxS suggestions were left with no decision, so Phosphate,
+Silicate, Pressure and Ammonia stay as the lab's own terms; accepting them would name the columns
+after the MIxS terms.
 
 ## Step 4. Apply mapping
 
 *Galaxy tool: FAIRe mapper: apply mapping*
 
-The reviewed crosswalk, a short list of project-wide values (`project_values_18S.tsv`) and the ASV
-table go in. A FAIRe workbook in FAIRe-ator's layout comes out, with a log of every change: 202
-samples, 54 FAIRe terms filled, 25 lab columns kept as user-defined fields, and 16,901 sequences in
-otuFinal and taxaFinal.
+The filled-in review sheet, a short list of project-wide values (`project_values_18S.tsv`), ENA's
+run report and the ASV table go in. A FAIRe workbook in FAIRe-ator's layout comes out, with a log of
+every change: 208 samples, 33 project and 32 sample terms filled, 25 lab columns kept as
+user-defined fields, and 16,901 sequences in otuFinal and taxaFinal. The log starts by asking the user to check the workbook
+before submitting it anywhere.
 
-- **Values converted:** '30/06/2023' became 2023-06-30; '2 L' became 2 and L; 'Flinders Island'
-  became 'Australia: Flinders Island'.
+- **Values converted:** '30/06/2023' became 2023-06-30, with the date as written kept in
+  verbatimEventDate. The times in *Collection Time (UTC)* were joined to the dates and converted to
+  local time (+10:00, given on the form): S001's became 2023-06-30T18:06+10:00. '2 L' became 2 and
+  L, and 'Flinders Island' became 'Australia: Flinders Island'.
 - **Project values** from the methods: target gene 18S V4, the primers TAReuk454FWD1 and the
   modified TAReuk-Rev3 with their sequences, sequencing at the Ramaciotti Centre on a NextSeq 1000,
-  SILVA v138.1 and PR2 v5.0.0, and the ENVO terms for seawater.
-- **Libraries:** ENA's run report gave a library for each of the 202 samples, with both fastq names
-  and checksums. Fifteen other 18S libraries, such as a mock community and samples not in the ASV
-  table, were left out and listed. Six of them are controls sequenced with the samples: a
-  no-template control (a PCR negative), a mock community (ATCC1010) and a soil sample on each of the
-  two runs. They have reads at the archive but are not in the ASV table. Since 13 November 2026 the
-  sample table has a row for each (`make_2L_table.py`, given the run report), with its sample type
-  and control type, so the workbook has 208 samples, six of them controls, and only the nine 2 L
-  samples with no details in the record are left out.
-- **Taxonomy:** PR2 lineages, with 1,057 sequences named to species and 1,894 to genus. The SILVA
-  lineages are kept in identificationRemarks.
+  SILVA v138.1 and PR2 v5.0.0, the ENVO terms for seawater, and links to the Australian Microbiome's
+  protocols for DNA extraction, PCR and the bioinformatics.
+- **Libraries:** ENA's run report gave a library for each sample, with both fastq names and
+  checksums. Six of the samples are controls sequenced with the samples: a no-template control (a
+  PCR negative), a mock community (ATCC1010) and a soil sample on each of the two runs. They have
+  reads at the archive but are not in the ASV table, so `make_2L_table.py` adds a row for each from
+  the run report, with its sample type and control type. Nine 2 L samples with libraries but no
+  details in the record are left out and listed.
+- **Read counts:** every sample in the ASV table has 26,739 reads, so the table is rarefied.
+  output_read_count is left empty, as FAIRe asks for the reads that passed filtering, before
+  rarefying; the log says so. output_otu_num and otu_num_tax_assigned are counted from the table.
+  The six controls have no column in it, so their counts are empty, and the log lists them.
+- **Taxonomy:** PR2 lineages, with 1,057 sequences named to species and 1,894 to genus. PR2's levels
+  are not Linnaean ranks, so names above genus go in scientificName with their PR2 level, and
+  *edna2obis: match taxa* can fill kingdom to family from WoRMS. The SILVA lineages are kept in
+  identificationRemarks.
 
 ## Step 5. Check the workbook
 
@@ -173,11 +210,10 @@ otuFinal and taxaFinal.
 
 FAIRe-fier, CSIRO's FAIRe validator, checks every value against the checklist.
 
-- **sampleMetadata passes.** Its warnings point out the 25 extra lab columns, such as Phosphate and
-  Pressure, and suggest giving coordinates to at least five decimal places.
-- **projectMetadata passes** with FAIRe mapper 0.5.1, which writes the checklist version as 1. With
-  0.5.0, FAIRe-fier reported one error here: the workbook gave the checklist's file name, as
-  FAIRe-ator writes it, and FAIRe-fier expects a number.
+- **projectMetadata passes**, with no warnings.
+- **sampleMetadata passes.** Its 228 warnings point out the 25 lab columns kept as user-defined
+  fields, such as Phosphate and Pressure, which the checklist doesn't list, and suggest giving
+  coordinates to at least five decimal places (203 values).
 
 ## Step 6. Samples
 
@@ -197,6 +233,11 @@ INFO: wrote 3 sample(s) for project SEA-MES_eDNA with taxon 408172
 
 The SEA-MES sources don't state the units of oxygen and nitrite. Once they're known, filling
 `diss_oxygen_unit` and `nitrite_unit` in the workbook brings both back.
+
+The trial's workbook gave the dates only. Since 13 November the workbook also gives each sample's
+time of collection, in local time, so FAIRe2ENA now writes S001's collection date as
+2023-06-30T18:06+10, in the form ENA's date pattern takes. Dates with times have not yet been sent
+to ENA's test service.
 
 <details>
 <summary>Part of S001's sample XML</summary>
@@ -327,6 +368,7 @@ S001 as the FAIRe2ENA script writes it, and as the Galaxy tool writes it now:
 ## Not covered yet
 
 - **Real reads.** The runs used made-up files. Submitting a real dataset's reads is still to do.
+- **Dates with times.** The trial's dates had no time (step 6).
 - **Single-end runs.** FAIRe2ENA's run tool writes single-end runs since 12 November 2026 (for
   Wilderlab data), but they have not yet been tried on ENA's test service.
 - **Submitting from the command line.** ENA's REST service refused the test account with HTTP 403,

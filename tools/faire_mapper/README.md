@@ -26,7 +26,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
 
 ## Status
 
-- Version 0.7.2. `planemo lint`: passes with no warnings. `pyflakes`: clean.
+- Version 0.7.3. `planemo lint`: passes with no warnings. `pyflakes`: clean.
 - Goes to Galaxy Australia as an early version with the wrapped FAIRe tools (decided 6 November
   2026). Each tool's help starts with a note saying so, which asks users to check the results and
   send problems to the Galaxy Australia help desk (to confirm with Galaxy Australia, question 8).
@@ -43,6 +43,10 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   independent answer keys (`dev/faire_mapper_real_datasets/`, `dev/faire_mapper_australian_datasets/`,
   summarised below), and end to end on CSIRO's SEA-MES data (`dev/faire_mapper_seames/`). Not yet
   tried on datasets from Australian labs that already have a FAIRe version.
+- New in 0.7.3 (13 November 2026): propose mapping names the sample table as the user sees it in
+  Galaxy (its dataset name) in the review sheet's *How to review*, the summary and the crosswalk's
+  description, where it gave Galaxy's file name (dataset_N.dat). The Shiny app (`shiny/`) passes the
+  name the same way.
 - New in 0.7.2 (13 November 2026), from the FAIRe team's questions on 0.7.1:
   - The review sheet can be sorted or filtered (rows to review first, say). Apply mapping reads each
     decision with its input term, and lists the columns in the table's order; the replacement
@@ -975,7 +979,7 @@ and one apply mapping test (MIxS and Darwin Core terms), and one of each for the
 propose mapping, 35 apply mapping and 3 identify tests pass in Galaxy `release_25.0` here, and so does
 the propose-mapping workflow test. 0.7.2 adds one apply mapping test (rows with no decision); all 15
 propose mapping and 36 apply mapping tests pass in Galaxy `release_25.0` here, and so do both workflow
-tests.
+tests. 0.7.3 checks the table's name in an existing propose mapping test.
 
 | Tool | Test | Checks | Result |
 |---|---|---|---|
@@ -1035,7 +1039,7 @@ tests.
 | map | 10 | A sheet in the day-night study's form: the *additional checks to make* list gives a repeated sample name, a filtration control not marked as a control, two columns of notes and the times with no time zone | passed |
 | map | 13 | Columns with no FAIRe term: MIxS phosphate (with the unit from the column name), silicate, pressure and ammonium (close) for review, with MIxS identifiers and the curie map; Voyage and Field bottle number get none; the report's other_standard column and the summary's count | passed |
 | map | 14 | The same table with *Suggest MIxS or Darwin Core terms* unticked: no MIxS rows | passed |
-| map | 15 | The review sheet: its five sheets (Choices hidden), the mapper's call, the decision and replacement drop-downs, a MIxS term as a proposal, and a MIxS term first in the replacement list of a FAIRe match for review | passed |
+| map | 15 | The review sheet: its five sheets (Choices hidden), the mapper's call, the decision and replacement drop-downs, a MIxS term as a proposal, and a MIxS term first in the replacement list of a FAIRe match for review; since 0.7.3, the table named as Galaxy shows it | passed |
 | apply mapping | 35 | The review sheet as the crosswalk, its rows sorted: Accept for a MIxS term, Change to the MIxS term offered for a wrong FAIRe match, Change to tot_depth_water_col, Reject keeping the column's own term, and the count of decisions in the log | passed |
 | apply mapping | 36 | The review sheet with four rows left with no decision and matches for review applied: the log says what happened to each kind of row | passed |
 | apply mapping | 34 | Confirmed MIxS terms name the user-defined fields with unmatched columns left out: phosphate with the unit added to each value (0.21 uM), ammonium typed in by the reviewer; silicate, still for review, left out and listed | passed |

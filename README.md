@@ -49,6 +49,10 @@ Notes for Galaxy Australia and other evaluators.
   from the lab's spreadsheet, through the FAIRe mapper, FAIRe-fier and FAIRe2ENA, to a submission
   that ENA's test service accepted. It ran the scripts the Galaxy tools wrap from the command line,
   so it shows the steps and their outputs, not Galaxy itself.
+- **Without Galaxy.** `shiny/` is a Shiny app that runs the same tools on a person's own computer, in
+  a web browser, with the same command lines (`shiny/README.md`). Its review screen is the FAIRe
+  mapper's review sheet, and it can take a review sheet filled in with Excel. It has a button that
+  loads a 16S demonstration from `demo/seames`.
 - **Network.** Only *edna2obis: match taxa* needs the internet, to look up names in WoRMS and GBIF.
   It sends one request at a time by default, and at most 4.
 - **Language model (optional).** *FAIRe mapper: ask a language model* needs a model service: one
@@ -77,6 +81,7 @@ tools/
   edna2obis/      one ToolShed repository (two tools sharing macros.xml)
   faire_mapper/   one ToolShed repository (seven tools sharing macros.xml; bundles the checklist v1.0.2, its full template and a primer table)
 workflows/faire/  three Galaxy workflows that chain the tools, each with its tests and test data
+shiny/            a Shiny app that runs the tools on a person's own computer, without Galaxy
 .github/workflows/pr.yaml   lint and tests on every change, adapted from the IUC's
 .flake8           the IUC's flake8 settings; upstream scripts left out
 ```

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A stand-in for an ENA receipt, made by accessions.py from the run report. -->
+<RECEIPT receiptDate="2026-11-04T00:00:00.000Z" submissionFile="submission.xml" success="true">
+     <SAMPLE accession="SRS25258429" alias="CN021" status="PUBLIC">
+          <EXT_ID accession="SAMN48885094" type="biosample"/>
+     </SAMPLE>
+     <SAMPLE accession="SRS25258440" alias="CN022" status="PUBLIC">
+          <EXT_ID accession="SAMN48885095" type="biosample"/>
+     </SAMPLE>
+     <SAMPLE accession="SRS25258372" alias="CN065" status="PUBLIC">
+          <EXT_ID accession="SAMN48885114" type="biosample"/>
+     </SAMPLE>
+     <SAMPLE accession="SRS25258373" alias="CN066" status="PUBLIC">
+          <EXT_ID accession="SAMN48885115" type="biosample"/>
+     </SAMPLE>
+     <SAMPLE accession="SRS25258410" alias="CN165" status="PUBLIC">
+          <EXT_ID accession="SAMN48885148" type="biosample"/>
+     </SAMPLE>
+     <SAMPLE accession="SRS25258411" alias="CN166" status="PUBLIC">
+          <EXT_ID accession="SAMN48885149" type="biosample"/>
+     </SAMPLE>
+     <SAMPLE accession="SRS25145581" alias="M056" status="PUBLIC">
+          <EXT_ID accession="SAMN48716090" type="biosample"/>
+     </SAMPLE>
+     <SAMPLE accession="SRS25145408" alias="M097" status="PUBLIC">
+          <EXT_ID accession="SAMN48716111" type="biosample"/>
+     </SAMPLE>
+     <SAMPLE accession="SRS25145411" alias="M099" status="PUBLIC">
+          <EXT_ID accession="SAMN48716113" type="biosample"/>
+     </SAMPLE>
+     <SAMPLE accession="SRS25145412" alias="M100" status="PUBLIC">
+          <EXT_ID accession="SAMN48716114" type="biosample"/>
+     </SAMPLE>
+     <SAMPLE accession="SRS25145418" alias="M106" status="PUBLIC">
+          <EXT_ID accession="SAMN48716120" type="biosample"/>
+     </SAMPLE>
+     <SAMPLE accession="SRS25145419" alias="M107" status="PUBLIC">
+          <EXT_ID accession="SAMN48716121" type="biosample"/>
+     </SAMPLE>
+     <SAMPLE accession="SRS25145449" alias="M108" status="PUBLIC">
+          <EXT_ID accession="SAMN48716122" type="biosample"/>
+     </SAMPLE>
+     <SAMPLE accession="SRS25145450" alias="M109" status="PUBLIC">
+          <EXT_ID accession="SAMN48716123" type="biosample"/>
+     </SAMPLE>
+     <SAMPLE accession="SRS25145475" alias="M153" status="PUBLIC">
+          <EXT_ID accession="SAMN48716145" type="biosample"/>
+     </SAMPLE>
+     <SAMPLE accession="SRS25145474" alias="M154" status="PUBLIC">
+          <EXT_ID accession="SAMN48716146" type="biosample"/>
+     </SAMPLE>
+     <SAMPLE accession="SRS25145476" alias="M155" status="PUBLIC">
+          <EXT_ID accession="SAMN48716147" type="biosample"/>
+     </SAMPLE>
+     <SAMPLE accession="SRS25145329" alias="M156" status="PUBLIC">
+          <EXT_ID accession="SAMN48716148" type="biosample"/>
+     </SAMPLE>
+     <SAMPLE accession="SRS25145347" alias="M172" status="PUBLIC">
+          <EXT_ID accession="SAMN48716162" type="biosample"/>
+     </SAMPLE>
+     <ACTIONS>ADD</ACTIONS>
+</RECEIPT>
