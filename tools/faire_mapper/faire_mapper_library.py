@@ -330,7 +330,7 @@ def read_library(path, sheet, samples, label, log, assays=(), name_filter='', ru
         log(f"{label}: {len(unmatched)} "
             + ('library matches no samp_name and is left out: ' if len(unmatched) == 1
                else 'libraries match no samp_name and are left out: ')
-            + ', '.join(unmatched[:5]) + (' ...' if len(unmatched) > 5 else ''))
+            + fm._first(unmatched, 50))
     if extra_files:
         log(f'{label}: {extra_files} files beside a read pair (reads that could not be paired) left out')
     if ena_copies:
