@@ -54,6 +54,8 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   (samp_vol_we_dna_ext); and the taxa the primers amplify (targetTaxonomicAssay) and the taxa the
   study set out to detect (targetTaxonomicScope). In the SEA-MES 18S trial, *Nominal depth* (the planned sampling depth) was
   proposed as tot_depth_water_col. `--confused_terms` gives another table.
+  Also in 0.6.1: apply mapping keeps the dates as written in verbatimEventDate (FAIRe: "Sample
+  collection date before formatting") when it converts them for eventDate, as Oliver Berry asked.
 - New in 0.6.0 (12 November 2026), from the day-night trial (`dev/faire_mapper_daynight/`): a
   column of times of day (Excel time cells, or 10:00, 4 pm) is proposed as verbatimEventTime, and
   apply mapping joins each time to its date in eventDate, with the UTC offset given on its form
@@ -888,7 +890,7 @@ test (commonly confused terms) and checks apply mapping's note on them in an exi
 | build primer table | 1 | User's rows added to the bundled table; bad row reported | passed |
 | build primer table | 2 | New table from a register spreadsheet and a TSV; reused primer names reported | passed |
 | build primer table | 3 | A correction row replaces the pair it corrects and records the change | passed |
-| apply mapping | 1 | Reviewed crosswalk: geo_loc_name from three columns, "1 L" split, microns kept as numbers, dd/mm/yyyy dates read day first, days frozen as ISO durations, unmapped columns kept, a match for review left out, mandatory terms listed | passed |
+| apply mapping | 1 | Reviewed crosswalk: geo_loc_name from three columns, "1 L" split, microns kept as numbers, dd/mm/yyyy dates read day first and kept as written in verbatimEventDate (since 0.6.1), days frozen as ISO durations, unmapped columns kept, a match for review left out, mandatory terms listed | passed |
 | apply mapping | 2 | Matches for review applied, values for the whole project (one for review left out, one replaced by a column), two assays as projectMetadata columns, unmapped columns dropped | passed |
 | apply mapping | 3 | Dates that fit both orders: stops and says which form setting to use | passed |
 | apply mapping | 4 | The same dates read month first, as set on the form | passed |

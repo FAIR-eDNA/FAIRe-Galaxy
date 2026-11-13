@@ -194,7 +194,8 @@ python '$__tool_directory__/faire_mapper_apply.py'
         <data name="log" format="txt" label="${tool.name} on ${on_string}: log"/>
     </outputs>
     <tests>
-        <!-- A reviewed crosswalk: combined place names, a number and its unit, dates, durations -->
+        <!-- A reviewed crosswalk: combined place names, a number and its unit, dates (kept as written in
+             verbatimEventDate, as FAIRe asks), durations -->
         <test expect_num_outputs="2">
             <param name="table" value="apply_reef.csv"/>
             <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
@@ -206,6 +207,7 @@ python '$__tool_directory__/faire_mapper_apply.py'
                     <has_archive_member path="xl/worksheets/sheet3.xml">
                         <has_text text="Australia: Great Barrier Reef, Lizard Island"/>
                         <has_text text="2017-09-06"/>
+                        <has_text text="06/09/2017"/>
                         <has_text text="P316D"/>
                         <has_text text="&lt;t&gt;mL&lt;/t&gt;"/>
                         <has_text text="&lt;v&gt;0.45&lt;/v&gt;"/>
@@ -221,6 +223,7 @@ python '$__tool_directory__/faire_mapper_apply.py'
                 <assert_contents>
                     <has_text text="'Country' + 'Reef' + 'Site' to geo_loc_name (sampleMetadata), combined in this order"/>
                     <has_text text="read day first, as 13/09/2017 shows"/>
+                    <has_text text="'Collected' as written to verbatimEventDate (sampleMetadata), as eventDate holds the dates in ISO 8601, e.g. '06/09/2017'"/>
                     <has_text text="'Volume filtered' to samp_size_unit (the unit)"/>
                     <has_text text="'Control' to neg_cont_0_1: skos:closeMatch (for review)"/>
                     <has_text text="kept as user-defined fields in sampleMetadata: Control, Notes"/>
@@ -1135,7 +1138,9 @@ converts them:
 
 - **Dates** become ISO 8601 dates, so 12-Feb-19 becomes 2019-02-12. If a column's dates could be
   read either day first or month first (06/09/2017), the tool stops unless you tell it which. A
-  single value such as 13/09/2017 settles it for the whole column.
+  single value such as 13/09/2017 settles it for the whole column. The dates as written are kept in
+  verbatimEventDate, FAIRe's term for the date before formatting, unless a column of the table gives
+  it. Dates stored as Excel date cells have no text to keep.
 - **Durations** become ISO 8601 durations: "2 days" becomes P2D, and 316 under a header such as
   *Days frozen* becomes P316D.
 - **A number and its unit** in one cell ("1 L") are split between the term and its unit term

@@ -543,6 +543,7 @@ def build_workbook(args, df, rows, terms, by_name, log):
         return None
 
     # ---- mapped columns
+    verbatim_dates = None   # the dates as written, when eventDate holds them converted
     by_term = {}
     for r in rows:
         by_term.setdefault(r['term'], []).append(r)
@@ -647,6 +648,9 @@ def build_workbook(args, df, rows, terms, by_name, log):
                                      f'stored number, so FAIRe-fier may count fewer decimal places')
             changed = [(a, b) for a, b in zip(raw, values) if not _blank(a) and str(a).strip() != str(b)
                        and not (isinstance(b, (int, float)) and _number(a) == b)]
+            if term == 'eventDate' and any(isinstance(a, str) for a, _ in changed):
+                # FAIRe's verbatimEventDate: the date before formatting. Excel date cells have no text to keep.
+                verbatim_dates = (col, [str(v).strip() if isinstance(v, str) and v.strip() else None for v in raw])
             ex = f", e.g. '{changed[0][0]}' as '{changed[0][1]}'" if changed else ''
             part = {'number': ' (the number)', 'unit': ' (the unit)', 'latitude': ' (the latitude)',
                     'longitude': ' (the longitude)'}.get(vp, '')
@@ -660,6 +664,12 @@ def build_workbook(args, df, rows, terms, by_name, log):
                     t.kind, 'could not be converted and are kept as they are')
                 log.add('Warnings', f"'{col}' to {term}: {len(problems)} values {why}, e.g. "
                         + ', '.join(f"'{x}'" for x in uniq[:3]))
+
+    if verbatim_dates and 'verbatimEventDate' in sample_out and 'verbatimEventDate' not in written:
+        col, texts = verbatim_dates
+        put('verbatimEventDate', texts, f"'{col}'")
+        log.add('Columns written', f"'{col}' as written to verbatimEventDate (sampleMetadata), as eventDate holds "
+                                   f"the dates in ISO 8601, e.g. '{next(x for x in texts if x)}'")
 
     # ---- times of day in a column of their own (verbatimEventTime), joined to the dates in eventDate,
     # as FAIRe's eventDate is "the date and time of sampling" (2008-01-23T19:23-06:00)
