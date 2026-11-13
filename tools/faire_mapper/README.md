@@ -26,7 +26,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
 
 ## Status
 
-- Version 0.6.1. `planemo lint`: passes with no warnings. `pyflakes`: clean.
+- Version 0.7.0. `planemo lint`: passes with no warnings. `pyflakes`: clean.
 - Goes to Galaxy Australia as an early version with the wrapped FAIRe tools (decided 6 November
   2026). Each tool's help starts with a note saying so, which asks users to check the results and
   send problems to the Galaxy Australia help desk (to confirm with Galaxy Australia, question 8).
@@ -43,6 +43,23 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   independent answer keys (`dev/faire_mapper_real_datasets/`, `dev/faire_mapper_australian_datasets/`,
   summarised below), and end to end on CSIRO's SEA-MES data (`dev/faire_mapper_seames/`). Not yet
   tried on datasets from Australian labs that already have a FAIRe version.
+- New in 0.7.0 (13 November 2026), as Oliver Berry asked in his review of the SEA-MES 18S
+  walkthrough: for a column with no FAIRe term, propose mapping suggests a MIxS or Darwin Core term
+  whose name matches, for review, as the FAIRe guidelines ask for one before a made-up name. The
+  terms come with the tool (`mixs_dwc_terms.tsv`, built by `dev/faire_mapper_other_terms/`), so
+  Galaxy needs no web access: 745 MIxS terms (v7.0.1) and 95 Darwin Core terms (record-level,
+  Event, Location and MaterialEntity terms of Simple Darwin Core) that FAIRe does not have, by name
+  or by IRI. Every word of the column's name must match the term's name, or be a common word, so
+  *Field bottle number* does not get fieldNumber. The crosswalk row has the term's own identifier
+  (MIXS:0000505, dwc:year) and a comment saying what the term means, its MIxS unit and extensions,
+  and what apply mapping will do. Once a reviewer confirms it, apply mapping names the user-defined
+  field after the term and, for a MIxS number, adds the unit from the column name to each value
+  (*Phosphate (uM)* becomes phosphate, 0.21 uM), as MIxS writes a number with its unit. These rows
+  are applied only when confirmed, even with matches for review applied, and are kept when
+  unmatched columns are left out. In the SEA-MES 18S table, Phosphate, Silicate, Pressure and
+  Ammonia (ammonium, close) get MIxS terms; across the benchmark, Dryad and Australian tables, only
+  the GOMECC table's four nutrient columns and *Sample_year* (Darwin Core year) do. Propose
+  mapping's *Suggest MIxS or Darwin Core terms* (`--no_other_terms`) turns this off.
 - New in 0.6.1 (13 November 2026): FAIRe terms that people often confuse, listed in
   `commonly_confused_terms.tsv` (group, term, meaning, the question that tells them apart). Propose
   mapping always marks a column matched to one of them for review, however strong the match. The
@@ -152,10 +169,11 @@ model is used, as agreed; the tools are built so one can be added later (see bel
 | `primers/faire_primers.tsv` | The bundled primer table (553 pairs) and its sources and update steps (`primers/README.md`). Most rows come from Takahashi et al. 2023 and keep its CC BY-NC 4.0 licence |
 | `faire_mapper_identify.xml`, `faire_mapper_profile.xml`, `faire_mapper_map.xml`, `faire_mapper_apply.xml`, `faire_mapper_model.xml`, `macros.xml` | Galaxy tool definitions |
 | `checklist/FAIRe_checklist_v1.0.2.xlsx` | FAIRe checklist, copied unchanged from FAIR-eDNA/FAIRe_checklist |
+| `mixs_dwc_terms.tsv` | The MIxS (v7.0.1, CC0) and Darwin Core (CC BY 4.0) terms that FAIRe lacks, suggested for columns with no FAIRe term; built by `dev/faire_mapper_other_terms/build_terms.py`, with each standard's attribution at its top |
 | `checklist/FAIRe_checklist_v1.0.2_FULLtemplate.xlsx` | FAIRe full template, as bundled with FAIRe-ator (the layout apply mapping writes) |
 | `test-data/` | Test files (see below) |
 | `faire_guide.xml` | The guide shown at the end of every FAIRe tool's help (`@HELP_FAIRE_GUIDE@`); a copy of `dev/faire_guide/faire_guide.xml`, updated by `dev/faire_guide/sync.py` |
-| `LICENSE` | MIT licence for the code in this folder. Bundled data keep their own licences: the checklist and full template are CC BY 4.0 (`checklist/LICENSE`), and the primer table's sources are listed in `primers/README.md` |
+| `LICENSE` | MIT licence for the code in this folder. Bundled data keep their own licences: the checklist and full template are CC BY 4.0 (`checklist/LICENSE`), the primer table's sources are listed in `primers/README.md`, and `mixs_dwc_terms.tsv` names its sources and licences (MIxS CC0, Darwin Core CC BY 4.0) at its top |
 | `checklist/LICENSE` | The FAIRe checklist's CC BY 4.0 licence |
 | `.shed.yml` | ToolShed metadata (owner still to fill in) |
 
@@ -842,6 +860,10 @@ test.
   script.
 - `map_confused.csv`: six samples with a sampling depth (0, 5 and 10 m), the depth of the water at
   the site (15 and 22 m), the volume filtered (1 or 2 L) and the volume extracted (500 or 1000 mL).
+- `map_other_terms.csv`: four samples with columns that FAIRe has no term for: *Phosphate (uM)*,
+  *Silicate*, *Pressure (dbar)*, *Ammonia*, *Voyage* and *Field bottle number*. Made up.
+- `apply_other_terms.sssom.tsv`: a reviewed crosswalk for that table: MIxS phosphate confirmed
+  (MIXS:0000505), ammonium typed in with no object_id, silicate still for review.
 - `map_review.csv`: 11 rows in the form of the day-night study's sheet: a sample name used twice,
   a filtration control named but not marked, notes in the first rows of two columns, and times with
   no time zone.
@@ -878,7 +900,9 @@ wrong field and the layout setting; all 49 tests passed in Galaxy `release_26.1`
 November (0.6.0) the day-night trial added 7 apply mapping tests, 3 propose mapping tests and 1
 identify test; all 60 tests passed in Galaxy `release_25.0` here. 0.6.1 adds one propose mapping
 test (commonly confused terms) and one apply mapping test (checkls_ver kept as given), and checks
-apply mapping's note on the confused terms in an existing test.
+apply mapping's note on the confused terms in an existing test. 0.7.0 adds two propose mapping tests
+and one apply mapping test (MIxS and Darwin Core terms); all 14 propose mapping and 34 apply mapping
+tests pass in Galaxy `release_25.0` here, and so does the propose-mapping workflow test.
 
 | Tool | Test | Checks | Result |
 |---|---|---|---|
@@ -936,6 +960,9 @@ apply mapping's note on the confused terms in an existing test.
 | map | 11 | Times in UTC only: *things to decide* lists them, with how to get local time | passed |
 | map | 12 | Sampling depth, water depth, volume filtered and volume extracted: all for review despite strong matches, each comment naming the terms it is confused with and the question that tells them apart, and all in *things to decide* | passed |
 | map | 10 | A sheet in the day-night study's form: the *things to decide* list gives a repeated sample name, a filtration control not marked as a control, two columns of notes and the times with no time zone | passed |
+| map | 13 | Columns with no FAIRe term: MIxS phosphate (with the unit from the column name), silicate, pressure and ammonium (close) for review, with MIxS identifiers and the curie map; Voyage and Field bottle number get none; the report's other_standard column and the summary's count | passed |
+| map | 14 | The same table with *Suggest MIxS or Darwin Core terms* unticked: no MIxS rows | passed |
+| apply mapping | 34 | Confirmed MIxS terms name the user-defined fields with unmatched columns left out: phosphate with the unit added to each value (0.21 uM), ammonium typed in by the reviewer; silicate, still for review, left out and listed | passed |
 | identify | 1 | Eight files: sample, OTU, taxonomy, library, dictionary, text, curated OTU table and crosswalk, each named with its reason | passed |
 | identify | 2 | Two Excel files: each sheet on its own (the SRA sheet's library sheet, a primer register); no sample table found | passed |
 | identify | 3 | A checksum file as md5sum writes it, and a list of file names with no header: library tables, not text | passed |

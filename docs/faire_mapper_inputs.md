@@ -158,6 +158,11 @@ sampleMetadata, unless you tick *Leave out columns that are not matched to a FAI
 *apply mapping* tool. The *mapping report* output shows the evidence and the other candidates for
 each column.
 
+For a column with no FAIRe term, the crosswalk may suggest a MIxS or Darwin Core term instead, as
+the FAIRe guidelines ask for one before a made-up name. Its row has the term's own identifier in
+`object_id`, such as `MIXS:0000505` for phosphate. Confirm it in the same way to name the
+column after the term, or delete the row to keep your own name.
+
 Some FAIRe terms are often confused, even by people who know FAIRe:
 
 - the depth a sample was taken from (`minimumDepthInMeters` and `maximumDepthInMeters`) and the

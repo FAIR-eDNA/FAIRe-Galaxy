@@ -119,7 +119,7 @@ python '$__tool_directory__/faire_mapper_apply.py'
         </param>
         <param name="drop_unmapped" type="boolean" truevalue="--drop_unmapped" falsevalue="" checked="false"
             label="Leave out columns that are not matched to a FAIRe term"
-            help="By default, a column with no skos:exactMatch row in the crosswalk (no row, or a skos:closeMatch row not confirmed) is kept as a user-defined field at the end of sampleMetadata, as FAIRe allows."/>
+            help="By default, a column with no skos:exactMatch row in the crosswalk (no row, or a skos:closeMatch row not confirmed) is kept as a user-defined field at the end of sampleMetadata, as FAIRe allows. A column with a confirmed MIxS or Darwin Core term is kept either way."/>
         <repeat name="otu_tables" title="OTU or ASV table" min="0" default="0"
             help="Reads per sequence (or per taxon) and sample, one table per assay. Sample names must match the samp_name column (or lib_id).">
             <param name="otu" type="data" format="tabular,csv,xlsx,txt" label="OTU or ASV table"
@@ -1144,6 +1144,34 @@ python '$__tool_directory__/faire_mapper_apply.py'
                 </assert_contents>
             </output>
         </test>
+        <!-- MIxS terms confirmed for columns with no FAIRe term name the user-defined fields, even when
+             unmatched columns are left out: phosphate takes the unit from its column name (MIxS writes a
+             number and its unit), and ammonium was typed by the reviewer with no object_id. Silicate, still
+             for review, is left out -->
+        <test expect_num_outputs="2">
+            <param name="table" value="map_other_terms.csv"/>
+            <param name="crosswalk" value="apply_other_terms.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="drop_unmapped" value="true"/>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet3.xml">
+                        <has_text text="phosphate"/>
+                        <has_text text="0.21 uM"/>
+                        <has_text text="ammonium"/>
+                        <not_has_text text="Silicate"/>
+                        <not_has_text text="Voyage"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="named after the MIxS or Darwin Core term confirmed in the crosswalk, as user-defined fields in sampleMetadata: 'Phosphate (uM)' as phosphate (MIxS), with the unit from the column name added to each value (0.21 uM); 'Ammonia' as ammonium (MIxS)"/>
+                    <has_text text="'Silicate' to MIxS silicate: skos:closeMatch (for review); confirm it as skos:exactMatch to name the user-defined field silicate"/>
+                </assert_contents>
+            </output>
+        </test>
     </tests>
     <help><![CDATA[
 @EARLY_VERSION@
@@ -1185,6 +1213,16 @@ converts them:
 
 Columns with no ``skos:exactMatch`` row are kept as user-defined fields, as FAIRe allows, unless you
 tick *Leave out columns that are not matched to a FAIRe term*.
+
+A confirmed row with a MIxS or Darwin Core term (*MIXS:0000505*, *dwc:verbatimDepth*, or a term
+named in ``mixs_dwc_terms.tsv``), which propose mapping suggests for columns with no FAIRe term,
+names that column's user-defined field after the term, as the FAIRe guidelines ask: *Phosphate (uM)*
+becomes *phosphate*. MIxS writes a number with its unit (0.7 micromole per liter), so for a MIxS
+number the unit in brackets at the end of the column name is added to each value (0.21 uM), and is
+not lost with the old name. These rows are applied only when confirmed as ``skos:exactMatch``, even
+with *Also apply the matches for review* ticked, and the column is kept even when unmatched columns are
+left out. If the name is already a column of sampleMetadata, the column keeps its own name and the
+log says so.
 
 @HELP_INPUTS@
 

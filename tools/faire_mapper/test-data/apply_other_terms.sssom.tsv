@@ -1,0 +1,9 @@
+# A reviewed crosswalk with MIxS terms for columns with no FAIRe term
+subject_id	subject_label	predicate_id	object_id	object_label	mapping_justification	confidence	comment	combine_order	value_part
+local:Sample	Sample	skos:exactMatch	FAIRe:samp_name	samp_name	semapv:CompositeMatching	1.0			
+local:Date	Date	skos:exactMatch	FAIRe:eventDate	eventDate	semapv:CompositeMatching	1.0			
+local:Latitude	Latitude	skos:exactMatch	FAIRe:decimalLatitude	decimalLatitude	semapv:CompositeMatching	1.0			
+local:Longitude	Longitude	skos:exactMatch	FAIRe:decimalLongitude	decimalLongitude	semapv:CompositeMatching	1.0			
+local:Phosphate__uM_	Phosphate (uM)	skos:exactMatch	MIXS:0000505	phosphate	semapv:CompositeMatching	1.0			
+local:Silicate	Silicate	skos:closeMatch	MIXS:0000184	silicate	semapv:CompositeMatching	1.0			
+local:Ammonia	Ammonia	skos:exactMatch		ammonium	semapv:ManualMappingCuration				

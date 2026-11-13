@@ -113,9 +113,23 @@ def read_crosswalk(path):
     return cw
 
 
-def choose_rows(cw, table_columns, by_name, include_review, log):
-    """The crosswalk rows to apply, as dicts with column, term, part (int) and value_part."""
+def other_source(object_id, term, other_terms):
+    """MIxS or Darwin Core for a crosswalk row with a term from one of them (MIXS:0000505, dwc:verbatimDepth,
+    or a term named in mixs_dwc_terms.tsv), else ''."""
+    oid = str(object_id or '').strip().lower()
+    if oid.startswith('mixs:'):
+        return 'MIxS'
+    if oid.startswith('dwc:'):
+        return 'Darwin Core'
+    return '' if oid.startswith('faire:') or term not in other_terms else other_terms[term].source
+
+
+def choose_rows(cw, table_columns, by_name, include_review, log, other_terms=None, others=None):
+    """The crosswalk rows to apply, as dicts with column, term, part (int) and value_part. Confirmed rows with
+    a MIxS or Darwin Core term, for columns with no FAIRe term, go to others (column, term, source, unit)."""
     stripped = {str(c).strip(): c for c in table_columns}
+    other_terms = other_terms or {}
+    others = [] if others is None else others
     applied, held = [], []
     for r in cw.to_dict('records'):
         label, term = r['subject_label'], r['object_label'].strip()
@@ -125,10 +139,19 @@ def choose_rows(cw, table_columns, by_name, include_review, log):
         if column is None:
             log.add('Warnings', f"crosswalk column '{label}' is not in the table; row skipped")
             continue
+        pred = r['predicate_id'].strip()
+        source = '' if term in by_name else other_source(r.get('object_id', ''), term, other_terms)
+        if source:
+            if pred == 'skos:exactMatch':
+                others.append({'column': column, 'term': term, 'source': source,
+                               'unit': fm.with_header_unit(other_terms.get(term), column)})
+            else:
+                log.add('Left out', f"'{column}' to {source} {term}: {pred} (for review); confirm it as "
+                                    f"skos:exactMatch to name the user-defined field {term}")
+            continue
         if term not in by_name:
             log.add('Warnings', f"'{label}': {term} is not a FAIRe term for this assay and sample type; row skipped")
             continue
-        pred = r['predicate_id'].strip()
         part = int(float(r['combine_order'])) if str(r['combine_order']).strip() else 0
         row = {'column': column, 'term': term, 'part': part, 'value_part': r['value_part'].strip().lower(),
                'predicate': pred}
@@ -483,7 +506,7 @@ def filter_columns(sheet, assay_type, req_lev, sample_types, checklist):
     return df[keep]
 
 
-def build_workbook(args, df, rows, terms, by_name, log):
+def build_workbook(args, df, rows, terms, by_name, log, others=()):
     tpl = load_template(args.template)
     checklist = pd.read_excel(args.checklist, sheet_name='checklist', dtype=object).to_dict('records')
     req_lev = ['M'] + [x for x in args.req_lev.split(',') if x and x != 'M']
@@ -859,30 +882,58 @@ def build_workbook(args, df, rows, terms, by_name, log):
             log.add('Warnings', 'experimentRunMetadata: fill assay_name for each library (several assays were named)')
 
     # ---- user-defined fields
+    # A column with no FAIRe term keeps its own name, or the name of the MIxS or Darwin Core term a reviewer
+    # confirmed for it, as the FAIRe guidelines ask.
     mapped_cols = {r['column'] for r in rows}
-    user_fields, empty_cols = [], []
-    if not args.drop_unmapped:
-        names = set(sample_terms) | set(by_name)
-        for c in df.columns:
-            if c in mapped_cols:
+    named = {}
+    for r in others:
+        if r['column'] in mapped_cols:
+            log.add('Warnings', f"'{r['column']}' has a FAIRe term, so its {r['source']} term {r['term']} is not used")
+        elif r['column'] in named:
+            log.add('Warnings', f"'{r['column']}' has two MIxS or Darwin Core terms; {named[r['column']]['term']} is used")
+        else:
+            named[r['column']] = r
+    user_fields, empty_cols, renamed, units = [], [], [], {}
+    names = set(sample_terms) | set(by_name)
+    for c in df.columns:
+        if c in mapped_cols or (args.drop_unmapped and c not in named):
+            continue
+        if all(_blank(v) for v in df[c]):
+            empty_cols.append(str(c))
+            continue
+        if c in named:
+            name = re.sub(r'[^A-Za-z0-9_-]+', '_', named[c]['term']).strip('_')
+            if name and name not in names:
+                names.add(name)
+                user_fields.append((c, name))
+                unit = named[c]['unit']
+                if unit:
+                    units[c] = unit
+                    first = next((_cell(v) for v in df[c] if not _blank(v)), '')
+                    renamed.append((c, f"'{c}' as {name} ({named[c]['source']}), with the unit from the column name "
+                                       f"added to each value ({first} {unit})"))
+                else:
+                    renamed.append((c, f"'{c}' as {name} ({named[c]['source']})"))
                 continue
-            if all(_blank(v) for v in df[c]):
-                empty_cols.append(str(c))
-                continue
-            name = re.sub(r'[^A-Za-z0-9_-]+', '_', str(c).strip()).strip('_') or 'column'
-            if name in names:
-                name = f'user_{name}'
-            base, k = name, 2
-            while name in names:
-                name, k = f'{base}_{k}', k + 1
-            names.add(name)
-            user_fields.append((c, name))
-        if user_fields:
-            log.add('Columns written', 'kept as user-defined fields in sampleMetadata: '
-                    + ', '.join(f"'{c}' as {nm}" if c != nm else nm for c, nm in user_fields))
-        if empty_cols:
-            log.add('Left out', f'{len(empty_cols)} empty columns not matched to a FAIRe term: '
-                    + ', '.join(empty_cols[:8]) + (' ...' if len(empty_cols) > 8 else ''))
+            log.add('Warnings', f"'{c}': {name} is already a column of sampleMetadata, so the column keeps its own name")
+        name = re.sub(r'[^A-Za-z0-9_-]+', '_', str(c).strip()).strip('_') or 'column'
+        if name in names:
+            name = f'user_{name}'
+        base, k = name, 2
+        while name in names:
+            name, k = f'{base}_{k}', k + 1
+        names.add(name)
+        user_fields.append((c, name))
+    if renamed:
+        log.add('Columns written', 'named after the MIxS or Darwin Core term confirmed in the crosswalk, as '
+                                   'user-defined fields in sampleMetadata: ' + '; '.join(x for _, x in renamed))
+    kept = [(c, nm) for c, nm in user_fields if c not in {r for r, _ in renamed}]
+    if kept:
+        log.add('Columns written', 'kept as user-defined fields in sampleMetadata: '
+                + ', '.join(f"'{c}' as {nm}" if c != nm else nm for c, nm in kept))
+    if empty_cols:
+        log.add('Left out', f'{len(empty_cols)} empty columns not matched to a FAIRe term: '
+                + ', '.join(empty_cols[:8]) + (' ...' if len(empty_cols) > 8 else ''))
 
     # ---- library tables: one experimentRunMetadata row per library and assay
     run_rows, lib_map = [], {}
@@ -1088,7 +1139,9 @@ def build_workbook(args, df, rows, terms, by_name, log):
     ws.append(sections)
     ws.append(sample_terms + [nm for _, nm in user_fields])
     for i in range(n):
-        ws.append([_cell(sample_out[t][i]) for t in sample_terms] + [_cell(df[c].iloc[i]) for c, _ in user_fields])
+        ws.append([_cell(sample_out[t][i]) for t in sample_terms]
+                  + [_cell(df[c].iloc[i]) if c not in units or _blank(df[c].iloc[i]) else f'{_cell(df[c].iloc[i])} {units[c]}'
+                     for c, _ in user_fields])
         for j, t in enumerate(sample_terms, 1):
             dp = formats.get(t, [None] * n)[i]
             if dp:
@@ -1775,8 +1828,10 @@ def main(argv=None):
         log.add('Inputs', f"assay type {args.assay_type}; sample types {args.sample_types or 'all'}; project ID "
                           f"{args.project_id or '(none)'}; assays {args.assay_name or '(none)'}"
                           + (' (from the assay column of the OTU table)' if args.assay_name and not named else ''))
-        rows = choose_rows(cw, list(df.columns), by_name, args.include_review, log)
-        counts = build_workbook(args, df, rows, terms, by_name, log)
+        other_terms = {t.name: t for t in fm.load_other_terms(exclude=by_name)}
+        others = []
+        rows = choose_rows(cw, list(df.columns), by_name, args.include_review, log, other_terms, others)
+        counts = build_workbook(args, df, rows, terms, by_name, log, others)
     except StopError as e:
         log.add('Warnings', f'STOPPED: {e}')
         log.write(args.log)

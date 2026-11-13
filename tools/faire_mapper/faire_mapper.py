@@ -33,7 +33,7 @@ from pathlib import Path
 
 import pandas as pd
 
-__version__ = '0.6.1'
+__version__ = '0.7.0'
 
 MISSING = {'', 'na', 'n/a', 'nan', 'none', 'null', '-', '--', '?', 'not applicable', 'missing',
            'not collected', 'not provided', 'unknown'}
@@ -252,6 +252,10 @@ class Term:
     level: str = 'sample'
     aliases: list = field(default_factory=list)   # list of token lists
     unit_term: str = ''   # the term that holds this term's unit, e.g. samp_size_unit for samp_size
+    source: str = 'FAIRe'  # or MIxS or Darwin Core (mixs_dwc_terms.tsv)
+    term_id: str = ''      # MIXS:0000505, dwc:verbatimDepth
+    label: str = ''        # the standard's own label, e.g. 'total depth of water column'
+    scope: str = ''        # where the standard uses it (MIxS extensions, Darwin Core group)
 
     @property
     def mandatory(self):
@@ -342,6 +346,34 @@ def load_checklist(path, assay_type=None, sample_types=None, sheets=MAPPABLE_SHE
         if f'{t.name}_unit' in names:
             t.unit_term = f'{t.name}_unit'
     return terms
+
+
+OTHER_TERMS = Path(__file__).with_name('mixs_dwc_terms.tsv')
+
+
+def load_other_terms(path=OTHER_TERMS, exclude=()):
+    """MIxS and Darwin Core terms that FAIRe does not have (mixs_dwc_terms.tsv), as Terms, for columns with
+    no FAIRe term: the FAIRe guidelines ask for a MIxS or Darwin Core term before a made-up name. Terms
+    named in exclude (the FAIRe terms in use) are left out."""
+    if not path or not Path(path).exists():
+        return []
+    lines = [ln for ln in Path(path).read_text(encoding='utf-8').splitlines() if ln and not ln.startswith('#')]
+    table = pd.read_csv(io.StringIO('\n'.join(lines)), sep='\t', dtype=str, keep_default_na=False)
+    exclude = set(exclude)
+    out = []
+    for r in table.to_dict('records'):
+        name = r['term'].strip()
+        if not name or name in exclude:
+            continue
+        t = Term(name=name, description=r['definition'], sheets=('sampleMetadata',), section='', requirement='',
+                 condition='', term_type='', unit=r['unit'], fixed_format='', vocab=(), example=r['example'],
+                 sample_types='', kind=r['kind'] or 'text', source=r['source'], term_id=r['id'],
+                 label=r['label'], scope=r['scope'])
+        t.aliases = [a for a in (tokens_of(name), tokens_of(r['label'])) if a]
+        if len(t.aliases) == 2 and t.aliases[0] == t.aliases[1]:
+            t.aliases = t.aliases[:1]
+        out.append(t)
+    return out
 
 
 def fixed_unit(t):
@@ -1059,6 +1091,9 @@ class Proposal:
     value_part: str = ''   # which part of each cell the term takes: number, latitude, or a conversion
     also: list = field(default_factory=list)   # other (term, value_part, note) filled from the same column
     comment: str = ''      # what a reviewer reads in the crosswalk (reader_comment)
+    other: object = None   # for a column with no FAIRe term: a MIxS or Darwin Core Term, for review
+    other_score: float = 0.0
+    other_comment: str = ''
 
     def also_terms(self):
         return [a[0] for a in self.also]
@@ -1319,20 +1354,106 @@ def reader_comment(pr, p, c, t, ctx):
     return ' '.join(parts)
 
 
+# A MIxS or Darwin Core term needs at least this name match: on its own, a column of numbers fits hundreds.
+OTHER_NAME_MIN = 0.75
+
+
+HEADER_UNIT_RE = re.compile(r'[(\[]\s*([^()\[\]]{1,20}?)\s*[)\]]\s*$')
+
+
+def header_unit_text(column):
+    """The unit a column name gives in brackets at its end, as written: 'uM' for 'Phosphate (uM)'."""
+    m = HEADER_UNIT_RE.search(str(column))
+    return m.group(1) if m else ''
+
+
+def with_header_unit(t, column):
+    """The unit to add to each value when a column is named after a MIxS term: MIxS writes a number and its
+    unit together (0.7 micromole per liter), so the unit in the column name, which the new name drops, goes
+    into the values. '' when the term is not a MIxS number or the name gives no unit."""
+    return header_unit_text(column) if t is not None and t.source == 'MIxS' and t.kind == 'number' else ''
+
+
+def other_name_fit(scorer, header, t):
+    """How well a header and a MIxS or Darwin Core term's names match, both ways. Every word of the header
+    must match a word of the name, or be a common word (Sample year fits year, but Field bottle number
+    does not fit fieldNumber, nor Field sheet page field)."""
+    best = 0.0
+    for a in t.aliases:
+        if header != a and any(not any(scorer.same(x, y) for y in a) and scorer.w(x) >= 0.55 * scorer.max_w
+                               for x in header):
+            continue
+        best = max(best, 1.0 if header == a else scorer.overlap(header, a))
+    return best
+
+
+# The MIxS extensions named first in a comment, as eDNA samples mostly come from them.
+MIXS_FIRST = ['water', 'sediment', 'soil', 'air', 'host-associated', 'microbial mat/biofilm', 'plant-associated']
+
+
+def other_comment(pr, p, c, t, rivals=()):
+    """The comment a reviewer reads for a MIxS or Darwin Core term proposed for a column with no FAIRe term."""
+    gloss = term_gloss(t)
+    if t.unit:
+        units = [u.strip() for u in t.unit.split(',') if u.strip()]
+        said = units[0] if len(units) == 1 else ', '.join(units[:-1]) + ' or ' + units[-1]
+        gloss += f" {t.source} gives it in {said}."
+    scope = t.scope.split(': ', 1)
+    if t.source == 'MIxS' and len(scope) == 2:
+        names = sorted((x.strip() for x in scope[1].split(',')),
+                       key=lambda x: (MIXS_FIRST.index(x) if x in MIXS_FIRST else len(MIXS_FIRST), x))
+        kind = scope[0] if len(names) > 1 else scope[0].rstrip('s')
+        shown = names[:3] + [f'{len(names) - 3} more'] if len(names) > 4 else names
+        gloss += f" MIxS has it in its {shown[0] if len(shown) == 1 else ', '.join(shown[:-1]) + ' and ' + shown[-1]} {kind}."
+    first = re.split(r'[;,] ', c.name_why)[0]
+    label = first.split("'")[1] if "'" in first else t.name
+    own = f"the {t.source} term's own name" if first.startswith('term name') else f"the {t.source} label"
+    exact = tokens_of(pr.column) in t.aliases
+    how = ("the column's description mentions" if c.from_desc else
+           'the column name matches' if exact else
+           'the column name is close to' if c.name_score >= 0.95 else 'the column name partly matches')
+    why = [f'{strength(c.score)} match', f"no FAIRe term fits this column, and {how} {own} ('{label}')"]
+    vwhy = c.value_why
+    if vwhy and vwhy != 'no values' and not vwhy.startswith('numbers or dates in a text field'):
+        why.append(vwhy)
+    elif p.examples:
+        why.append(f'values include {_examples(p)}')
+    if header_unit_text(pr.column):
+        why.append(f"the column's unit, from its name: {header_unit_text(pr.column)}")
+    check = [f"does the column hold what the {t.source} term describes? Confirm this row to name the column "
+             f"{t.name}, or delete the row to keep your own name ({pr.column})"]
+    unit = with_header_unit(t, pr.column)
+    happens = (f"if you confirm it, apply mapping keeps the column as a user-defined field named {t.name}, as the "
+               f"FAIRe guidelines suggest for columns with no FAIRe term")
+    if unit:
+        ex = p.examples[0] if p.examples else '1'
+        happens += f", and adds the unit from the column name to each value, as MIxS writes them ({ex} {unit})"
+    elif t.unit and t.kind == 'number':
+        check.append('the values are written as they are, and the column name gives no unit, so check their unit')
+    if rivals:
+        check.append('another possible term is ' + ' or '.join(f'{r.source} {r.name}' for r in rivals))
+    return ' '.join([
+        f'{t.source} term: {t.name} ({t.term_id}). {gloss}',
+        'Why: ' + ' '.join(_sentence(w) for w in why),
+        f'What happens: {_sentence(happens)}',
+        'Check: ' + ' '.join(_sentence(x) for x in check) + ' To confirm, change skos:closeMatch to skos:exactMatch.'])
+
+
 def also_comment(pr, term, note, t):
     return (f'FAIRe term: {term}. {term_gloss(t) if t else ""} Why: Same column as the {pr.term} row above. '
             f'What happens: {_sentence(note)}'
             + (' Check: confirm or delete it together with that row.' if pr.route == 'review' else ''))
 
 
-def propose(df, terms, k=5, overrides=None, answered_by=None, descriptions=None, k_close=10, confused=None):
+def propose(df, terms, k=5, overrides=None, answered_by=None, descriptions=None, k_close=10, confused=None,
+            other_terms=None):
     by_name = {t.name: t for t in terms}
     scorer = NameScorer(terms)
     profiles = profile_table(df)
     columns = [p.column for p in profiles]
     bases = {c: unit_base(c, columns) for c in columns}
     descriptions = descriptions or {}
-    scored = {}
+    scored, desc_map = {}, {}
     for p in profiles:
         d = descriptions.get(p.column)
         desc_tokens = None
@@ -1343,6 +1464,7 @@ def propose(df, terms, k=5, overrides=None, answered_by=None, descriptions=None,
                 p.header_units.append(u)
             if u in ISO_DURATION_UNITS and not p.header_time_unit:
                 p.header_time_unit = u
+        desc_map[p.column] = desc_tokens
         scored[p.column] = score_column(p, terms, scorer, tokens_of(p.column), desc_tokens)
     # Apply answers from a reviewer or model first: they fix those columns.
     overrides = overrides or {}
@@ -1584,6 +1706,27 @@ def propose(df, terms, k=5, overrides=None, answered_by=None, descriptions=None,
         if pr.route == 'accept' and any(x in confused[0] for x in [pr.term] + pr.also_terms()):
             pr.route = 'review'
             pr.evidence = '; '.join(x for x in (pr.evidence, 'a commonly confused FAIRe term, so for review') if x)
+    # A column with no FAIRe term: a MIxS or Darwin Core term whose name matches, for review, as the FAIRe
+    # guidelines ask for one before a made-up name. Not for unit columns, empty columns or columns answered
+    # by a reviewer or model. A person confirms it; apply mapping then names the user-defined field after it.
+    if other_terms:
+        others = {t.name: t for t in other_terms if t.name not in by_name}
+        other_list = list(others.values())
+        other_scorer = NameScorer(other_list)
+        for pr in proposals:
+            p = prof[pr.column]
+            if (pr.route != 'no match' or not p.n_values or pr.column in overrides or bases.get(pr.column)
+                    or pr.column in unit_notes):
+                continue
+            header = tokens_of(pr.column)
+            cands = [c for c in score_column(p, other_list, other_scorer, header, desc_map.get(pr.column))
+                     if (c.from_desc and c.name_score >= 0.85 or other_name_fit(other_scorer, header, others[c.term])
+                         >= OTHER_NAME_MIN) and not c.value_why.startswith(('conflict', 'check')) and c.score >= REVIEW]
+            if cands:
+                c = cands[0]
+                pr.other, pr.other_score = others[c.term], c.score
+                rivals = [others[x.term] for x in cands[1:3] if c.score - x.score < CLOSE]
+                pr.other_comment = other_comment(pr, p, c, pr.other, rivals)
     # What the reviewer reads in the crosswalk.
     id_col = assigned_term.get('samp_name')
     flag_info = {}
@@ -1647,6 +1790,8 @@ def write_sssom(proposals, path, source_name, checklist_name):
         "#   local: 'urn:faire-mapper:local:'",
         '#   skos: http://www.w3.org/2004/02/skos/core#',
         '#   semapv: https://w3id.org/semapv/vocab/',
+        '#   MIXS: https://w3id.org/mixs/',
+        '#   dwc: http://rs.tdwg.org/dwc/terms/',
         f'# mapping_set_id: urn:faire-mapper:{re.sub(r"[^A-Za-z0-9_.-]", "_", source_name)}',
         f'# mapping_set_description: Proposed mapping of the columns of {source_name} to FAIRe terms ({checklist_name})',
         '# license: https://creativecommons.org/publicdomain/zero/1.0/',
@@ -1667,10 +1812,17 @@ def write_sssom(proposals, path, source_name, checklist_name):
         '#   longitude (MIxS lat_lon), or a conversion (negative control if yes). The apply mapping',
         '#   tool applies rows with skos:exactMatch; change a row to skos:exactMatch to confirm it.',
         '#   A column with no skos:exactMatch row is kept as a user-defined field, unless the apply',
-        '#   mapping tool is set to leave such columns out.',
+        '#   mapping tool is set to leave such columns out. Rows with a MIxS or Darwin Core term (MIXS: or',
+        '#   dwc:) are for columns with no FAIRe term: confirmed, they name the user-defined field.',
     ]
     rows = []
     for p in proposals:
+        if not p.term and p.other is not None:
+            rows.append({'subject_id': 'local:' + re.sub(r'[^A-Za-z0-9_.-]', '_', p.column), 'subject_label': p.column,
+                         'predicate_id': 'skos:closeMatch', 'object_id': p.other.term_id, 'object_label': p.other.name,
+                         'mapping_justification': 'semapv:CompositeMatching', 'confidence': round(p.other_score, 3),
+                         'comment': p.other_comment, 'combine_order': '', 'value_part': ''})
+            continue
         if not p.term:
             continue
         row = {
@@ -2151,9 +2303,10 @@ def cmd_map(args):
     descriptions, dict_notes = read_dictionary(args.dictionary, df.columns, args.dictionary_sheet) \
         if args.dictionary else ({}, [])
     confused = load_confused(args.confused_terms)
+    other_terms = [] if args.no_other_terms else load_other_terms(args.other_terms)
     profiles, proposals = propose(df, terms, k=args.shortlist, k_close=args.shortlist_close, overrides=overrides,
                                   answered_by=answered_by,
-                                  descriptions=descriptions, confused=confused)
+                                  descriptions=descriptions, confused=confused, other_terms=other_terms)
     out = Path(args.outdir)
     out.mkdir(parents=True, exist_ok=True)
     rep = pd.DataFrame([{'column': p.column, 'proposed_term': p.term, 'faire_sheet': p.sheet,
@@ -2161,7 +2314,9 @@ def cmd_map(args):
                          'transform_hint': p.hint, 'shortlist': '; '.join(p.candidates),
                          'combine_order': p.part or '', 'unit_term': p.unit_term,
                          'also_fills': ', '.join(p.also_terms()),
-                         'description': descriptions.get(p.column, {}).get('description', '')} for p in proposals])
+                         'description': descriptions.get(p.column, {}).get('description', ''),
+                         'other_standard': f'{p.other.source}: {p.other.name} ({p.other_score:.2f})' if p.other else ''}
+                        for p in proposals])
     rep.to_csv(out / 'mapping_report.tsv', sep='\t', index=False)
     write_sssom(proposals, out / 'crosswalk.sssom.tsv', Path(args.table).name, Path(args.checklist).name)
     pd.DataFrame(missing_mandatory(terms, proposals, args.assay_type),
@@ -2177,6 +2332,7 @@ def cmd_map(args):
                'accept': counts.get('accept', 0), 'review': counts.get('review', 0),
                'no_match': counts.get('no match', 0), 'confirmed': counts.get('confirmed', 0),
                'model': counts.get('model', 0),
+               'other_standard': sum(p.other is not None for p in proposals),
                'terms_considered': len(terms),
                'missing_mandatory': int(len(missing_mandatory(terms, proposals, args.assay_type))),
                'to_decide': len(review),
@@ -2195,6 +2351,9 @@ def cmd_map(args):
     print(f"INFO: {summary['columns']} columns: {summary['accept']} accept, {summary['review']} review, "
           f"{summary['no_match']} no match, {summary['confirmed']} confirmed, {summary['model']} chosen by a model; "
           f"{summary['missing_mandatory']} mandatory FAIRe terms not covered")
+    if summary['other_standard']:
+        print(f"INFO: {summary['other_standard']} columns with no FAIRe term have a MIxS or Darwin Core term, for review: "
+              + ', '.join(f"{p.column} ({p.other.source} {p.other.name})" for p in proposals if p.other))
     for check, col, rows, _ in review:
         print(f'INFO: to decide: {check} ({col}: {rows})')
     if args.gold:
@@ -2219,6 +2378,10 @@ def main(argv=None):
     m.add_argument('--confused_terms', default=str(CONFUSED_TERMS),
                    help='table of FAIRe terms people often confuse (group, term, meaning, check); these are '
                         'always for review (default: commonly_confused_terms.tsv beside this script)')
+    m.add_argument('--other_terms', default=str(OTHER_TERMS),
+                   help='MIxS and Darwin Core terms that FAIRe lacks, suggested (for review) for columns with no FAIRe '
+                        'term (default: mixs_dwc_terms.tsv beside this script)')
+    m.add_argument('--no_other_terms', action='store_true', help='do not suggest MIxS or Darwin Core terms')
     m.add_argument('--shortlist', type=int, default=5, help='candidates listed per column (default 5)')
     m.add_argument('--shortlist_close', type=int, default=10,
                    help='candidates listed when the last of --shortlist scores within %.2f of the first, so no '
