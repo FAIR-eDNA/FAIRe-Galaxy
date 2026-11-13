@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3] 2026-11-13
+
+Added the *review sheet* output (FAIRe mapper 0.7.2): the proposed terms laid out for a person to
+review, with Accept, Reject or Change for each column. *things to decide* is now *additional checks to
+make*.
+
 ## [0.2] 2026-11-12
 
 Added the *things to decide* output: what only a person can decide before applying the mapping

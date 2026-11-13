@@ -2,15 +2,15 @@ class: GalaxyWorkflow
 label: "FAIRe mapper: write and check a FAIRe workbook"
 doc: |
   The second step from a lab's own tables to FAIRe. Writes a FAIRe workbook, in the layout
-  FAIRe-ator makes, from the sample table and its reviewed crosswalk (from "FAIRe mapper: propose
-  a mapping"), values for the whole project and an OTU or ASV table, then checks it with
+  FAIRe-ator makes, from the sample table and its review sheet or reviewed crosswalk (from "FAIRe
+  mapper: propose a mapping"), values for the whole project and an OTU or ASV table, then checks it with
   FAIRe-fier. For library tables, a raw and a final OTU table, or several assays, run the apply
   mapping tool on its own.
 license: MIT
 creator:
   - class: Organization
     name: FAIRe Galaxy project contributors
-release: "0.1"
+release: "0.2"
 inputs:
   sample_table:
     type: data
@@ -26,7 +26,7 @@ inputs:
       - tabular
       - csv
       - xlsx
-    doc: The reviewed crosswalk (SSSOM).
+    doc: The review sheet with your decisions (Excel), or the reviewed crosswalk (SSSOM).
   project_values:
     type: data
     format:

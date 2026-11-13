@@ -1179,9 +1179,9 @@ python '$__tool_directory__/faire_mapper_apply.py'
                 </assert_contents>
             </output>
         </test>
-        <!-- A review sheet as the crosswalk: Accept for a MIxS term, Change to the MIxS term offered
-             for a wrong FAIRe match, Change to another FAIRe term, and Reject, which keeps the column as
-             its own term -->
+        <!-- A review sheet as the crosswalk, with its rows sorted (rows to review first): Accept for a
+             MIxS term, Change to the MIxS term offered for a wrong FAIRe match, Change to another FAIRe
+             term, and Reject, which keeps the column as its own term -->
         <test expect_num_outputs="2">
             <param name="table" value="review_table.csv"/>
             <param name="crosswalk" value="apply_review_sheet.xlsx" ftype="xlsx"/>
@@ -1202,6 +1202,24 @@ python '$__tool_directory__/faire_mapper_apply.py'
                     <not_has_text text="with no decision"/>
                     <has_text text="'Depth (m)' to tot_depth_water_col (sampleMetadata)"/>
                     <has_text text="'Water phosphate' as phosphate (MIxS); 'Silicate' as silicate (MIxS)"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- The same review sheet with four rows left with no decision, and matches for review applied:
+             the log says what happened to each kind (no proposed term, a MIxS term for review, a FAIRe
+             term for review, the mapper's accepted match) -->
+        <test expect_num_outputs="2">
+            <param name="table" value="review_table.csv"/>
+            <param name="crosswalk" value="apply_review_sheet_undecided.xlsx" ftype="xlsx"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="include_review" value="true"/>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="review sheet: 3 accepted, 0 rejected, 1 changed, 4 with no decision (1 with no proposed term and 1 match for review, kept as your own terms; 1 match for review, applied as you asked; 1 of the mapper's accepted matches, applied)"/>
+                    <has_text text="'Depth (m)' to minimumDepthInMeters (sampleMetadata)"/>
+                    <has_text text="'Date' to eventDate (sampleMetadata)"/>
+                    <has_text text="kept as user-defined fields in sampleMetadata: Silicate, Voyage"/>
                 </assert_contents>
             </output>
         </test>

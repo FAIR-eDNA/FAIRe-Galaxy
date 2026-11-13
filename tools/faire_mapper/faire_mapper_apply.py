@@ -2010,7 +2010,7 @@ def main(argv=None):
         if fr.is_review_sheet(args.crosswalk):
             try:
                 cw, problems = fr.read_review_sheet(args.crosswalk, by_name, other_terms,
-                                                    lambda m: log.add('Inputs', m))
+                                                    lambda m: log.add('Inputs', m), args.include_review)
             except (ValueError, KeyError) as e:
                 raise StopError(f'the review sheet could not be read: {e}')
             for x in problems:

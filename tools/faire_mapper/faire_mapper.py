@@ -28,12 +28,19 @@ import json
 import math
 import re
 import sys
+import warnings
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 import pandas as pd
 
-__version__ = '0.7.1'
+__version__ = '0.7.2'
+
+# Excel saves a drop-down that lists cells of another sheet (the review sheet's replacement terms) in a
+# newer form that openpyxl does not read. Only the cell values are read here, so the warning says
+# nothing useful to a Galaxy user.
+warnings.filterwarnings('ignore', message='(Data Validation|Conditional Formatting) extension is not supported',
+                        category=UserWarning, module='openpyxl')
 
 MISSING = {'', 'na', 'n/a', 'nan', 'none', 'null', '-', '--', '?', 'not applicable', 'missing',
            'not collected', 'not provided', 'unknown'}
