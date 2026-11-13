@@ -9,7 +9,7 @@ Developed by Oliver Berry (CSIRO), with Claude (Anthropic).
 | Tool | Galaxy ID | Input | Outputs |
 |---|---|---|---|
 | FAIRe mapper: profile columns | `faire_mapper_profile` | CSV, TSV or Excel table | one row per column describing its values |
-| FAIRe mapper: propose mapping | `faire_mapper_map` | the table, optional answers file | mapping report, SSSOM crosswalk, mandatory terms not covered, columns to review, things to decide, summary |
+| FAIRe mapper: propose mapping | `faire_mapper_map` | the table, optional answers file | mapping report, SSSOM crosswalk, mandatory terms not covered, columns to review, additional checks to make, summary, review sheet |
 | FAIRe mapper: find primers | `faire_primers_find` | methods text, or primer names and citations; optional own primer table | candidate primer pairs with sequences, references and sources |
 | FAIRe mapper: build primer table | `faire_primers_build` | primer spreadsheets or TSVs | a primer table (added to the bundled one, or new), problems found |
 | FAIRe mapper: apply mapping | `faire_mapper_apply` | the table, the reviewed crosswalk, optional values for the whole project, optional OTU and taxonomy tables, optional library tables | FAIRe workbook in the FAIRe-ator layout, with OTU and taxonomy sheets; log |
@@ -26,7 +26,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
 
 ## Status
 
-- Version 0.7.0. `planemo lint`: passes with no warnings. `pyflakes`: clean.
+- Version 0.7.1. `planemo lint`: passes with no warnings. `pyflakes`: clean.
 - Goes to Galaxy Australia as an early version with the wrapped FAIRe tools (decided 6 November
   2026). Each tool's help starts with a note saying so, which asks users to check the results and
   send problems to the Galaxy Australia help desk (to confirm with Galaxy Australia, question 8).
@@ -43,15 +43,32 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   independent answer keys (`dev/faire_mapper_real_datasets/`, `dev/faire_mapper_australian_datasets/`,
   summarised below), and end to end on CSIRO's SEA-MES data (`dev/faire_mapper_seames/`). Not yet
   tried on datasets from Australian labs that already have a FAIRe version.
+- New in 0.7.1 (13 November 2026), from the FAIRe team's second review:
+  - The review sheet has a *Mapper's call* column (accept, review or no match), as in the
+    walkthrough, and rows to review are shaded across the whole row.
+  - *Things to decide* is now *additional checks to make*, in the review sheet and in propose
+    mapping's output.
+  - *How to review* says which table the rows come from: the table given to propose mapping, one
+    row per sample, whose column headings are the input terms.
+  - A MIxS or Darwin Core term is used by accepting it, never by rejecting: Reject always keeps the
+    column as its own term. When the mapper proposes a FAIRe term for review and also found a MIxS
+    or Darwin Core term for the column, that term comes first in the replacement list
+    (*phosphate (MIxS term)*), and the reasoning says to choose Change and pick it.
+  - The replacement list has a blank line between the best candidates and the rest.
+  - *If rejected, kept as* says "your own term".
+  - output_read_count is left empty for an OTU table that is rarefied (every sample with the same
+    number of reads), as FAIRe asks for the reads that passed filtering; the log says so. Libraries
+    with no column in the OTU tables (the SEA-MES 18S controls) have no counts, and the log says why.
 - Also in 0.7.0, from the FAIRe team's review of the tools and outputs (13 November 2026):
   - **Review sheet.** Propose mapping writes a review sheet (Excel, `faire_mapper_review.py`) laid
     out as the team suggested: one row per column with the input term, the proposed FAIRe term, the
     score, the mapper's reasoning, the reviewer's decision (Accept, Reject or Change, from a
     drop-down) and the replacement FAIRe term (a drop-down with the column's five best candidates
     first, then every FAIRe term), plus what the column is kept as if the match is rejected. A
-    rejected column keeps its own name, or the name of a MIxS or Darwin Core term the mapper found
-    for it, as the team asked. Hovering over a proposed term shows its definition. The workbook also
-    has the things to decide, how to review, and the full crosswalk, which apply mapping uses to
+    rejected column kept its own name, or the name of a MIxS or Darwin Core term the mapper found
+    for it (since 0.7.1, it always keeps its own term, and a MIxS or Darwin Core term is accepted
+    or picked as the replacement). Hovering over a proposed term shows its definition. The workbook also
+    has the additional checks to make, how to review, and the full crosswalk, which apply mapping uses to
     apply the decisions. Apply mapping takes the review sheet in place of the crosswalk; a row with
     no decision is applied as the mapper called it. On the SEA-MES 18S table, the review sheet with
     the trial's decisions gives the same workbook as the reviewed crosswalk.
@@ -64,7 +81,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
     description, example and field type, as FAIRe-ator makes them; user-defined fields say which
     column they came from.
   - **Several terms in one cell.** A cell of env_local_scale (or another term in "label [ID]" form)
-    holding several terms joined by | is flagged in *things to decide* and the log, and the cells get
+    holding several terms joined by | is flagged in *additional checks to make* and the log, and the cells get
     a drop-down of the terms given, to pick one where one is meant.
   - **Read and sequence counts.** output_read_count, output_otu_num and otu_num_tax_assigned are
     filled for each library from the OTU and taxonomy tables (the final table of its assay), and
@@ -91,7 +108,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   `commonly_confused_terms.tsv` (group, term, meaning, the question that tells them apart). Propose
   mapping always marks a column matched to one of them for review, however strong the match. The
   crosswalk comment names the terms it is confused with and what each means, and asks the question;
-  *things to decide* lists the column too, and apply mapping's log gives the same note for any of
+  *additional checks to make* lists the column too, and apply mapping's log gives the same note for any of
   these terms in the values for the whole project. The groups, from Oliver Berry: the sampling
   depth (minimumDepthInMeters and maximumDepthInMeters, which go together) and the depth of the water
   column (tot_depth_water_col); the amount collected (samp_size) and the amount extracted
@@ -117,7 +134,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   not given the project values FAIRe asks only of samples (the habitat terms), and their empty
   mandatory cells are written as "not applicable: control sample". The log's list of empty
   mandatory terms follows each term's condition (neg_cont_type for the negative controls only).
-  Propose mapping has a new output, *things to decide*: what only a person can decide, each with
+  Propose mapping has a new output, *additional checks to make*: what only a person can decide, each with
   what to do about it (a sample name used on more than one row, sample names that read as controls
   when no column marks the controls, columns with values only in the first rows, and times with no
   time zone). It lists them and changes nothing; the propose-mapping workflow gives it as
@@ -126,7 +143,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   md5sum's checksum files and the CSV from PowerShell's Get-FileHash: the files are paired into
   libraries by their read number (R1 and R2), and *identify your files* names such lists as
   library tables. eventDate keeps the local time, which daily cycles follow: a time column whose
-  name says UTC is converted to local time when the UTC offset is given, and *things to decide*
+  name says UTC is converted to local time when the UTC offset is given, and *additional checks to make*
   lists UTC-only times. The offset can now be negative on the command line (`--utc_offset=-03:30`). A library name that already ends with the assay name
   (1A_16S_Fish) gets only the run added in lib_id, unless the library holds several assays.
 - New in 0.5.1 (12 November 2026): each crosswalk comment says, in plain sentences and the same
@@ -892,11 +909,11 @@ test.
 - `apply_other_terms.sssom.tsv`: a reviewed crosswalk for that table: MIxS phosphate confirmed
   (MIXS:0000505), ammonium typed in with no object_id, silicate still for review.
 - `review_table.csv`: four samples with a column the mapper wrongly matches (*Water phosphate*,
-  for review as samp_size, with MIxS phosphate if rejected), a MIxS term (*Silicate*), a column with
+  for review as samp_size, with MIxS phosphate offered first in the replacement list), a MIxS term (*Silicate*), a column with
   no term (*Voyage*) and a depth. Made up.
 - `apply_review_sheet.xlsx`: the review sheet propose mapping writes for that table, with decisions:
-  Reject for *Water phosphate*, Accept for *Silicate*, Change to tot_depth_water_col for
-  *Depth (m)*, and none for *Voyage*.
+  Change to *phosphate (MIxS term)* for *Water phosphate*, Accept for *Silicate*, Change to
+  tot_depth_water_col for *Depth (m)*, and Reject for *Voyage*.
 - `map_review.csv`: 11 rows in the form of the day-night study's sheet: a sample name used twice,
   a filtration control named but not marked, notes in the first rows of two columns, and times with
   no time zone.
@@ -991,13 +1008,13 @@ the propose-mapping workflow test.
 | apply mapping | 32 | The same files as md5sum writes them (no header): read as a checksum list, paired, checksums written | passed |
 | apply mapping | 33 | checkls_ver given as v2.0.0 in the values for the whole project: kept as written, with a warning that checklist v1.0.2 defines a number; since 0.7.0, a project_contact given as a name and an email split into recordedBy and project_contact | passed |
 | map | 9 | Excel time cells in a Time column: verbatimEventTime (times of day), with a note that apply mapping joins them to the dates | passed |
-| map | 11 | Times in UTC only: *things to decide* lists them, with how to get local time | passed |
-| map | 12 | Sampling depth, water depth, volume filtered and volume extracted: all for review despite strong matches, each comment naming the terms it is confused with and the question that tells them apart, and all in *things to decide* | passed |
-| map | 10 | A sheet in the day-night study's form: the *things to decide* list gives a repeated sample name, a filtration control not marked as a control, two columns of notes and the times with no time zone | passed |
+| map | 11 | Times in UTC only: *additional checks to make* lists them, with how to get local time | passed |
+| map | 12 | Sampling depth, water depth, volume filtered and volume extracted: all for review despite strong matches, each comment naming the terms it is confused with and the question that tells them apart, and all in *additional checks to make* | passed |
+| map | 10 | A sheet in the day-night study's form: the *additional checks to make* list gives a repeated sample name, a filtration control not marked as a control, two columns of notes and the times with no time zone | passed |
 | map | 13 | Columns with no FAIRe term: MIxS phosphate (with the unit from the column name), silicate, pressure and ammonium (close) for review, with MIxS identifiers and the curie map; Voyage and Field bottle number get none; the report's other_standard column and the summary's count | passed |
 | map | 14 | The same table with *Suggest MIxS or Darwin Core terms* unticked: no MIxS rows | passed |
-| map | 15 | The review sheet: its five sheets (Choices hidden), the decision and replacement drop-downs, a MIxS term as a proposal and as what a rejected column is kept as, and the fallback row in the details | passed |
-| apply mapping | 35 | The review sheet as the crosswalk: Accept for a MIxS term, Reject naming the column after its MIxS fallback, Change to tot_depth_water_col, and the count of decisions in the log | passed |
+| map | 15 | The review sheet: its five sheets (Choices hidden), the mapper's call, the decision and replacement drop-downs, a MIxS term as a proposal, and a MIxS term first in the replacement list of a FAIRe match for review | passed |
+| apply mapping | 35 | The review sheet as the crosswalk: Accept for a MIxS term, Change to the MIxS term offered for a wrong FAIRe match, Change to tot_depth_water_col, Reject keeping the column's own term, and the count of decisions in the log | passed |
 | apply mapping | 34 | Confirmed MIxS terms name the user-defined fields with unmatched columns left out: phosphate with the unit added to each value (0.21 uM), ammonium typed in by the reviewer; silicate, still for review, left out and listed | passed |
 | identify | 1 | Eight files: sample, OTU, taxonomy, library, dictionary, text, curated OTU table and crosswalk, each named with its reason | passed |
 | identify | 2 | Two Excel files: each sheet on its own (the SRA sheet's library sheet, a primer register); no sample table found | passed |

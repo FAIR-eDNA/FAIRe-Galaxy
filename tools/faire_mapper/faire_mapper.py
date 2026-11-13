@@ -33,7 +33,7 @@ from pathlib import Path
 
 import pandas as pd
 
-__version__ = '0.7.0'
+__version__ = '0.7.1'
 
 MISSING = {'', 'na', 'n/a', 'nan', 'none', 'null', '-', '--', '?', 'not applicable', 'missing',
            'not collected', 'not provided', 'unknown'}
@@ -1094,7 +1094,7 @@ class Proposal:
     other: object = None   # for a column with no FAIRe term: a MIxS or Darwin Core Term, for review
     other_score: float = 0.0
     other_comment: str = ''
-    fallback: object = None  # for a FAIRe match for review: the MIxS or Darwin Core term if it is rejected
+    fallback: object = None  # for a FAIRe match for review: a MIxS or Darwin Core term, offered in the review sheet
 
     def also_terms(self):
         return [a[0] for a in self.also]
@@ -1832,19 +1832,10 @@ CROSSWALK_COLUMNS = ['subject_id', 'subject_label', 'predicate_id', 'object_id',
                      'mapping_justification', 'confidence', 'comment', 'combine_order', 'value_part']
 
 
-def crosswalk_rows(proposals, fallbacks=False):
-    """The crosswalk's rows, as dicts. With fallbacks, a FAIRe match for review whose column has a MIxS
-    or Darwin Core term too adds a skos:relatedMatch row for it: the review sheet's name for the column
-    if the match is rejected."""
+def crosswalk_rows(proposals):
+    """The crosswalk's rows, as dicts."""
     rows = []
     for p in proposals:
-        if fallbacks and p.term and p.fallback is not None:
-            rows.append({'subject_id': 'local:' + re.sub(r'[^A-Za-z0-9_.-]', '_', p.column), 'subject_label': p.column,
-                         'predicate_id': 'skos:relatedMatch', 'object_id': p.fallback.term_id,
-                         'object_label': p.fallback.name, 'mapping_justification': 'semapv:CompositeMatching',
-                         'confidence': '', 'comment': f'{p.fallback.source} term: {p.fallback.name}, the name of the '
-                                                      f'column if its FAIRe match is rejected',
-                         'combine_order': '', 'value_part': ''})
         if not p.term and p.other is not None:
             rows.append({'subject_id': 'local:' + re.sub(r'[^A-Za-z0-9_.-]', '_', p.column), 'subject_label': p.column,
                          'predicate_id': 'skos:closeMatch', 'object_id': p.other.term_id, 'object_label': p.other.name,

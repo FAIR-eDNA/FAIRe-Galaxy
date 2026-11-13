@@ -1,5 +1,5 @@
 <macros>
-    <token name="@TOOL_VERSION@">0.7.0</token>
+    <token name="@TOOL_VERSION@">0.7.1</token>
     <token name="@VERSION_SUFFIX@">0</token>
     <token name="@PROFILE@">23.0</token>
     <xml name="requirements">
@@ -133,7 +133,7 @@ names are in italics and leave off *FAIRe mapper:* at the front.
   such as the primers. Rows without an assay apply to the whole project.
 
   To see which terms you still need to find, look at the *mandatory terms not covered* output of
-  the *propose mapping* tool. Its *things to decide* output lists what only you can settle before
+  the *propose mapping* tool. Its *additional checks to make* output lists what only you can settle before
   applying the mapping: a sample name used on more than one row, controls named but not marked in
   a column, columns of notes, and times with no time zone.
 
@@ -188,19 +188,22 @@ names are in italics and leave off *FAIRe mapper:* at the front.
 *Reviewing the matches*
 
 The *propose mapping* tool writes a **review sheet**, an Excel workbook with one row for each
-column of your table: the input term (your column's name), the proposed FAIRe term, its score, the
-mapper's reasoning, your decision and a replacement term. Rows to decide are shaded. For each row,
-choose a decision from the drop-down:
+column of the table you gave it: the input term (the column heading), the proposed FAIRe term, its
+score, the mapper's call (accept, review or no match), the mapper's reasoning, your decision and a
+replacement term. Rows to review are shaded across the whole row. For each row, choose a decision
+from the drop-down:
 
-- **Accept**: the proposed term is right. Rows the mapper accepted are marked Accept already.
-- **Reject**: the column has no FAIRe term. It is kept as a user-defined field, under the name in
-  *If rejected, kept as*: your own column name, or a MIxS or Darwin Core term when the mapper found
-  one, as the FAIRe guidelines ask.
-- **Change**: another FAIRe term is right. Pick it in *Replacement FAIRe term*: the drop-down lists
-  the column's five best candidates first, then every FAIRe term.
+- **Accept**: the proposed term is right. Rows the mapper accepted are marked Accept already. When
+  no FAIRe term fits, the mapper may propose a MIxS or Darwin Core term instead, as the FAIRe
+  guidelines ask (*silicate (MIxS term)*): accept it to use it.
+- **Reject**: no proposed term is right. The column is kept as your own term (its heading), as a
+  user-defined field.
+- **Change**: another term is right. Pick it in *Replacement FAIRe term*: the drop-down lists the
+  column's five best candidates first (with a MIxS or Darwin Core term first, when the mapper found
+  one for a column it matched to a FAIRe term), then a blank line, then every FAIRe term.
 
 A row with no decision is applied as the mapper called it. Hover over a proposed term to see what it
-means. The workbook also lists the things to decide. Save it as Excel and upload it as the input
+means. The workbook also lists the additional checks to make. Save it as Excel and upload it as the input
 for the *apply mapping* tool.
 
 The review sheet is built from the **crosswalk**, the table of matches in SSSOM, a standard format,
@@ -234,7 +237,7 @@ Some FAIRe terms are often confused, even by people who know FAIRe:
 
 When the tool proposes one of these terms, it always marks the row for review, however good the
 match, and the comment names the terms it is confused with, what each one means, and a question that
-tells them apart. The *things to decide* output lists these rows too. If you give one of these terms
+tells them apart. The *additional checks to make* output lists these rows too. If you give one of these terms
 in your values for the whole project, the *apply mapping* log gives the same note. The terms are
 listed in ``commonly_confused_terms.tsv``, which comes with the tool.
 
