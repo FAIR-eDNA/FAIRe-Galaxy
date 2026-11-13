@@ -283,6 +283,8 @@ python '$__tool_directory__/faire2ena_galaxy.py' run
         </test>
     </tests>
     <help><![CDATA[
+@CHECK_BEFORE_UPLOAD@
+
 **What it does**
 
 This tool converts the **experimentRunMetadata** sheet of a FAIRe workbook into ENA EXPERIMENT and

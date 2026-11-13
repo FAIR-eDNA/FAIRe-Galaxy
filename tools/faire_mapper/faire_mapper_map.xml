@@ -72,10 +72,11 @@ python '$__tool_directory__/faire_mapper.py' map
         <data name="requests" format="json" from_work_dir="out/adjudication_requests.json" label="${tool.name} on ${on_string}: columns to review"/>
         <data name="summary" format="json" from_work_dir="out/summary.json" label="${tool.name} on ${on_string}: summary"/>
         <data name="review" format="tabular" from_work_dir="out/review_list.tsv" label="${tool.name} on ${on_string}: things to decide"/>
+        <data name="review_sheet" format="xlsx" from_work_dir="out/review_sheet.xlsx" label="${tool.name} on ${on_string}: review sheet"/>
     </outputs>
     <tests>
         <!-- The prototype's sample sheet: water metabarcoding -->
-        <test expect_num_outputs="6">
+        <test expect_num_outputs="7">
             <param name="table" value="messy_edna.csv"/>
             <param name="sample_types" value="Water"/>
             <output name="report">
@@ -112,7 +113,7 @@ python '$__tool_directory__/faire_mapper.py' map
             </output>
         </test>
         <!-- Excel sheet with a title row above the headers; held-out style headers -->
-        <test expect_num_outputs="6">
+        <test expect_num_outputs="7">
             <param name="table" value="survey_sheet.xlsx"/>
             <param name="sheet" value="Samples"/>
             <param name="header_row" value="2"/>
@@ -137,7 +138,7 @@ python '$__tool_directory__/faire_mapper.py' map
             </output>
         </test>
         <!-- Answers from a reviewer are applied first -->
-        <test expect_num_outputs="6">
+        <test expect_num_outputs="7">
             <param name="table" value="messy_edna.csv"/>
             <param name="sample_types" value="Water"/>
             <param name="responses" value="messy_edna_responses.json"/>
@@ -158,7 +159,7 @@ python '$__tool_directory__/faire_mapper.py' map
             </output>
         </test>
         <!-- Semicolon-separated Windows-1252 text with decimal commas and Excel serial dates -->
-        <test expect_num_outputs="6">
+        <test expect_num_outputs="7">
             <param name="table" value="reef_stations_semicolon.csv" ftype="txt"/>
             <param name="sample_types" value="Water"/>
             <output name="report">
@@ -177,7 +178,7 @@ python '$__tool_directory__/faire_mapper.py' map
             </output>
         </test>
         <!-- A data dictionary in a README: descriptions change two matches -->
-        <test expect_num_outputs="6">
+        <test expect_num_outputs="7">
             <param name="table" value="apply_reef.csv"/>
             <param name="sample_types" value="Water"/>
             <param name="dictionary" value="apply_reef_readme.md" ftype="txt"/>
@@ -200,7 +201,7 @@ python '$__tool_directory__/faire_mapper.py' map
             </output>
         </test>
         <!-- A data dictionary as a table, with units -->
-        <test expect_num_outputs="6">
+        <test expect_num_outputs="7">
             <param name="table" value="apply_reef.csv"/>
             <param name="sample_types" value="Water"/>
             <param name="dictionary" value="apply_reef_dictionary.csv" ftype="csv"/>
@@ -218,7 +219,7 @@ python '$__tool_directory__/faire_mapper.py' map
         </test>
         <!-- An NCBI BioSample sheet: comment lines, MIxS lat_lon, one depth (for review, as the depth terms are
              commonly confused), a yes/no control column -->
-        <test expect_num_outputs="6">
+        <test expect_num_outputs="7">
             <param name="table" value="mixs_sheet.tsv" ftype="tabular"/>
             <param name="sample_types" value="Water"/>
             <output name="crosswalk">
@@ -253,7 +254,7 @@ python '$__tool_directory__/faire_mapper.py' map
         </test>
         <!-- A time of day in its own column (Excel time cells) is the time of collection: verbatimEventTime,
              which apply mapping joins to the date in eventDate (day-night trial, 12 November 2026) -->
-        <test expect_num_outputs="6">
+        <test expect_num_outputs="7">
             <param name="table" value="apply_reef_times.xlsx" ftype="xlsx"/>
             <param name="sample_types" value="Water"/>
             <output name="report">
@@ -270,7 +271,7 @@ python '$__tool_directory__/faire_mapper.py' map
         </test>
         <!-- The review list: what only a person can decide (a sample name used twice, controls named but
              not marked, columns of notes, times with no time zone), with what to do about each -->
-        <test expect_num_outputs="6">
+        <test expect_num_outputs="7">
             <param name="table" value="map_review.csv"/>
             <param name="sample_types" value="Water"/>
             <output name="review">
@@ -284,7 +285,7 @@ python '$__tool_directory__/faire_mapper.py' map
             </output>
         </test>
         <!-- Times in UTC only: listed, as daily cycles follow local time, with how to get it -->
-        <test expect_num_outputs="6">
+        <test expect_num_outputs="7">
             <param name="table" value="apply_times_utc.csv"/>
             <param name="sample_types" value="Water"/>
             <output name="review">
@@ -297,7 +298,7 @@ python '$__tool_directory__/faire_mapper.py' map
         <!-- Commonly confused terms (commonly_confused_terms.tsv): the sampling depth and the depth of the
              water column, and the volume collected and the volume extracted, are always for review, however
              strong the match, and the comment says how to tell them apart -->
-        <test expect_num_outputs="6">
+        <test expect_num_outputs="7">
             <param name="table" value="map_confused.csv"/>
             <param name="sample_types" value="Water"/>
             <output name="report">
@@ -324,7 +325,7 @@ python '$__tool_directory__/faire_mapper.py' map
         <!-- Columns with no FAIRe term get a MIxS or Darwin Core term whose name matches, for review
              (mixs_dwc_terms.tsv). Field bottle number is not given Darwin Core's fieldNumber, as "bottle"
              has no match in the term's name -->
-        <test expect_num_outputs="6">
+        <test expect_num_outputs="7">
             <param name="table" value="map_other_terms.csv"/>
             <param name="sample_types" value="Water"/>
             <output name="crosswalk">
@@ -350,7 +351,7 @@ python '$__tool_directory__/faire_mapper.py' map
             </output>
         </test>
         <!-- The same table with the suggestions turned off -->
-        <test expect_num_outputs="6">
+        <test expect_num_outputs="7">
             <param name="table" value="map_other_terms.csv"/>
             <param name="sample_types" value="Water"/>
             <param name="other_terms" value="false"/>
@@ -358,6 +359,35 @@ python '$__tool_directory__/faire_mapper.py' map
                 <assert_contents>
                     <not_has_text text="MIXS:0000505"/>
                     <not_has_text text="local:Phosphate"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- The review sheet: one row per column with the proposed term, score, reasoning, a decision
+             drop-down (Accept, Reject or Change) and a replacement drop-down (best candidates first, then
+             every FAIRe term); a FAIRe match for review whose column has a MIxS term names that term as
+             what the column is kept as if rejected -->
+        <test expect_num_outputs="7">
+            <param name="table" value="review_table.csv"/>
+            <param name="sample_types" value="Water"/>
+            <output name="review_sheet" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/workbook.xml">
+                        <has_text text="name=&quot;Review&quot;"/>
+                        <has_text text="name=&quot;Things to decide&quot;"/>
+                        <has_text text="name=&quot;How to review&quot;"/>
+                        <has_text text="name=&quot;Crosswalk (details)&quot;"/>
+                        <has_text text="name=&quot;Choices&quot; sheetId=&quot;2&quot; state=&quot;hidden&quot;"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/worksheets/sheet1.xml">
+                        <has_text text="Replacement FAIRe term"/>
+                        <has_text text="phosphate (MIxS term)"/>
+                        <has_text text="silicate (MIxS)"/>
+                        <has_text text="&quot;Accept,Reject,Change&quot;"/>
+                        <has_text text="&apos;Choices&apos;!$A$1"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/worksheets/sheet5.xml">
+                        <has_text text="skos:relatedMatch"/>
+                    </has_archive_member>
                 </assert_contents>
             </output>
         </test>
@@ -369,8 +399,8 @@ python '$__tool_directory__/faire_mapper.py' map
 This tool proposes which FAIRe term each column of your table holds, so you do not have to rename
 columns by hand. The result is a **crosswalk**: a table with one row for each column of your table
 and the FAIRe term it matches, saved in SSSOM, a standard format for such tables. You check and
-correct the crosswalk, and **FAIRe mapper: apply mapping** then uses it to write your FAIRe
-workbook.
+correct the crosswalk, most easily in the **review sheet** it also writes, and **FAIRe mapper: apply
+mapping** then uses it to write your FAIRe workbook.
 
 For every column, the tool scores each FAIRe term on three kinds of evidence:
 
@@ -446,6 +476,13 @@ value. Untick *Suggest MIxS or Darwin Core terms* to leave them out.
   term clearly leads), how columns combine or split, the column's description from the data
   dictionary, and, for a column with no FAIRe term, the MIxS or Darwin Core term suggested
   (*other_standard*).
+- **review sheet** (Excel): the matches laid out for a person to review, one row per column: the
+  input term, the proposed FAIRe term, its score, the mapper's reasoning, the reviewer's decision
+  (Accept, Reject or Change, from a drop-down), the replacement FAIRe term (a drop-down with the
+  column's best candidates first, then every FAIRe term) and what the column is kept as if the match
+  is rejected (its own name, or a MIxS or Darwin Core term the mapper found). Hover over a proposed
+  term to see its definition. It also has the things to decide and how to review. Give it to
+  **FAIRe mapper: apply mapping** as the crosswalk once the decisions are made.
 - **crosswalk (SSSOM)**: the proposed and confirmed matches in the
   `SSSOM <https://mapping-commons.github.io/sssom/>`_ format, which you can reuse with later
   datasets.

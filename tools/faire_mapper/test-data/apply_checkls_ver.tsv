@@ -1,4 +1,6 @@
-# A values file that gives the checklist version as text, as FAIRe checklist v2 will have it
+# Values for the whole project that give checkls_ver as text, as FAIRe checklist v2 will have it,
+# and the project contact as a name and an email
 term	value
 project_name	Lizard Island reef survey
 checkls_ver	v2.0.0
+project_contact	Jane Citizen (jane.citizen@example.org)

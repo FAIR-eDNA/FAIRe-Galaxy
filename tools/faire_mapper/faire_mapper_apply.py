@@ -30,6 +30,7 @@ from pathlib import Path
 
 import pandas as pd
 from openpyxl import Workbook
+from openpyxl.comments import Comment
 from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
@@ -39,6 +40,7 @@ import faire_mapper as fm  # noqa: E402
 import faire_mapper_kinds as fk  # noqa: E402
 import faire_mapper_library as fl  # noqa: E402
 import faire_mapper_otu as fo  # noqa: E402
+import faire_mapper_review as fr  # noqa: E402
 
 __version__ = fm.__version__
 CHECKLIST_VERSION_RE = re.compile(r'v(\d+(?:\.\d+)*)', re.I)
@@ -68,6 +70,11 @@ class StopError(Exception):
     """A problem the user has to settle before the workbook can be written."""
 
 
+BEFORE_SUBMITTING = ('Check the workbook before you submit it anywhere. FAIRe mapper matched and converted '
+                     'these values, and some may need correcting: this log lists every change, the values left '
+                     'out and the mandatory terms still empty. Run FAIRe-fier on the workbook too.')
+
+
 class Log:
     def __init__(self):
         self.sections = {'Inputs': [], 'Columns written': [], 'Project values': [], 'Commonly confused terms': [],
@@ -80,7 +87,7 @@ class Log:
 
     def write(self, path):
         with open(path, 'w', encoding='utf-8') as f:
-            f.write(f'FAIRe mapper: apply mapping {__version__}\n')
+            f.write(f'FAIRe mapper: apply mapping {__version__}\n\n{BEFORE_SUBMITTING}\n')
             for name, lines in self.sections.items():
                 f.write(f'\n## {name}\n\n')
                 f.write('\n'.join(f'- {x}' for x in lines) + '\n' if lines else '- none\n')
@@ -144,7 +151,8 @@ def choose_rows(cw, table_columns, by_name, include_review, log, other_terms=Non
         if source:
             if pred == 'skos:exactMatch':
                 others.append({'column': column, 'term': term, 'source': source,
-                               'unit': fm.with_header_unit(other_terms.get(term), column)})
+                               'unit': fm.with_header_unit(other_terms.get(term), column),
+                               'definition': other_terms[term].description if term in other_terms else ''})
             else:
                 log.add('Left out', f"'{column}' to {source} {term}: {pred} (for review); confirm it as "
                                     f"skos:exactMatch to name the user-defined field {term}")
@@ -364,6 +372,9 @@ DEPTH_RANGE = re.compile(r'^\s*(\d+(\.\d+)?)\s*(?:-|–|to)\s*(\d+(\.\d+)?)\s*m?
 
 
 CONTROL_CATEGORIES = {'negative control', 'positive control', 'pcr standard'}
+# A contact given as "Name (email)", "Name <email>" or "Name, email"
+CONTACT_RE = re.compile(r'^\s*([^()<>@]*[A-Za-z][^()<>@]*?)\s*(?:\(\s*|<\s*|[,;]\s*)'
+                        r'([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})\s*[)>]?\s*$')
 CONTROL_NA = 'not applicable: control sample'
 
 
@@ -841,6 +852,20 @@ def build_workbook(args, df, rows, terms, by_name, log, others=()):
             log.add('Left out', f'project values with status {status}, not applied: '
                     + ', '.join(f'{t} ({k})' if k > 1 else t for t, k in counts.items()))
 
+    # ---- the project contact: FAIRe's project_contact is the contact's email, and recordedBy the people
+    # responsible for the dataset, so "Name (email)" fills both when recordedBy is not given
+    contact = str(project.get('project_contact') or '').strip()
+    m = CONTACT_RE.match(contact)
+    if m:
+        name, email = m.group(1).strip(' ,;'), m.group(2)
+        project['project_contact'] = email
+        log.add('Project values', f"project_contact = {email}, the email in '{contact}'")
+        if 'recordedBy' in project_terms and _blank(project.get('recordedBy')) and 'recordedBy' not in written:
+            project['recordedBy'] = name
+            written.add('recordedBy')
+            log.add('Project values', f"recordedBy = {name}, the person named in project_contact, as the person "
+                                      f"responsible for the dataset")
+
     # ---- controls marked yes or no in a column
     for kind, k in controls.items():
         flag, typ = ('neg_cont_0_1', 'neg_cont_type') if kind.startswith('negative') else ('pos_cont_0_1', 'pos_cont_type')
@@ -927,7 +952,8 @@ def build_workbook(args, df, rows, terms, by_name, log, others=()):
     if renamed:
         log.add('Columns written', 'named after the MIxS or Darwin Core term confirmed in the crosswalk, as '
                                    'user-defined fields in sampleMetadata: ' + '; '.join(x for _, x in renamed))
-    kept = [(c, nm) for c, nm in user_fields if c not in {r for r, _ in renamed}]
+    renamed_cols = {r for r, _ in renamed}
+    kept = [(c, nm) for c, nm in user_fields if c not in renamed_cols]
     if kept:
         log.add('Columns written', 'kept as user-defined fields in sampleMetadata: '
                 + ', '.join(f"'{c}' as {nm}" if c != nm else nm for c, nm in kept))
@@ -993,6 +1019,12 @@ def build_workbook(args, df, rows, terms, by_name, log, others=()):
         view = [{t: v[i] for t, v in run_out.items()} for i in range(n)]
         amplicon_lib_ids(view, log, 'Columns written')
         run_out['lib_id'] = [r.get('lib_id') for r in view]
+    if otu_tables and 'experimentRunMetadata' in other:
+        fill_otu_counts(run_rows, run_out, sample_out, otu_tables, list(other['experimentRunMetadata'].columns), log)
+    if any('input_read_count' in r for r in run_rows):
+        log.add('Library tables', f"input_read_count for {sum('input_read_count' in r for r in run_rows)} libraries, "
+                                  f"from the library table's read count (ENA's read_count counts read pairs for "
+                                  f"paired libraries)")
     for t in otu_tables:
         if any(fo.PR2_REMARK in str(r.get('identificationRemarks') or '') for r in t['taxa'].values()):
             db = by_assay.get(t['assay'], {}).get('otu_db') or project.get('otu_db')
@@ -1110,7 +1142,8 @@ def build_workbook(args, df, rows, terms, by_name, log, others=()):
               f'project_id = {args.project_id}', f"assay_name = {' | '.join(assays)}",
               f'assay_type = {args.assay_type}', f"req_lev = {' | '.join(req_lev)}",
               f"sample_type = {' | '.join(sample_types) if sample_types else 'all'}", '',
-              'Requirement levels;', 'M = Mandatory', 'HR = Highly recommended', 'R = Recommended', 'O = Optional']
+              'Requirement levels;', 'M = Mandatory', 'HR = Highly recommended', 'R = Recommended', 'O = Optional',
+              '', 'Before you submit;', BEFORE_SUBMITTING]
     for line in readme:
         ws.append([line])
     bold = Font(bold=True)
@@ -1192,11 +1225,42 @@ def build_workbook(args, df, rows, terms, by_name, log, others=()):
             _write_otu_sheet(wb, _sheet_name(f'otu{st}', t['suffix']), t['counts'], bold)
 
     dd = tpl['Drop-down values']
+    # Several ENVO terms in one cell (env_local_scale, say): a drop-down of the terms given, so a person can
+    # check them and pick one where one is meant
+    multi = several_terms(sample_terms, sample_out, by_name, set(str(x).strip() for x in dd.iloc[:, 0]))
+    if multi:
+        rows_dd = [list(r) for r in dd.itertuples(index=False)]
+        width = max(len(rows_dd[0]), 4 + max(len(parts) for parts, _, _ in multi.values()))
+        rows_dd = [r + [None] * (width - len(r)) for r in rows_dd]
+        for i in range(len(dd.columns), width):
+            rows_dd[0][i] = f'vocab{i - 3}'
+        for t, (parts, k, repeated) in multi.items():
+            rows_dd.append([t, 'terms given in the table or values (to check)', ' | '.join(parts), len(parts)] + parts
+                           + [None] * (width - 4 - len(parts)))
+            log.add('Warnings', f"{t}: {len(parts)} terms in one cell for {k} samples ({'; '.join(parts)})"
+                    + (', one of them given twice' if repeated else '')
+                    + ". FAIRe allows several, separated by |, but check that each applies; the cells have a "
+                      "drop-down of these terms, to pick one where one is meant"
+                    + ('. FAIRe asks for ENVO layer terms here (marine pelagic zone, for example); biome terms '
+                       'belong in env_broad_scale' if t == 'env_local_scale' and any('biome' in x.lower() for x in parts)
+                       else ''))
+        dd = pd.DataFrame(rows_dd)
     ws = wb.create_sheet('Drop-down values')
     for row in dd.itertuples(index=False):
         ws.append([_cell(x) for x in row])
     for c in ws[1]:
         c.font = bold
+    user_notes = {}
+    for c, nm in user_fields:
+        note = f"User-defined field: the column '{c}' of {args.table_name or Path(args.table).name}"
+        if c in renamed_cols:
+            r = named[c]
+            note += f", named after the {r['source']} term {r['term']}" + (f": {r['definition']}" if r.get('definition') else '')
+        if c in units:
+            note += f"; the unit from the column name ({units[c]}) is added to each value"
+        user_notes[nm] = note
+    k_notes = add_term_comments(wb, args.checklist, user_notes)
+    log.add('Inputs', f'comments with each term\'s definition added to {k_notes} term names, as FAIRe-ator adds them')
     k = add_dropdowns(wb, dd)
     if k:
         log.add('Inputs', f'drop-down lists added to {k} columns and rows, from the Drop-down values sheet, as '
@@ -1563,6 +1627,121 @@ def fill_sequences(tables, say):
             missing = [s for s in missing if not t['taxa'][s].get('dna_sequence')]
 
 
+COUNT_TERMS = ('output_read_count', 'output_otu_num', 'otu_num_tax_assigned')
+
+
+def otu_counts(t):
+    """{sample: (reads, sequences with reads, those with a scientificName)} for one OTU table."""
+    named = {k for k, r in t['taxa'].items() if not _blank(r.get('scientificName'))}
+    out = {}
+    for s in t['samples']:
+        col = pd.to_numeric(t['counts'][s], errors='coerce').fillna(0)
+        present = col[col > 0]
+        out[s] = (int(round(present.sum())), int(len(present)), int(sum(q in named for q in present.index)))
+    return out
+
+
+def fill_otu_counts(run_rows, run_out, sample_out, otu_tables, run_cols, log):
+    """output_read_count, output_otu_num and otu_num_tax_assigned for each library, from the final OTU
+    table of its assay (or the raw one when there is no final table): the reads in the sample's column,
+    the sequences with reads, and those of them with a scientificName. Values given are kept."""
+    terms = [t for t in COUNT_TERMS if t in run_cols]
+    if not terms:
+        return
+    by_assay = {}
+    for t in sorted(otu_tables, key=lambda t: t['stage'] != 'Final'):
+        by_assay.setdefault(t['assay'] or '', (t, otu_counts(t)))
+    rows = run_rows or ([{k: v[i] for k, v in run_out.items()} for i in range(len(sample_out.get('samp_name', [])))]
+                        if run_out else [])
+    filled, none = 0, []
+    for r in rows:
+        hit = by_assay.get(r.get('assay_name') or '') or (next(iter(by_assay.values())) if len(by_assay) == 1 else None)
+        if hit is None or r.get('samp_name') not in hit[1]:
+            none.append(str(r.get('lib_id') or r.get('samp_name')))
+            continue
+        for term, v in zip(COUNT_TERMS, hit[1][r['samp_name']]):
+            if term in terms and _blank(r.get(term)):
+                r[term] = v
+        filled += 1
+    if not run_rows and run_out:
+        for term in terms:
+            run_out[term] = [r.get(term) for r in rows]
+    if filled:
+        tables = ', '.join(dict.fromkeys(t['label'] + (f" ({t['assay']})" if t['assay'] else '') for t, _ in by_assay.values()))
+        log.add('OTU and taxonomy tables', f"{', '.join(terms)} for {filled} libraries, from {tables}: the reads in "
+                                           f"each sample's column, the sequences with reads, and those of them "
+                                           f"named to any rank (scientificName)")
+    for t, counts in by_assay.values():
+        totals = {v[0] for v in counts.values()}
+        if len(counts) > 2 and len(totals) == 1:
+            log.add('Warnings', f"{t['label']}: every sample has {totals.pop()} reads, so the table looks rarefied and "
+                                f"output_read_count is that depth; give the reads before rarefying instead, if you "
+                                f"have them")
+    if none:
+        log.add('OTU and taxonomy tables', f"{len(none)} libraries have no column in the OTU tables, so their read "
+                                           f"and sequence counts are empty: " + fm._first(none, 10))
+
+
+def several_terms(sample_terms, sample_out, by_name, have_lists):
+    """Terms in "label [ID]" form (env_broad_scale, env_local_scale, env_medium) whose cells hold several terms
+    joined by |: {term: (the terms given, the number of samples, whether a cell repeats one)}. Terms that
+    already have a drop-down list are left out."""
+    out = {}
+    for t in sample_terms:
+        if t in have_lists or by_name.get(t) is None or by_name[t].kind != 'termlabel':
+            continue
+        cells = [str(v) for v in sample_out.get(t, []) if not _blank(v) and '|' in str(v)]
+        parts = list(dict.fromkeys(x.strip() for v in cells for x in v.split('|') if x.strip()))
+        if len(parts) >= 2:
+            repeated = any(len({x.strip() for x in v.split('|')}) < len(v.split('|')) for v in cells)
+            out[t] = (parts, len(cells), repeated)
+    return out
+
+
+def term_note(r):
+    """The comment FAIRe-ator puts on a term's name: requirement level (and its condition), description,
+    example, and field type (with the allowed values or the format)."""
+    def val(k):
+        v = r.get(k)
+        return '' if _blank(v) else str(v).strip()
+    level = val('requirement_level') + (f" ({val('requirement_level_condition')})" if val('requirement_level_condition') else '')
+    kind = val('term_type')
+    if kind == 'controlled vocabulary' and val('controlled_vocabulary_options'):
+        kind += f" ({val('controlled_vocabulary_options')})"
+    elif kind == 'fixed format' and val('fixed_format'):
+        kind += f" ({val('fixed_format')})"
+    return (f'Requirement level : {level}\nDescription : {val("description")}\nExample : {val("example")}\n'
+            f'Field type : {kind}')
+
+
+def add_term_comments(wb, checklist, user_notes=None):
+    """A comment on each term's name, as FAIRe-ator makes them, so the definition is at hand: column C of
+    projectMetadata, and the row of term names (row 3) of the other sheets. user_notes gives the comments
+    for user-defined fields of sampleMetadata, by name. Returns the number of comments."""
+    ck = pd.read_excel(checklist, sheet_name='checklist', dtype=str)
+    notes = {str(r['term_name']).strip(): term_note(r) for r in ck.to_dict('records') if not _blank(r.get('term_name'))}
+    user_notes = user_notes or {}
+
+    def put(cell, text):
+        cell.comment = Comment(text, 'FAIRe mapper')
+        cell.comment.width, cell.comment.height = 360, 220
+    n = 0
+    for ws in wb.worksheets:
+        if ws.title in ('README', 'Drop-down values') or ws.title.startswith('otu'):
+            continue
+        if ws.title == 'projectMetadata':
+            cells = [row[2] for row in ws.iter_rows(min_row=2, max_col=3)]
+        else:
+            cells = list(ws[3]) if ws.max_row >= 3 else []
+        for c in cells:
+            name = str(c.value or '').strip()
+            text = notes.get(name) or (user_notes.get(name) if ws.title == 'sampleMetadata' else None)
+            if text:
+                put(c, text)
+                n += 1
+    return n
+
+
 def add_dropdowns(wb, dd):
     """List validations as FAIRe-ator writes them: each controlled-vocabulary column (or
     projectMetadata row) offers the values in its row of the Drop-down values sheet. Other values
@@ -1818,17 +1997,28 @@ def main(argv=None):
         sample_types = [s.strip() for s in args.sample_types.split(',')] if args.sample_types else None
         terms = fm.load_checklist(args.checklist, assay_type=args.assay_type, sample_types=sample_types)
         by_name = {t.name: t for t in terms}
-        cw = read_crosswalk(args.crosswalk)
+        other_terms = {t.name: t for t in fm.load_other_terms(exclude=by_name)}
         log.add('Inputs', f"table: {args.table_name or Path(args.table).name}, {len(df)} rows and "
                           f"{len(df.columns)} columns" + ''.join(f'; {x}' for x in df.attrs.get('read_notes', [])))
-        log.add('Inputs', f"crosswalk: {args.crosswalk_name or Path(args.crosswalk).name}, {len(cw)} rows; applied: "
-                          f"skos:exactMatch{' and skos:closeMatch' if args.include_review else ''}")
+        if fr.is_review_sheet(args.crosswalk):
+            try:
+                cw, problems = fr.read_review_sheet(args.crosswalk, by_name, other_terms,
+                                                    lambda m: log.add('Inputs', m))
+            except (ValueError, KeyError) as e:
+                raise StopError(f'the review sheet could not be read: {e}')
+            for x in problems:
+                log.add('Warnings', x)
+            log.add('Inputs', f"crosswalk: the review sheet {args.crosswalk_name or Path(args.crosswalk).name}, "
+                              f"with the reviewer's decisions")
+        else:
+            cw = read_crosswalk(args.crosswalk)
+            log.add('Inputs', f"crosswalk: {args.crosswalk_name or Path(args.crosswalk).name}, {len(cw)} rows; "
+                              f"applied: skos:exactMatch{' and skos:closeMatch' if args.include_review else ''}")
         named = bool(args.assay_name)
         split_by_assay_column(args, log)
         log.add('Inputs', f"assay type {args.assay_type}; sample types {args.sample_types or 'all'}; project ID "
                           f"{args.project_id or '(none)'}; assays {args.assay_name or '(none)'}"
                           + (' (from the assay column of the OTU table)' if args.assay_name and not named else ''))
-        other_terms = {t.name: t for t in fm.load_other_terms(exclude=by_name)}
         others = []
         rows = choose_rows(cw, list(df.columns), by_name, args.include_review, log, other_terms, others)
         counts = build_workbook(args, df, rows, terms, by_name, log, others)
@@ -1839,7 +2029,8 @@ def main(argv=None):
         return 1
     log.write(args.log)
     print(f"INFO: wrote {counts['samples']} samples and {counts['terms']} FAIRe terms, plus {counts['user_fields']} "
-          f"user-defined fields; see the log for conversions and the mandatory terms still empty")
+          f"user-defined fields; see the log for conversions and the mandatory terms still empty. Check the "
+          f"workbook before you submit it anywhere")
     return 0
 
 

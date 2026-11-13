@@ -7,8 +7,8 @@ Sterivex Number	delete	the number of the filter cartridge, not a read count
 Sample ID	delete	a field label for each sample, as sample_title is in the 10 L table
 Location	delete	station codes (S2.1, N1.1), not place names; Locality gives geo_loc_name
 Filtration Date	delete	the date of filtering, not the date the record changed
-Filtered by	delete	who filtered; Collected by gives recordedBy
-Collected by	term:recordedBy	the people who collected the samples
+Filtered by	delete	who filtered each sample, not the people responsible for the dataset
+Collected by	delete	who collected each sample; recordedBy is the person responsible for the dataset, named in project_contact (O. Berry, 13 November 2026)
 Nominal depth	delete	the planned sampling depth, not the depth of the water column
 Depth (m)	confirm	the depth each sample was taken from (the planned depths in Nominal depth are the same), not the depth of the water column; a commonly confused term, so always for review
 Volume filtered	confirm	the volume of water collected and filtered for each sample (samp_size); a commonly confused term, so always for review

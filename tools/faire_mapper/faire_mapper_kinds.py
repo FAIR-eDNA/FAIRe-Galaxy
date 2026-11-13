@@ -100,9 +100,11 @@ def describe(df, sample_names=(), term_names=(), faire_terms=()):
     n_rows = len(df)
     known = {fo.norm_id(s) for s in sample_names if fo.norm_id(s)}
 
-    # A crosswalk from propose mapping
+    # A crosswalk from propose mapping, or its review sheet
     if {'subjectid', 'objectid'} <= set(keys) or {'subjectid', 'predicateid'} <= set(keys):
         return 'crosswalk', ['has subject_id and object_id columns (SSSOM)']
+    if {'inputterm', 'reviewersdecision'} <= set(keys):
+        return 'crosswalk', ["has Input term and Reviewer's decision columns (the review sheet)"]
 
     # Text read as a table: the header is a sentence
     if sum(len(str(c)) for c in cols) / len(cols) > 40:

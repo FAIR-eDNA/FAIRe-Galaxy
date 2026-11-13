@@ -187,12 +187,27 @@ names are in italics and leave off *FAIRe mapper:* at the front.
 
 *Reviewing the matches*
 
-The crosswalk is the table of matches that the *propose mapping* tool writes. It has one row for
-each column of your table, with the FAIRe term it matches, and it is where you check the matches
-and make corrections. Each match is rated for how certain it is: ``skos:exactMatch`` marks accepted
-and confirmed matches, and ``skos:closeMatch`` marks those to review.
+The *propose mapping* tool writes a **review sheet**, an Excel workbook with one row for each
+column of your table: the input term (your column's name), the proposed FAIRe term, its score, the
+mapper's reasoning, your decision and a replacement term. Rows to decide are shaded. For each row,
+choose a decision from the drop-down:
 
-Open the crosswalk in a spreadsheet or text editor. To confirm a match, change its row to
+- **Accept**: the proposed term is right. Rows the mapper accepted are marked Accept already.
+- **Reject**: the column has no FAIRe term. It is kept as a user-defined field, under the name in
+  *If rejected, kept as*: your own column name, or a MIxS or Darwin Core term when the mapper found
+  one, as the FAIRe guidelines ask.
+- **Change**: another FAIRe term is right. Pick it in *Replacement FAIRe term*: the drop-down lists
+  the column's five best candidates first, then every FAIRe term.
+
+A row with no decision is applied as the mapper called it. Hover over a proposed term to see what it
+means. The workbook also lists the things to decide. Save it as Excel and upload it as the input
+for the *apply mapping* tool.
+
+The review sheet is built from the **crosswalk**, the table of matches in SSSOM, a standard format,
+which the tool writes too. Each of its matches is rated for how certain it is:
+``skos:exactMatch`` marks accepted and confirmed matches, and ``skos:closeMatch`` marks those to
+review. You can review the crosswalk instead of the review sheet: open it in a spreadsheet or text
+editor. To confirm a match, change its row to
 ``skos:exactMatch`` by typing it over ``skos:closeMatch`` in the ``predicate_id`` column. To correct
 a match, change the term in ``object_label``. To stop a column being matched, delete its row. Then
 save the crosswalk as Excel, CSV or tab-separated text, and upload it as the input for the
@@ -203,10 +218,10 @@ sampleMetadata, unless you tick *Leave out columns that are not matched to a FAI
 *apply mapping* tool. The *mapping report* output shows the evidence and the other candidates for
 each column.
 
-For a column with no FAIRe term, the crosswalk may suggest a MIxS or Darwin Core term instead, as
-the FAIRe guidelines ask for one before a made-up name. Its row has the term's own identifier in
-``object_id``, such as ``MIXS:0000505`` for phosphate. Confirm it in the same way to name the
-column after the term, or delete the row to keep your own name.
+For a column with no FAIRe term, the review sheet and the crosswalk may suggest a MIxS or Darwin
+Core term instead, as the FAIRe guidelines ask for one before a made-up name. Accept it to name the
+column after the term, or reject it to keep your own name. In the crosswalk, its row has the term's
+own identifier in ``object_id``, such as ``MIXS:0000505`` for phosphate.
 
 Some FAIRe terms are often confused, even by people who know FAIRe:
 

@@ -89,7 +89,9 @@ For 18S:
   runs' BioSamples differ. Three columns say which rows are controls: *Sample type*,
   *Negative control type* and *Positive control type*.
 - `reviewer_decisions_18S.tsv`: the review of its crosswalk (below). `review.py` now also adds a row
-  for a column the mapper left unmatched (*Collected by* as recordedBy).
+  for a column the mapper left unmatched (*Collected by* as recordedBy, until 13 November 2026:
+  recordedBy is now the person named in project_contact, the person responsible for the dataset,
+  as Oliver Berry asked, and *Collected by* stays a user-defined field).
 - `project_values_18S.tsv`: the assay, gene and region from the ReadMe; the three ENVO terms from
   the 10 L sheet (the same for every sample there); and from the consolidated methods, the primers (TAReuk454FWD1 and modified
   TAReuk-Rev3), the amplification protocol, the sequencing centre, the sampling device, the cleaning
@@ -464,7 +466,10 @@ The benchmark and the four Dryad and two Australian trials give the same scores 
   last is kept.
 
 - **Not in the consolidated methods**: the 18S PCR conditions
-  (cycles, annealing, volumes; they are in Australian Microbiome protocol meth_5.1), the membrane of
+  (cycles, annealing, volumes; they are in the Australian Microbiome SOPs: the methods name meth_5.1,
+  which the SOP site lists as amplicon analysis, while meth_4.1.4 is the 18S V4 PCR with these primers;
+  since 13 November 2026 the 18S values give nucl_acid_amp as meth_4.1.4's link and sop_bioinformatics
+  as meth_5.1's, for the authors to confirm), the membrane of
   the Sterivex GP filters (filter_material), and the units of oxygen and nitrite. The references for
   the 18S primers are not given either; the primer table now has them (Stoeck et al. 2010, and the
   Australian Microbiome protocol for the modified reverse primer).
