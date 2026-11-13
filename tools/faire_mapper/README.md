@@ -934,8 +934,9 @@ November (0.6.0) the day-night trial added 7 apply mapping tests, 3 propose mapp
 identify test; all 60 tests passed in Galaxy `release_25.0` here. 0.6.1 adds one propose mapping
 test (commonly confused terms) and one apply mapping test (checkls_ver kept as given), and checks
 apply mapping's note on the confused terms in an existing test. 0.7.0 adds two propose mapping tests
-and one apply mapping test (MIxS and Darwin Core terms); all 14 propose mapping and 34 apply mapping
-tests pass in Galaxy `release_25.0` here, and so does the propose-mapping workflow test.
+and one apply mapping test (MIxS and Darwin Core terms), and one of each for the review sheet; all 15
+propose mapping, 35 apply mapping and 3 identify tests pass in Galaxy `release_25.0` here, and so does
+the propose-mapping workflow test.
 
 | Tool | Test | Checks | Result |
 |---|---|---|---|
