@@ -93,6 +93,11 @@ Of the 44 columns, 20 were accepted, 5 went to review and 19 had no FAIRe term. 
 | Nominal depth | `tot_depth_water_col` | 0.48 | review | Header partly matches 'total depth'; numbers 5 to 530. |
 | Phosphate | none | n/a | no match | FAIRe has no term for phosphate, so the column is kept as a user-defined field. |
 
+Since version 0.6.1 (13 November 2026), *Depth (m)* and *Nominal depth* would both go to review,
+however strong the match. FAIRe's sampling depth terms and `tot_depth_water_col` are often confused,
+so the comment names them, says what each means, and asks whether the column is the depth the sample
+was taken from or the depth of the water at the site.
+
 ## Step 3. Review
 
 *A person, in a spreadsheet*
