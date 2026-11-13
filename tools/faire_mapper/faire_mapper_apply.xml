@@ -194,7 +194,8 @@ python '$__tool_directory__/faire_mapper_apply.py'
         <data name="log" format="txt" label="${tool.name} on ${on_string}: log"/>
     </outputs>
     <tests>
-        <!-- A reviewed crosswalk: combined place names, a number and its unit, dates, durations -->
+        <!-- A reviewed crosswalk: combined place names, a number and its unit, dates (kept as written in
+             verbatimEventDate, as FAIRe asks), durations -->
         <test expect_num_outputs="2">
             <param name="table" value="apply_reef.csv"/>
             <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
@@ -206,6 +207,7 @@ python '$__tool_directory__/faire_mapper_apply.py'
                     <has_archive_member path="xl/worksheets/sheet3.xml">
                         <has_text text="Australia: Great Barrier Reef, Lizard Island"/>
                         <has_text text="2017-09-06"/>
+                        <has_text text="06/09/2017"/>
                         <has_text text="P316D"/>
                         <has_text text="&lt;t&gt;mL&lt;/t&gt;"/>
                         <has_text text="&lt;v&gt;0.45&lt;/v&gt;"/>
@@ -221,6 +223,7 @@ python '$__tool_directory__/faire_mapper_apply.py'
                 <assert_contents>
                     <has_text text="'Country' + 'Reef' + 'Site' to geo_loc_name (sampleMetadata), combined in this order"/>
                     <has_text text="read day first, as 13/09/2017 shows"/>
+                    <has_text text="'Collected' as written to verbatimEventDate (sampleMetadata), as eventDate holds the dates in ISO 8601, e.g. '06/09/2017'"/>
                     <has_text text="'Volume filtered' to samp_size_unit (the unit)"/>
                     <has_text text="'Control' to neg_cont_0_1: skos:closeMatch (for review)"/>
                     <has_text text="kept as user-defined fields in sampleMetadata: Control, Notes"/>
@@ -949,6 +952,10 @@ python '$__tool_directory__/faire_mapper_apply.py'
                     <has_text_matching expression="'not applicable: control sample' written in the 2 empty mandatory cells of 1 control \(eventDate, geo_loc_name\)"/>
                     <has_text text="ampliconSize = 178-228 (projectMetadata, assay Fish16S)"/>
                     <not_has_text text="ampliconSize = 178-228 (projectMetadata, assay Fish16S) (not an allowed value)"/>
+                    <!-- a commonly confused term given in the values for the whole project gets the same check -->
+                    <has_text text="## Commonly confused terms"/>
+                    <has_text text="samp_size = 1 (from the values for the whole project): Often confused with samp_vol_we_dna_ext (the amount of the sample, or of its subsamples, that went into the DNA extraction"/>
+                    <has_text text="Is this the amount collected from the environment, or the amount that went into the DNA extraction?"/>
                     <not_has_text text="neg_cont_type (sampleMetadata; mandatory if samp_category = negative control): empty in"/>
                     <has_text text="otu_lca_ranks.tsv: the sequence IDs are in the column 'OTU'"/>
                     <has_text text="otu_lca_ranks.tsv: dna_sequence from otu_lca_ranks.fasta for 3 of 3 sequences"/>
@@ -1115,6 +1122,28 @@ python '$__tool_directory__/faire_mapper_apply.py'
                 </assert_contents>
             </output>
         </test>
+        <!-- A checklist version given by the submitter is kept as written, even as text for a checklist
+             that defines it as a number, with a warning -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="project_values" value="apply_checkls_ver.tsv" ftype="tabular"/>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet2.xml">
+                        <has_text text="v2.0.0"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="checkls_ver is written as given (v2.0.0); the README sheet names the checklist used (FAIRe_checklist_v1.0.2.xlsx)"/>
+                    <has_text text="checkls_ver 'v2.0.0' is kept as given, but FAIRe_checklist_v1.0.2.xlsx defines it as a number, so FAIRe-fier will report it"/>
+                </assert_contents>
+            </output>
+        </test>
     </tests>
     <help><![CDATA[
 @EARLY_VERSION@
@@ -1131,7 +1160,9 @@ converts them:
 
 - **Dates** become ISO 8601 dates, so 12-Feb-19 becomes 2019-02-12. If a column's dates could be
   read either day first or month first (06/09/2017), the tool stops unless you tell it which. A
-  single value such as 13/09/2017 settles it for the whole column.
+  single value such as 13/09/2017 settles it for the whole column. The dates as written are kept in
+  verbatimEventDate, FAIRe's term for the date before formatting, unless a column of the table gives
+  it. Dates stored as Excel date cells have no text to keep.
 - **Durations** become ISO 8601 durations: "2 days" becomes P2D, and 316 under a header such as
   *Days frozen* becomes P316D.
 - **A number and its unit** in one cell ("1 L") are split between the term and its unit term
@@ -1292,7 +1323,9 @@ tick *Leave out columns that are not matched to a FAIRe term*.
   or as *otuRaw* and *taxaRaw*, as set for each table. When there are several assays, the assay name
   is added to the sheet names (*otuFinal_MiFish*), as in the FAIRe examples.
 - **Log**. This lists the inputs; each column written, with the conversion and an example; the
-  values for the whole project; what was left out and why; warnings, such as values that could not
+  values for the whole project; **commonly confused terms** given in those values (such as samp_size
+  and samp_vol_we_dna_ext), each with the terms it is confused with and how to tell them apart;
+  what was left out and why; warnings, such as values that could not
   be converted or repeated sample names; and the **mandatory terms still empty**, which are the next
   things to fill in.
 
@@ -1305,9 +1338,14 @@ tick *Leave out columns that are not matched to a FAIRe term*.
   nor a raw table of the same assay gives it.
 - Cell comments are not added to the sheets. Drop-down lists are added, in the same way FAIRe-ator
   adds them, from the *Drop-down values* sheet.
-- ``checkls_ver`` is written as the number 1, as the checklist defines it and the FAIRe examples
-  use it. The README sheet names the exact checklist (*FAIRe_checklist_v1.0.2.xlsx*). FAIRe-ator
-  writes the file name here, which FAIRe-fier reports as an error.
+- ``checkls_ver`` is kept as written when you give it (in the values for the whole project, or a
+  column): a number stays a number, and text such as v2.0.0 stays text. If you do not give it, it
+  is written as the checklist defines it. FAIRe checklist v1.0.2 defines it as a number, so it is
+  written as 1, as the FAIRe examples have it; a checklist that defines it as text (FAIRe v2) gets
+  the full version, such as v2.0.0, from the checklist's file name. Text given for a checklist that
+  defines a number is kept, and the log warns that FAIRe-fier will report it. The README sheet names
+  the exact checklist (*FAIRe_checklist_v1.0.2.xlsx*). FAIRe-ator writes the file name here, which
+  FAIRe-fier reports as an error.
 - Values from the table and the methods text are written to *project_level*. For values that differ
   between assays, add an ``assay`` column to the values for the whole project, or move the values to
   the assay columns yourself.

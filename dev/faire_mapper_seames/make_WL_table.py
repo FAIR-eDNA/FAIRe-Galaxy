@@ -36,10 +36,13 @@ OUT_COLS = ['*sample_name', 'sample_title', 'Sample set', 'Voyage', 'Location', 
 
 
 def ncbi_sheet(path):
+    """The rows of an NCBI BioSample sheet. Excel date cells, which pandas reads as text such as
+    2024-05-03 00:00:00, are written as the date they hold (2024-05-03), as prepare_table.py does."""
     raw = pd.read_excel(path, header=None, dtype=str)
     h = raw.index[raw[0].astype(str).str.contains('sample_name')][0]
     t = raw.iloc[h + 1:].copy()
     t.columns = [str(c) for c in raw.iloc[h]]
+    t = t.replace(r'^(\d{4}-\d{2}-\d{2}) 00:00:00$', r'\1', regex=True)
     return t.dropna(how='all').fillna('')
 
 

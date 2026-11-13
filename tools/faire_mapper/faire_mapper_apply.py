@@ -41,10 +41,22 @@ import faire_mapper_library as fl  # noqa: E402
 import faire_mapper_otu as fo  # noqa: E402
 
 __version__ = fm.__version__
-CHECKLIST_NAME = 'FAIRe_checklist_v1.0.2.xlsx'
-# The checklist defines checkls_ver as a number (example 1.2) and FAIRe-fier rejects anything else,
-# so write the major version, as the FAIRe example workbooks do. The README sheet names the exact file.
-CHECKLIST_NUMBER = 1
+CHECKLIST_VERSION_RE = re.compile(r'v(\d+(?:\.\d+)*)', re.I)
+
+
+def checklist_version(path, term):
+    """checkls_ver as the checklist given defines it: v1.0.2 defines it as a number (example 1.2) and
+    FAIRe-fier rejects anything else, so the major version, as the FAIRe example workbooks have it;
+    a checklist that defines it as text (FAIRe v2) gets the full version (v2.0.0). Returns the value
+    and the checklist's file name, which the README sheet records."""
+    name = Path(path).name
+    m = CHECKLIST_VERSION_RE.search(name)
+    version = m.group(1) if m else ''
+    if term is None or term.kind in ('number', 'integer'):
+        return (int(version.split('.')[0]) if version else 1), name
+    return (f'v{version}' if version else Path(path).stem), name
+
+
 SECTIONS_OUT = {'metabarcoding': ('Targeted assay detection',),
                 'targeted': ('Library preparation sequencing', 'Bioinformatics', 'OTU/ASV')}
 OTHER_SHEETS = {'metabarcoding': ('experimentRunMetadata', 'taxaRaw', 'taxaFinal'),
@@ -58,7 +70,8 @@ class StopError(Exception):
 
 class Log:
     def __init__(self):
-        self.sections = {'Inputs': [], 'Columns written': [], 'Project values': [], 'Library tables': [],
+        self.sections = {'Inputs': [], 'Columns written': [], 'Project values': [], 'Commonly confused terms': [],
+                         'Library tables': [],
                          'OTU and taxonomy tables': [], 'Left out': [], 'Warnings': [],
                          'Mandatory terms with no value': []}
 
@@ -505,7 +518,8 @@ def build_workbook(args, df, rows, terms, by_name, log):
     pm = pm[~pm['section'].isin(SECTIONS_OUT.get(args.assay_type, ()))]
     pm = pm[pm['requirement_level_code'].isin(req_lev)].reset_index(drop=True)
     project_terms = list(pm['term_name'])
-    project = {'project_id': args.project_id, 'assay_type': args.assay_type, 'checkls_ver': CHECKLIST_NUMBER}
+    checklist_ver, checklist_name = checklist_version(args.checklist, by_name.get('checkls_ver'))
+    project = {'project_id': args.project_id, 'assay_type': args.assay_type, 'checkls_ver': checklist_ver}
     if len(assays) == 1:
         project['assay_name'] = assays[0]
     by_assay = {a: {} for a in assays}   # values for one assay, in its projectMetadata column
@@ -542,6 +556,7 @@ def build_workbook(args, df, rows, terms, by_name, log):
         return None
 
     # ---- mapped columns
+    verbatim_dates = None   # the dates as written, when eventDate holds them converted
     by_term = {}
     for r in rows:
         by_term.setdefault(r['term'], []).append(r)
@@ -646,6 +661,9 @@ def build_workbook(args, df, rows, terms, by_name, log):
                                      f'stored number, so FAIRe-fier may count fewer decimal places')
             changed = [(a, b) for a, b in zip(raw, values) if not _blank(a) and str(a).strip() != str(b)
                        and not (isinstance(b, (int, float)) and _number(a) == b)]
+            if term == 'eventDate' and any(isinstance(a, str) for a, _ in changed):
+                # FAIRe's verbatimEventDate: the date before formatting. Excel date cells have no text to keep.
+                verbatim_dates = (col, [str(v).strip() if isinstance(v, str) and v.strip() else None for v in raw])
             ex = f", e.g. '{changed[0][0]}' as '{changed[0][1]}'" if changed else ''
             part = {'number': ' (the number)', 'unit': ' (the unit)', 'latitude': ' (the latitude)',
                     'longitude': ' (the longitude)'}.get(vp, '')
@@ -659,6 +677,12 @@ def build_workbook(args, df, rows, terms, by_name, log):
                     t.kind, 'could not be converted and are kept as they are')
                 log.add('Warnings', f"'{col}' to {term}: {len(problems)} values {why}, e.g. "
                         + ', '.join(f"'{x}'" for x in uniq[:3]))
+
+    if verbatim_dates and 'verbatimEventDate' in sample_out and 'verbatimEventDate' not in written:
+        col, texts = verbatim_dates
+        put('verbatimEventDate', texts, f"'{col}'")
+        log.add('Columns written', f"'{col}' as written to verbatimEventDate (sampleMetadata), as eventDate holds "
+                                   f"the dates in ISO 8601, e.g. '{next(x for x in texts if x)}'")
 
     # ---- times of day in a column of their own (verbatimEventTime), joined to the dates in eventDate,
     # as FAIRe's eventDate is "the date and time of sampling" (2008-01-23T19:23-06:00)
@@ -711,7 +735,7 @@ def build_workbook(args, df, rows, terms, by_name, log):
         pv = fm.read_table(args.project_values).astype(object).where(lambda x: x.notna(), '')
         pv.columns = [str(c).strip().lower() for c in pv.columns]
         pv = pv.map(lambda v: str(v) if v != '' else '')
-        held_values, for_samples_only = {}, []
+        held_values, for_samples_only, from_values = {}, [], {}
         ctrl = control_rows(sample_out, n)
         if not {'term', 'value'} <= set(pv.columns):
             raise StopError('the project values file needs the columns term and value')
@@ -738,6 +762,7 @@ def build_workbook(args, df, rows, terms, by_name, log):
                 v, problem = convert_value(value, by_name[term], None)
                 by_assay[assay][term] = v
                 written.add(term)
+                from_values.setdefault(term, str(v))
                 log.add('Project values', f'{term} = {str(v)[:80]} (projectMetadata, assay {assay})'
                         + (' (not an allowed value)' if problem else ''))
                 continue
@@ -753,6 +778,9 @@ def build_workbook(args, df, rows, terms, by_name, log):
                 continue
             t = by_name[term]
             v, problem = convert_value(value, t, None)
+            if term == 'checkls_ver':
+                # Kept as the submitter wrote it (a number stays a number), whatever the checklist's type
+                v, problem = _number_or_text(value), False
             if term in project_terms and t.level == 'project':
                 project[term] = v
             elif term in sample_out:
@@ -769,8 +797,20 @@ def build_workbook(args, df, rows, terms, by_name, log):
                 log.add('Warnings', f'project value {term}: not in the sheets made; skipped')
                 continue
             written.add(term)
+            from_values.setdefault(term, str(v))
             where = 'projectMetadata' if term in project and project[term] == v else 'every sample'
             log.add('Project values', f'{term} = {str(v)[:80]} ({where})' + (' (not an allowed value)' if problem else ''))
+        # Terms that people often confuse, given here with no review: the same check as the crosswalk's
+        confused = fm.load_confused(args.confused_terms)
+        sides = {}
+        for term in from_values:
+            if term in confused[0]:
+                sides.setdefault(confused[0][term][1], []).append(term)
+        for given in sides.values():
+            note = fm.confused_note(given, confused)
+            if note:
+                log.add('Commonly confused terms', ', '.join(f'{t} = {from_values[t][:60]}' for t in given)
+                        + f' (from the values for the whole project): {note}')
         if for_samples_only:
             log.add('Project values', f"{', '.join(for_samples_only)}: written as '{CONTROL_NA}' for the "
                     f"{sum(ctrl)} controls, as FAIRe asks only the samples for them")
@@ -990,15 +1030,27 @@ def build_workbook(args, df, rows, terms, by_name, log):
             if empty:
                 log.add('Mandatory terms with no value', f'{term} (experimentRunMetadata)'
                         + (f': empty in {empty} of {len(run_rows)} rows' if empty < len(run_rows) else ''))
-    log.add('Project values', f'checkls_ver is written as the number {CHECKLIST_NUMBER}, as the checklist defines it; the README '
-            f'sheet names the exact checklist ({CHECKLIST_NAME})')
+    given = project.get('checkls_ver')
+    if given != checklist_ver:
+        # The submitter's own value, from a column or the values for the whole project, kept as written.
+        numeric = by_name.get('checkls_ver') is not None and by_name['checkls_ver'].kind in ('number', 'integer')
+        log.add('Project values', f"checkls_ver is written as given ({given}); the README sheet names the checklist "
+                                  f"used ({checklist_name})")
+        if numeric and not isinstance(given, (int, float)):
+            log.add('Warnings', f"checkls_ver '{given}' is kept as given, but {checklist_name} defines it as a number, "
+                                f"so FAIRe-fier will report it (FAIRe checklist v2 makes it text). Give "
+                                f"{checklist_ver} for this checklist")
+    else:
+        log.add('Project values', (f'checkls_ver is written as the number {checklist_ver}' if isinstance(checklist_ver, int)
+                                   else f"checkls_ver is written as the text '{checklist_ver}'")
+                + f', as the checklist defines it; the README sheet names the exact checklist ({checklist_name})')
 
     # ---- write
     wb = Workbook()
     ws = wb.active
     ws.title = 'README'
     stamp = dt.datetime.now().astimezone().isoformat(timespec='seconds')
-    readme = ['The templates were generated using the FAIR eDNA checklist version of;', CHECKLIST_NAME, '',
+    readme = ['The templates were generated using the FAIR eDNA checklist version of;', checklist_name, '',
               'Date/Time generated;', stamp, '',
               f'Filled by FAIRe mapper: apply mapping {__version__}, from;',
               f'table = {args.table_name or Path(args.table).name}',
@@ -1513,6 +1565,16 @@ def _write_otu_sheet(wb, name, counts, bold):
     ws.freeze_panes = 'B2'
 
 
+def _number_or_text(s):
+    """A value as written: 1.2 as the number 1.2, v2.0.0 as the text."""
+    s = str(s).strip()
+    try:
+        f = float(s)
+    except ValueError:
+        return s
+    return int(f) if re.fullmatch(r'[-+]?\d+', s) else f
+
+
 def _maybe_number(values, s):
     for v in values:
         if not _blank(v) and str(v) == s:
@@ -1637,6 +1699,9 @@ def main(argv=None):
     ap.add_argument('--date_order', choices=['stop', 'dmy', 'mdy'], default='stop',
                     help='how to read dates such as 06/09/2017 when no value settles it (default: stop)')
     ap.add_argument('--include_review', action='store_true', help='also apply skos:closeMatch rows (for review)')
+    ap.add_argument('--confused_terms', default=str(fm.CONFUSED_TERMS),
+                    help='table of FAIRe terms people often confuse; a value for one of them in the project values '
+                         'gets a note in the log (default: commonly_confused_terms.tsv beside faire_mapper.py)')
     ap.add_argument('--project_values', help='table (CSV, TSV or Excel) with term and value (and status): values for the whole project, '
                                              'e.g. from faire_mapper_methods.py; rows with status other than '
                                              'supported or confirmed are left out')

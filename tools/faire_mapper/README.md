@@ -26,7 +26,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
 
 ## Status
 
-- Version 0.6.0. `planemo lint`: passes with no warnings. `pyflakes`: clean.
+- Version 0.6.1. `planemo lint`: passes with no warnings. `pyflakes`: clean.
 - Goes to Galaxy Australia as an early version with the wrapped FAIRe tools (decided 6 November
   2026). Each tool's help starts with a note saying so, which asks users to check the results and
   send problems to the Galaxy Australia help desk (to confirm with Galaxy Australia, question 8).
@@ -43,6 +43,24 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   independent answer keys (`dev/faire_mapper_real_datasets/`, `dev/faire_mapper_australian_datasets/`,
   summarised below), and end to end on CSIRO's SEA-MES data (`dev/faire_mapper_seames/`). Not yet
   tried on datasets from Australian labs that already have a FAIRe version.
+- New in 0.6.1 (13 November 2026): FAIRe terms that people often confuse, listed in
+  `commonly_confused_terms.tsv` (group, term, meaning, the question that tells them apart). Propose
+  mapping always marks a column matched to one of them for review, however strong the match. The
+  crosswalk comment names the terms it is confused with and what each means, and asks the question;
+  *things to decide* lists the column too, and apply mapping's log gives the same note for any of
+  these terms in the values for the whole project. The groups, from Oliver Berry: the sampling
+  depth (minimumDepthInMeters and maximumDepthInMeters, which go together) and the depth of the water
+  column (tot_depth_water_col); the amount collected (samp_size) and the amount extracted
+  (samp_vol_we_dna_ext); and the taxa the primers amplify (targetTaxonomicAssay) and the taxa the
+  study set out to detect (targetTaxonomicScope). In the SEA-MES 18S trial, *Nominal depth* (the planned sampling depth) was
+  proposed as tot_depth_water_col. `--confused_terms` gives another table.
+  Also in 0.6.1: apply mapping keeps the dates as written in verbatimEventDate (FAIRe: "Sample
+  collection date before formatting") when it converts them for eventDate, as Oliver Berry asked.
+  Apply mapping writes checkls_ver as the checklist it's given defines it: the number 1 for v1.0.2,
+  as before, or the version as text (v2.0.0, from the file name) for a checklist that defines it as
+  text, as FAIRe checklist v2 will. A checkls_ver the submitter gives (in the values for the whole
+  project, or a column) is kept as written, as Oliver Berry asked; text given for a checklist that
+  defines a number is kept, with a warning that FAIRe-fier will report it.
 - New in 0.6.0 (12 November 2026), from the day-night trial (`dev/faire_mapper_daynight/`): a
   column of times of day (Excel time cells, or 10:00, 4 pm) is proposed as verbatimEventTime, and
   apply mapping joins each time to its date in eventDate, with the UTC offset given on its form
@@ -72,7 +90,8 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   values), what apply mapping will do with the values, and, for rows to review, what to check. A
   yes/no control column explains why it goes to samp_category and how many rows become controls.
   Apply mapping writes `checkls_ver` as the number 1, as the checklist defines it and the FAIRe
-  examples use it; the README sheet names the exact checklist.
+  examples use it; the README sheet names the exact checklist. (From 0.6.1 it follows the
+  checklist: text such as v2.0.0 when the checklist defines it as text, as FAIRe v2 will.)
 - New in 0.5.0, from the SEA-MES trial: comment lines above the header (NCBI and ENA sheets) are
   skipped; MIxS lat_lon is split into decimalLatitude and decimalLongitude; one depth fills both
   depth terms; a yes/no control column goes to samp_category; dates saved at midnight lose the time;
@@ -812,6 +831,7 @@ test.
 - `otu_lca_ranks.tsv` and `otu_lca_ranks.fasta`: an eDNAFlow LCA output (domain to species, the
   OTU column, then the samples) for those samples, and its ASV sequences. Made up, by the same
   script.
+- `apply_checkls_ver.tsv`: values for the whole project that give checkls_ver as v2.0.0.
 - `apply_times_utc.csv` and `apply_times_utc.sssom.tsv`: two samples with a *Collection Time (UTC)*
   column, as in the SEA-MES 18S table.
 - `library_file_list.csv` and `library_md5sum.txt`: eight fastq files with made-up MD5s, as Windows
@@ -820,6 +840,8 @@ test.
   the day-night study names its files (LIZ_01_Fish16S_R1.fastq.gz); and `library_file_names.txt`:
   their names only, one per line with a folder, as the Data Access Portal lists files. By the same
   script.
+- `map_confused.csv`: six samples with a sampling depth (0, 5 and 10 m), the depth of the water at
+  the site (15 and 22 m), the volume filtered (1 or 2 L) and the volume extracted (500 or 1000 mL).
 - `map_review.csv`: 11 rows in the form of the day-night study's sheet: a sample name used twice,
   a filtration control named but not marked, notes in the first rows of two columns, and times with
   no time zone.
@@ -854,7 +876,9 @@ passing credentials as Galaxy would); all 42 tests passed in Galaxy `release_26.
 November the identify tool was added, with 2 tests, and 5 apply mapping tests for files in the
 wrong field and the layout setting; all 49 tests passed in Galaxy `release_26.1` here. On 12
 November (0.6.0) the day-night trial added 7 apply mapping tests, 3 propose mapping tests and 1
-identify test; all 60 tests passed in Galaxy `release_25.0` here.
+identify test; all 60 tests passed in Galaxy `release_25.0` here. 0.6.1 adds one propose mapping
+test (commonly confused terms) and one apply mapping test (checkls_ver kept as given), and checks
+apply mapping's note on the confused terms in an existing test.
 
 | Tool | Test | Checks | Result |
 |---|---|---|---|
@@ -874,7 +898,7 @@ identify test; all 60 tests passed in Galaxy `release_25.0` here.
 | build primer table | 1 | User's rows added to the bundled table; bad row reported | passed |
 | build primer table | 2 | New table from a register spreadsheet and a TSV; reused primer names reported | passed |
 | build primer table | 3 | A correction row replaces the pair it corrects and records the change | passed |
-| apply mapping | 1 | Reviewed crosswalk: geo_loc_name from three columns, "1 L" split, microns kept as numbers, dd/mm/yyyy dates read day first, days frozen as ISO durations, unmapped columns kept, a match for review left out, mandatory terms listed | passed |
+| apply mapping | 1 | Reviewed crosswalk: geo_loc_name from three columns, "1 L" split, microns kept as numbers, dd/mm/yyyy dates read day first and kept as written in verbatimEventDate (since 0.6.1), days frozen as ISO durations, unmapped columns kept, a match for review left out, mandatory terms listed | passed |
 | apply mapping | 2 | Matches for review applied, values for the whole project (one for review left out, one replaced by a column), two assays as projectMetadata columns, unmapped columns dropped | passed |
 | apply mapping | 3 | Dates that fit both orders: stops and says which form setting to use | passed |
 | apply mapping | 4 | The same dates read month first, as set on the form | passed |
@@ -882,7 +906,7 @@ identify test; all 60 tests passed in Galaxy `release_25.0` here.
 | apply mapping | 6 | Two assays: a reads-per-taxon matrix (samples as rows, sample details left out, names read as ranks) and a DADA2 table with its taxonomy joined by sequence, as otuRaw and taxaRaw sheets named by assay | passed |
 | apply mapping | 7 | OTU table whose names match no sample: stops with the names found | passed |
 | apply mapping | 8 | A crosswalk edited in a spreadsheet and saved as Excel | passed |
-| map | 8 | NCBI BioSample sheet: comment lines skipped, MIxS lat_lon to both coordinates, one depth to both depth terms, Control_Neg (Y or N) to samp_category | passed |
+| map | 8 | NCBI BioSample sheet: comment lines skipped, MIxS lat_lon to both coordinates, one depth to both depth terms (for review since 0.6.1, as commonly confused), Control_Neg (Y or N) to samp_category | passed |
 | apply mapping | 9 | The same sheet: coordinates split and signed, dates at midnight written as dates, controls as *negative control*; an ENA run report as the library table (filtered by name, a library of another sample and a lone file left out, files, MD5s and links written, lib_id with the assay and run added); an ASV table named after fastq files | passed |
 | apply mapping | 10 | The SRA submission sheet as the library table: the instructions sheet skipped, libraries matched by sample name | passed |
 | apply mapping | 11 | Libraries that hold two assays' amplicons in one pair of files: a lib_id for each amplicon (library name, assay and run), the rows sharing the files, and the log listing the libraries | passed |
@@ -907,8 +931,10 @@ identify test; all 60 tests passed in Galaxy `release_25.0` here.
 | apply mapping | 30 | A list of fastq files with their MD5s as PowerShell's Get-FileHash and Export-Csv write it (a #TYPE line; Algorithm, Hash and the full Windows path): paired into four libraries by read number, file names without their folders, checksums written and checksum_method MD5, lib_id LIZ_01_Fish16S_reef_run1 (the assay not repeated) | passed |
 | apply mapping | 31 | The same files as a list of names, one per line with their folder and no header (as the Data Access Portal lists them): read as a file list, paired, folders taken off, no checksum_method | passed |
 | apply mapping | 32 | The same files as md5sum writes them (no header): read as a checksum list, paired, checksums written | passed |
+| apply mapping | 33 | checkls_ver given as v2.0.0 in the values for the whole project: kept as written, with a warning that checklist v1.0.2 defines a number | passed |
 | map | 9 | Excel time cells in a Time column: verbatimEventTime (times of day), with a note that apply mapping joins them to the dates | passed |
 | map | 11 | Times in UTC only: *things to decide* lists them, with how to get local time | passed |
+| map | 12 | Sampling depth, water depth, volume filtered and volume extracted: all for review despite strong matches, each comment naming the terms it is confused with and the question that tells them apart, and all in *things to decide* | passed |
 | map | 10 | A sheet in the day-night study's form: the *things to decide* list gives a repeated sample name, a filtration control not marked as a control, two columns of notes and the times with no time zone | passed |
 | identify | 1 | Eight files: sample, OTU, taxonomy, library, dictionary, text, curated OTU table and crosswalk, each named with its reason | passed |
 | identify | 2 | Two Excel files: each sheet on its own (the SRA sheet's library sheet, a primer register); no sample table found | passed |

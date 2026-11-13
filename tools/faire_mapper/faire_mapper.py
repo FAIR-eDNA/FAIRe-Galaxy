@@ -33,7 +33,7 @@ from pathlib import Path
 
 import pandas as pd
 
-__version__ = '0.6.0'
+__version__ = '0.6.1'
 
 MISSING = {'', 'na', 'n/a', 'nan', 'none', 'null', '-', '--', '?', 'not applicable', 'missing',
            'not collected', 'not provided', 'unknown'}
@@ -1190,6 +1190,43 @@ def _value_problem(why):
     return ''
 
 
+CONFUSED_TERMS = Path(__file__).with_name('commonly_confused_terms.tsv')
+
+
+def load_confused(path=CONFUSED_TERMS):
+    """FAIRe terms that people often confuse (commonly_confused_terms.tsv): {term: (group, side, meaning)},
+    where a side is the terms of one row, which go together (minimumDepthInMeters, maximumDepthInMeters),
+    and {group: the question that tells its sides apart}."""
+    terms, checks = {}, {}
+    if not path or not Path(path).exists():
+        return terms, checks
+    table = pd.read_csv(path, sep='\t', comment='#', dtype=str, keep_default_na=False)
+    for r in table.to_dict('records'):
+        group = r.get('group', '').strip()
+        side = tuple(t.strip() for t in r.get('term', '').split(',') if t.strip())
+        for term in side if group else ():
+            terms[term] = (group, side, r.get('meaning', '').strip())
+        if group and side and r.get('check', '').strip() and group not in checks:
+            checks[group] = r['check'].strip()
+    return terms, checks
+
+
+def confused_note(names, confused):
+    """'Often confused with Z (its meaning). <the group's question>' for terms of one group, or ''."""
+    terms, checks = confused
+    names = [n for n in names if n in terms]
+    if not names:
+        return ''
+    group = terms[names[0]][0]
+    mine = {terms[n][1] for n in names}
+    others = list(dict.fromkeys(side for g, side, _ in terms.values() if g == group and side not in mine))
+    if not others:
+        return ''
+    meaning = {side: m for g, side, m in terms.values()}
+    said = ' and '.join(f"{' and '.join(s)} ({meaning[s]})" if meaning[s] else ' and '.join(s) for s in others)
+    return f"Often confused with {said}. {checks.get(group, '')}".strip()
+
+
 def reader_comment(pr, p, c, t, ctx):
     """The comment a reviewer reads for one crosswalk row (see the block comment above)."""
     review = pr.route == 'review'
@@ -1264,6 +1301,9 @@ def reader_comment(pr, p, c, t, ctx):
             ll = parse_lat_lon(p.examples[0])
             if ll:
                 happens.append(f'for example, {p.examples[0]} becomes {ll[0]} and {ll[1]}')
+    note = confused_note([pr.term] + pr.also_terms(), ctx.get('confused', ({}, {})))
+    if note:
+        check.insert(0, note)
     if review and not check:
         rival = next((x for x in ctx['rivals'].get(pr.column, []) if x != pr.term), '')
         check.append('confirm this row if the column holds what the FAIRe term describes. Otherwise change the '
@@ -1285,7 +1325,7 @@ def also_comment(pr, term, note, t):
             + (' Check: confirm or delete it together with that row.' if pr.route == 'review' else ''))
 
 
-def propose(df, terms, k=5, overrides=None, answered_by=None, descriptions=None, k_close=10):
+def propose(df, terms, k=5, overrides=None, answered_by=None, descriptions=None, k_close=10, confused=None):
     by_name = {t.name: t for t in terms}
     scorer = NameScorer(terms)
     profiles = profile_table(df)
@@ -1538,6 +1578,12 @@ def propose(df, terms, k=5, overrides=None, answered_by=None, descriptions=None,
                 if pr.route == 'accept':
                     pr.route = 'review'
                     pr.evidence += '; for review with the other parts'
+    # Terms that people often confuse are always for review, however strong the match.
+    confused = load_confused() if confused is None else confused
+    for pr in proposals:
+        if pr.route == 'accept' and any(x in confused[0] for x in [pr.term] + pr.also_terms()):
+            pr.route = 'review'
+            pr.evidence = '; '.join(x for x in (pr.evidence, 'a commonly confused FAIRe term, so for review') if x)
     # What the reviewer reads in the crosswalk.
     id_col = assigned_term.get('samp_name')
     flag_info = {}
@@ -1553,6 +1599,7 @@ def propose(df, terms, k=5, overrides=None, answered_by=None, descriptions=None,
         flag_info[col] = (was, kind, yes, no, sum(v.lower() in BOOL_YES for v in vals),
                           sum(v.lower() in BOOL_NO for v in vals), example)
     ctx = {'flags': flag_info, 'unit_notes': unit_notes, 'part_notes': part_notes, 'clashes': clashes,
+           'confused': confused,
            'level_notes': level_notes,
            'rivals': {col: [x.term for x in cands if x.term not in assigned_term and x.score >= REVIEW]
                       for col, cands in scored.items()},
@@ -1706,7 +1753,7 @@ def _row_span(rows, n):
     return f'row {rows[0]} of {n}' if len(rows) == 1 else f'rows {rows[0]} to {rows[-1]} of {n}'
 
 
-def review_list(df, profiles, proposals):
+def review_list(df, profiles, proposals, confused=None):
     """What only a person can decide: a sample name used twice, controls named but not marked, columns
     of notes, and times of collection with no time zone. One row each, with what to do. The tool
     flags these and changes nothing."""
@@ -1745,6 +1792,12 @@ def review_list(df, profiles, proposals):
                         'leave the column out (delete its row in the crosswalk) and give anything FAIRe needs from them '
                         '(recordedBy, for example) as a project value. If they belong to those rows only, keep '
                         'the column'])
+    # Terms that people often confuse, with the question that tells them apart
+    confused = load_confused() if confused is None else confused
+    for pr in mapped:
+        names = [x for x in [pr.term] + pr.also_terms() if x in confused[0]]
+        if names:
+            out.append(['often confused terms', pr.column, ', '.join(names), confused_note(names, confused)])
     # The times that go into eventDate: a column matched to verbatimEventTime, or eventDate with times.
     # Daily cycles follow local time, so eventDate keeps it; the UTC offset adds the time zone.
     timed = {pr.column for pr in mapped if pr.term in ('verbatimEventTime', 'eventDate')}
@@ -2097,9 +2150,10 @@ def cmd_map(args):
     overrides, answered_by = read_responses(args.responses, with_source=True) if args.responses else (None, None)
     descriptions, dict_notes = read_dictionary(args.dictionary, df.columns, args.dictionary_sheet) \
         if args.dictionary else ({}, [])
+    confused = load_confused(args.confused_terms)
     profiles, proposals = propose(df, terms, k=args.shortlist, k_close=args.shortlist_close, overrides=overrides,
                                   answered_by=answered_by,
-                                  descriptions=descriptions)
+                                  descriptions=descriptions, confused=confused)
     out = Path(args.outdir)
     out.mkdir(parents=True, exist_ok=True)
     rep = pd.DataFrame([{'column': p.column, 'proposed_term': p.term, 'faire_sheet': p.sheet,
@@ -2116,7 +2170,7 @@ def cmd_map(args):
     reqs = adjudication_requests(profiles, proposals, terms, descriptions)
     with open(out / 'adjudication_requests.json', 'w') as f:
         json.dump(reqs, f, indent=1)
-    review = review_list(df, profiles, proposals)
+    review = review_list(df, profiles, proposals, confused)
     pd.DataFrame(review, columns=REVIEW_COLUMNS).to_csv(out / 'review_list.tsv', sep='\t', index=False)
     counts = rep.route.value_counts().to_dict()
     summary = {'table': Path(args.table).name, 'checklist': Path(args.checklist).name, 'columns': len(proposals),
@@ -2162,6 +2216,9 @@ def main(argv=None):
     m.add_argument('--checklist', required=True, help='FAIRe checklist workbook (FAIRe_checklist_v*.xlsx)')
     m.add_argument('--assay_type', choices=['metabarcoding', 'targeted'], help='leave out terms for the other assay type')
     m.add_argument('--sample_types', help='comma-separated sample types (Water, Soil, Sediment, Air, ...)')
+    m.add_argument('--confused_terms', default=str(CONFUSED_TERMS),
+                   help='table of FAIRe terms people often confuse (group, term, meaning, check); these are '
+                        'always for review (default: commonly_confused_terms.tsv beside this script)')
     m.add_argument('--shortlist', type=int, default=5, help='candidates listed per column (default 5)')
     m.add_argument('--shortlist_close', type=int, default=10,
                    help='candidates listed when the last of --shortlist scores within %.2f of the first, so no '

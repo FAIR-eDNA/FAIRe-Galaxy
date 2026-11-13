@@ -15,7 +15,7 @@ tables into a FAIRe workbook. The Galaxy eDNA Lab is at edna.dev.gvl.org.au.
 | `tools/faire2qiime` | FAIRe2QIIME | [aomlomics/faire2qiime](https://github.com/aomlomics/faire2qiime) | Lint clean; 8/8 tests pass; needs a trial importing its files into QIIME 2 |
 | `tools/faire2mdt` | FAIRe2MDT | [FAIR-eDNA/FAIRe2MDT](https://github.com/FAIR-eDNA/FAIRe2MDT) | Lint clean; 6/6 tests pass; leaves out control samples, as GBIF asks; ran on 11 assay and run combinations of the FAIRe examples; MDT trial reached an archive GBIF can index; CC BY 4.0 licence copied in (`LICENSE.upstream`) |
 | `tools/edna2obis` | edna2obis: match taxa; edna2obis: build Darwin Core tables | [aomlomics/edna2obis](https://github.com/aomlomics/edna2obis) | Lint clean; 14/14 tests pass (Galaxy 26.1, with internet access); one request at a time to WoRMS and GBIF by default, at most 4; needs a trial on Galaxy Australia and an IPT |
-| `tools/faire_mapper` | FAIRe mapper: identify your files (says what each file is and where it goes); profile columns; propose mapping; find primers; build primer table; apply mapping (writes a FAIRe workbook); ask a language model (optional answers for the columns to review) (plus a model script for methods text) | New code, from the project's `faire_mapper` prototype; bundled primer table from Takahashi et al. 2023 and a bacteria and archaea register | Lint clean; 60/60 tests pass (Galaxy 26.1); benchmarked, tried on four Dryad datasets, two Australian datasets, the SEA-MES record (16S, COI, 18S and Wilderlab), the day-night study of West et al. 2024 (16S and COI, `dev/faire_mapper_daynight/`) and nine FAIRe examples; model step not yet run against the API |
+| `tools/faire_mapper` | FAIRe mapper: identify your files (says what each file is and where it goes); profile columns; propose mapping; find primers; build primer table; apply mapping (writes a FAIRe workbook); ask a language model (optional answers for the columns to review) (plus a model script for methods text) | New code, from the project's `faire_mapper` prototype; bundled primer table from Takahashi et al. 2023 and a bacteria and archaea register | Lint clean; 61/61 tests pass (Galaxy 26.1); benchmarked, tried on four Dryad datasets, two Australian datasets, the SEA-MES record (16S, COI, 18S and Wilderlab), the day-night study of West et al. 2024 (16S and COI, `dev/faire_mapper_daynight/`) and nine FAIRe examples; model step not yet run against the API |
 
 Each tool directory has its own README with what the wrapper adds, upstream issues found, and the
 steps still needed before deployment.
@@ -30,7 +30,7 @@ Notes for Galaxy Australia and other evaluators.
   which repository.
 - **Installing.** Each folder under `tools/` is one ToolShed repository with its own tests
   (`planemo test tools/FOLDER`). The tools are not on the ToolShed yet, as the owner account is still
-  to be chosen. Dependencies come from conda (conda-forge and bioconda) or containers. All 130 tool
+  to be chosen. Dependencies come from conda (conda-forge and bioconda) or containers. All 131 tool
   tests pass on Galaxy release_26.1 in this repository's checks; the tools were also tested on
   release_25.0. Tools use profile 23.0, except *FAIRe mapper: ask a language model* (25.1, for
   Galaxy's credentials).

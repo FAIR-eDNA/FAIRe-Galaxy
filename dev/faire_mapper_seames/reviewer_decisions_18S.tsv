@@ -10,3 +10,5 @@ Filtration Date	delete	the date of filtering, not the date the record changed
 Filtered by	delete	who filtered; Collected by gives recordedBy
 Collected by	term:recordedBy	the people who collected the samples
 Nominal depth	delete	the planned sampling depth, not the depth of the water column
+Depth (m)	confirm	the depth each sample was taken from (the planned depths in Nominal depth are the same), not the depth of the water column; a commonly confused term, so always for review
+Volume filtered	confirm	the volume of water collected and filtered for each sample (samp_size); a commonly confused term, so always for review

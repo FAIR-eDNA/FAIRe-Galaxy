@@ -12,15 +12,31 @@ and M for 10 L samples, collected on 0.45 µm filters. The methods (methods_cons
 sections 2 and 4) give the filter, its processing and the extraction for each. The 12 10 L samples
 are taken to have the 10 L extraction (section 2.2), as they come from the same extracts as the 16S
 data. The membrane of the Sterivex GP filters is not stated, so Filter material is empty for them.
-Nothing else is changed.
 
-Usage: python make_2L_table.py 7_SEA-MES_2025_EUK_18S_for_DAT.csv.gz OUT.csv
+Given the run report, it also adds a row for each control library sequenced with the 18S samples,
+as a person following the guide would: the controls have reads at the archive but are not in the
+18S table. Each 18S run (BOD14795 and BOD14856) had a no-template control (NTC), a mock community
+(ATCC1010) and a soil sample. The SRA sheet titles all three "Pos. control"; a no-template control
+is a PCR negative (O. Berry, 13 November 2026). Each row is named after its library, without _18s
+(NTC-7C-1608411-BOD14795), and has only a Sample ID that says what it is and which run it was on
+(no-template control, run BOD14795), so that its BioSample differs from the other run's, a Sample
+type, a Negative control type and a Positive control type; the field samples have Sample type
+"sample". Nothing else is changed.
+
+Usage: python make_2L_table.py 7_SEA-MES_2025_EUK_18S_for_DAT.csv.gz OUT.csv [RUN_REPORT.tsv]
 """
 import csv
 import gzip
 import sys
 
+# The controls in the run report, by the start of their library name: sample type, negative control
+# type, positive control type.
+CONTROLS = {'NTC-': ('no-template control', 'negative control', 'PCR negative', ''),
+            'ATCC1010-': ('mock community ATCC1010', 'positive control', '', 'PCR positive: mock community (ATCC1010)'),
+            'Soil-': ('soil', 'positive control', '', 'PCR positive: soil')}
+
 src, out = sys.argv[1], sys.argv[2]
+report = sys.argv[3] if len(sys.argv) > 3 else None
 with gzip.open(src, 'rt', encoding='utf-8-sig', newline='') as f:
     rows = list(csv.reader(f))
 header = rows[0]
@@ -43,11 +59,27 @@ by_prefix = {   # from the ReadMe and the methods
           'with a peristaltic pump; filters stored at -80 °C.',
           'West et al. (2024), with modifications', 'DNeasy Blood and Tissue Kit (QIAGEN)'),
 }
+controls = []
+if report:
+    with open(report, encoding='utf-8', newline='') as f:
+        for r in csv.DictReader(f, delimiter='\t'):
+            lib = r['library_name'].strip()
+            kind = next((v for k, v in CONTROLS.items() if lib.startswith(k)), None)
+            if kind and lib.lower().endswith('_18s'):
+                controls.append((lib[:-4], kind))
+controls.sort()
+kinds = ['Sample type', 'Negative control type', 'Positive control type']
 with open(out, 'w', encoding='utf-8', newline='') as f:
     w = csv.writer(f)
-    w.writerow([names[j] for j in keep] + added)
+    w.writerow([names[j] for j in keep] + added + (kinds if controls else []))
     for s in samples:
-        w.writerow([s[j].strip() for j in keep] + list(by_prefix.get(s[name].strip()[:1], ('',) * len(added))))
+        w.writerow([s[j].strip() for j in keep] + list(by_prefix.get(s[name].strip()[:1], ('',) * len(added)))
+                   + (['sample', '', ''] if controls else []))
+    for lib, (what, *kind) in controls:
+        label = f"{what}, run {lib.rsplit('-', 1)[-1]}"
+        w.writerow([lib if names[j] == 'Sample No.' else label if names[j] == 'Sample ID' else '' for j in keep]
+                   + [''] * len(added) + kind)
 left_out = [names[j] for j in range(len(names)) if j not in keep]
 print(f'{len(samples)} samples and {len(keep)} details from rows {start + 1} to {len(rows)} of the 18S table'
-      + (f"; empty for every sample: {', '.join(left_out)}" if left_out else ''))
+      + (f"; empty for every sample: {', '.join(left_out)}" if left_out else '')
+      + (f"; {len(controls)} controls from the run report: {', '.join(c for c, _ in controls)}" if controls else ''))

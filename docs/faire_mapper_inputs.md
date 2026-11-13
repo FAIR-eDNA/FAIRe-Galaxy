@@ -158,6 +158,21 @@ sampleMetadata, unless you tick *Leave out columns that are not matched to a FAI
 *apply mapping* tool. The *mapping report* output shows the evidence and the other candidates for
 each column.
 
+Some FAIRe terms are often confused, even by people who know FAIRe:
+
+- the depth a sample was taken from (`minimumDepthInMeters` and `maximumDepthInMeters`) and the
+  depth of the water column at the site (`tot_depth_water_col`);
+- the amount of sample collected (`samp_size`) and the amount that went into the DNA extraction
+  (`samp_vol_we_dna_ext`);
+- the taxa the primers amplify (`targetTaxonomicAssay`) and the taxa the study set out to detect
+  (`targetTaxonomicScope`).
+
+When the tool proposes one of these terms, it always marks the row for review, however good the
+match, and the comment names the terms it is confused with, what each one means, and a question that
+tells them apart. The *things to decide* output lists these rows too. If you give one of these terms
+in your values for the whole project, the *apply mapping* log gives the same note. The terms are
+listed in `commonly_confused_terms.tsv`, which comes with the tool.
+
 ## What you may still need to add
 
 The mapper matches columns in your sample table to any FAIRe term, including the ones listed below.

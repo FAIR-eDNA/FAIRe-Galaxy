@@ -80,12 +80,18 @@ For 18S:
   that differ between the 2 L and 10 L samples, from the ReadMe and the consolidated methods:
   *Volume filtered*, *Filter pore size (µm)*, *Filter name*, *Filter material*, *Sample processing*,
   *Extraction protocol* and *Extraction kit*. The 12 10 L samples are taken to have the 10 L
-  extraction, as they come from the same extracts as the 16S data.
+  extraction, as they come from the same extracts as the 16S data. Given the run report, it also
+  adds a row for each of the six control libraries sequenced with the 18S samples, which have reads
+  at the archive but are not in the 18S table (since 13 November 2026, as Oliver Berry asked): a
+  no-template control (a PCR negative; the SRA sheet titles it "Pos.control NTC"), a mock community
+  (ATCC1010) and a soil sample (both PCR positives) on each of the two runs, named after their
+  libraries (NTC-7C-1608411-BOD14795). Their *Sample ID* says what each is and its run, so the two
+  runs' BioSamples differ. Three columns say which rows are controls: *Sample type*,
+  *Negative control type* and *Positive control type*.
 - `reviewer_decisions_18S.tsv`: the review of its crosswalk (below). `review.py` now also adds a row
   for a column the mapper left unmatched (*Collected by* as recordedBy).
 - `project_values_18S.tsv`: the assay, gene and region from the ReadMe; the three ENVO terms from
-  the 10 L sheet (the same for every sample there); samp_category *sample* (the 18S table has no
-  controls); and from the consolidated methods, the primers (TAReuk454FWD1 and modified
+  the 10 L sheet (the same for every sample there); and from the consolidated methods, the primers (TAReuk454FWD1 and modified
   TAReuk-Rev3), the amplification protocol, the sequencing centre, the sampling device, the cleaning
   method and the bioinformatics (trimming, merging, filtering, zOTUs, SILVA v138.1 and PR2 v5.0.0
   with the Wang classifier at 60%).

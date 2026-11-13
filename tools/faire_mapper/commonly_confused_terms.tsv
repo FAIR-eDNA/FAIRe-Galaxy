@@ -1,0 +1,13 @@
+# FAIRe terms that people often confuse, even in review. When propose mapping proposes one, it always
+# marks the row for review, and the comment names the other terms of its group with their meaning and
+# asks the group's question. A value for one of them in the values for the whole project gets the same
+# note in apply mapping's log. Columns: group (a short name shared by the terms people mix up), term
+# (a FAIRe term, or terms that go together, separated by commas), meaning (a plain description), check
+# (the question that tells them apart; give it on one row of the group, or repeat it).
+group	term	meaning	check
+depth	minimumDepthInMeters, maximumDepthInMeters	the depth, or range of depths, the sample was taken from, in metres below the water, sediment or soil surface; both hold the same depth for a sample from one depth	Is this the depth the sample was taken from, or the depth of the water at the site? A surface sample at a site 15 m deep has 0 in minimumDepthInMeters and maximumDepthInMeters, and 15 in tot_depth_water_col
+depth	tot_depth_water_col	the depth of the water column at the site, from the surface to the bottom, in metres	
+volume	samp_size	the amount of sample collected from the environment, as a volume, mass or area, with its unit in samp_size_unit; 1 L for a 1 L water sample	Is this the amount collected from the environment, or the amount that went into the DNA extraction? If 1 L of water was collected and filtered, and half the filter was extracted, samp_size is 1 L and samp_vol_we_dna_ext is 500 mL
+volume	samp_vol_we_dna_ext	the amount of the sample, or of its subsamples, that went into the DNA extraction, with its unit in samp_vol_we_dna_ext_unit; 500 mL if half the filter of a 1 L sample was extracted	
+taxonomic target	targetTaxonomicAssay	the taxa the primers, and any probes, are designed to amplify, for each assay; vertebrates for a vertebrate 16S assay	Does this describe what the primers amplify, or the taxa the study set out to detect? A fish survey with vertebrate primers has vertebrates as targetTaxonomicAssay and teleost fish as targetTaxonomicScope
+taxonomic target	targetTaxonomicScope	the taxa the study set out to detect, which can be narrower than what the primers amplify; teleost fish for a fish survey that uses vertebrate primers	
