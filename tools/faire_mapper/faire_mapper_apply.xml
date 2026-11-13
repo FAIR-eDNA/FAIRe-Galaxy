@@ -949,6 +949,10 @@ python '$__tool_directory__/faire_mapper_apply.py'
                     <has_text_matching expression="'not applicable: control sample' written in the 2 empty mandatory cells of 1 control \(eventDate, geo_loc_name\)"/>
                     <has_text text="ampliconSize = 178-228 (projectMetadata, assay Fish16S)"/>
                     <not_has_text text="ampliconSize = 178-228 (projectMetadata, assay Fish16S) (not an allowed value)"/>
+                    <!-- a commonly confused term given in the values for the whole project gets the same check -->
+                    <has_text text="## Commonly confused terms"/>
+                    <has_text text="samp_size = 1 (from the values for the whole project): Often confused with samp_vol_we_dna_ext (the amount of the sample, or of its subsamples, that went into the DNA extraction"/>
+                    <has_text text="Is this the amount collected from the environment, or the amount that went into the DNA extraction?"/>
                     <not_has_text text="neg_cont_type (sampleMetadata; mandatory if samp_category = negative control): empty in"/>
                     <has_text text="otu_lca_ranks.tsv: the sequence IDs are in the column 'OTU'"/>
                     <has_text text="otu_lca_ranks.tsv: dna_sequence from otu_lca_ranks.fasta for 3 of 3 sequences"/>
@@ -1292,7 +1296,9 @@ tick *Leave out columns that are not matched to a FAIRe term*.
   or as *otuRaw* and *taxaRaw*, as set for each table. When there are several assays, the assay name
   is added to the sheet names (*otuFinal_MiFish*), as in the FAIRe examples.
 - **Log**. This lists the inputs; each column written, with the conversion and an example; the
-  values for the whole project; what was left out and why; warnings, such as values that could not
+  values for the whole project; **commonly confused terms** given in those values (such as samp_size
+  and samp_vol_we_dna_ext), each with the terms it is confused with and how to tell them apart;
+  what was left out and why; warnings, such as values that could not
   be converted or repeated sample names; and the **mandatory terms still empty**, which are the next
   things to fill in.
 

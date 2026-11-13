@@ -58,7 +58,8 @@ class StopError(Exception):
 
 class Log:
     def __init__(self):
-        self.sections = {'Inputs': [], 'Columns written': [], 'Project values': [], 'Library tables': [],
+        self.sections = {'Inputs': [], 'Columns written': [], 'Project values': [], 'Commonly confused terms': [],
+                         'Library tables': [],
                          'OTU and taxonomy tables': [], 'Left out': [], 'Warnings': [],
                          'Mandatory terms with no value': []}
 
@@ -711,7 +712,7 @@ def build_workbook(args, df, rows, terms, by_name, log):
         pv = fm.read_table(args.project_values).astype(object).where(lambda x: x.notna(), '')
         pv.columns = [str(c).strip().lower() for c in pv.columns]
         pv = pv.map(lambda v: str(v) if v != '' else '')
-        held_values, for_samples_only = {}, []
+        held_values, for_samples_only, from_values = {}, [], {}
         ctrl = control_rows(sample_out, n)
         if not {'term', 'value'} <= set(pv.columns):
             raise StopError('the project values file needs the columns term and value')
@@ -738,6 +739,7 @@ def build_workbook(args, df, rows, terms, by_name, log):
                 v, problem = convert_value(value, by_name[term], None)
                 by_assay[assay][term] = v
                 written.add(term)
+                from_values.setdefault(term, str(v))
                 log.add('Project values', f'{term} = {str(v)[:80]} (projectMetadata, assay {assay})'
                         + (' (not an allowed value)' if problem else ''))
                 continue
@@ -769,8 +771,20 @@ def build_workbook(args, df, rows, terms, by_name, log):
                 log.add('Warnings', f'project value {term}: not in the sheets made; skipped')
                 continue
             written.add(term)
+            from_values.setdefault(term, str(v))
             where = 'projectMetadata' if term in project and project[term] == v else 'every sample'
             log.add('Project values', f'{term} = {str(v)[:80]} ({where})' + (' (not an allowed value)' if problem else ''))
+        # Terms that people often confuse, given here with no review: the same check as the crosswalk's
+        confused = fm.load_confused(args.confused_terms)
+        sides = {}
+        for term in from_values:
+            if term in confused[0]:
+                sides.setdefault(confused[0][term][1], []).append(term)
+        for given in sides.values():
+            note = fm.confused_note(given, confused)
+            if note:
+                log.add('Commonly confused terms', ', '.join(f'{t} = {from_values[t][:60]}' for t in given)
+                        + f' (from the values for the whole project): {note}')
         if for_samples_only:
             log.add('Project values', f"{', '.join(for_samples_only)}: written as '{CONTROL_NA}' for the "
                     f"{sum(ctrl)} controls, as FAIRe asks only the samples for them")
@@ -1637,6 +1651,9 @@ def main(argv=None):
     ap.add_argument('--date_order', choices=['stop', 'dmy', 'mdy'], default='stop',
                     help='how to read dates such as 06/09/2017 when no value settles it (default: stop)')
     ap.add_argument('--include_review', action='store_true', help='also apply skos:closeMatch rows (for review)')
+    ap.add_argument('--confused_terms', default=str(fm.CONFUSED_TERMS),
+                    help='table of FAIRe terms people often confuse; a value for one of them in the project values '
+                         'gets a note in the log (default: commonly_confused_terms.tsv beside faire_mapper.py)')
     ap.add_argument('--project_values', help='table (CSV, TSV or Excel) with term and value (and status): values for the whole project, '
                                              'e.g. from faire_mapper_methods.py; rows with status other than '
                                              'supported or confirmed are left out')

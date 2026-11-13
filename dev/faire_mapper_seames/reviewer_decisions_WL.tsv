@@ -6,3 +6,4 @@ Control_Neg	confirm	Y marks the negative controls: samp_category negative contro
 sample_title	delete	a field label for each sample, not the material sample ID
 Location	delete	station names, not where samples were stored
 *depth	confirm	the depth each sample was taken from (NCBI's depth attribute), not the depth of the water column; a commonly confused term, so always for review
+samp_vol_we_dna_ext	confirm	the authors gave this as samp_vol_we_dna_ext in their NCBI submission; a commonly confused term, so always for review

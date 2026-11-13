@@ -47,9 +47,12 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   `commonly_confused_terms.tsv` (group, term, meaning, the question that tells them apart). Propose
   mapping always marks a column matched to one of them for review, however strong the match. The
   crosswalk comment names the terms it is confused with and what each means, and asks the question;
-  *things to decide* lists the column too. The first group is the sampling depth
-  (minimumDepthInMeters, maximumDepthInMeters) and the depth of the water column
-  (tot_depth_water_col). In the SEA-MES 18S trial, *Nominal depth* (the planned sampling depth) was
+  *things to decide* lists the column too, and apply mapping's log gives the same note for any of
+  these terms in the values for the whole project. The groups, from Oliver Berry: the sampling
+  depth (minimumDepthInMeters and maximumDepthInMeters, which go together) and the depth of the water
+  column (tot_depth_water_col); the amount collected (samp_size) and the amount extracted
+  (samp_vol_we_dna_ext); and the taxa the primers amplify (targetTaxonomicAssay) and the taxa the
+  study set out to detect (targetTaxonomicScope). In the SEA-MES 18S trial, *Nominal depth* (the planned sampling depth) was
   proposed as tot_depth_water_col. `--confused_terms` gives another table.
 - New in 0.6.0 (12 November 2026), from the day-night trial (`dev/faire_mapper_daynight/`): a
   column of times of day (Excel time cells, or 10:00, 4 pm) is proposed as verbatimEventTime, and
@@ -828,8 +831,8 @@ test.
   the day-night study names its files (LIZ_01_Fish16S_R1.fastq.gz); and `library_file_names.txt`:
   their names only, one per line with a folder, as the Data Access Portal lists files. By the same
   script.
-- `map_depths.csv`: six samples with a sampling depth (0, 5 and 10 m) and the depth of the water
-  at the site (15 and 22 m).
+- `map_confused.csv`: six samples with a sampling depth (0, 5 and 10 m), the depth of the water at
+  the site (15 and 22 m), the volume filtered (1 or 2 L) and the volume extracted (500 or 1000 mL).
 - `map_review.csv`: 11 rows in the form of the day-night study's sheet: a sample name used twice,
   a filtration control named but not marked, notes in the first rows of two columns, and times with
   no time zone.
@@ -865,7 +868,7 @@ November the identify tool was added, with 2 tests, and 5 apply mapping tests fo
 wrong field and the layout setting; all 49 tests passed in Galaxy `release_26.1` here. On 12
 November (0.6.0) the day-night trial added 7 apply mapping tests, 3 propose mapping tests and 1
 identify test; all 60 tests passed in Galaxy `release_25.0` here. 0.6.1 adds one propose mapping
-test (commonly confused terms).
+test (commonly confused terms) and checks apply mapping's note on them in an existing test.
 
 | Tool | Test | Checks | Result |
 |---|---|---|---|
@@ -920,7 +923,7 @@ test (commonly confused terms).
 | apply mapping | 32 | The same files as md5sum writes them (no header): read as a checksum list, paired, checksums written | passed |
 | map | 9 | Excel time cells in a Time column: verbatimEventTime (times of day), with a note that apply mapping joins them to the dates | passed |
 | map | 11 | Times in UTC only: *things to decide* lists them, with how to get local time | passed |
-| map | 12 | A sampling depth and a water depth column: both for review despite strong matches, each comment naming the other term and the question that tells them apart, and both in *things to decide* | passed |
+| map | 12 | Sampling depth, water depth, volume filtered and volume extracted: all for review despite strong matches, each comment naming the terms it is confused with and the question that tells them apart, and all in *things to decide* | passed |
 | map | 10 | A sheet in the day-night study's form: the *things to decide* list gives a repeated sample name, a filtration control not marked as a control, two columns of notes and the times with no time zone | passed |
 | identify | 1 | Eight files: sample, OTU, taxonomy, library, dictionary, text, curated OTU table and crosswalk, each named with its reason | passed |
 | identify | 2 | Two Excel files: each sheet on its own (the SRA sheet's library sheet, a primer register); no sample table found | passed |

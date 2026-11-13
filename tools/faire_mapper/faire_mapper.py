@@ -1194,32 +1194,36 @@ CONFUSED_TERMS = Path(__file__).with_name('commonly_confused_terms.tsv')
 
 
 def load_confused(path=CONFUSED_TERMS):
-    """FAIRe terms that people often confuse (commonly_confused_terms.tsv): {term: (group, meaning)}, and
-    {group: the question that tells its terms apart}."""
+    """FAIRe terms that people often confuse (commonly_confused_terms.tsv): {term: (group, side, meaning)},
+    where a side is the terms of one row, which go together (minimumDepthInMeters, maximumDepthInMeters),
+    and {group: the question that tells its sides apart}."""
     terms, checks = {}, {}
     if not path or not Path(path).exists():
         return terms, checks
     table = pd.read_csv(path, sep='\t', comment='#', dtype=str, keep_default_na=False)
     for r in table.to_dict('records'):
-        group, term = r.get('group', '').strip(), r.get('term', '').strip()
-        if group and term:
-            terms[term] = (group, r.get('meaning', '').strip())
-            if r.get('check', '').strip() and group not in checks:
-                checks[group] = r['check'].strip()
+        group = r.get('group', '').strip()
+        side = tuple(t.strip() for t in r.get('term', '').split(',') if t.strip())
+        for term in side if group else ():
+            terms[term] = (group, side, r.get('meaning', '').strip())
+        if group and side and r.get('check', '').strip() and group not in checks:
+            checks[group] = r['check'].strip()
     return terms, checks
 
 
 def confused_note(names, confused):
-    """'Often confused with Z (its meaning). <the group's question>', or ''."""
+    """'Often confused with Z (its meaning). <the group's question>' for terms of one group, or ''."""
     terms, checks = confused
     names = [n for n in names if n in terms]
     if not names:
         return ''
     group = terms[names[0]][0]
-    others = [t for t, (g, _) in terms.items() if g == group and t not in names]
+    mine = {terms[n][1] for n in names}
+    others = list(dict.fromkeys(side for g, side, _ in terms.values() if g == group and side not in mine))
     if not others:
         return ''
-    said = ' and '.join(f'{t} ({terms[t][1]})' if terms[t][1] else t for t in others)
+    meaning = {side: m for g, side, m in terms.values()}
+    said = ' and '.join(f"{' and '.join(s)} ({meaning[s]})" if meaning[s] else ' and '.join(s) for s in others)
     return f"Often confused with {said}. {checks.get(group, '')}".strip()
 
 
