@@ -913,7 +913,10 @@ def taxa_rows(seq_ids, ann, taxa_df, sequences, orientation, taxa_terms, log, la
     if primary:
         how = {'pr2': "as PR2 levels. FAIRe's rank terms are Linnaean ranks, so only the genus and species "
                       "are written to them; a name above genus goes in scientificName with taxonRank 'other: "
-                      "PR2 <level>', and identificationRemarks notes on each row that PR2 was used",
+                      "PR2 <level>', and identificationRemarks notes on each row that PR2 was used. PR2's "
+                      "levels carry Linnaean names but not Linnaean ranks (for a copepod, its class is "
+                      "Arthropoda). To fill kingdom to family, look the names up in WoRMS with edna2obis: "
+                      "match taxa",
                'silva': 'as SILVA ranks (phylum to genus)',
                '': 'in FAIRe rank order, or by rank prefix'}
         log(f"{label}: lineages read from '{primary}' " + '; '.join(how[k] for k in schemes)

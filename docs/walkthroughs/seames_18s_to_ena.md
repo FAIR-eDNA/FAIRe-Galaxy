@@ -119,6 +119,13 @@ review. For this example, each decision went into a small table of column, actio
 (`dev/faire_mapper_seames/reviewer_decisions_18S.tsv`), and a short script (`review.py`) applied it
 to the crosswalk, so the review is on record.
 
+Since version 0.7.0, propose mapping also writes a **review sheet**, as the FAIRe team suggested: an
+Excel workbook with one row per column, giving the input term, the proposed FAIRe term, the score,
+the mapper's reasoning, a decision (Accept, Reject or Change, from a drop-down) and a replacement
+term (a drop-down with the column's best candidates first, then every FAIRe term). Apply mapping
+takes the filled-in sheet in place of the crosswalk. Filled in with the decisions above, it gives
+the same workbook as the reviewed crosswalk.
+
 | Column | Decision | Reason |
 |---|---|---|
 | Sample | delete | The fastq name of each sample (S001_S13_L001), not the sample material. |
@@ -129,6 +136,11 @@ to the crosswalk, so the review is on record.
 | Filtered by | delete | Who filtered the water. Collected by gives recordedBy. |
 | Nominal depth | delete | The planned sampling depth, not the depth of the water column. |
 | Collected by | add `recordedBy` | The people who collected the samples. |
+
+Since 13 November 2026, *Collected by* is deleted too and kept as a user-defined field. FAIRe's
+recordedBy names the people responsible for the dataset, so apply mapping takes it from the person
+named in project_contact (Bruce Deagle), and writes project_contact as their email, as Oliver Berry
+asked.
 
 ## Step 4. Apply mapping
 

@@ -1094,6 +1094,7 @@ class Proposal:
     other: object = None   # for a column with no FAIRe term: a MIxS or Darwin Core Term, for review
     other_score: float = 0.0
     other_comment: str = ''
+    fallback: object = None  # for a FAIRe match for review: the MIxS or Darwin Core term if it is rejected
 
     def also_terms(self):
         return [a[0] for a in self.also]
@@ -1715,14 +1716,18 @@ def propose(df, terms, k=5, overrides=None, answered_by=None, descriptions=None,
         other_scorer = NameScorer(other_list)
         for pr in proposals:
             p = prof[pr.column]
-            if (pr.route != 'no match' or not p.n_values or pr.column in overrides or bases.get(pr.column)
-                    or pr.column in unit_notes):
+            # A column with no FAIRe match gets a suggestion; one whose FAIRe match is for review gets a
+            # fallback, the name the column takes if the reviewer rejects that match (review sheet).
+            if (pr.route not in ('no match', 'review') or not p.n_values or bases.get(pr.column)
+                    or pr.column in unit_notes or (pr.route == 'no match' and pr.column in overrides)):
                 continue
             header = tokens_of(pr.column)
             cands = [c for c in score_column(p, other_list, other_scorer, header, desc_map.get(pr.column))
                      if (c.from_desc and c.name_score >= 0.85 or other_name_fit(other_scorer, header, others[c.term])
                          >= OTHER_NAME_MIN) and not c.value_why.startswith(('conflict', 'check')) and c.score >= REVIEW]
-            if cands:
+            if cands and pr.route == 'review':
+                pr.fallback = others[cands[0].term]
+            elif cands:
                 c = cands[0]
                 pr.other, pr.other_score = others[c.term], c.score
                 rivals = [others[x.term] for x in cands[1:3] if c.score - x.score < CLOSE]
@@ -1815,8 +1820,31 @@ def write_sssom(proposals, path, source_name, checklist_name):
         '#   mapping tool is set to leave such columns out. Rows with a MIxS or Darwin Core term (MIXS: or',
         '#   dwc:) are for columns with no FAIRe term: confirmed, they name the user-defined field.',
     ]
+    rows = crosswalk_rows(proposals)
+    cols = ['subject_id', 'subject_label', 'predicate_id', 'object_id', 'object_label',
+            'mapping_justification', 'confidence', 'comment', 'combine_order', 'value_part']
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(header) + '\n')
+        pd.DataFrame(rows, columns=cols).to_csv(f, sep='\t', index=False)
+
+
+CROSSWALK_COLUMNS = ['subject_id', 'subject_label', 'predicate_id', 'object_id', 'object_label',
+                     'mapping_justification', 'confidence', 'comment', 'combine_order', 'value_part']
+
+
+def crosswalk_rows(proposals, fallbacks=False):
+    """The crosswalk's rows, as dicts. With fallbacks, a FAIRe match for review whose column has a MIxS
+    or Darwin Core term too adds a skos:relatedMatch row for it: the review sheet's name for the column
+    if the match is rejected."""
     rows = []
     for p in proposals:
+        if fallbacks and p.term and p.fallback is not None:
+            rows.append({'subject_id': 'local:' + re.sub(r'[^A-Za-z0-9_.-]', '_', p.column), 'subject_label': p.column,
+                         'predicate_id': 'skos:relatedMatch', 'object_id': p.fallback.term_id,
+                         'object_label': p.fallback.name, 'mapping_justification': 'semapv:CompositeMatching',
+                         'confidence': '', 'comment': f'{p.fallback.source} term: {p.fallback.name}, the name of the '
+                                                      f'column if its FAIRe match is rejected',
+                         'combine_order': '', 'value_part': ''})
         if not p.term and p.other is not None:
             rows.append({'subject_id': 'local:' + re.sub(r'[^A-Za-z0-9_.-]', '_', p.column), 'subject_label': p.column,
                          'predicate_id': 'skos:closeMatch', 'object_id': p.other.term_id, 'object_label': p.other.name,
@@ -1841,11 +1869,7 @@ def write_sssom(proposals, path, source_name, checklist_name):
         for term, part, note in p.also:
             rows.append({**row, 'object_id': f'FAIRe:{term}', 'object_label': term,
                          'comment': note if note.startswith('FAIRe term:') else f'{p.route}; {note}', 'value_part': part})
-    cols = ['subject_id', 'subject_label', 'predicate_id', 'object_id', 'object_label',
-            'mapping_justification', 'confidence', 'comment', 'combine_order', 'value_part']
-    with open(path, 'w', encoding='utf-8') as f:
-        f.write('\n'.join(header) + '\n')
-        pd.DataFrame(rows, columns=cols).to_csv(f, sep='\t', index=False)
+    return rows
 
 
 def adjudication_requests(profiles, proposals, terms, descriptions=None):
@@ -1895,6 +1919,7 @@ CONTROL_NAME_RE = re.compile(r'control|blank|negative|\bneg\b|\bntc\b|ext_?bl|pc
 # Terms that say which rows are controls
 CONTROL_TERMS = {'samp_category', 'neg_cont_type', 'pos_cont_type', *CONTROL_FLAGS}
 REVIEW_COLUMNS = ['check', 'columns', 'rows', 'what_to_do']
+TERM_ID_RE = re.compile(r'\[\s*[A-Za-z]+[:_]\s*\d+\s*\]')
 
 
 def _first(items, k=10):
@@ -1944,6 +1969,19 @@ def review_list(df, profiles, proposals, confused=None):
                         'leave the column out (delete its row in the crosswalk) and give anything FAIRe needs from them '
                         '(recordedBy, for example) as a project value. If they belong to those rows only, keep '
                         'the column'])
+    # Several ontology terms in one cell ("Neritic Pelagic Zone Biome [ENVO:01000032]|Oceanic ..."): FAIRe
+    # allows several, but a list may be choices that were never narrowed down
+    for pr in mapped:
+        if pr.column not in df.columns:
+            continue
+        cells = [str(v) for v in df[pr.column].tolist() if not is_missing(v) and '|' in str(v)]
+        multi = [v for v in cells if len(TERM_ID_RE.findall(v)) >= 2]
+        if multi:
+            parts = list(dict.fromkeys(x.strip() for v in multi for x in v.split('|') if x.strip()))
+            out.append(['several terms in one cell', pr.column, f'{len(multi)} rows: ' + _first(parts, 5),
+                        f'FAIRe allows several terms in {pr.term}, separated by |, but check that each applies to '
+                        f'these samples, and keep only the one that does if one is meant. The workbook gives these '
+                        f'cells a drop-down of the terms'])
     # Terms that people often confuse, with the question that tells them apart
     confused = load_confused() if confused is None else confused
     for pr in mapped:
@@ -2327,6 +2365,9 @@ def cmd_map(args):
         json.dump(reqs, f, indent=1)
     review = review_list(df, profiles, proposals, confused)
     pd.DataFrame(review, columns=REVIEW_COLUMNS).to_csv(out / 'review_list.tsv', sep='\t', index=False)
+    import faire_mapper_review   # here, as it imports this module
+    faire_mapper_review.write_review_sheet(out / 'review_sheet.xlsx', proposals, profiles, terms, review,
+                                           Path(args.table).name, k=args.shortlist)
     counts = rep.route.value_counts().to_dict()
     summary = {'table': Path(args.table).name, 'checklist': Path(args.checklist).name, 'columns': len(proposals),
                'accept': counts.get('accept', 0), 'review': counts.get('review', 0),

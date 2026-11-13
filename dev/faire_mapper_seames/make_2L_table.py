@@ -9,7 +9,8 @@ for every sample are left out.
 It then adds the columns a person would add for the details that differ between the two kinds of
 sample. The ReadMe says sample names start with S for 2 L samples, collected on 0.22 µm filters,
 and M for 10 L samples, collected on 0.45 µm filters. The methods (methods_consolidated.txt,
-sections 2 and 4) give the filter, its processing and the extraction for each. The 12 10 L samples
+sections 2 and 4) give the filter, its processing and the extraction for each; the 2 L extraction
+protocol, Australian Microbiome meth_3.1.9, is given as the link to its SOP. The 12 10 L samples
 are taken to have the 10 L extraction (section 2.2), as they come from the same extracts as the 16S
 data. The membrane of the Sterivex GP filters is not stated, so Filter material is empty for them.
 
@@ -53,7 +54,10 @@ by_prefix = {   # from the ReadMe and the methods
     'S': ('2 L', '0.22', 'Sterivex GP', '',
           'Held at 4 °C and filtered within 12 hours onto 0.22 µm Sterivex GP filters with a Masterflex L/S '
           'console pump; filters stored at -80 °C.',
-          'Australian Microbiome protocol meth_3.1.9', 'DNeasy PowerWater filter columns (QIAGEN)'),
+          'https://research.csiro.au/ambsm/3-omics-sample-extraction-purification-and-quantification-procedures/'
+          '3-1-dna-extraction-purification-procedures/meth_3-1-9-qiagen-dneasy-powerwater-sterivex-kit-modified-'
+          'imos-nrs-acmon-and-voyages-csiro-hobart-genetics-laboratories',
+          'DNeasy PowerWater filter columns (QIAGEN)'),
     'M': ('10 L', '0.45', '47 mm mixed cellulose ester membrane (MerckMillipore)', 'cellulose ester',
           'Held at 4 °C and filtered within 12 hours through 47 mm, 0.45 µm mixed cellulose ester membranes '
           'with a peristaltic pump; filters stored at -80 °C.',

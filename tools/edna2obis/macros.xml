@@ -2,7 +2,16 @@
     <!-- Upstream has tagged releases up to v3.2.0, but the pinned commit is later. The version is the date of
          the pinned commit (aomlomics/edna2obis a3bc89050bcee12b482237cb2e3bb5c3c276debc). -->
     <token name="@TOOL_VERSION@">2026.10.26</token>
-    <token name="@VERSION_SUFFIX@">3</token>
+    <token name="@VERSION_SUFFIX@">4</token>
+    <token name="@CHECK_BEFORE_UPLOAD@"><![CDATA[
+.. class:: warningmark
+
+**Check the FAIRe workbook before you submit anything.** However the workbook was made (by hand,
+with FAIRe-ator, or with the FAIRe mapper tools), a person who knows the data should check it, and
+apply mapping's log if it made the workbook, before what this tool writes goes to a repository.
+Run FAIRe-fier on the workbook first. Submissions become public, and are hard to change once
+accepted.
+]]></token>
     <token name="@PROFILE@">23.0</token>
     <xml name="requirements">
         <requirements>

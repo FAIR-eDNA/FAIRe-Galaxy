@@ -35,6 +35,7 @@ COLUMNS = {
     'instrument': ['instrumentmodel', 'instrument', 'model', 'sequencer'],
     'platform': ['instrumentplatform', 'platform'],
     'layout': ['librarylayout', 'layout', 'liblayout'],
+    'input_read_count': ['inputreadcount', 'readcount', 'reads', 'numberofreads', 'totalreads', 'rawreads'],
 }
 RUN_ACC = re.compile(r'^[SED]RR\d+$')
 SAMPLE_ACC = re.compile(r'^(SAM[NED][A-Z]?\d+|[SED]RS\d+)$')
@@ -313,6 +314,8 @@ def read_library(path, sheet, samples, label, log, assays=(), name_filter='', ru
         row = {'samp_name': s, 'lib_id': lib or None, 'filename': f1 or None, 'filename2': f2 or None,
                'checksum_filename': c1 or None, 'checksum_filename2': c2 or None,
                'associatedSequences': ' | '.join(links) or None, 'seq_run_id': get(r, 'seq_run_id') or run_id or None}
+        if re.fullmatch(r'\d+(\.0+)?', get(r, 'input_read_count')):
+            row['input_read_count'] = int(float(get(r, 'input_read_count')))
         md5 = md5 or (bool(c1 or c2) and any('md5' in _key(cols.get(f, ''))
                                              for f in ('md5s', 'checksum_filename', 'checksum_filename2'))) \
             or bool(c1 and MD5.match(c1))

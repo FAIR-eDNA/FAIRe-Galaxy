@@ -69,8 +69,8 @@ python '$__tool_directory__/faire_mapper_apply.py'
     ]]></command>
     <inputs>
         <expand macro="table_input"/>
-        <param name="crosswalk" type="data" format="tabular,csv,xlsx,txt" label="Crosswalk"
-            help="The crosswalk (SSSOM) from FAIRe mapper: propose mapping, after review; edited in a spreadsheet and saved as Excel, CSV or tab-separated text is fine. Rows marked skos:exactMatch are applied: accepted, confirmed and model matches. To confirm a match for review, change its skos:closeMatch to skos:exactMatch. To stop a column being matched, delete its row; the column is then kept as a user-defined field unless you tick the option below to leave such columns out."/>
+        <param name="crosswalk" type="data" format="tabular,csv,xlsx,txt" label="Review sheet or crosswalk"
+            help="The review sheet (Excel) from FAIRe mapper: propose mapping, with your decisions: Accept, Reject or Change for each column. Or the crosswalk (SSSOM), after review; edited in a spreadsheet and saved as Excel, CSV or tab-separated text is fine. In the crosswalk, rows marked skos:exactMatch are applied: accepted, confirmed and model matches. To confirm a match for review, change its skos:closeMatch to skos:exactMatch. To stop a column being matched, delete its row; the column is then kept as a user-defined field unless you tick the option below to leave such columns out."/>
         <param name="assay_type" type="select" label="Assay type">
             <option value="metabarcoding" selected="true">Metabarcoding</option>
             <option value="targeted">Targeted (qPCR or ddPCR)</option>
@@ -418,6 +418,7 @@ python '$__tool_directory__/faire_mapper_apply.py'
                         <has_text text="&lt;t&gt;reef_run1&lt;/t&gt;"/>
                         <has_text text="&lt;t&gt;ERR9999901_1.fastq.gz&lt;/t&gt;"/>
                         <has_text text="&lt;t&gt;a1b2c3d4e5f60718293a4b5c6d7e8f91&lt;/t&gt;"/>
+                        <has_text text="&lt;v&gt;41250&lt;/v&gt;"/>
                         <has_text text="https://www.ebi.ac.uk/ena/browser/view/ERR9999901 | https://www.ebi.ac.uk/ena/browser/view/SAMEA9999901"/>
                         <not_has_text text="LIZ_01_16S"/>
                         <not_has_text text="LIZ_99"/>
@@ -438,6 +439,9 @@ python '$__tool_directory__/faire_mapper_apply.py'
                     <has_text text="neg_cont_0_1 = 1 (projectMetadata)"/>
                     <has_text text="checksum_method = MD5 (projectMetadata)"/>
                     <has_text text="5 of 6 libraries have 'COI' in their name"/>
+                    <has_text text="read_count as input_read_count"/>
+                    <has_text text="input_read_count for 4 libraries, from the library table's read count"/>
+                    <has_text text="output_read_count, output_otu_num, otu_num_tax_assigned for 4 libraries"/>
                     <has_text text="4 rows for 4 samples, matched by start of the library name (4)"/>
                     <has_text text="1 library matches no samp_name and is left out: LIZ_99_COI"/>
                     <has_text text="1 files beside a read pair (reads that could not be paired) left out"/>
@@ -1123,7 +1127,8 @@ python '$__tool_directory__/faire_mapper_apply.py'
             </output>
         </test>
         <!-- A checklist version given by the submitter is kept as written, even as text for a checklist
-             that defines it as a number, with a warning -->
+             that defines it as a number, with a warning; a project contact given as a name and an email
+             is split into recordedBy and project_contact -->
         <test expect_num_outputs="2">
             <param name="table" value="apply_reef.csv"/>
             <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
@@ -1141,6 +1146,8 @@ python '$__tool_directory__/faire_mapper_apply.py'
                 <assert_contents>
                     <has_text text="checkls_ver is written as given (v2.0.0); the README sheet names the checklist used (FAIRe_checklist_v1.0.2.xlsx)"/>
                     <has_text text="checkls_ver 'v2.0.0' is kept as given, but FAIRe_checklist_v1.0.2.xlsx defines it as a number, so FAIRe-fier will report it"/>
+                    <has_text text="project_contact = jane.citizen@example.org, the email in 'Jane Citizen (jane.citizen@example.org)'"/>
+                    <has_text text="recordedBy = Jane Citizen, the person named in project_contact"/>
                 </assert_contents>
             </output>
         </test>
@@ -1169,6 +1176,30 @@ python '$__tool_directory__/faire_mapper_apply.py'
                 <assert_contents>
                     <has_text text="named after the MIxS or Darwin Core term confirmed in the crosswalk, as user-defined fields in sampleMetadata: 'Phosphate (uM)' as phosphate (MIxS), with the unit from the column name added to each value (0.21 uM); 'Ammonia' as ammonium (MIxS)"/>
                     <has_text text="'Silicate' to MIxS silicate: skos:closeMatch (for review); confirm it as skos:exactMatch to name the user-defined field silicate"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- A review sheet as the crosswalk: Accept for a MIxS term, Reject for a FAIRe match whose
+             column then takes its MIxS name, and Change to another FAIRe term -->
+        <test expect_num_outputs="2">
+            <param name="table" value="review_table.csv"/>
+            <param name="crosswalk" value="apply_review_sheet.xlsx" ftype="xlsx"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="lizard_test"/>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet3.xml">
+                        <has_text text="&lt;t&gt;phosphate&lt;/t&gt;"/>
+                        <has_text text="&lt;t&gt;silicate&lt;/t&gt;"/>
+                        <has_text text="&lt;t&gt;Voyage&lt;/t&gt;"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="review sheet: 5 accepted, 1 rejected, 1 changed, 1 with no decision"/>
+                    <has_text text="'Depth (m)' to tot_depth_water_col (sampleMetadata)"/>
+                    <has_text text="'Water phosphate' as phosphate (MIxS); 'Silicate' as silicate (MIxS)"/>
                 </assert_contents>
             </output>
         </test>
@@ -1210,6 +1241,9 @@ converts them:
   written as "not applicable: control sample", which is FAIRe's term for a value that a control
   does not have.
 - **A column with one value for a project-level term** is written once, to projectMetadata.
+- **project_contact given as a name and an email** ("Bruce Deagle (bruce.deagle@csiro.au)", or
+  with < > or a comma) is written as the email, as FAIRe's example has it, and the name goes to
+  recordedBy (the people responsible for the dataset) when recordedBy is not given.
 
 Columns with no ``skos:exactMatch`` row are kept as user-defined fields, as FAIRe allows, unless you
 tick *Leave out columns that are not matched to a FAIRe term*.
@@ -1231,7 +1265,15 @@ log says so.
 **Inputs**
 
 - **Your table**, as you gave it to *propose mapping*.
-- **Crosswalk**: the SSSOM crosswalk from *propose mapping*. The tool applies the rows marked
+- **Review sheet or crosswalk**: the review sheet from *propose mapping*, with your decisions. For
+  each column, Accept applies the proposed term (all its parts, such as both depth terms), Reject
+  keeps the column as a user-defined field (named after the MIxS or Darwin Core term in *If rejected,
+  kept as*, when there is one), and Change applies the replacement term. A column with no decision
+  is applied as the mapper called it: its accepted matches are applied and its matches for review
+  are not. The log counts each kind of decision. The review sheet's *Crosswalk (details)* sheet
+  carries what the tool needs to apply them, so keep it.
+
+  Or the SSSOM crosswalk from *propose mapping*. The tool applies the rows marked
   ``skos:exactMatch``, which are the accepted, confirmed and model matches. It leaves out the rows
   marked for review (``skos:closeMatch``) unless you tick the option to apply them. You can edit the
   crosswalk to confirm a match (change ``skos:closeMatch`` to ``skos:exactMatch``), to change the
@@ -1356,6 +1398,12 @@ log says so.
   **FAIRe mapper: identify your files** can tell you what each of your files is before you start.
 
 **Outputs**
+
+.. class:: warningmark
+
+**Check the workbook before you submit it anywhere.** The tool matched and converted the values, and
+some may need correcting. The log lists every change, and the workbook's README sheet says the same.
+Run FAIRe-fier on it too.
 
 - **FAIRe workbook** (.xlsx). The OTU and taxonomy tables are added as *otuFinal* and *taxaFinal*,
   or as *otuRaw* and *taxaRaw*, as set for each table. When there are several assays, the assay name

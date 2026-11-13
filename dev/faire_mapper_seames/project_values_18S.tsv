@@ -5,6 +5,10 @@
 # methods (methods_consolidated.txt, sections 2 and 4): the rest, except the instrument, which is from
 # the SRA run table (NextSeq 1000; B. Deagle, 6 November 2026). Details that differ between the 2 L
 # and 10 L samples (filter, processing, extraction) are columns of the sample table instead.
+# The protocols are links to the Australian Microbiome SOPs (13 November 2026). The methods say the 18S
+# V4 region was tag-sequenced using meth_5.1, but the SOP site lists meth_5.1 as Amplicon Analysis (the
+# bioinformatics), and meth_4.1.4 as the 18S V4 PCR with these primers: so nucl_acid_amp is meth_4.1.4
+# and sop_bioinformatics meth_5.1, for the authors to confirm.
 term	value
 project_name	Environmental DNA for measuring offshore marine biodiversity (SEA-MES, NESP Marine and Coastal Hub Project 4.23)
 targetTaxonomicAssay	Eukaryotes
@@ -14,7 +18,8 @@ pcr_primer_name_forward	TAReuk454FWD1
 pcr_primer_name_reverse	TAReuk-Rev3 (modified)
 pcr_primer_forward	CCAGCASCYGCGGTAATTCC
 pcr_primer_reverse	ACTTTCGTTCTTGATYRATGA
-nucl_acid_amp	Australian Microbiome protocol meth_5.1
+nucl_acid_amp	https://research.csiro.au/ambsm/4-omics-sequencing-procedures/4-1-library-preparation-incl-amplicon-generation-where-appropriate/meth_4-1-4-eukaryotic-18s-v4-rrna-gene-tareuk454fwd1-and-modified-tareukrev3-1-step/
+sop_bioinformatics	https://research.csiro.au/ambsm/5-bioinformatics/meth_5-1-amplicon-analysis
 sequencing_location	Ramaciotti Centre for Genomics
 platform	ILLUMINA
 instrument	Illumina NextSeq 1000 [OBI_0003606]
