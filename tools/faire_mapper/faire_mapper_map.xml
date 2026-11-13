@@ -30,6 +30,7 @@ python '$__tool_directory__/faire_mapper.py' map
     --shortlist $shortlist
     --shortlist_close $shortlist_close
     $other_terms
+    --table_name '${str($table.element_identifier).replace("'", "")}'
     --outdir out
     ]]></command>
     <inputs>
@@ -389,6 +390,10 @@ python '$__tool_directory__/faire_mapper.py' map
                     </has_archive_member>
                     <has_archive_member path="xl/worksheets/sheet2.xml">
                         <has_text text="phosphate (MIxS term)"/>
+                    </has_archive_member>
+                    <!-- named as the user sees it in Galaxy, not by its file name (dataset_N.dat) -->
+                    <has_archive_member path="xl/worksheets/sheet4.xml">
+                        <has_text text="your sample metadata, review_table.csv: the table"/>
                     </has_archive_member>
                 </assert_contents>
             </output>

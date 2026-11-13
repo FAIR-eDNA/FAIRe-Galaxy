@@ -1,0 +1,15 @@
+# Python packages for the FAIRe tools, at the versions the Galaxy wrappers ask for
+# (tools/*/macros.xml and the tool XML files). setup.R installs them into .venv.
+pandas==2.2.3
+openpyxl==3.1.5
+pyyaml==6.0.3
+pydantic>=2.7,<3
+jinja2>=3.1
+numpy
+# edna2obis
+pyworms>=0.4  # Galaxy uses 0.3.0 from conda; PyPI has 0.4.0 only
+pygbif==0.6.5
+multiprocess
+requests
+rich
+pyfiglet
