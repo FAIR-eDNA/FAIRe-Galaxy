@@ -15,7 +15,7 @@ the same files.
 This version is a demonstration that runs on one computer. It is written so that it can later be
 hosted on a server (see *Hosting later*, below). It was first built in a private repository and moved
 here, beside the tools it runs, on 13 November 2026 (version 0.2.0). Version 0.3.0 has the changes
-from the FAIRe team's first trial of it.
+from the FAIRe team's first trial of it, and version 0.4.0 those from the second (14 November 2026).
 
 ## What it covers
 
@@ -38,14 +38,24 @@ input term. Either way, the mapper's conversions, such as reading Y and N as *ne
 A few things that help along the way:
 
 - **Your files** (on the left) lists every file you add, with what *a. Your files* found it to be.
-  The cross beside a file removes it; *Remove all files* starts again.
+  The eye beside a file shows what is in it: the first rows of a table as they are in the file, with
+  their row numbers (so you can see which row holds the column names), the first rows of each sheet
+  of a workbook, the first lines of a FASTA file, or the text of a methods file or PDF as the tools
+  read it. The cross removes a file; *Remove all files* starts again.
 - **a. Your files** says what each file seems to be and where it goes in the app. It recognises
   FASTA files and PDFs by their content, whatever they are called. If it gets one wrong, choose the
-  right kind in its table: the app then offers the file in the right places.
+  right kind in its table: the app then offers the file in the right places. *Look inside* shows the
+  file, to help you decide.
 - **Methods** can be text or a PDF. *d. Primers and project values* reads them for primers, and
   lists the mandatory project terms still to give; the other values for the whole study, such as
-  the target gene, PCR conditions and sequencing platform, come from you, with the methods open
-  beside you. A PDF of scanned pages has no text to read: save it as text first.
+  PCR conditions and the sequencing platform, come from you, with the methods open beside you. A PDF
+  of scanned pages has no text to read: save it as text first.
+- **Primers** are checked against a reference table of about 550 published primer pairs, most from
+  Takahashi et al. (2023) and Wilderlab's assays. This keeps primer names as they are in the
+  literature and catches typos in sequences. If your primers are not in it, add your own table.
+  The step says how to choose the pair you used for each assay, and which assay name to give it.
+- **Adding a value** offers the FAIRe terms for one part of the checklist at a time, PCR and primers
+  first, then library preparation and sequencing, bioinformatics and so on, or all of them.
 - **A question mark** beside a label explains the term (*data dictionary*, *assay*, *raw* and
   *final* and so on) when the pointer rests on it, or when you move to it with the Tab key.
 - **Optional fields**, such as the data dictionary, can be set back to *None* after choosing a file.

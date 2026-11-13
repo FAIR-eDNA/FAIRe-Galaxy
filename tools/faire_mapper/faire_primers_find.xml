@@ -63,18 +63,20 @@ $search.names
             </when>
         </conditional>
         <conditional name="table">
-            <param name="source" type="select" label="Primer table">
-                <option value="bundled" selected="true">The table that comes with the tool</option>
-                <option value="both">The table that comes with the tool, plus my own</option>
-                <option value="own">Only my own table</option>
+            <param name="source" type="select" label="Reference table of primers to check against"
+                help="Checking against a table of published primers keeps primer names as they are in the literature and catches typos in sequences. The reference table that comes with the tool holds about 550 published pairs, most from Takahashi et al. (2023) and Wilderlab's assays (see below). Add your own table if your primers are not in it.">
+                <option value="bundled" selected="true">The reference table that comes with the tool (about 550 published pairs)</option>
+                <option value="both">The reference table and my own table</option>
+                <option value="own">My own table only</option>
             </param>
             <when value="bundled"/>
             <when value="both">
-                <param name="own" type="data" format="tabular" label="My primer table"
-                    help="A table made by FAIRe mapper: build primer table, or a TSV with the same columns. Its rows replace bundled rows with the same sequences."/>
+                <param name="own" type="data" format="tabular" label="My own primer table"
+                    help="A table made by FAIRe mapper: build primer table, or a TSV with the same columns. Its rows replace rows of the reference table with the same sequences."/>
             </when>
             <when value="own">
-                <param name="own" type="data" format="tabular" label="My primer table"/>
+                <param name="own" type="data" format="tabular" label="My own primer table"
+                    help="A table made by FAIRe mapper: build primer table, or a TSV with the same columns."/>
             </when>
         </conditional>
     </inputs>
@@ -173,9 +175,10 @@ $search.names
 FAIRe needs the primer sequences (``pcr_primer_forward`` and ``pcr_primer_reverse``), but methods
 sections often give only a name ("the MiFish primer set", "Bact16S_515F") or a citation
 ("universal eukaryote 18S assay (Pochon et al., 2013)"). This tool looks up the primer pairs that
-those names and citations point to in a primer table, so you can check them and copy the
-sequences. When the methods give the sequences themselves, the tool reads those too, and names the
-pair from the table if the sequences match one.
+those names and citations point to in a reference table of published primers, so you can check them
+and copy the sequences. When the methods give the sequences themselves, the tool reads those too, and
+names the pair from the table if the sequences match one. Checking against the reference table keeps
+primer names the same as in the literature and catches typos in sequences.
 
 The tool never chooses between candidates, because names such as 515F or 806R are used for several
 different sequences. Check each candidate against the original paper before you use it.
@@ -203,8 +206,9 @@ different sequences. Check each candidate against the original paper before you 
   pair that is not in the table is shown as written, with the name before each sequence and the
   gene named on the same line.
 - **Or a list** of primer names, assay names or citations, one per line.
-- **Primer table**: the table that comes with the tool (described below), your own table, or both.
-  You can make your own with **FAIRe mapper: build primer table**.
+- **Reference table of primers to check against**: the reference table that comes with the tool
+  (described below), your own table, or both. Use your own when your primers are not in the reference
+  table. You can make one with **FAIRe mapper: build primer table**.
 
 **Output**
 
@@ -215,17 +219,18 @@ gene and source row. Pairs whose sequences are in the text come first.
 
 -----
 
-**The bundled primer table**
+**The reference table of primers**
 
-The primer table that comes with the tool is built from three sources: the metabarcoding and
-species-specific primer tables (Tables S3 and S4) of Takahashi et al. 2023, *Aquatic environmental
-DNA: a review of the macro-organismal biomonitoring revolution*, Science of the Total Environment
-873:162322 (CC BY-NC 4.0); a metazoan primer register that puts those tables in FAIRe terms, adding
-the target taxon and the gene in the FAIRe vocabulary; and a register of bacteria and archaea 16S
-primer pairs (the pairs recommended by Klindworth et al. 2013, the Earth Microbiome Project primers,
-and other common pairs). The columns use FAIRe term names, so values such as
-``targetTaxonomicAssay`` and ``target_gene`` can be copied straight into a FAIRe workbook. Each row
-records its source.
+The reference table that comes with the tool holds about 550 published primer pairs. Most come from
+the metabarcoding and species-specific primer tables (Tables S3 and S4) of Takahashi et al. 2023,
+*Aquatic environmental DNA: a review of the macro-organismal biomonitoring revolution*, Science of
+the Total Environment 873:162322 (CC BY-NC 4.0), through a metazoan primer register that puts those
+tables in FAIRe terms, adding the target taxon and the gene in the FAIRe vocabulary. The others are
+Wilderlab's 25 assays (from the assay table their laboratory methods refer to), a few more published
+pairs, and a register of bacteria and archaea 16S primer pairs (the pairs recommended by Klindworth
+et al. 2013, the Earth Microbiome Project primers, and other common pairs). The columns use FAIRe term
+names, so values such as ``targetTaxonomicAssay`` and ``target_gene`` can be copied straight into a
+FAIRe workbook. Each row records its source.
 
 @HELP_INPUTS@
 

@@ -26,7 +26,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import faire_mapper_text as ft  # noqa: E402
 
-__version__ = '0.8.0'
+__version__ = '0.8.1'
 # FAIRe term names wherever FAIRe has a term; the rest describe the table itself.
 COLUMNS = ['primer_pair_id', 'assay_name', 'assay_type', 'targetTaxonomicAssay', 'targetTaxonomicScope',
            'target_gene', 'target_subfragment',

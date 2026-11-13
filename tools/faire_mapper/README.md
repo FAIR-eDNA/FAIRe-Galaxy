@@ -26,7 +26,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
 
 ## Status
 
-- Version 0.8.0. `planemo lint`: passes with no warnings. `pyflakes`: clean.
+- Version 0.8.1. `planemo lint`: passes with no warnings. `pyflakes`: clean.
 - Goes to Galaxy Australia as an early version with the wrapped FAIRe tools (decided 6 November
   2026). Each tool's help starts with a note saying so, which asks users to check the results and
   send problems to the Galaxy Australia help desk (to confirm with Galaxy Australia, question 8).
@@ -43,6 +43,13 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   independent answer keys (`dev/faire_mapper_real_datasets/`, `dev/faire_mapper_australian_datasets/`,
   summarised below), and end to end on CSIRO's SEA-MES data (`dev/faire_mapper_seames/`). Not yet
   tried on datasets from Australian labs that already have a FAIRe version.
+- New in 0.8.1 (14 November 2026), from the FAIRe team's second review of the Shiny app: *Find
+  primers* calls its primer table the *reference table of primers to check against*, says that the
+  one that comes with the tool holds about 550 published pairs, most from Takahashi et al. (2023) and
+  Wilderlab's assays, and that checking against it keeps primer names as in the literature and
+  catches typos in sequences. Its choices are the reference table, the reference table and your own,
+  or your own only. The help now names Wilderlab's assays among the table's sources. No change to
+  what the tools do.
 - New in 0.8.0 (13 November 2026), from the FAIRe team's trial of the Shiny app:
   - Methods can be a PDF. *Find primers* (and the methods script, `faire_mapper_methods.py`) read
     the text of a PDF with pypdf, which all the mapper tools now list as a requirement. The PDF's
