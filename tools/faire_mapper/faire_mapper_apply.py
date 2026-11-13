@@ -1644,13 +1644,23 @@ def otu_counts(t):
 def fill_otu_counts(run_rows, run_out, sample_out, otu_tables, run_cols, log):
     """output_read_count, output_otu_num and otu_num_tax_assigned for each library, from the final OTU
     table of its assay (or the raw one when there is no final table): the reads in the sample's column,
-    the sequences with reads, and those of them with a scientificName. Values given are kept."""
+    the sequences with reads, and those of them with a scientificName. Values given are kept. A table
+    whose samples all have the same number of reads is rarefied: its reads are not those that passed
+    filtering, so output_read_count is left empty for it."""
     terms = [t for t in COUNT_TERMS if t in run_cols]
     if not terms:
         return
-    by_assay = {}
+    by_assay, rarefied = {}, {}
     for t in sorted(otu_tables, key=lambda t: t['stage'] != 'Final'):
         by_assay.setdefault(t['assay'] or '', (t, otu_counts(t)))
+    for key, (t, counts) in by_assay.items():
+        totals = {v[0] for v in counts.values()}
+        if len(counts) > 2 and len(totals) == 1:
+            rarefied[key] = totals.pop()
+            log.add('Warnings', f"{t['label']}: every sample has {rarefied[key]} reads, so the table is rarefied. "
+                                f"output_read_count is left empty, as FAIRe asks for the reads that passed "
+                                f"filtering, before rarefying: give them if you have them. output_otu_num and "
+                                f"otu_num_tax_assigned are counted in the rarefied table")
     rows = run_rows or ([{k: v[i] for k, v in run_out.items()} for i in range(len(sample_out.get('samp_name', [])))]
                         if run_out else [])
     filled, none = 0, []
@@ -1660,6 +1670,8 @@ def fill_otu_counts(run_rows, run_out, sample_out, otu_tables, run_cols, log):
             none.append(str(r.get('lib_id') or r.get('samp_name')))
             continue
         for term, v in zip(COUNT_TERMS, hit[1][r['samp_name']]):
+            if term == 'output_read_count' and (hit[0]['assay'] or '') in rarefied:
+                continue
             if term in terms and _blank(r.get(term)):
                 r[term] = v
         filled += 1
@@ -1671,15 +1683,10 @@ def fill_otu_counts(run_rows, run_out, sample_out, otu_tables, run_cols, log):
         log.add('OTU and taxonomy tables', f"{', '.join(terms)} for {filled} libraries, from {tables}: the reads in "
                                            f"each sample's column, the sequences with reads, and those of them "
                                            f"named to any rank (scientificName)")
-    for t, counts in by_assay.values():
-        totals = {v[0] for v in counts.values()}
-        if len(counts) > 2 and len(totals) == 1:
-            log.add('Warnings', f"{t['label']}: every sample has {totals.pop()} reads, so the table looks rarefied and "
-                                f"output_read_count is that depth; give the reads before rarefying instead, if you "
-                                f"have them")
     if none:
-        log.add('OTU and taxonomy tables', f"{len(none)} libraries have no column in the OTU tables, so their read "
-                                           f"and sequence counts are empty: " + fm._first(none, 10))
+        log.add('OTU and taxonomy tables', f"{len(none)} libraries have no column in the OTU tables (controls left "
+                                           f"out of the table, for example), so their read and sequence counts are "
+                                           f"empty: " + fm._first(none, 10))
 
 
 def several_terms(sample_terms, sample_out, by_name, have_lists):

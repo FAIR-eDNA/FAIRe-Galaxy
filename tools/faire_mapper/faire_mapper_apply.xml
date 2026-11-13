@@ -1179,8 +1179,9 @@ python '$__tool_directory__/faire_mapper_apply.py'
                 </assert_contents>
             </output>
         </test>
-        <!-- A review sheet as the crosswalk: Accept for a MIxS term, Reject for a FAIRe match whose
-             column then takes its MIxS name, and Change to another FAIRe term -->
+        <!-- A review sheet as the crosswalk: Accept for a MIxS term, Change to the MIxS term offered
+             for a wrong FAIRe match, Change to another FAIRe term, and Reject, which keeps the column as
+             its own term -->
         <test expect_num_outputs="2">
             <param name="table" value="review_table.csv"/>
             <param name="crosswalk" value="apply_review_sheet.xlsx" ftype="xlsx"/>
@@ -1197,7 +1198,8 @@ python '$__tool_directory__/faire_mapper_apply.py'
             </output>
             <output name="log">
                 <assert_contents>
-                    <has_text text="review sheet: 5 accepted, 1 rejected, 1 changed, 1 with no decision"/>
+                    <has_text text="review sheet: 5 accepted, 1 rejected, 2 changed"/>
+                    <not_has_text text="with no decision"/>
                     <has_text text="'Depth (m)' to tot_depth_water_col (sampleMetadata)"/>
                     <has_text text="'Water phosphate' as phosphate (MIxS); 'Silicate' as silicate (MIxS)"/>
                 </assert_contents>
@@ -1266,9 +1268,10 @@ log says so.
 
 - **Your table**, as you gave it to *propose mapping*.
 - **Review sheet or crosswalk**: the review sheet from *propose mapping*, with your decisions. For
-  each column, Accept applies the proposed term (all its parts, such as both depth terms), Reject
-  keeps the column as a user-defined field (named after the MIxS or Darwin Core term in *If rejected,
-  kept as*, when there is one), and Change applies the replacement term. A column with no decision
+  each column, Accept applies the proposed term (all its parts, such as both depth terms; a MIxS or
+  Darwin Core term names the column), Reject keeps the column as a user-defined field under its own
+  term, and Change applies the replacement term (a FAIRe term, or a MIxS or Darwin Core term such as
+  *phosphate (MIxS term)*). A column with no decision
   is applied as the mapper called it: its accepted matches are applied and its matches for review
   are not. The log counts each kind of decision. The review sheet's *Crosswalk (details)* sheet
   carries what the tool needs to apply them, so keep it.

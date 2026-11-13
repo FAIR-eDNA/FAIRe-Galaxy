@@ -71,7 +71,7 @@ python '$__tool_directory__/faire_mapper.py' map
         <data name="missing" format="tabular" from_work_dir="out/missing_mandatory.tsv" label="${tool.name} on ${on_string}: mandatory terms not covered"/>
         <data name="requests" format="json" from_work_dir="out/adjudication_requests.json" label="${tool.name} on ${on_string}: columns to review"/>
         <data name="summary" format="json" from_work_dir="out/summary.json" label="${tool.name} on ${on_string}: summary"/>
-        <data name="review" format="tabular" from_work_dir="out/review_list.tsv" label="${tool.name} on ${on_string}: things to decide"/>
+        <data name="review" format="tabular" from_work_dir="out/review_list.tsv" label="${tool.name} on ${on_string}: additional checks to make"/>
         <data name="review_sheet" format="xlsx" from_work_dir="out/review_sheet.xlsx" label="${tool.name} on ${on_string}: review sheet"/>
     </outputs>
     <tests>
@@ -363,9 +363,9 @@ python '$__tool_directory__/faire_mapper.py' map
             </output>
         </test>
         <!-- The review sheet: one row per column with the proposed term, score, reasoning, a decision
-             drop-down (Accept, Reject or Change) and a replacement drop-down (best candidates first, then
-             every FAIRe term); a FAIRe match for review whose column has a MIxS term names that term as
-             what the column is kept as if rejected -->
+             drop-down (Accept, Reject or Change), the mapper's call, a replacement drop-down (best
+             candidates first, a blank line, then every FAIRe term), and a FAIRe match for review whose
+             column has a MIxS term too, which comes first in the replacement list -->
         <test expect_num_outputs="7">
             <param name="table" value="review_table.csv"/>
             <param name="sample_types" value="Water"/>
@@ -373,20 +373,22 @@ python '$__tool_directory__/faire_mapper.py' map
                 <assert_contents>
                     <has_archive_member path="xl/workbook.xml">
                         <has_text text="name=&quot;Review&quot;"/>
-                        <has_text text="name=&quot;Things to decide&quot;"/>
+                        <has_text text="name=&quot;Additional checks to make&quot;"/>
                         <has_text text="name=&quot;How to review&quot;"/>
                         <has_text text="name=&quot;Crosswalk (details)&quot;"/>
                         <has_text text="name=&quot;Choices&quot; sheetId=&quot;2&quot; state=&quot;hidden&quot;"/>
                     </has_archive_member>
                     <has_archive_member path="xl/worksheets/sheet1.xml">
                         <has_text text="Replacement FAIRe term"/>
-                        <has_text text="phosphate (MIxS term)"/>
-                        <has_text text="silicate (MIxS)"/>
+                        <has_text text="Mapper&apos;s call"/>
+                        <has_text text="choose Change and pick &apos;phosphate (MIxS term)&apos;, first in the replacement list"/>
+                        <has_text text="silicate (MIxS term)"/>
+                        <has_text text="Voyage (your own term)"/>
                         <has_text text="&quot;Accept,Reject,Change&quot;"/>
                         <has_text text="&apos;Choices&apos;!$A$1"/>
                     </has_archive_member>
-                    <has_archive_member path="xl/worksheets/sheet5.xml">
-                        <has_text text="skos:relatedMatch"/>
+                    <has_archive_member path="xl/worksheets/sheet2.xml">
+                        <has_text text="phosphate (MIxS term)"/>
                     </has_archive_member>
                 </assert_contents>
             </output>
@@ -477,11 +479,12 @@ value. Untick *Suggest MIxS or Darwin Core terms* to leave them out.
   dictionary, and, for a column with no FAIRe term, the MIxS or Darwin Core term suggested
   (*other_standard*).
 - **review sheet** (Excel): the matches laid out for a person to review, one row per column: the
-  input term, the proposed FAIRe term, its score, the mapper's reasoning, the reviewer's decision
-  (Accept, Reject or Change, from a drop-down), the replacement FAIRe term (a drop-down with the
-  column's best candidates first, then every FAIRe term) and what the column is kept as if the match
-  is rejected (its own name, or a MIxS or Darwin Core term the mapper found). Hover over a proposed
-  term to see its definition. It also has the things to decide and how to review. Give it to
+  input term (the column heading), the proposed FAIRe term (or a MIxS or Darwin Core term when no
+  FAIRe term fits), its score, the mapper's call (accept, review or no match), the mapper's
+  reasoning, the reviewer's decision (Accept, Reject or Change, from a drop-down), the replacement
+  FAIRe term (a drop-down with the column's best candidates first, a blank line, then every FAIRe
+  term) and what the column is kept as if the match is rejected (its own term). Rows to review are
+  shaded. Hover over a proposed term to see its definition. It also has the additional checks to make and how to review. Give it to
   **FAIRe mapper: apply mapping** as the crosswalk once the decisions are made.
 - **crosswalk (SSSOM)**: the proposed and confirmed matches in the
   `SSSOM <https://mapping-commons.github.io/sssom/>`_ format, which you can reuse with later
@@ -492,7 +495,7 @@ value. Untick *Suggest MIxS or Darwin Core terms* to leave them out.
   methods text, and the rest are questions to ask the data provider.
 - **columns to review**: the review and no-match columns, with their values and candidate terms, in
   a form that a reviewer or a language model can answer.
-- **things to decide**: what only a person can decide before applying the mapping, each with what to
+- **additional checks to make**: what only a person can decide before applying the mapping, each with what to
   do about it: a sample name used on more than one row; sample names that read as controls
   (*Filtration control 1 + 2*, *Extbl19_4*) when no column says which rows are controls; columns
   with values only in the first rows, which may be notes about the whole study; and times of

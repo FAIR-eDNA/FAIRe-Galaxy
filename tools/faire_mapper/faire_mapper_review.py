@@ -1,12 +1,14 @@
 """The review sheet: an Excel workbook in which a person checks propose mapping's matches, one row for
 each column of their table, and which apply mapping reads in place of the crosswalk.
 
-Its first sheet, Review, has one row per column: the input term (the column's name), the proposed
-FAIRe term, the score, the mapper's reasoning, the reviewer's decision (Accept, Reject or Change, from
-a drop-down), the replacement FAIRe term (a drop-down with the column's five best candidates first,
-then every FAIRe term) and what the column is kept as if the match is rejected. The other sheets give
-the things to decide, how to review, the full crosswalk (Crosswalk (details)), which apply mapping
-uses to apply the decisions, and the drop-down lists (Choices, hidden).
+Its first sheet, Review, has one row per column: the input term (the column's heading), the proposed
+FAIRe term (or a MIxS or Darwin Core term when no FAIRe term fits), the score, the mapper's call
+(accept, review or no match), the mapper's reasoning, the reviewer's decision (Accept, Reject or
+Change, from a drop-down), the replacement FAIRe term (a drop-down with the column's best candidates
+first, a blank line, then every FAIRe term) and what the column is kept as if the match is rejected
+(its own term). The other sheets give the additional checks to make, how to review, the full
+crosswalk (Crosswalk (details)), which apply mapping uses to apply the decisions, and the drop-down
+lists (Choices, hidden).
 """
 import io
 import re
@@ -24,15 +26,16 @@ import faire_mapper as fm
 REVIEW = 'Review'
 DETAILS = 'Crosswalk (details)'
 CHOICES = 'Choices'
-DECIDE = 'Things to decide'
+DECIDE = 'Additional checks to make'
 HOW = 'How to review'
-INPUT, PROPOSED, SCORE, REASON, DECISION, REPLACEMENT, KEPT = (
-    'Input term', 'Proposed FAIRe term', 'Score', "Mapper's reasoning", "Reviewer's decision",
+INPUT, PROPOSED, SCORE, CALL_HEAD, REASON, DECISION, REPLACEMENT, KEPT = (
+    'Input term', 'Proposed FAIRe term', 'Score', "Mapper's call", "Mapper's reasoning", "Reviewer's decision",
     'Replacement FAIRe term', 'If rejected, kept as')
-HEADERS = [INPUT, PROPOSED, SCORE, REASON, DECISION, REPLACEMENT, KEPT]
+HEADERS = [INPUT, PROPOSED, SCORE, CALL_HEAD, REASON, DECISION, REPLACEMENT, KEPT]
 DECISIONS = ('Accept', 'Reject', 'Change')
-CALL = {'accept': 'Accepted', 'review': 'For review', 'confirmed': 'Set by a reviewer',
-        'model': 'Chosen by a language model, so check it', 'no match': 'No FAIRe term'}
+# The mapper's call, as the walkthrough shows it
+CALL = {'accept': 'accept', 'review': 'review', 'confirmed': 'set by a reviewer', 'model': 'review (chosen by a model)',
+        'no match': 'no match'}
 TO_DECIDE = PatternFill('solid', fgColor='FBEFD9')
 HEAD = PatternFill('solid', fgColor='DDE7F0')
 # The crosswalk's words for what a reviewer does, in the review sheet's words
@@ -41,11 +44,11 @@ WORDING = [
     (r'Confirm or delete them together', 'Accept or reject them together'),
     (r'confirm or delete it together with that row', 'accept or reject it together with that match'),
     (r'Confirm this row to name the column', 'Accept to name the column'),
-    (r'or delete the row to keep your own name', 'or reject it to keep your own name'),
+    (r'or delete the row to keep your own name', 'or reject it to keep your own term'),
     (r'Confirm this row', 'Accept'), (r'confirm this row', 'accept'),
     (r'Delete this row', 'Reject the match'), (r'delete this row', 'reject the match'),
     (r'delete the row', 'reject the match'),
-    (r'change the FAIRe term', 'choose Change and give the right FAIRe term'),
+    (r'change the FAIRe term', 'choose Change and pick the right term'),
     (r'confirm it', 'accept it'), (r'this row', 'this match'), (r'The tool will', 'Apply mapping will'),
 ]
 
@@ -66,24 +69,34 @@ def _parts(comment):
     return out
 
 
+def _label(t):
+    """How a MIxS or Darwin Core term is named in the review sheet: phosphate (MIxS term)."""
+    return f'{t.name} ({t.source} term)'
+
+
 def reasoning(pr, p):
     """The mapper's reasoning for one column, in a few sentences."""
-    call = CALL.get(pr.route, pr.route)
     if pr.term:
         parts = _parts(pr.comment)
     elif pr.other is not None:
         parts = _parts(pr.other_comment)
-        call = f'No FAIRe term; a {pr.other.source} term instead'
     else:
         why = pr.evidence if pr.evidence != 'no term scored high enough' else 'no FAIRe term fits well enough'
         ex = fm._examples(p)
-        return _plain(f'{call}: {why}.' + (f' Values include {ex}.' if ex else '')
-                      + ' The column is kept under its own name.')
-    text = f"{call}. {parts.get('Why', '')}"
+        return _plain(f'{fm._sentence(why)}' + (f' Values include {ex}.' if ex else '')
+                      + f' The column is kept as your own term ({pr.column}).')
+    text = parts.get('Why', '')
+    if pr.other is not None:
+        intro = (f"No FAIRe term fits, so the mapper suggests the {pr.other.source} term {pr.other.name}, as the "
+                 f"FAIRe guidelines ask; accept it to use it. ")
+        text = intro + text.replace('No FAIRe term fits this column, and the', 'The')
     if parts.get('What happens'):
         text += f" {parts['What happens']}"
     if parts.get('Check') and pr.route != 'accept':
         text += f" Check: {parts['Check']}"
+    if pr.fallback is not None:
+        text += (f" {pr.fallback.source} also has a term for this column, {pr.fallback.name}: if {pr.term} is "
+                 f"wrong, choose Change and pick '{_label(pr.fallback)}', first in the replacement list.")
     return _plain(text)
 
 
@@ -105,52 +118,56 @@ def write_review_sheet(path, proposals, profiles, terms, review_rows, table_name
     ws.append(HEADERS)
     choices = wb.create_sheet(CHOICES)
     shown = [pr for pr in proposals if prof[pr.column].n_values]
+    at = {h: j for j, h in enumerate(HEADERS, 1)}
     for i, pr in enumerate(shown, 2):
         p = prof[pr.column]
         if pr.term:
             proposed = ' + '.join([pr.term] + pr.also_terms()) + (f' (part {pr.part})' if pr.part else '')
-            score = round(pr.score, 2)
+            score, call = round(pr.score, 2), CALL.get(pr.route, pr.route)
         elif pr.other is not None:
-            proposed, score = f'{pr.other.name} ({pr.other.source})', round(pr.other_score, 2)
+            proposed, score, call = _label(pr.other), round(pr.other_score, 2), 'review'
         else:
-            proposed, score = '', None
-        kept = (f'{pr.fallback.name} ({pr.fallback.source} term)' if pr.fallback is not None
-                else f'{pr.column} (your own name)')
+            proposed, score, call = '', None, 'no match'
         decision = 'Accept' if pr.route in ('accept', 'confirmed') else None
-        ws.append([pr.column, proposed, score, reasoning(pr, p), decision, None, kept])
-        # The replacement drop-down: the column's best candidates first, then every FAIRe term
+        ws.append([pr.column, proposed, score, call, reasoning(pr, p), decision, None,
+                   f'{pr.column} (your own term)'])
+        # The replacement drop-down: the column's best candidates (a MIxS or Darwin Core term the mapper
+        # found first), a blank line, then every FAIRe term
         best = [c.rsplit(' (', 1)[0] for c in pr.candidates]
         best = [t for t in dict.fromkeys(best) if t in by_name and t != pr.term][:k]
-        options = best + [t for t in all_terms if t not in best]
+        if pr.fallback is not None:
+            best = [_label(pr.fallback)] + best
+        options = best + [''] + [t for t in all_terms if t not in best]
         col = get_column_letter(i - 1)
         for j, t in enumerate(options, 1):
-            choices.cell(j, i - 1, t)
+            choices.cell(j, i - 1, t or None)
         dv = DataValidation(type='list', formula1=f"'{CHOICES}'!${col}$1:${col}${len(options)}", allow_blank=True,
                             showErrorMessage=False)
-        dv.add(f'F{i}')
+        dv.add(f'{get_column_letter(at[REPLACEMENT])}{i}')
         ws.add_data_validation(dv)
         gloss = _gloss(pr, by_name)
         if gloss:
-            ws.cell(i, 2).comment = Comment(gloss, 'FAIRe mapper', width=320, height=160)
-        if pr.route not in ('accept', 'confirmed'):
-            for j in (1, 5, 6):
+            ws.cell(i, at[PROPOSED]).comment = Comment(gloss, 'FAIRe mapper', width=320, height=160)
+        if call not in ('accept', 'set by a reviewer', 'no match'):
+            for j in range(1, len(HEADERS) + 1):
                 ws.cell(i, j).fill = TO_DECIDE
     choices.sheet_state = 'hidden'
+    dcol = get_column_letter(at[DECISION])
     dv = DataValidation(type='list', formula1='"' + ','.join(DECISIONS) + '"', allow_blank=True,
                         showErrorMessage=True, errorTitle='Decision', error='Choose Accept, Reject or Change')
-    dv.add(f'E2:E{len(shown) + 1}')
+    dv.add(f'{dcol}2:{dcol}{len(shown) + 1}')
     ws.add_data_validation(dv)
     for c in ws[1]:
         c.font = Font(bold=True)
         c.fill = HEAD
         c.alignment = Alignment(wrap_text=True, vertical='top')
-    for j, w in enumerate((26, 30, 7, 80, 14, 30, 28), 1):
+    for j, w in enumerate((26, 30, 7, 12, 80, 14, 30, 28), 1):
         ws.column_dimensions[get_column_letter(j)].width = w
     for row in ws.iter_rows(min_row=2):
         for c in row:
             c.alignment = Alignment(wrap_text=True, vertical='top')
     ws.freeze_panes = 'B2'
-    ws.auto_filter.ref = f'A1:G{len(shown) + 1}'
+    ws.auto_filter.ref = f'A1:{get_column_letter(len(HEADERS))}{len(shown) + 1}'
 
     d = wb.create_sheet(DECIDE)
     d.append(['What to check', 'Columns', 'Rows', 'What to do'])
@@ -173,7 +190,7 @@ def write_review_sheet(path, proposals, profiles, terms, review_rows, table_name
 
     x = wb.create_sheet(DETAILS)
     x.append(fm.CROSSWALK_COLUMNS)
-    for r in fm.crosswalk_rows(proposals, fallbacks=True):
+    for r in fm.crosswalk_rows(proposals):
         x.append([r.get(c, '') for c in fm.CROSSWALK_COLUMNS])
     for c in x[1]:
         c.font = Font(bold=True)
@@ -184,27 +201,33 @@ def write_review_sheet(path, proposals, profiles, terms, review_rows, table_name
 
 def how_to_review(table_name):
     return [
-        f'How to review the proposed FAIRe terms for {table_name}',
+        f'How to review the terms proposed for {table_name}',
         '',
-        'The Review sheet has one row for each column of your table, with the FAIRe term the mapper proposes, '
-        'its score (0 to 1), and why. Rows to decide are shaded.',
+        f'{table_name} is the table you gave to FAIRe mapper: propose mapping, with one row for each sample. The '
+        'Review sheet has one row for each column of that table: the input term is the column heading. For each '
+        'input term it gives the FAIRe term the mapper proposes, its score (0 to 1), the mapper\'s call and why.',
+        '',
+        "The mapper's call: accept (a strong match), review (a match to check), or no match (no term proposed; "
+        'the column is kept as your own term). Rows to review are shaded: put your effort there.',
         '',
         "For each row, choose a Reviewer's decision:",
-        '- Accept: the proposed term is right.',
-        "- Reject: the column has no FAIRe term. It is kept in the workbook as a user-defined field, under the "
-        "name in 'If rejected, kept as': your own column name, or a MIxS or Darwin Core term when the mapper "
-        'found one, as the FAIRe guidelines ask.',
-        '- Change: another FAIRe term is right. Pick it in Replacement FAIRe term: the drop-down lists the '
-        "column's best candidates first, then every FAIRe term.",
+        '- Accept: the proposed term is right. When no FAIRe term fits, the mapper may propose a MIxS or Darwin '
+        'Core term instead, as the FAIRe guidelines ask, shown as, for example, "silicate (MIxS term)". Accept it '
+        'to use it.',
+        '- Reject: no proposed term is right. The column is kept in the workbook as your own term (its heading), '
+        'as a user-defined field.',
+        "- Change: another term is right. Pick it in Replacement FAIRe term. The drop-down lists the column's best "
+        'candidates first (with a MIxS or Darwin Core term first, when the mapper found one, such as '
+        '"phosphate (MIxS term)"), then a blank line, then every FAIRe term.',
         '',
-        'Rows already marked Accept were accepted by the mapper; change them if they are wrong. A row with no '
+        'Rows the mapper accepted are marked Accept already; change them if they are wrong. A row with no '
         'decision is applied as the mapper called it: accepted matches are applied, and matches for review are '
         'left out.',
         '',
-        'Hover over a proposed term to see what it means. The Things to decide sheet lists what only a person '
-        'can settle, such as terms people often confuse.',
+        'Hover over a proposed term to see what it means. The Additional checks to make sheet lists what only a '
+        'person can settle, such as terms people often confuse.',
         '',
-        'Save the workbook (as .xlsx) and give it to FAIRe mapper: apply mapping as the crosswalk. Keep the '
+        'Save the workbook (as .xlsx) and give it to FAIRe mapper: apply mapping as the review sheet. Keep the '
         'Crosswalk (details) sheet: apply mapping uses it to apply your decisions.',
     ]
 
@@ -221,8 +244,8 @@ def is_review_sheet(path):
 
 def read_review_sheet(path, by_name, other_terms, log):
     """The crosswalk for apply mapping, from a review sheet's decisions: Accept applies the proposed
-    match, Reject leaves the column out of the FAIRe terms (named after its MIxS or Darwin Core term if
-    the sheet gives one), Change applies the replacement term, and no decision keeps the mapper's call."""
+    term (a FAIRe term, or a MIxS or Darwin Core term), Reject keeps the column as its own term, Change
+    applies the replacement term, and no decision keeps the mapper's call."""
     with open(path, 'rb') as f:   # a file object, as Galaxy's file names end in .dat
         wb = load_workbook(io.BytesIO(f.read()), data_only=True)
     ws = wb[REVIEW]
@@ -242,13 +265,12 @@ def read_review_sheet(path, by_name, other_terms, log):
         counts[decision] += 1
         mine = details[details['subject_label'].str.strip() == column].to_dict('records')
         main = [x for x in mine if x['predicate_id'] != 'skos:relatedMatch']
-        fallback = [x for x in mine if x['predicate_id'] == 'skos:relatedMatch']
         if decision == 'Accept':
             if not main:
                 problems.append(f"'{column}': Accept, but no term was proposed; kept under its own name")
             rows += [{**x, 'predicate_id': 'skos:exactMatch'} for x in main]
         elif decision == 'Reject':
-            rows += [{**x, 'predicate_id': 'skos:exactMatch'} for x in fallback]
+            continue
         elif decision == 'Change':
             term = re.sub(r'\s*\(.*\)\s*$', '', str(r[at[REPLACEMENT]] or '')).strip()
             term = term[6:] if term.startswith('FAIRe:') else term
