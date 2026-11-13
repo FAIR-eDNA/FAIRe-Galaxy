@@ -56,6 +56,9 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   proposed as tot_depth_water_col. `--confused_terms` gives another table.
   Also in 0.6.1: apply mapping keeps the dates as written in verbatimEventDate (FAIRe: "Sample
   collection date before formatting") when it converts them for eventDate, as Oliver Berry asked.
+  Apply mapping writes checkls_ver as the checklist it's given defines it: the number 1 for v1.0.2,
+  as before, or the version as text (v2.0.0, from the file name) for a checklist that defines it as
+  text, as FAIRe checklist v2 will.
 - New in 0.6.0 (12 November 2026), from the day-night trial (`dev/faire_mapper_daynight/`): a
   column of times of day (Excel time cells, or 10:00, 4 pm) is proposed as verbatimEventTime, and
   apply mapping joins each time to its date in eventDate, with the UTC offset given on its form
@@ -85,7 +88,8 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   values), what apply mapping will do with the values, and, for rows to review, what to check. A
   yes/no control column explains why it goes to samp_category and how many rows become controls.
   Apply mapping writes `checkls_ver` as the number 1, as the checklist defines it and the FAIRe
-  examples use it; the README sheet names the exact checklist.
+  examples use it; the README sheet names the exact checklist. (From 0.6.1 it follows the
+  checklist: text such as v2.0.0 when the checklist defines it as text, as FAIRe v2 will.)
 - New in 0.5.0, from the SEA-MES trial: comment lines above the header (NCBI and ENA sheets) are
   skipped; MIxS lat_lon is split into decimalLatitude and decimalLongitude; one depth fills both
   depth terms; a yes/no control column goes to samp_category; dates saved at midnight lose the time;

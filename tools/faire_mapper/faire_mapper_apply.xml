@@ -1316,9 +1316,11 @@ tick *Leave out columns that are not matched to a FAIRe term*.
   nor a raw table of the same assay gives it.
 - Cell comments are not added to the sheets. Drop-down lists are added, in the same way FAIRe-ator
   adds them, from the *Drop-down values* sheet.
-- ``checkls_ver`` is written as the number 1, as the checklist defines it and the FAIRe examples
-  use it. The README sheet names the exact checklist (*FAIRe_checklist_v1.0.2.xlsx*). FAIRe-ator
-  writes the file name here, which FAIRe-fier reports as an error.
+- ``checkls_ver`` is written as the checklist defines it. FAIRe checklist v1.0.2 defines it as a
+  number, so it is written as 1, as the FAIRe examples have it; a checklist that defines it as text
+  (FAIRe v2) gets the full version, such as v2.0.0, from the checklist's file name. The README sheet
+  names the exact checklist (*FAIRe_checklist_v1.0.2.xlsx*). FAIRe-ator writes the file name here,
+  which FAIRe-fier reports as an error.
 - Values from the table and the methods text are written to *project_level*. For values that differ
   between assays, add an ``assay`` column to the values for the whole project, or move the values to
   the assay columns yourself.
