@@ -48,13 +48,21 @@ model is used, as agreed; the tools are built so one can be added later (see bel
     walkthrough, and rows to review are shaded across the whole row.
   - *Things to decide* is now *additional checks to make*, in the review sheet and in propose
     mapping's output.
-  - *How to review* says which table the rows come from: the table given to propose mapping, one
-    row per sample, whose column headings are the input terms.
+  - *How to review* says where the rows come from, without naming the steps a workflow runs unseen:
+    from the files provided, each row is one column heading (input term) of the sample metadata,
+    named, the table with one row per sample. It says the values for the whole project (primers,
+    protocols) are checked in the workbook's log. The propose-mapping workflow (0.3) gives the review
+    sheet as an output, and the write-workbook workflow (0.2) takes it as its crosswalk input.
   - A MIxS or Darwin Core term is used by accepting it, never by rejecting: Reject always keeps the
     column as its own term. When the mapper proposes a FAIRe term for review and also found a MIxS
     or Darwin Core term for the column, that term comes first in the replacement list
     (*phosphate (MIxS term)*), and the reasoning says to choose Change and pick it.
   - The replacement list has a blank line between the best candidates and the rest.
+  - The review sheet can be sorted or filtered (rows to review first, say). Apply mapping reads each
+    decision with its input term, and lists the columns in the table's order; the replacement
+    drop-down finds its list by the row's input term (Excel leaves drop-downs where they were when it
+    sorts rows). A column whose row was deleted is kept as its own term, and the log says so. Tested
+    with sorted and shuffled sheets, including headings that start with *.
   - *If rejected, kept as* says "your own term".
   - output_read_count is left empty for an OTU table that is rarefied (every sample with the same
     number of reads), as FAIRe asks for the reads that passed filtering; the log says so. Libraries

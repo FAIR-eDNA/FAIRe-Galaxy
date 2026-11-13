@@ -17,7 +17,7 @@
       asserts:
         has_line_matching:
           expression: "^date_collected\teventDate\tsampleMetadata\taccept\t.*"
-    things_to_decide:
+    additional_checks_to_make:
       asserts:
         has_line:
           line: "check\tcolumns\trows\twhat_to_do"
@@ -29,3 +29,10 @@
       asserts:
         has_text:
           text: "18S V4 (Australian Microbiome)"
+    review_sheet:
+      asserts:
+        has_archive_member:
+          path: xl/workbook.xml
+          asserts:
+            has_text:
+              text: Crosswalk (details)

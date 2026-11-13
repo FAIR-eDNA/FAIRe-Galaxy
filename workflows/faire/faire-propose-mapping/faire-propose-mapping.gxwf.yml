@@ -2,15 +2,16 @@ class: GalaxyWorkflow
 label: "FAIRe mapper: propose a mapping"
 doc: |
   The first step from a lab's own sample table to a FAIRe workbook. Profiles the columns of the
-  sample table, proposes a FAIRe term for each (a crosswalk for review), lists the mandatory FAIRe
-  terms not yet covered and what only a person can decide (a sample name used twice, controls not
-  marked, columns of notes, times with no time zone), and finds the primer pairs a methods text
-  names, cites or gives as sequences. Review the crosswalk, then run "FAIRe mapper: write and check a FAIRe workbook".
+  sample table, proposes a FAIRe term for each (a review sheet and a crosswalk for review), lists the
+  mandatory FAIRe terms not yet covered and the additional checks to make (a sample name used twice,
+  controls not marked, columns of notes, times with no time zone), and finds the primer pairs a methods
+  text names, cites or gives as sequences. Fill in the review sheet, then run "FAIRe mapper: write and
+  check a FAIRe workbook".
 license: MIT
 creator:
   - class: Organization
     name: FAIRe Galaxy project contributors
-release: "0.2"
+release: "0.3"
 inputs:
   sample_table:
     type: data
@@ -34,8 +35,10 @@ outputs:
     outputSource: propose/crosswalk
   mandatory_not_covered:
     outputSource: propose/missing
-  things_to_decide:
+  additional_checks_to_make:
     outputSource: propose/review
+  review_sheet:
+    outputSource: propose/review_sheet
   primer_candidates:
     outputSource: primers/candidates
 steps:

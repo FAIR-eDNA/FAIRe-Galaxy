@@ -1179,9 +1179,9 @@ python '$__tool_directory__/faire_mapper_apply.py'
                 </assert_contents>
             </output>
         </test>
-        <!-- A review sheet as the crosswalk: Accept for a MIxS term, Change to the MIxS term offered
-             for a wrong FAIRe match, Change to another FAIRe term, and Reject, which keeps the column as
-             its own term -->
+        <!-- A review sheet as the crosswalk, with its rows sorted (rows to review first): Accept for a
+             MIxS term, Change to the MIxS term offered for a wrong FAIRe match, Change to another FAIRe
+             term, and Reject, which keeps the column as its own term -->
         <test expect_num_outputs="2">
             <param name="table" value="review_table.csv"/>
             <param name="crosswalk" value="apply_review_sheet.xlsx" ftype="xlsx"/>
