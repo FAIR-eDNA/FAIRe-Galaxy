@@ -45,7 +45,7 @@ python '$__tool_directory__/faire2ena_galaxy.py' sample
             </when>
         </conditional>
         <param name="convert_dates" type="boolean" checked="true" label="Convert eventDate values to a form ENA accepts"
-            help="ENA rejects time zone offsets written as +hh:mm (e.g. 2021-09-14T11:00+08:00). With this on, such dates are converted to UTC (2021-09-14T03:00Z). With it off, the upstream script replaces them with 'not provided'."/>
+            help="ENA rejects time zone offsets written as +hh:mm (e.g. 2021-09-14T11:00+08:00). With this on, such dates keep their local time, which daily cycles follow, with the offset in whole hours as ENA takes it (2021-09-14T11:00+08). An offset with minutes (+09:30) does not fit ENA's pattern, so those times are written in UTC and listed in the log. With it off, the upstream script replaces them with 'not provided'."/>
     </inputs>
     <outputs>
         <data name="samples_xml" format="xml" label="${tool.name} on ${on_string}: SAMPLE XML"/>
@@ -53,7 +53,8 @@ python '$__tool_directory__/faire2ena_galaxy.py' sample
         <data name="log" format="txt" label="${tool.name} on ${on_string}: log"/>
     </outputs>
     <tests>
-        <!-- Defaults: marine taxon, dates converted to UTC, one date stored as an Excel date -->
+        <!-- Defaults: marine taxon, local times kept with their offset in whole hours (-04), one date
+             stored as an Excel date -->
         <test expect_num_outputs="3">
             <param name="input_file" value="faire_two_assays.xlsx"/>
             <param name="center_name" value="CSIRO"/>
@@ -63,8 +64,10 @@ python '$__tool_directory__/faire2ena_galaxy.py' sample
                     <has_n_elements_with_path path="./SAMPLE" n="4"/>
                     <has_element_with_path path="./SAMPLE[@alias='GOMECC4_27N_Sta1_DCM_A'][@center_name='CSIRO']"/>
                     <has_text text="&lt;TAXON_ID&gt;408172&lt;/TAXON_ID&gt;"/>
-                    <has_text text="2021-09-14T15:00Z"/>
+                    <has_text text="2021-09-14T11:00-04&lt;"/>
+                    <has_text text="2021-10-02T14:27-04&lt;"/>
                     <has_text text="2021-09-14T11:00&lt;"/>
+                    <not_has_text text="15:00Z"/>
                     <has_text text="ERC000024"/>
                     <!-- ENA's units and numbers (ENA test-server trial, 11 November 2026) -->
                     <has_text_matching expression="&lt;TAG&gt;temperature&lt;/TAG&gt;\s*&lt;VALUE&gt;28.592&lt;/VALUE&gt;\s*&lt;UNITS&gt;ºC&lt;/UNITS&gt;"/>
@@ -137,10 +140,14 @@ python '$__tool_directory__/faire2ena_galaxy.py' sample
                     <!-- a 20 µm pre-filter (size_frac_low) is ENA's upper threshold -->
                     <has_n_elements_with_path path=".//SAMPLE_ATTRIBUTE[TAG='size-fraction upper threshold']" n="1"/>
                     <has_text_matching expression="&lt;TAG&gt;size-fraction upper threshold&lt;/TAG&gt;\s*&lt;VALUE&gt;20&lt;/VALUE&gt;\s*&lt;UNITS&gt;µm&lt;/UNITS&gt;"/>
+                    <!-- an offset with minutes (+09:30) does not fit ENA's date pattern, so that time is in UTC -->
+                    <has_text text="2021-10-02T04:57Z"/>
+                    <has_text text="2021-09-14T11:00-04&lt;"/>
                 </assert_contents>
             </output>
             <output name="log">
                 <assert_contents>
+                    <has_text text="1 eventDate value(s) written in UTC, as ENA takes offsets in whole hours only (+09:30 is not one): GOMECC4_BROWNSVILLE_Sta63_DCM_A"/>
                     <has_text_matching expression="'nitrate' left out for 1 sample.*nitrate_unit is empty.*GOMECC4_BROWNSVILLE_Sta63_DCM_A"/>
                     <has_text_matching expression="sample volume or weight for DNA extraction.*1 sample.*samp_vol_we_dna_ext_unit is empty.*GOMECC4_27N_Sta1_DCM_B"/>
                     <has_text_matching expression="sample storage temperature.*1 sample.*not a number.*GOMECC4_BROWNSVILLE_Sta63_DCM_A"/>

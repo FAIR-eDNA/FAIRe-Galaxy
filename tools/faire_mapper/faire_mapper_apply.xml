@@ -28,7 +28,7 @@ python '$__tool_directory__/faire_mapper_apply.py'
     #end if
     --date_order '$date_order'
     #if str($utc_offset).strip():
-        --utc_offset '$utc_offset'
+        '--utc_offset=$utc_offset'
     #end if
     $include_review
     #if $project_values:
@@ -103,7 +103,7 @@ python '$__tool_directory__/faire_mapper_apply.py'
             <option value="mdy">Month first (9 June 2017)</option>
         </param>
         <param name="utc_offset" type="text" value="" optional="true" label="UTC offset of the times of collection (optional)"
-            help="When your table gives the time of collection in its own column (matched to verbatimEventTime), the tool joins each time to its date in eventDate, as FAIRe asks for the date and time of sampling. Give the offset of the local time from UTC, such as +10:00 for Australian Eastern Standard Time or +11:00 for Australian Eastern Daylight Time, so the time is unambiguous. Leave empty to write local times without an offset.">
+            help="When your table gives the time of collection in its own column (matched to verbatimEventTime), the tool joins each time to its date in eventDate, as FAIRe asks for the date and time of sampling. Give the offset of the local time from UTC, such as +10:00 for Australian Eastern Standard Time or +11:00 for Australian Eastern Daylight Time, so the time is unambiguous. eventDate keeps the local time, as daily cycles follow it: if the column name says the times are UTC, the tool converts them to local time with this offset. Leave empty to write local times without an offset.">
             <validator type="regex" message="An offset such as +11:00, -04:00 or Z">^(Z|[+-](0\d|1[0-4]):[0-5]\d)?$</validator>
         </param>
         <param name="include_review" type="boolean" truevalue="--include_review" falsevalue="" checked="false"
@@ -956,7 +956,8 @@ python '$__tool_directory__/faire_mapper_apply.py'
                 </assert_contents>
             </output>
         </test>
-        <!-- A time column whose name says UTC: joined to the dates with Z, when no offset is given -->
+        <!-- Times in a column whose name says UTC, with no offset given: joined to the dates with Z, and a
+             warning that eventDate holds UTC times, not the local times that daily cycles follow -->
         <test expect_num_outputs="2">
             <param name="table" value="apply_times_utc.csv"/>
             <param name="crosswalk" value="apply_times_utc.sssom.tsv" ftype="tabular"/>
@@ -967,13 +968,59 @@ python '$__tool_directory__/faire_mapper_apply.py'
                 <assert_contents>
                     <has_archive_member path="xl/worksheets/sheet3.xml">
                         <has_text text="2017-09-06T00:30Z"/>
+                        <has_text text="2017-09-06T14:45Z"/>
                     </has_archive_member>
                 </assert_contents>
             </output>
             <output name="log">
                 <assert_contents>
-                    <has_text text="joined to the dates, with the UTC offset Z (the column name says UTC), in 2 rows"/>
+                    <has_text text="joined to the dates in UTC (Z), as the column name says, in 3 rows"/>
+                    <has_text text="eventDate: the times are in UTC. Give the UTC offset of the sampling sites"/>
                     <not_has_text text="the times have no UTC offset"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- The same UTC times with the UTC offset of the sites given: converted to local time, which daily
+             cycles follow, so 14:45 UTC on 6 September is 00:45 on 7 September at +10:00 -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_times_utc.csv"/>
+            <param name="crosswalk" value="apply_times_utc.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="reef_times"/>
+            <param name="assay_name" value="Fish16S"/>
+            <param name="utc_offset" value="+10:00"/>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet3.xml">
+                        <has_text text="2017-09-06T10:30+10:00"/>
+                        <has_text text="2017-09-06T16:30+10:00"/>
+                        <has_text text="2017-09-07T00:45+10:00"/>
+                        <not_has_text text="T14:45"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="converted from UTC to local time at +10:00, in 3 rows"/>
+                    <not_has_text text="the times are in UTC. Give"/>
+                    <not_has_text text="check which is right"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- A negative offset (west of Greenwich, with minutes) reaches the tool as one argument:
+             00:30 UTC on 6 September is 21:00 on 5 September at -03:30 -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_times_utc.csv"/>
+            <param name="crosswalk" value="apply_times_utc.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="reef_times"/>
+            <param name="assay_name" value="Fish16S"/>
+            <param name="utc_offset" value="-03:30"/>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet3.xml">
+                        <has_text text="2017-09-05T21:00-03:30"/>
+                    </has_archive_member>
                 </assert_contents>
             </output>
         </test>

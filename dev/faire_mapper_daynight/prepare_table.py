@@ -3,7 +3,7 @@
 Usage: python prepare_table.py SAMPLE_SHEET.xlsx OUT.xlsx
 
 The sheet is used as published (its Excel time and date cells, and the latitudes stored as text with
-non-breaking spaces, are kept), except for three changes a person would make before mapping:
+non-breaking spaces, are kept), except for four changes a person would make before mapping:
 
 1. The second '8B' (the row between 9A and 9C, Waubs Bay, 14 March 2022 10:00) is renamed 9B. Both
    OTU tables have a 9B column and no second 8B, so this is taken to be a typing slip.
@@ -12,6 +12,9 @@ non-breaking spaces, are kept), except for three changes a person would make bef
    water filtered on site between the day and night intervals (methods, section 2.1).
 3. A row is added for the extraction blank Extbl19_4, which the 16S OTU table holds but the sheet
    does not (an extraction blank was processed with every set of 23 samples; section 2.2).
+4. A row is added for the PCR blank PCRbl19_4, which has 16S fastq files on the Data Access Portal
+   but is in neither the sheet nor the OTU tables (confirmed as a PCR blank by Oliver Berry,
+   13 November 2026).
 
 The notes in 'Collected by', 'Filtered by' and 'Information:' (lists of people and a short ReadMe in
 the first rows) are left as they are; the review deletes or leaves them out.
@@ -42,9 +45,10 @@ for r, v in ids:
     controls += control
     ws.cell(r, type_col).value = 'negative control' if control else 'sample'
     ws.cell(r, control_col).value = 'field negative' if control else None
-blank = ws.max_row + 1
-ws.cell(blank, col['Sample ID']).value = 'Extbl19_4'
-ws.cell(blank, type_col).value, ws.cell(blank, control_col).value = 'negative control', 'extraction negative'
+for name, kind in (('Extbl19_4', 'extraction negative'), ('PCRbl19_4', 'PCR negative')):
+    blank = ws.max_row + 1
+    ws.cell(blank, col['Sample ID']).value = name
+    ws.cell(blank, type_col).value, ws.cell(blank, control_col).value = 'negative control', kind
 wb.save(out)
-print(f'{blank - 1} rows: 9B renamed from the second 8B; {controls} filtration controls and one extraction '
-      'blank marked as negative controls')
+print(f'{ws.max_row - 1} rows: 9B renamed from the second 8B; {controls} filtration controls, an extraction '
+      'blank and a PCR blank marked as negative controls')

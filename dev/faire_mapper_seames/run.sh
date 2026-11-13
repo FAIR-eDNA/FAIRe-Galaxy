@@ -128,7 +128,7 @@ python "$here/review.py" "$s/mapper/samples_18S/crosswalk.sssom.tsv" "$here/revi
 gunzip -c "$d/7_SEA-MES_2025_EUK_18S_for_DAT.csv.gz" > "$s/faire/18S.csv"
 python "$tools/faire_mapper_apply.py" "$s/mapper/samples_18S.csv" --crosswalk "$s/mapper/reviewed.sssom.tsv" \
     --checklist "$ck" --template "$tpl" --assay_type metabarcoding --sample_types Water --project_id SEA-MES_eDNA \
-    --assay_name Euk18S --country Australia --project_values "$here/project_values_18S.tsv" \
+    --assay_name Euk18S --country Australia --utc_offset +10:00 --project_values "$here/project_values_18S.tsv" \
     --otu "$s/faire/18S.csv" --otu_assay Euk18S --otu_run Ramaciotti_2025-02 \
     --library "$report" --library_filter _18s --library_assay Euk18S \
     -o "$s/faire/seames_18S.xlsx" --log "$s/faire/seames_18S.log"

@@ -274,7 +274,18 @@ python '$__tool_directory__/faire_mapper.py' map
                     <has_line_matching expression="^controls not marked\tSample ID\tFiltration control 1 \+ 2\t.*sample type column.*"/>
                     <has_line_matching expression="^notes, not sample values\tCollected by\trows 1 to 2 of 11\t.*"/>
                     <has_line_matching expression="^notes, not sample values\tInformation:\trows 1 to 3 of 11\t.*"/>
-                    <has_line_matching expression="^times with no time zone\tTime\t.*UTC offset.*"/>
+                    <has_line_matching expression="^times with no time zone\tTime\t.*taken as local time.*UTC offset.*"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Times in UTC only: listed, as daily cycles follow local time, with how to get it -->
+        <test expect_num_outputs="6">
+            <param name="table" value="apply_times_utc.csv"/>
+            <param name="sample_types" value="Water"/>
+            <output name="review">
+                <assert_contents>
+                    <has_line_matching expression="^times in UTC\tCollection Time \(UTC\)\t3 rows \(00:30, 06:30, 14:45 \.\.\.\)\t.*local time.*converts.*"/>
+                    <not_has_text text="times with no time zone"/>
                 </assert_contents>
             </output>
         </test>
@@ -361,8 +372,8 @@ maximumDepthInMeters. A yes/no column that says which samples are controls, unde
   do about it: a sample name used on more than one row; sample names that read as controls
   (*Filtration control 1 + 2*, *Extbl19_4*) when no column says which rows are controls; columns
   with values only in the first rows, which may be notes about the whole study; and times of
-  collection (the column matched to verbatimEventTime or eventDate) with no time zone. The tool
-  lists these and changes nothing. The list has only its header row when there is nothing to
+  collection (the column matched to verbatimEventTime or eventDate) with no time zone, or in UTC
+  only (daily cycles follow local time). The tool lists these and changes nothing. The list has only its header row when there is nothing to
   decide.
 - **summary**: the number of columns in each route.
 

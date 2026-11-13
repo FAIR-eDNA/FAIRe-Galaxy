@@ -63,7 +63,9 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   CSIRO's Data Access Portal lists a collection's files), works as a library table, and so do
   md5sum's checksum files and the CSV from PowerShell's Get-FileHash: the files are paired into
   libraries by their read number (R1 and R2), and *identify your files* names such lists as
-  library tables. A library name that already ends with the assay name
+  library tables. eventDate keeps the local time, which daily cycles follow: a time column whose
+  name says UTC is converted to local time when the UTC offset is given, and *things to decide*
+  lists UTC-only times. The offset can now be negative on the command line (`--utc_offset=-03:30`). A library name that already ends with the assay name
   (1A_16S_Fish) gets only the run added in lib_id, unless the library holds several assays.
 - New in 0.5.1 (12 November 2026): each crosswalk comment says, in plain sentences and the same
   order, what the FAIRe term means (from the checklist), why it was proposed (with the table's own
@@ -643,7 +645,10 @@ from *Collected by*. After review, and with the primers and methods
 from the report as values for the whole project, the 18S workbook went through every tool;
 FAIRe-fier passed sampleMetadata and reported only `checkls_ver` in projectMetadata. With 0.6.0
 (12 November), the 18S table's *Collection Time (UTC)* goes to verbatimEventTime and its times join
-the dates in eventDate, with Z, as the column's name says UTC.
+the dates in eventDate. As daily cycles follow local time, the trial gives the sites' UTC offset
+(+10:00, AEST, off Victoria and Tasmania in July), and apply mapping converts the times to local time
+(2023-07-07T00:45+10:00 for 14:45 UTC on 6 July). The table's *Collection Time (AEST)* column is an
+hour ahead of AEST (22:48 for 11:48 UTC), so it is left out.
 
 The COI table then joined the 16S workbook as a second assay (11,643 ASVs, not curated), with the
 values that differ between the assays given an assay column. Every tool takes the two-assay
@@ -848,8 +853,8 @@ providing no model, own service without credentials, and an unreachable service,
 passing credentials as Galaxy would); all 42 tests passed in Galaxy `release_26.1` here. On 7
 November the identify tool was added, with 2 tests, and 5 apply mapping tests for files in the
 wrong field and the layout setting; all 49 tests passed in Galaxy `release_26.1` here. On 12
-November (0.6.0) the day-night trial added 5 apply mapping tests, 2 propose mapping tests and 1
-identify test; all 57 tests passed in Galaxy `release_25.0` here.
+November (0.6.0) the day-night trial added 7 apply mapping tests, 3 propose mapping tests and 1
+identify test; all 60 tests passed in Galaxy `release_25.0` here.
 
 | Tool | Test | Checks | Result |
 |---|---|---|---|
@@ -896,11 +901,14 @@ identify test; all 57 tests passed in Galaxy `release_25.0` here.
 | apply mapping | 24 | *Layout of this table* set to samples as columns: read as set | passed |
 | apply mapping | 25 | *Layout of this table* set to samples as rows for a table with samples as columns: stops, naming the setting | passed |
 | apply mapping | 26 | Day-night layouts: a time column joined to the dates in eventDate at +10:00; the habitat project values written as "not applicable: control sample" for the two controls, and the extraction blank's empty eventDate and geo_loc_name too; a values file with no trailing tabs; ampliconSize 178-228 accepted; no empty neg_cont_type reported for the samples; an LCA output with the OTU column after the ranks, its sequences from a FASTA file | passed |
-| apply mapping | 27 | A time column named *Collection Time (UTC)*, with no offset given: joined to the dates with Z | passed |
-| apply mapping | 28 | A list of fastq files with their MD5s as PowerShell's Get-FileHash and Export-Csv write it (a #TYPE line; Algorithm, Hash and the full Windows path): paired into four libraries by read number, file names without their folders, checksums written and checksum_method MD5, lib_id LIZ_01_Fish16S_reef_run1 (the assay not repeated) | passed |
-| apply mapping | 29 | The same files as a list of names, one per line with their folder and no header (as the Data Access Portal lists them): read as a file list, paired, folders taken off, no checksum_method | passed |
-| apply mapping | 30 | The same files as md5sum writes them (no header): read as a checksum list, paired, checksums written | passed |
+| apply mapping | 27 | A time column named *Collection Time (UTC)*, with no offset given: joined to the dates with Z, and a warning that eventDate holds UTC, not local time | passed |
+| apply mapping | 28 | The same UTC times with the sites' offset (+10:00): converted to local time, 14:45 UTC on 6 September as 2017-09-07T00:45+10:00 | passed |
+| apply mapping | 29 | A negative offset with minutes (-03:30) reaches the tool as one argument: 2017-09-05T21:00-03:30 | passed |
+| apply mapping | 30 | A list of fastq files with their MD5s as PowerShell's Get-FileHash and Export-Csv write it (a #TYPE line; Algorithm, Hash and the full Windows path): paired into four libraries by read number, file names without their folders, checksums written and checksum_method MD5, lib_id LIZ_01_Fish16S_reef_run1 (the assay not repeated) | passed |
+| apply mapping | 31 | The same files as a list of names, one per line with their folder and no header (as the Data Access Portal lists them): read as a file list, paired, folders taken off, no checksum_method | passed |
+| apply mapping | 32 | The same files as md5sum writes them (no header): read as a checksum list, paired, checksums written | passed |
 | map | 9 | Excel time cells in a Time column: verbatimEventTime (times of day), with a note that apply mapping joins them to the dates | passed |
+| map | 11 | Times in UTC only: *things to decide* lists them, with how to get local time | passed |
 | map | 10 | A sheet in the day-night study's form: the *things to decide* list gives a repeated sample name, a filtration control not marked as a control, two columns of notes and the times with no time zone | passed |
 | identify | 1 | Eight files: sample, OTU, taxonomy, library, dictionary, text, curated OTU table and crosswalk, each named with its reason | passed |
 | identify | 2 | Two Excel files: each sheet on its own (the SRA sheet's library sheet, a primer register); no sample table found | passed |

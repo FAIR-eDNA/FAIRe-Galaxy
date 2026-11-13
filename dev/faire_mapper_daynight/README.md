@@ -42,7 +42,8 @@ the tools do not decide them.
 - **Which rows are controls.** The six filtration controls are marked only by name ("Filtration
   control 1 + 2"), so the sheet gets a sample type column (sample or negative control) and a
   control type column (field negative). The 16S table also holds an extraction blank, Extbl19_4,
-  which the sheet does not; it is added as an extraction negative.
+  which the sheet does not; it is added as an extraction negative. The PCR blank PCRbl19_4, which
+  has only fastq files, is added as a PCR negative.
 - **Notes and times.** The list also gives the three columns of notes (values only in the first
   rows) and the times with no time zone (answered by the UTC offset on apply mapping's form).
 
@@ -61,7 +62,8 @@ Table 1, including the inosines of jgHCO2198. The habitat terms (marine biome, m
 reef, ocean water, from ENVO's current labels), the control types (field negative for the filtration
 controls, extraction negative for the extraction blank), 9B for the second 8B and the UTC offset
 (+11:00, Australian Eastern Daylight Time, which all three trips fell within) were the trial's
-choices; Oliver Berry confirmed them on 12 November 2026.
+choices; Oliver Berry confirmed them on 12 November 2026, and PCRbl19_4 as a PCR blank on
+13 November.
 
 ## What the trial found in the tools
 
@@ -85,13 +87,13 @@ The first run stopped or went wrong at each of these. Each was fixed with a test
 
 ## Result
 
-With the prepared sheet and one review decision: 127 rows (120 samples, 6 filtration controls and
-1 extraction blank), 88 FAIRe terms, both assays as otuFinal and taxaFinal with every sequence, and
-no mandatory term left empty. experimentRunMetadata has 238 libraries (121 for 16S and 117 for
-COI), each with its two fastq files and lib_id (1A_16S_Fish_AGRF_NovaSeq6000_SP); the log lists the
-PCR blank's library, which matches no sample. FAIRe-fier passes
-both sheets (warnings only: coordinates with fewer than five decimal places). FAIRe2ENA writes 127
-samples, with the collection times in UTC (2021-10-31T23:00Z for 10 am on 1 November). FAIRe2QIIME
+With the prepared sheet and one review decision: 128 rows (120 samples, 6 filtration controls, an
+extraction blank and a PCR blank), 88 FAIRe terms, both assays as otuFinal and taxaFinal with every sequence, and
+no mandatory term left empty. experimentRunMetadata has 239 libraries (122 for 16S and 117 for
+COI), every one on the portal, each with its two fastq files and lib_id
+(1A_16S_Fish_AGRF_NovaSeq6000_SP). FAIRe-fier passes
+both sheets (warnings only: coordinates with fewer than five decimal places). FAIRe2ENA writes 128
+samples, with the collection times in local time (2021-11-01T10:00+11 for 10 am on 1 November). FAIRe2QIIME
 writes metadata and manifests for both assays.
 
 ## Still to do
@@ -105,9 +107,6 @@ writes metadata and manifests for both assays.
   Export-Csv md5.csv` in PowerShell, in the folder of reads, writes one. Either goes to `run.sh` as
   `FILES` (and to apply mapping as a library table) as it is, in place of the list of names. With
   made-up checksums in an md5sum file, FAIRe2ENA writes an experiment and a run for each library.
-- **The PCR blank.** PCRbl19_4 has files on the portal but no row in the sheet and no column in the
-  OTU tables. If it is a PCR blank from 19 April 2022, a row for it (negative control, PCR negative)
-  would give it its library, as the extraction blank has.
 - **ENA aliases.** FAIRe2ENA names each experiment and run by the lib_id without its assay and run.
   Here the library names end with the assay, so a library sequenced for one assay only becomes
   Extbl19_4, while the rest keep the whole lib_id (1A_16S_Fish_AGRF_NovaSeq6000_SP) so that 1A's

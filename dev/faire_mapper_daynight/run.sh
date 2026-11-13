@@ -10,7 +10,8 @@
 #   another list of the files, such as md5sum's output with their checksums.
 #   1. propose mapping on the sample sheet as published
 #   2. prepare_table.py: what a person adds before mapping (9B for the second 8B, a sample type and
-#      control type column, a row for the extraction blank in the 16S table)
+#      control type column, rows for the extraction blank in the 16S table and the PCR blank in the
+#      fastq files)
 #   3. propose mapping on that sheet, then review.py applies the reviewer's decisions
 #   4. find primers on the paper's methods
 #   5. apply mapping: both LCA outputs as otuFinal and taxaFinal, with their FASTA files, the fastq

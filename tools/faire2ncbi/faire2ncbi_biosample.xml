@@ -67,7 +67,7 @@ python '$__tool_directory__/faire2ncbi_galaxy.py' biosample
         </param>
         <section name="advanced" title="More options" expanded="false">
             <param name="convert_dates" type="boolean" checked="true" label="Convert eventDate values for NCBI"
-                help="NCBI needs collection times in UTC. With this on, a time zone offset is converted (2021-09-14T11:00+08:00 becomes 2021-09-14T03:00Z) and Excel date cells are written as ISO dates. With it off, values are passed unchanged."/>
+                help="NCBI needs collection times in UTC. With this on, a time zone offset is converted (2021-09-14T11:00+08:00 becomes 2021-09-14T03:00Z) and Excel date cells are written as ISO dates. With it off, values are passed unchanged. The local time stays in the table as verbatimEventTime, when the workbook has it and extra fields are included."/>
             <param name="mixs_units" type="boolean" checked="true" label="Add MIxS preferred units"
                 help="Numeric fields with a matching _unit field (for example temp_unit) always get that unit. With this on, other numeric fields get the MIxS preferred unit, for example 'degree Celsius' for temp. With it off, they are left as plain numbers."/>
             <conditional name="title">

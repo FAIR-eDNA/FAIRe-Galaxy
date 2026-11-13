@@ -1691,8 +1691,8 @@ def adjudication_requests(profiles, proposals, terms, descriptions=None):
     return reqs
 
 
-# Sample names that read as controls (Filt_control_3_4, Extbl19_4, NTC, Field blank 2 ...)
-CONTROL_NAME_RE = re.compile(r'control|blank|negative|\bneg\b|\bntc\b|extbl|ext_bl|\bmock\b', re.I)
+# Sample names that read as controls (Filt_control_3_4, Extbl19_4, PCRbl19_4, NTC, Field blank 2 ...)
+CONTROL_NAME_RE = re.compile(r'control|blank|negative|\bneg\b|\bntc\b|ext_?bl|pcr_?bl|\bmock\b', re.I)
 # Terms that say which rows are controls
 CONTROL_TERMS = {'samp_category', 'neg_cont_type', 'pos_cont_type', *CONTROL_FLAGS}
 REVIEW_COLUMNS = ['check', 'columns', 'rows', 'what_to_do']
@@ -1738,26 +1738,35 @@ def review_list(df, profiles, proposals):
         if str(c).startswith('Unnamed: '):   # no header (pandas names it), so never mapped
             continue
         rows = [i + 1 for i, v in enumerate(df[c].tolist()) if not is_missing(v) and str(v).strip()]
-        if n >= 6 and rows and len(rows) < n and rows[-1] <= max(5, n // 10):
+        # values in a few rows at the top only (not a column left empty for controls at the end)
+        if n >= 6 and rows and len(rows) <= n // 2 and rows[-1] <= max(5, n // 10):
             out.append(['notes, not sample values', str(c), _row_span(rows, n),
                         'Values only in the first rows, so they may be notes about the whole study. If so, '
                         'leave the column out (delete its row in the crosswalk) and give anything FAIRe needs from them '
                         '(recordedBy, for example) as a project value. If they belong to those rows only, keep '
                         'the column'])
-    # The times that go into eventDate: a column matched to verbatimEventTime, or eventDate with times
+    # The times that go into eventDate: a column matched to verbatimEventTime, or eventDate with times.
+    # Daily cycles follow local time, so eventDate keeps it; the UTC offset adds the time zone.
     timed = {pr.column for pr in mapped if pr.term in ('verbatimEventTime', 'eventDate')}
     for p in profiles:
-        if p.column not in timed or not p.n_values or re.search(r'\b(UTC|GMT)\b', p.column, re.I):
+        if p.column not in timed or not p.n_values or not (p.time_frac >= 0.8 or p.date_format == 'ISO date-time'):
             continue
-        if p.time_frac >= 0.8 or p.date_format == 'ISO date-time':
-            zone = re.search(r'\(([A-Z]{2,4}T)\)', p.column)
-            out.append(['times with no time zone', p.column,
-                        f"{p.n_values} rows ({', '.join(time_text(v) for v in p.examples[:3])} ...)",
-                        (f'The column name gives the time zone ({zone.group(1)}), but the times have no UTC '
-                         f'offset. Give the offset of {zone.group(1)} on apply mapping\'s form' if zone else
-                         'The times have no UTC offset. Give it on apply mapping\'s form (+11:00 for '
-                         'Australian Eastern Daylight Time, for example)')
-                        + ', or eventDate will hold local times with no offset'])
+        rows = f"{p.n_values} rows ({', '.join(time_text(v) for v in p.examples[:3])} ...)"
+        if re.search(r'\b(UTC|GMT)\b', p.column, re.I):
+            out.append(['times in UTC', p.column, rows,
+                        'Daily cycles follow local time. If the table also gives the local time, match that '
+                        'column to verbatimEventTime instead; or give the UTC offset of the sampling sites on '
+                        'apply mapping\'s form, which then converts these times to local time in eventDate '
+                        '(taking the dates as UTC dates)'])
+            continue
+        zone = re.search(r'\(([A-Z]{2,4}T)\)', p.column)
+        out.append(['times with no time zone', p.column, rows,
+                    'The times are taken as local time, which daily cycles follow. '
+                    + (f'The column name gives the time zone ({zone.group(1)}): give its UTC offset on apply '
+                       f'mapping\'s form' if zone else
+                       'Give their UTC offset on apply mapping\'s form (+11:00 for Australian Eastern Daylight '
+                       'Time, for example)')
+                    + ', so eventDate also gives the time zone. NCBI needs it, as it takes times in UTC only'])
     return out
 
 

@@ -666,7 +666,14 @@ def build_workbook(args, df, rows, terms, by_name, log):
         times, dates = sample_out['verbatimEventTime'], sample_out['eventDate']
         tcol = next((r['column'] for r in rows if r['term'] == 'verbatimEventTime'), 'the time column')
         says_utc = bool(re.search(r'\b(UTC|GMT)\b', str(tcol), re.I))
+        # Daily cycles follow local time, so eventDate keeps it: times in UTC are converted to local time
+        # when the sites' offset is given (the dates then taken as UTC dates, as in a UTC log)
+        to_local = says_utc and offset not in ('', 'Z')
         join_offset = offset or ('Z' if says_utc else '')
+        shift = dt.timedelta(0)
+        if to_local:   # +10:00 or -04:30 (checked against UTC_OFFSET_RE above)
+            hours, minutes = offset[1:].split(':')
+            shift = (-1 if offset.startswith('-') else 1) * dt.timedelta(hours=int(hours), minutes=int(minutes))
         # Excel time cells come as 10:00:00: written as 10:00, FAIRe's example form
         sample_out['verbatimEventTime'] = [fm.time_text(v) if isinstance(v, dt.time) or TIME_24_RE.match(str(v).strip())
                                            else v for v in times]
@@ -675,21 +682,29 @@ def build_workbook(args, df, rows, terms, by_name, log):
             hms, d = time_of_day(times[i]), str(dates[i]).strip()
             if hms is None or _blank(dates[i]) or not re.match(r'^\d{4}-\d{2}-\d{2}$', d):
                 continue
-            stamp = f'{d}T{hms[0]:02d}:{hms[1]:02d}' + (f':{hms[2]:02d}' if hms[2] else '') + join_offset
+            when = dt.datetime.fromisoformat(d) + dt.timedelta(hours=hms[0], minutes=hms[1], seconds=hms[2]) + shift
+            stamp = when.strftime('%Y-%m-%dT%H:%M' + (':%S' if when.second else '')) + join_offset
             example = example or (d, fm.time_text(times[i]), stamp)
             dates[i] = stamp
             joined += 1
         if joined:
-            log.add('Columns written', f"eventDate: the times in '{tcol}' (verbatimEventTime) joined to the dates"
-                    + (f', with the UTC offset {join_offset}' if join_offset else '')
-                    + (' (the column name says UTC)' if join_offset and not offset else '')
-                    + f", in {joined} rows (e.g. '{example[0]}' at '{example[1]}' as '{example[2]}')")
-            if says_utc and offset and offset != 'Z':
-                log.add('Warnings', f"eventDate: the column name '{tcol}' says UTC, but the offset given is {offset}; "
-                                    f"check which is right")
+            eg = f"in {joined} rows (e.g. '{example[0]}' at '{example[1]}' as '{example[2]}')"
+            if to_local:
+                log.add('Columns written', f"eventDate: the times in '{tcol}' (verbatimEventTime), which the column "
+                                           f"name says are UTC, joined to the dates and converted from UTC to local "
+                                           f"time at {offset}, {eg}")
+            elif says_utc and not offset:
+                log.add('Columns written', f"eventDate: the times in '{tcol}' (verbatimEventTime) joined to the dates "
+                                           f"in UTC (Z), as the column name says, {eg}")
+                log.add('Warnings', 'eventDate: the times are in UTC. Give the UTC offset of the sampling sites on '
+                                    'the form to write them as local times, which daily cycles follow')
+            else:
+                log.add('Columns written', f"eventDate: the times in '{tcol}' (verbatimEventTime) joined to the dates"
+                        + (f', with the UTC offset {join_offset}' if join_offset else '') + f', {eg}')
             if not join_offset:
-                log.add('Warnings', 'eventDate: the times have no UTC offset, so they are local times; give the '
-                                    'offset on the form (for example +11:00 for Australian Eastern Daylight Time)')
+                log.add('Warnings', 'eventDate: the times have no UTC offset, so they are kept as local times; give '
+                                    'the offset on the form (for example +11:00 for Australian Eastern Daylight '
+                                    'Time) so eventDate also gives the time zone')
 
     # ---- values for the whole project or for every sample (e.g. from the methods text)
     if args.project_values:

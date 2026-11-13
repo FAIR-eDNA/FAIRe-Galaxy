@@ -48,8 +48,12 @@ before and after them:
 1. **Collection dates.** ENA's date pattern does not accept time zone offsets written as `+hh:mm`.
    The upstream script replaces every such date with "not provided". In the GOMECC-4 example
    workbook this happens to all 502 samples. Australian data with offsets such as `+08:00` or
-   `+09:30` would be affected the same way. The driver converts these to UTC (for example
-   `2021-09-14T11:00-04:00` becomes `2021-09-14T15:00Z`). Users can turn this off.
+   `+09:30` would be affected the same way. The driver keeps the local time, which daily cycles
+   follow, and writes the offset in whole hours, as ENA's pattern takes it
+   (`2021-09-14T11:00-04:00` becomes `2021-09-14T11:00-04`). An offset with minutes, such as
+   `+09:30` in South Australia and the Northern Territory, does not fit the pattern, so those times
+   are written in UTC (`2021-10-02T14:27+09:30` becomes `2021-10-02T04:57Z`) and listed in the log.
+   Until 13 November the driver wrote every time in UTC. Users can turn this off.
 2. **Excel date cells.** If eventDate is stored as an Excel date, the upstream script crashes
    (`TypeError`). The driver turns these into ISO text first.
 3. **Sample taxon.** Upstream hard-codes taxon 408172 (marine metagenome). The tool offers
@@ -266,5 +270,7 @@ the tests for items 12 to 14 were written first and failed (in planemo's numberi
 | faire2ena_run | 6 | Unknown assay name: stops and lists available assays | passed |
 | faire2ena_sample | 1 (12 Nov, size fraction) | Also size_frac 0.22 as *size-fraction lower threshold* in µm; "no pre-filter" left out and listed; no *sizefraction* labels; upstream's count of XML lines not in the log | passed |
 | faire2ena_sample | 4 (12 Nov, size fraction) | Also a 20 µm pre-filter as *size-fraction upper threshold* | passed |
+| faire2ena_sample | 1 (13 Nov) | Local times kept with the offset in whole hours (2021-09-14T11:00-04), nothing converted to 15:00Z | passed |
+| faire2ena_sample | 4 (13 Nov) | An offset with minutes (+09:30) written in UTC (2021-10-02T04:57Z) and listed in the log | passed |
 | faire2ena_run | single end (12 Nov) | lib_layout *single end*: 3 experiments with SINGLE, 3 runs with one file each, no `nan` | passed |
 | faire2ena_run | single end, second file (12 Nov) | lib_layout *single end* with filename2 given: stops with advice | passed |

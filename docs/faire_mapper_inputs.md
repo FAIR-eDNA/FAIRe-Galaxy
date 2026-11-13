@@ -41,8 +41,9 @@ do a better job if you:
 - give units in the header ("Volume (mL)") or with each value ("1 L");
 - keep a column that says which rows are controls, and what kind of control each one is (the tools
   cannot tell controls from samples by their names);
-- give the time of collection as a time (10:00), in its own column or with the date; the tool joins
-  a time column to the dates, and asks for the UTC offset on its form;
+- give the time of collection as local time (10:00), as daily cycles follow it, in its own column
+  or with the date; the tool joins a time column to the dates, and asks for the UTC offset on its
+  form so eventDate also gives the time zone;
 - use the same sample names as in your OTU table.
 
 **Data dictionary** (recommended, for the *propose mapping* tool). A data dictionary is a list of
