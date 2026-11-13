@@ -26,7 +26,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
 
 ## Status
 
-- Version 0.6.0. `planemo lint`: passes with no warnings. `pyflakes`: clean.
+- Version 0.6.1. `planemo lint`: passes with no warnings. `pyflakes`: clean.
 - Goes to Galaxy Australia as an early version with the wrapped FAIRe tools (decided 6 November
   2026). Each tool's help starts with a note saying so, which asks users to check the results and
   send problems to the Galaxy Australia help desk (to confirm with Galaxy Australia, question 8).
@@ -43,6 +43,14 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   independent answer keys (`dev/faire_mapper_real_datasets/`, `dev/faire_mapper_australian_datasets/`,
   summarised below), and end to end on CSIRO's SEA-MES data (`dev/faire_mapper_seames/`). Not yet
   tried on datasets from Australian labs that already have a FAIRe version.
+- New in 0.6.1 (13 November 2026): FAIRe terms that people often confuse, listed in
+  `commonly_confused_terms.tsv` (group, term, meaning, the question that tells them apart). Propose
+  mapping always marks a column matched to one of them for review, however strong the match. The
+  crosswalk comment names the terms it is confused with and what each means, and asks the question;
+  *things to decide* lists the column too. The first group is the sampling depth
+  (minimumDepthInMeters, maximumDepthInMeters) and the depth of the water column
+  (tot_depth_water_col). In the SEA-MES 18S trial, *Nominal depth* (the planned sampling depth) was
+  proposed as tot_depth_water_col. `--confused_terms` gives another table.
 - New in 0.6.0 (12 November 2026), from the day-night trial (`dev/faire_mapper_daynight/`): a
   column of times of day (Excel time cells, or 10:00, 4 pm) is proposed as verbatimEventTime, and
   apply mapping joins each time to its date in eventDate, with the UTC offset given on its form
@@ -820,6 +828,8 @@ test.
   the day-night study names its files (LIZ_01_Fish16S_R1.fastq.gz); and `library_file_names.txt`:
   their names only, one per line with a folder, as the Data Access Portal lists files. By the same
   script.
+- `map_depths.csv`: six samples with a sampling depth (0, 5 and 10 m) and the depth of the water
+  at the site (15 and 22 m).
 - `map_review.csv`: 11 rows in the form of the day-night study's sheet: a sample name used twice,
   a filtration control named but not marked, notes in the first rows of two columns, and times with
   no time zone.
@@ -854,7 +864,8 @@ passing credentials as Galaxy would); all 42 tests passed in Galaxy `release_26.
 November the identify tool was added, with 2 tests, and 5 apply mapping tests for files in the
 wrong field and the layout setting; all 49 tests passed in Galaxy `release_26.1` here. On 12
 November (0.6.0) the day-night trial added 7 apply mapping tests, 3 propose mapping tests and 1
-identify test; all 60 tests passed in Galaxy `release_25.0` here.
+identify test; all 60 tests passed in Galaxy `release_25.0` here. 0.6.1 adds one propose mapping
+test (commonly confused terms).
 
 | Tool | Test | Checks | Result |
 |---|---|---|---|
@@ -882,7 +893,7 @@ identify test; all 60 tests passed in Galaxy `release_25.0` here.
 | apply mapping | 6 | Two assays: a reads-per-taxon matrix (samples as rows, sample details left out, names read as ranks) and a DADA2 table with its taxonomy joined by sequence, as otuRaw and taxaRaw sheets named by assay | passed |
 | apply mapping | 7 | OTU table whose names match no sample: stops with the names found | passed |
 | apply mapping | 8 | A crosswalk edited in a spreadsheet and saved as Excel | passed |
-| map | 8 | NCBI BioSample sheet: comment lines skipped, MIxS lat_lon to both coordinates, one depth to both depth terms, Control_Neg (Y or N) to samp_category | passed |
+| map | 8 | NCBI BioSample sheet: comment lines skipped, MIxS lat_lon to both coordinates, one depth to both depth terms (for review since 0.6.1, as commonly confused), Control_Neg (Y or N) to samp_category | passed |
 | apply mapping | 9 | The same sheet: coordinates split and signed, dates at midnight written as dates, controls as *negative control*; an ENA run report as the library table (filtered by name, a library of another sample and a lone file left out, files, MD5s and links written, lib_id with the assay and run added); an ASV table named after fastq files | passed |
 | apply mapping | 10 | The SRA submission sheet as the library table: the instructions sheet skipped, libraries matched by sample name | passed |
 | apply mapping | 11 | Libraries that hold two assays' amplicons in one pair of files: a lib_id for each amplicon (library name, assay and run), the rows sharing the files, and the log listing the libraries | passed |
@@ -909,6 +920,7 @@ identify test; all 60 tests passed in Galaxy `release_25.0` here.
 | apply mapping | 32 | The same files as md5sum writes them (no header): read as a checksum list, paired, checksums written | passed |
 | map | 9 | Excel time cells in a Time column: verbatimEventTime (times of day), with a note that apply mapping joins them to the dates | passed |
 | map | 11 | Times in UTC only: *things to decide* lists them, with how to get local time | passed |
+| map | 12 | A sampling depth and a water depth column: both for review despite strong matches, each comment naming the other term and the question that tells them apart, and both in *things to decide* | passed |
 | map | 10 | A sheet in the day-night study's form: the *things to decide* list gives a repeated sample name, a filtration control not marked as a control, two columns of notes and the times with no time zone | passed |
 | identify | 1 | Eight files: sample, OTU, taxonomy, library, dictionary, text, curated OTU table and crosswalk, each named with its reason | passed |
 | identify | 2 | Two Excel files: each sheet on its own (the SRA sheet's library sheet, a primer register); no sample table found | passed |

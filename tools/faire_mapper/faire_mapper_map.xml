@@ -212,7 +212,8 @@ python '$__tool_directory__/faire_mapper.py' map
                 </assert_contents>
             </output>
         </test>
-        <!-- An NCBI BioSample sheet: comment lines, MIxS lat_lon, one depth, a yes/no control column -->
+        <!-- An NCBI BioSample sheet: comment lines, MIxS lat_lon, one depth (for review, as the depth terms are
+             commonly confused), a yes/no control column -->
         <test expect_num_outputs="6">
             <param name="table" value="mixs_sheet.tsv" ftype="tabular"/>
             <param name="sample_types" value="Water"/>
@@ -220,7 +221,7 @@ python '$__tool_directory__/faire_mapper.py' map
                 <assert_contents>
                     <has_line_matching expression="^local:_lat_lon\t\*lat_lon\tskos:exactMatch\tFAIRe:decimalLatitude\t.*\tlatitude$"/>
                     <has_line_matching expression="^local:_lat_lon\t\*lat_lon\tskos:exactMatch\tFAIRe:decimalLongitude\t.*\tlongitude$"/>
-                    <has_line_matching expression="^local:_depth\t\*depth\tskos:exactMatch\tFAIRe:maximumDepthInMeters\t.*"/>
+                    <has_line_matching expression="^local:_depth\t\*depth\tskos:closeMatch\tFAIRe:maximumDepthInMeters\t.*"/>
                     <has_line_matching expression="^local:Control_Neg\tControl_Neg\tskos:closeMatch\tFAIRe:samp_category\t.*\tnegative control if yes$"/>
                 </assert_contents>
             </output>
@@ -286,6 +287,31 @@ python '$__tool_directory__/faire_mapper.py' map
                 <assert_contents>
                     <has_line_matching expression="^times in UTC\tCollection Time \(UTC\)\t3 rows \(00:30, 06:30, 14:45 \.\.\.\)\t.*local time.*converts.*"/>
                     <not_has_text text="times with no time zone"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Commonly confused terms (commonly_confused_terms.tsv): the sampling depth and the depth of the
+             water column are always for review, however strong the match, and the comment says how to tell
+             them apart -->
+        <test expect_num_outputs="6">
+            <param name="table" value="map_depths.csv"/>
+            <param name="sample_types" value="Water"/>
+            <output name="report">
+                <assert_contents>
+                    <has_line_matching expression="^Depth \(m\)\tminimumDepthInMeters\tsampleMetadata\treview\t.*"/>
+                    <has_line_matching expression="^Water depth \(m\)\ttot_depth_water_col\tsampleMetadata\treview\t.*"/>
+                </assert_contents>
+            </output>
+            <output name="crosswalk">
+                <assert_contents>
+                    <has_line_matching expression="^local:Depth__m_\tDepth \(m\)\tskos:closeMatch\tFAIRe:minimumDepthInMeters\t.*Check: Often confused with tot_depth_water_col \(the depth of the water column at the site.*Is this column the depth the sample was taken from.*"/>
+                    <has_line_matching expression="^local:Water_depth__m_\tWater depth \(m\)\tskos:closeMatch\tFAIRe:tot_depth_water_col\t.*Check: Often confused with minimumDepthInMeters \(the shallowest depth.*"/>
+                </assert_contents>
+            </output>
+            <output name="review">
+                <assert_contents>
+                    <has_line_matching expression="^often confused terms\tDepth \(m\)\tminimumDepthInMeters, maximumDepthInMeters\tOften confused with tot_depth_water_col.*Is this column the depth the sample was taken from.*"/>
+                    <has_line_matching expression="^often confused terms\tWater depth \(m\)\ttot_depth_water_col\t.*"/>
                 </assert_contents>
             </output>
         </test>
@@ -373,7 +399,9 @@ maximumDepthInMeters. A yes/no column that says which samples are controls, unde
   (*Filtration control 1 + 2*, *Extbl19_4*) when no column says which rows are controls; columns
   with values only in the first rows, which may be notes about the whole study; and times of
   collection (the column matched to verbatimEventTime or eventDate) with no time zone, or in UTC
-  only (daily cycles follow local time). The tool lists these and changes nothing. The list has only its header row when there is nothing to
+  only (daily cycles follow local time); and columns matched to FAIRe terms that people often
+  confuse, such as the sampling depth and the depth of the water column, with how to tell them
+  apart. The tool lists these and changes nothing. The list has only its header row when there is nothing to
   decide.
 - **summary**: the number of columns in each route.
 
