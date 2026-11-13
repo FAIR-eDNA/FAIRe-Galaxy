@@ -14,7 +14,8 @@ the same files.
 
 This version is a demonstration that runs on one computer. It is written so that it can later be
 hosted on a server (see *Hosting later*, below). It was first built in a private repository and moved
-here, beside the tools it runs, on 13 November 2026 (version 0.2.0).
+here, beside the tools it runs, on 13 November 2026 (version 0.2.0). Version 0.3.0 has the changes
+from the FAIRe team's first trial of it.
 
 ## What it covers
 
@@ -33,6 +34,21 @@ sheet can also be downloaded, filled in with Excel (sorted or filtered as the pe
 back with the upload button: the decisions go on screen and are saved, matched to their columns by
 input term. Either way, the mapper's conversions, such as reading Y and N as *negative control* and
 *sample*, are kept for the matches a person accepts.
+
+A few things that help along the way:
+
+- **Your files** (on the left) lists every file you add, with what *a. Your files* found it to be.
+  The cross beside a file removes it; *Remove all files* starts again.
+- **a. Your files** says what each file seems to be and where it goes in the app. It recognises
+  FASTA files and PDFs by their content, whatever they are called. If it gets one wrong, choose the
+  right kind in its table: the app then offers the file in the right places.
+- **Methods** can be text or a PDF. *d. Primers and project values* reads them for primers, and
+  lists the mandatory project terms still to give; the other values for the whole study, such as
+  the target gene, PCR conditions and sequencing platform, come from you, with the methods open
+  beside you. A PDF of scanned pages has no text to read: save it as text first.
+- **A question mark** beside a label explains the term (*data dictionary*, *assay*, *raw* and
+  *final* and so on) when the pointer rests on it, or when you move to it with the Tab key.
+- **Optional fields**, such as the data dictionary, can be set back to *None* after choosing a file.
 
 ## Downloading and running it
 

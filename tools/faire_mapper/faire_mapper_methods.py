@@ -27,6 +27,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import faire_mapper as fm  # noqa: E402
 import faire_mapper_adjudicate as fa  # noqa: E402
+import faire_mapper_text as ft  # noqa: E402
 
 LEVELS = {'M': 'Mandatory', 'HR': 'Highly recommended', 'R': 'Recommended', 'O': 'Optional'}
 # Recommended terms that methods sections nearly always give, asked about by default.
@@ -57,7 +58,7 @@ def norm(s):
 def read_text(paths):
     parts = []
     for p in paths:
-        txt = Path(p).read_text(encoding='utf-8', errors='replace')
+        txt = ft.read_text(p)   # plain text, markdown or a PDF
         parts.append(f'[{Path(p).name}]\n{txt.strip()}')
     return '\n\n'.join(parts)
 
@@ -230,7 +231,7 @@ def call_model(system, user, model, api_key, api_version, api_url=fa.API_URL, ti
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument('methods', nargs='+', help='methods or README text files (plain text or markdown)')
+    ap.add_argument('methods', nargs='+', help='methods or README files (plain text, markdown or PDF)')
     ap.add_argument('--checklist', required=True)
     ap.add_argument('--report', help='mapping_report.tsv from faire_mapper.py map; its terms are not asked again')
     ap.add_argument('--assay_type', choices=['metabarcoding', 'targeted'])

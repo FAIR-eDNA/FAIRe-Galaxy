@@ -2,6 +2,7 @@
 # (tools/*/macros.xml and the tool XML files). setup.R installs them into .venv.
 pandas==2.2.3
 openpyxl==3.1.5
+pypdf==5.1.0  # methods given as a PDF
 pyyaml==6.0.3
 pydantic>=2.7,<3
 jinja2>=3.1

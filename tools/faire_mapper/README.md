@@ -26,7 +26,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
 
 ## Status
 
-- Version 0.7.3. `planemo lint`: passes with no warnings. `pyflakes`: clean.
+- Version 0.8.0. `planemo lint`: passes with no warnings. `pyflakes`: clean.
 - Goes to Galaxy Australia as an early version with the wrapped FAIRe tools (decided 6 November
   2026). Each tool's help starts with a note saying so, which asks users to check the results and
   send problems to the Galaxy Australia help desk (to confirm with Galaxy Australia, question 8).
@@ -43,6 +43,18 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   independent answer keys (`dev/faire_mapper_real_datasets/`, `dev/faire_mapper_australian_datasets/`,
   summarised below), and end to end on CSIRO's SEA-MES data (`dev/faire_mapper_seames/`). Not yet
   tried on datasets from Australian labs that already have a FAIRe version.
+- New in 0.8.0 (13 November 2026), from the FAIRe team's trial of the Shiny app:
+  - Methods can be a PDF. *Find primers* (and the methods script, `faire_mapper_methods.py`) read
+    the text of a PDF with pypdf, which all the mapper tools now list as a requirement. The PDF's
+    lines are kept, as a table's cells come out one per line, and a primer sequence wrapped in its
+    cell is joined again. On the SEA-MES methods saved as a PDF, find primers gives the same eight
+    candidates as from the text. A PDF of scanned pages has no text, and the tools say so.
+  - *Identify your files* recognises FASTA files and PDFs by their content, whatever their names
+    (Galaxy's are dataset_N.dat): a FASTA file is reported as sequences, to give beside the OTU table
+    that names them, and a PDF as text, with its pages and words.
+  - The inputs guide says plainly that the tools read the methods for primers only, and that the
+    other values for the whole study come from the person, with the methods beside them.
+  - New module `faire_mapper_text.py`, shared by these tools.
 - New in 0.7.3 (13 November 2026): propose mapping names the sample table as the user sees it in
   Galaxy (its dataset name) in the review sheet's *How to review*, the summary and the crosswalk's
   description, where it gave Galaxy's file name (dataset_N.dat). The Shiny app (`shiny/`) passes the
@@ -229,6 +241,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
 | `faire_mapper_otu.py` | Reads OTU or ASV tables and taxonomy tables for apply mapping |
 | `faire_mapper_kinds.py` | Says what kind of input a table looks like (sample, OTU, taxonomy, library table and others) and where it goes |
 | `faire_mapper_identify.py` | Reports on every uploaded file (`faire_mapper_identify.xml`) |
+| `faire_mapper_text.py` | Reads methods given as text or PDF, and recognises FASTA files by their content |
 | `faire_mapper_library.py` | Reads library tables (run reports and run sheets) for apply mapping |
 | `faire_primers.py` | Builds and updates primer tables, and finds primer pairs for names, citations or methods text (`faire_primers_find.xml`, `faire_primers_build.xml`) |
 | `primers/faire_primers.tsv` | The bundled primer table (553 pairs) and its sources and update steps (`primers/README.md`). Most rows come from Takahashi et al. 2023 and keep its CC BY-NC 4.0 licence |
@@ -941,6 +954,8 @@ test.
 - `map_review.csv`: 11 rows in the form of the day-night study's sheet: a sample name used twice,
   a filtration control named but not marked, notes in the first rows of two columns, and times with
   no time zone.
+- `primer_methods.pdf`: `primer_methods.txt` saved as a PDF (LibreOffice), for find primers and
+  identify.
 - `primer_methods_sequences.txt`: a methods text with primer sequences: the TAReuk 18S V4 pair, an
   Illumina overhang, and a made-up pair on rows of their own.
 - `survey_sheet.xlsx`: 15 rows of a held-out benchmark table (eDNA provider form style), on a sheet
@@ -993,9 +1008,10 @@ tests. 0.7.3 checks the table's name in an existing propose mapping test.
 | map | 6 | Data dictionary as README lines: descriptions change two matches, reach the review requests and the report | passed |
 | map | 7 | Data dictionary as a table with units: a person's name column goes to recordedBy | passed |
 | find primers | 1 | Methods text: MiFish set, Bact16S_515F/806R inside longer names, a citation with its gene; "Forward" and "Reverse" ignored | passed |
-| find primers | 2 | Names, with the user's table added: user's alias found, bad row left out, unknown names reported | passed |
-| find primers | 3 | User's table only, with a gene filter | passed |
-| find primers | 4 | Methods text with sequences: the TAReuk pair named from the table, a pair not in the table shown as written with its names and gene, an adapter ignored | passed |
+| find primers | 2 | The same methods as a PDF: the same candidates | passed |
+| find primers | 3 | Names, with the user's table added: user's alias found, bad row left out, unknown names reported | passed |
+| find primers | 4 | User's table only, with a gene filter | passed |
+| find primers | 5 | Methods text with sequences: the TAReuk pair named from the table, a pair not in the table shown as written with its names and gene, an adapter ignored | passed |
 | build primer table | 1 | User's rows added to the bundled table; bad row reported | passed |
 | build primer table | 2 | New table from a register spreadsheet and a TSV; reused primer names reported | passed |
 | build primer table | 3 | A correction row replaces the pair it corrects and records the change | passed |
@@ -1046,3 +1062,4 @@ tests. 0.7.3 checks the table's name in an existing propose mapping test.
 | identify | 1 | Eight files: sample, OTU, taxonomy, library, dictionary, text, curated OTU table and crosswalk, each named with its reason | passed |
 | identify | 2 | Two Excel files: each sheet on its own (the SRA sheet's library sheet, a primer register); no sample table found | passed |
 | identify | 3 | A checksum file as md5sum writes it, and a list of file names with no header: library tables, not text | passed |
+| identify | 4 | A FASTA file and a PDF uploaded as plain text: recognised by their content, as sequences and text | passed |

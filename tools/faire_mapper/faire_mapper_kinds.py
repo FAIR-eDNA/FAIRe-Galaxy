@@ -4,7 +4,9 @@ Used by apply mapping, to say what a file in the wrong place looks like, and by 
 files, which reports on every file a user uploads. A best guess from the table's shape, headers and
 values: the user decides.
 
-Kinds: sample, otu, taxonomy, library, crosswalk, dictionary, project_values, primers, text, unknown.
+Kinds: sample, otu, taxonomy, library, crosswalk, dictionary, project_values, primers, sequences, text,
+unknown. Sequences (FASTA) and PDF documents are recognised from their content (describe_file), whatever
+their names.
 """
 
 from __future__ import annotations
@@ -14,6 +16,7 @@ import re
 import faire_mapper as fm
 import faire_mapper_library as fl
 import faire_mapper_otu as fo
+import faire_mapper_text as ft
 
 # Plain words for each kind, and where it goes (tool and field).
 NAME = {
@@ -25,12 +28,14 @@ NAME = {
     'dictionary': 'a data dictionary (column names with their descriptions)',
     'project_values': 'a table of values for the whole project (FAIRe term names with their values)',
     'primers': 'a primer table (primer names and sequences)',
-    'text': 'text, such as methods or a ReadMe',
+    'sequences': 'sequences in FASTA format (a header line starting with > before each sequence)',
+    'text': 'text, such as methods or a ReadMe (plain text or PDF)',
     'unknown': 'not recognised',
 }
 SHORT = {'sample': 'sample table', 'otu': 'OTU or ASV table', 'taxonomy': 'taxonomy table',
          'library': 'library table', 'crosswalk': 'crosswalk', 'dictionary': 'data dictionary',
-         'project_values': 'project values', 'primers': 'primer table', 'text': 'text', 'unknown': 'not recognised'}
+         'project_values': 'project values', 'primers': 'primer table', 'sequences': 'sequences (FASTA)',
+         'text': 'text', 'unknown': 'not recognised'}
 WHERE = {
     'sample': "'Your table' in FAIRe mapper: profile a table, propose mapping and apply mapping",
     'otu': "'OTU or ASV table' in FAIRe mapper: apply mapping",
@@ -40,6 +45,8 @@ WHERE = {
     'dictionary': "'Data dictionary' in FAIRe mapper: propose mapping",
     'project_values': "'Values for the whole project' in FAIRe mapper: apply mapping",
     'primers': "'My primer table' in FAIRe mapper: find primers, or 'Primer sources' in build primer table",
+    'sequences': "'Sequences of this table (FASTA)', beside the OTU table whose sequence IDs it names, in FAIRe "
+                 "mapper: apply mapping",
     'text': "'Methods text' in FAIRe mapper: find primers, if it describes the methods; a ReadMe can serve "
             "as the 'Data dictionary' in propose mapping if it describes the columns",
     'unknown': 'check the file; it may need its header row or sheet set',
@@ -240,14 +247,35 @@ def describe(df, sample_names=(), term_names=(), faire_terms=()):
     return 'unknown', [f'{len(cols)} columns, {n_rows} rows']
 
 
+def describe_file(path):
+    """(kind, [reasons]) for the files recognised by their content, whatever their names: FASTA files
+    and PDF documents. None for anything else, which is read as a table or as text."""
+    if ft.is_pdf(path):
+        return describe_text(path)
+    fa = ft.fasta_summary(path)
+    if fa:
+        size = (f"{fa['shortest']} to {fa['longest']} bases" if fa['shortest'] != fa['longest']
+                else f"{fa['longest']} bases")
+        return 'sequences', [f"{fa['n']} sequences of {size}, each after a header line starting with > "
+                             f"({', '.join(fa['ids'])} ...)"]
+    return None
+
+
 def describe_text(path):
-    """(kind, [reasons]) for a text file that is not a table."""
+    """(kind, [reasons]) for a text file that is not a table, or a PDF."""
     try:
-        text = open(path, encoding='utf-8', errors='replace').read(200000)
-    except OSError as e:
-        return 'unknown', [str(e)]
+        text = ft.read_text(path)[:200000]
+    except (OSError, SystemExit) as e:
+        return 'unknown', [str(e).replace('ERROR: ', '')]
+    except Exception as e:   # a damaged PDF
+        return 'unknown', [f'could not be read: {e}']
     seqs = re.findall(r"\b[ACGTURYSWKMBDHVNI]{15,40}\b", text)
     why = [f'{len(text.split())} words']
+    if ft.is_pdf(path):
+        n = ft.pdf_pages(path)
+        why = [f'a PDF of {n} page{"" if n == 1 else "s"}'] + why
+        if not text.split():
+            why.append('no text could be read: a PDF of scanned pages has none, so save the methods as text')
     if seqs:
         why.append(f'{len(seqs)} primer-length DNA sequences')
     if re.search(r'primer|PCR|amplif', text, re.I):

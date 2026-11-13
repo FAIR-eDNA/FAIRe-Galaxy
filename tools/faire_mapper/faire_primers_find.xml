@@ -43,8 +43,8 @@ $search.names
                 <option value="names">A list of primer names, assay names or citations</option>
             </param>
             <when value="text">
-                <param name="texts" type="data" format="txt" multiple="true" label="Methods text"
-                    help="Plain text or markdown. Convert Word or PDF files to text first."/>
+                <param name="texts" type="data" format="txt,pdf" multiple="true" label="Methods text"
+                    help="Plain text, markdown or PDF. A PDF of scanned pages has no text to read: save Word files and scanned PDFs as text first."/>
             </when>
             <when value="names">
                 <param name="names" type="text" area="true" label="Names or citations, one per line"
@@ -95,6 +95,20 @@ $search.names
                     <has_line_matching expression="^Bact16S_515F; 515F; Bact16S_806R; 806R\tname\t\d+\t.*\tOriginal 515F / 806R\t.*GTGCCAGCMGCCGCGGTAA\t.*"/>
                     <has_line_matching expression="^Pochon et al., 2013\treference\t.*18S Universal.*GCCAGTAGTCATATGCTTGTCT.*"/>
                     <not_has_text text="AAAGTCTAACCTGCCCACTGAGTTA"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- The same methods as a PDF: the same candidates -->
+        <test expect_num_outputs="1">
+            <conditional name="search">
+                <param name="mode" value="text"/>
+                <param name="texts" value="primer_methods.pdf" ftype="pdf"/>
+            </conditional>
+            <output name="candidates">
+                <assert_contents>
+                    <has_line_matching expression="^.*MiFish.*\t12S MiFish-U\t.*GTCGGTAAAACTCGTGCCAGC.*"/>
+                    <has_line_matching expression="^Bact16S_515F; 515F; Bact16S_806R; 806R\tname\t\d+\t.*\tOriginal 515F / 806R\t.*GTGCCAGCMGCCGCGGTAA\t.*"/>
+                    <has_line_matching expression="^Pochon et al., 2013\treference\t.*18S Universal.*GCCAGTAGTCATATGCTTGTCT.*"/>
                 </assert_contents>
             </output>
         </test>
@@ -170,7 +184,9 @@ different sequences. Check each candidate against the original paper before you 
 
 **Inputs**
 
-- **Methods or README text**, as plain text. The tool looks for primer and assay names, including
+- **Methods or README text**, as plain text, markdown or a PDF. A PDF of scanned pages holds images
+  of the text, which the tool can't read: save it, or a Word file, as text first. The tool looks for
+  primer and assay names, including
   names inside longer names, such as *Bact16S_515F* or a file name containing *teleo*. It also
   looks for citations of a primer's authors, but counts these only when the same sentence names the
   primers' gene.

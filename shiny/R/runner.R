@@ -51,7 +51,7 @@ check_setup <- function() {
     v <- tryCatch(processx::run(py, c("-c", "import sys; print(sys.version.split()[0])"),
                                 error_on_status = FALSE)$stdout, error = function(e) "")
     add("Python", nzchar(trimws(v)), paste(py, trimws(v)))
-    mods <- c(core = "pandas, openpyxl", "FAIRe-fier" = "pydantic, jinja2", "FAIRe2NCBI" = "yaml",
+    mods <- c(core = "pandas, openpyxl, pypdf", "FAIRe-fier" = "pydantic, jinja2", "FAIRe2NCBI" = "yaml",
               edna2obis = "pyworms, pygbif, multiprocess, requests, rich, pyfiglet")
     for (nm in names(mods)) {
       code <- sprintf("import %s", mods[[nm]])

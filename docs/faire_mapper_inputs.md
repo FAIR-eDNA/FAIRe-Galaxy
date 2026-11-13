@@ -71,9 +71,16 @@ a count or a code) and what any codes mean ("NC = negative control"). You can gi
 as the tool ignores lines that do not name a column in your table.
 
 **Methods text** (for the *find primers* tool). This is the methods section of your paper or
-protocol, as plain text. The tool finds the primer pairs it names, cites or gives as sequences, and
-lists them with their sequences for you to check. You can also type primer names or citations into
-the tool, one per line.
+protocol, as plain text or a PDF. (A PDF of scanned pages holds images of the text, which the tool
+can't read: save it as text first.) The tool finds the primer pairs it names, cites or gives as
+sequences, and lists them with their sequences for you to check. You can also type primer names or
+citations into the tool, one per line.
+
+The tools read the methods only for primers. The other values for the whole study that methods
+usually give, such as the target gene, PCR conditions, extraction kit, sequencing platform, reference
+databases and protocols, come from you: with the methods open beside you, type them into your values
+for the whole project (below). The *mandatory terms not covered* output of *propose mapping* lists
+the ones FAIRe needs.
 
 **Values for the whole project** (for the *apply mapping* tool). These are things that are true of
 the whole study, such as the primers, the extraction kit or the sequencing platform. Give them as a

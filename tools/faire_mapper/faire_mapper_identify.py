@@ -34,6 +34,8 @@ NEXT = {
     'dictionary': 'Its descriptions help propose mapping match columns whose headers are unclear.',
     'project_values': "Two columns: the FAIRe term and its value (or one column per assay).",
     'primers': 'Find primers and build primer table can use it.',
+    'sequences': ("Give it beside the OTU table that names these sequences (ASV_1, ASV_2 ...) but doesn't hold "
+                  "them, such as an LCA output."),
     'text': 'Find primers reads primer names and sequences from methods text.',
     'unknown': '',
 }
@@ -71,6 +73,11 @@ def main(argv=None):
     items = []
     for path, name, fmt in zip(args.file, names, formats):
         name = name or Path(path).name
+        known_kind = fk.describe_file(path)   # FASTA files and PDFs, by their content
+        if known_kind:
+            items.append({'name': name, 'sheet': '', 'df': None, 'error': '', 'fmt': fmt, 'path': path,
+                          'kind': known_kind})
+            continue
         files, form = fl.read_file_list(path)
         if files is not None:   # md5sum's output or a list of file names: no header, so not a table otherwise
             items.append({'name': name, 'sheet': '', 'df': files, 'error': '', 'fmt': fmt, 'path': path,
@@ -101,7 +108,9 @@ def main(argv=None):
 
     rows = []
     for it in items:
-        if it['df'] is None:
+        if it.get('kind'):
+            kind, why = it['kind']
+        elif it['df'] is None:
             if it['fmt'] == 'txt' or Path(it['name']).suffix.lower() in ('.txt', '.md'):
                 kind, why = fk.describe_text(it['path'])
             else:
@@ -120,6 +129,10 @@ def main(argv=None):
         elif kind == 'text' and not any('primer' in w for w in why):
             nxt = ("If it describes the columns of your table, give it as the 'Data dictionary' in propose "
                    "mapping; if it describes your methods, find primers can read it.")
+        if kind == 'text' and fk.ft.is_pdf(it['path']):
+            nxt = ("If it describes your methods, find primers can read it. The other values for the whole "
+                   "project come from the methods too: give them as the values for the whole project, with this "
+                   "document beside you.")
         rows.append({'file': it['name'], 'sheet': it['sheet'], 'kind': fk.SHORT[kind], 'looks like': fk.NAME[kind],
                      'why': '; '.join(why), 'give it as': fk.WHERE[kind] if kind != 'text' else
                      "'Methods text' in FAIRe mapper: find primers, or 'Data dictionary' in propose mapping",

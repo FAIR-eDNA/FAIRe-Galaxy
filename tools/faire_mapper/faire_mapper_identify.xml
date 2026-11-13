@@ -17,8 +17,8 @@ python '$__tool_directory__/faire_mapper_identify.py'
     -o '$report'
     ]]></command>
     <inputs>
-        <param name="files" type="data" format="tabular,csv,xlsx,txt" multiple="true" label="Your files"
-            help="Every file you have for the dataset: sample sheets, OTU or ASV tables, taxonomy tables, run reports, methods or ReadMe texts. Each sheet of an Excel file is reported on its own."/>
+        <param name="files" type="data" format="tabular,csv,xlsx,txt,fasta,pdf" multiple="true" label="Your files"
+            help="Every file you have for the dataset: sample sheets, OTU or ASV tables, taxonomy tables, sequences (FASTA), run reports, methods (text or PDF) or ReadMe texts. Each sheet of an Excel file is reported on its own."/>
     </inputs>
     <outputs>
         <data name="report" format="tabular" label="${tool.name} on ${on_string}"/>
@@ -67,6 +67,16 @@ python '$__tool_directory__/faire_mapper_identify.py'
                 </assert_contents>
             </output>
         </test>
+        <!-- Recognised by their content: a FASTA file uploaded as plain text, and methods as a PDF -->
+        <test expect_num_outputs="1">
+            <param name="files" value="otu_lca_ranks.fasta,primer_methods.pdf" ftype="txt"/>
+            <output name="report">
+                <assert_contents>
+                    <has_line_matching expression="^otu_lca_ranks\.fasta\t\tsequences \(FASTA\)\t.*4 sequences of 77 bases, each after a header line starting with &gt; \(ASV_1, ASV_2, ASV_3 \.\.\.\).*Sequences of this table \(FASTA\).*"/>
+                    <has_line_matching expression="^primer_methods\.pdf\t\ttext\t.*a PDF of 1 page; 45 words.*find primers can read it.*"/>
+                </assert_contents>
+            </output>
+        </test>
     </tests>
     <help><![CDATA[
 @EARLY_VERSION@
@@ -97,7 +107,10 @@ Here is what the tool looks for in each kind of file:
 - **Library tables** (run reports, SRA sheets) have run accessions such as SRR numbers, or library
   names with their sequence file names. A sample sheet that also names each sample's files is
   reported as a sample table that can serve as the library table too.
-- **Text** (methods, ReadMe files) is reported with the primer sequences it holds, if any.
+- **Sequences in FASTA format** have a header line starting with *>* before each sequence. They are
+  recognised by their content, whatever the file is called (.fa, .fasta, .fna, .txt or no ending).
+- **Text** (methods, ReadMe files), plain or as a PDF, is reported with the primer sequences it holds,
+  if any. A PDF of scanned pages has no text the tools can read.
 - Crosswalks, data dictionaries, tables of values for the whole project and primer tables are
   recognised too.
 
