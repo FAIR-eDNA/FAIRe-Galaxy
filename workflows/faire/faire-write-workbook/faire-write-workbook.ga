@@ -2,10 +2,10 @@
     "name": "FAIRe mapper: write and check a FAIRe workbook",
     "a_galaxy_workflow": "true",
     "format-version": "0.1",
-    "annotation": "The second step from a lab's own tables to FAIRe. Writes a FAIRe workbook, in the layout\nFAIRe-ator makes, from the sample table and its reviewed crosswalk (from \"FAIRe mapper: propose\na mapping\"), values for the whole project and an OTU or ASV table, then checks it with\nFAIRe-fier. For library tables, a raw and a final OTU table, or several assays, run the apply\nmapping tool on its own.\n",
+    "annotation": "The second step from a lab's own tables to FAIRe. Writes a FAIRe workbook, in the layout\nFAIRe-ator makes, from the sample table and its review sheet or reviewed crosswalk (from \"FAIRe\nmapper: propose a mapping\"), values for the whole project and an OTU or ASV table, then checks it with\nFAIRe-fier. For library tables, a raw and a final OTU table, or several assays, run the apply\nmapping tool on its own.\n",
     "tags": [],
     "license": "MIT",
-    "release": "0.1",
+    "release": "0.2",
     "uuid": "4b93d86b-5451-4866-9404-ff48d36b064c",
     "creator": [
         {
@@ -42,7 +42,7 @@
             "name": "crosswalk",
             "type": "data_input",
             "label": "crosswalk",
-            "annotation": "The reviewed crosswalk (SSSOM).",
+            "annotation": "The review sheet with your decisions (Excel), or the reviewed crosswalk (SSSOM).",
             "tool_state": "{\"name\": \"crosswalk\", \"format\": [\"tabular\", \"csv\", \"xlsx\"]}",
             "position": {
                 "top": 10,
@@ -52,7 +52,7 @@
             "inputs": [
                 {
                     "name": "crosswalk",
-                    "description": ""
+                    "description": "The review sheet with your decisions (Excel), or the reviewed crosswalk (SSSOM)."
                 }
             ],
             "outputs": [],

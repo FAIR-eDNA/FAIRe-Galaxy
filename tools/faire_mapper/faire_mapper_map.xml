@@ -385,7 +385,7 @@ python '$__tool_directory__/faire_mapper.py' map
                         <has_text text="silicate (MIxS term)"/>
                         <has_text text="Voyage (your own term)"/>
                         <has_text text="&quot;Accept,Reject,Change&quot;"/>
-                        <has_text text="&apos;Choices&apos;!$A$1"/>
+                        <has_text text="OFFSET(&apos;Choices&apos;!$A$2,0,MATCH(SUBSTITUTE("/>
                     </has_archive_member>
                     <has_archive_member path="xl/worksheets/sheet2.xml">
                         <has_text text="phosphate (MIxS term)"/>

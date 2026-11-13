@@ -157,8 +157,9 @@ from the drop-down:
   column's five best candidates first (with a MIxS or Darwin Core term first, when the mapper found
   one for a column it matched to a FAIRe term), then a blank line, then every FAIRe term.
 
-A row with no decision is applied as the mapper called it. Hover over a proposed term to see what it
-means. The workbook also lists the additional checks to make. Save it as Excel and upload it as the input
+A row with no decision is applied as the mapper called it. You can sort or filter the rows, for
+example to bring the rows to review to the top, but don't delete any. Hover over a proposed term to
+see what it means. The workbook also lists the additional checks to make. Save it as Excel and upload it as the input
 for the *apply mapping* tool.
 
 The review sheet is built from the **crosswalk**, the table of matches in SSSOM, a standard format,

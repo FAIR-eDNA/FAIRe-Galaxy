@@ -119,6 +119,7 @@ def write_review_sheet(path, proposals, profiles, terms, review_rows, table_name
     choices = wb.create_sheet(CHOICES)
     shown = [pr for pr in proposals if prof[pr.column].n_values]
     at = {h: j for j, h in enumerate(HEADERS, 1)}
+    lists = []
     for i, pr in enumerate(shown, 2):
         p = prof[pr.column]
         if pr.term:
@@ -137,20 +138,26 @@ def write_review_sheet(path, proposals, profiles, terms, review_rows, table_name
         best = [t for t in dict.fromkeys(best) if t in by_name and t != pr.term][:k]
         if pr.fallback is not None:
             best = [_label(pr.fallback)] + best
-        options = best + [''] + [t for t in all_terms if t not in best]
-        col = get_column_letter(i - 1)
-        for j, t in enumerate(options, 1):
-            choices.cell(j, i - 1, t or None)
-        dv = DataValidation(type='list', formula1=f"'{CHOICES}'!${col}$1:${col}${len(options)}", allow_blank=True,
-                            showErrorMessage=False)
-        dv.add(f'{get_column_letter(at[REPLACEMENT])}{i}')
-        ws.add_data_validation(dv)
+        lists.append([pr.column] + best + [''] + [t for t in all_terms if t not in best])
         gloss = _gloss(pr, by_name)
         if gloss:
             ws.cell(i, at[PROPOSED]).comment = Comment(gloss, 'FAIRe mapper', width=320, height=160)
         if call not in ('accept', 'set by a reviewer', 'no match'):
             for j in range(1, len(HEADERS) + 1):
                 ws.cell(i, j).fill = TO_DECIDE
+    # Each column of Choices holds one input term's list, under the term itself in row 1. The replacement
+    # drop-down finds its list by the input term in column A of its own row, not by its position, so it
+    # stays right when the rows are sorted (Excel does not move drop-downs with sorted rows).
+    for j, items in enumerate(lists, 1):
+        for r, t in enumerate(items, 1):
+            choices.cell(r, j, t or None)
+    longest = max((len(x) for x in lists), default=2) - 1
+    key = 'SUBSTITUTE(SUBSTITUTE(SUBSTITUTE($A2,"~","~~"),"*","~*"),"?","~?")'   # MATCH reads * ? ~ as wildcards
+    rcol = get_column_letter(at[REPLACEMENT])
+    dv = DataValidation(type='list', allow_blank=True, showErrorMessage=False,
+                        formula1=f"OFFSET('{CHOICES}'!$A$2,0,MATCH({key},'{CHOICES}'!$1:$1,0)-1,{longest},1)")
+    dv.add(f'{rcol}2:{rcol}{len(shown) + 1}')
+    ws.add_data_validation(dv)
     choices.sheet_state = 'hidden'
     dcol = get_column_letter(at[DECISION])
     dv = DataValidation(type='list', formula1='"' + ','.join(DECISIONS) + '"', allow_blank=True,
@@ -203,9 +210,11 @@ def how_to_review(table_name):
     return [
         f'How to review the terms proposed for {table_name}',
         '',
-        f'{table_name} is the table you gave to FAIRe mapper: propose mapping, with one row for each sample. The '
-        'Review sheet has one row for each column of that table: the input term is the column heading. For each '
-        'input term it gives the FAIRe term the mapper proposes, its score (0 to 1), the mapper\'s call and why.',
+        f'The rows come from the files you provided. Each row of the Review sheet is one column heading (an input '
+        f'term) of your sample metadata, {table_name}: the table with one row for each sample. The mapper matched '
+        'each heading to a term from the heading, the column\'s values and, if your files describe the columns, '
+        'those descriptions. For each input term the sheet gives the proposed term, its score (0 to 1), the '
+        'mapper\'s call and why.',
         '',
         "The mapper's call: accept (a strong match), review (a match to check), or no match (no term proposed; "
         'the column is kept as your own term). Rows to review are shaded: put your effort there.',
@@ -224,11 +233,18 @@ def how_to_review(table_name):
         'decision is applied as the mapper called it: accepted matches are applied, and matches for review are '
         'left out.',
         '',
+        'You can sort or filter the rows, for example to bring the rows to review to the top: each decision is '
+        'read with its input term, wherever the row is. Do not delete rows: a column whose row is deleted is kept '
+        'as your own term.',
+        '',
         'Hover over a proposed term to see what it means. The Additional checks to make sheet lists what only a '
         'person can settle, such as terms people often confuse.',
         '',
-        'Save the workbook (as .xlsx) and give it to FAIRe mapper: apply mapping as the review sheet. Keep the '
-        'Crosswalk (details) sheet: apply mapping uses it to apply your decisions.',
+        'Values for the whole project, such as the primers and protocols found in your methods, are not in this '
+        'sheet. The log that comes with the FAIRe workbook lists them, for you to check.',
+        '',
+        'Save the workbook (as .xlsx) and give it as the review sheet when you write the FAIRe workbook. Keep the '
+        'Crosswalk (details) sheet: it is used to apply your decisions.',
     ]
 
 
@@ -255,11 +271,16 @@ def read_review_sheet(path, by_name, other_terms, log):
         raise ValueError(f"the review sheet needs the columns {', '.join(sorted(need))}; found {', '.join(head)}")
     at = {h: i for i, h in enumerate(head)}
     details = pd.read_excel(path, sheet_name=DETAILS, dtype=str, engine='openpyxl').fillna('')
-    rows, counts, problems = [], {'Accept': 0, 'Reject': 0, 'Change': 0, '': 0}, []
+    rows, counts, problems, seen = [], {'Accept': 0, 'Reject': 0, 'Change': 0, '': 0}, [], set()
+    # Rows are read by their input term, so they can be sorted or filtered in any order.
     for r in ws.iter_rows(min_row=2, values_only=True):
         column = str(r[at[INPUT]] or '').strip()
         if not column:
             continue
+        if column in seen:
+            problems.append(f"'{column}' is in the review sheet twice; its first row is used")
+            continue
+        seen.add(column)
         decision = str(r[at[DECISION]] or '').strip().capitalize()
         decision = decision if decision in DECISIONS else ''
         counts[decision] += 1
@@ -288,6 +309,13 @@ def read_review_sheet(path, by_name, other_terms, log):
                          'comment': 'changed by the reviewer', 'combine_order': '', 'value_part': ''})
         else:
             rows += main
+    # In the crosswalk's order (the table's), however the rows of the sheet were sorted
+    order = {c: i for i, c in enumerate(dict.fromkeys(details['subject_label'].str.strip()))}
+    rows.sort(key=lambda x: order.get(str(x['subject_label']).strip(), len(order)))
+    gone = [c for c in order if c and c not in seen]
+    if gone:
+        problems.append(f"{len(gone)} columns with a proposed term have no row in the review sheet, so they are kept as "
+                        f"their own terms: " + fm._first(gone, 10))
     log(f"review sheet: {counts['Accept']} accepted, {counts['Reject']} rejected, {counts['Change']} changed"
         + (f", {counts['']} with no decision (the mapper's accepted matches applied, its matches for review "
            f"left out)" if counts[''] else ''))

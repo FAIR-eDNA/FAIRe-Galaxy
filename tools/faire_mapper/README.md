@@ -26,7 +26,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
 
 ## Status
 
-- Version 0.7.1. `planemo lint`: passes with no warnings. `pyflakes`: clean.
+- Version 0.7.2. `planemo lint`: passes with no warnings. `pyflakes`: clean.
 - Goes to Galaxy Australia as an early version with the wrapped FAIRe tools (decided 6 November
   2026). Each tool's help starts with a note saying so, which asks users to check the results and
   send problems to the Galaxy Australia help desk (to confirm with Galaxy Australia, question 8).
@@ -43,6 +43,19 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   independent answer keys (`dev/faire_mapper_real_datasets/`, `dev/faire_mapper_australian_datasets/`,
   summarised below), and end to end on CSIRO's SEA-MES data (`dev/faire_mapper_seames/`). Not yet
   tried on datasets from Australian labs that already have a FAIRe version.
+- New in 0.7.2 (13 November 2026), from the FAIRe team's questions on 0.7.1:
+  - The review sheet can be sorted or filtered (rows to review first, say). Apply mapping reads each
+    decision with its input term, and lists the columns in the table's order; the replacement
+    drop-down finds its list by the row's input term (Excel leaves drop-downs where they were when it
+    sorts rows). A column whose row was deleted is kept as its own term, and the log says so. Tested
+    with sorted and shuffled sheets, including headings that start with *.
+  - *How to review* says where the rows come from, without naming the steps a workflow runs unseen:
+    from the files provided, each row is one column heading (input term) of the sample metadata,
+    named, the table with one row per sample. It says the values for the whole project (primers,
+    protocols) are checked in the workbook's log.
+  - The propose-mapping workflow (0.3) gives the review sheet as an output (datasets that aren't
+    workflow outputs are hidden in the history), and the write-workbook workflow (0.2) takes it as its
+    crosswalk input.
 - New in 0.7.1 (13 November 2026), from the FAIRe team's second review:
   - The review sheet has a *Mapper's call* column (accept, review or no match), as in the
     walkthrough, and rows to review are shaded across the whole row.

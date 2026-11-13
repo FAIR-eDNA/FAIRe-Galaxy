@@ -23,7 +23,7 @@ from pathlib import Path
 
 import pandas as pd
 
-__version__ = '0.7.1'
+__version__ = '0.7.2'
 # FAIRe term names wherever FAIRe has a term; the rest describe the table itself.
 COLUMNS = ['primer_pair_id', 'assay_name', 'assay_type', 'targetTaxonomicAssay', 'targetTaxonomicScope',
            'target_gene', 'target_subfragment',
