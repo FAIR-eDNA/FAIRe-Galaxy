@@ -23,7 +23,10 @@ from pathlib import Path
 
 import pandas as pd
 
-__version__ = '0.7.3'
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import faire_mapper_text as ft  # noqa: E402
+
+__version__ = '0.8.0'
 # FAIRe term names wherever FAIRe has a term; the rest describe the table itself.
 COLUMNS = ['primer_pair_id', 'assay_name', 'assay_type', 'targetTaxonomicAssay', 'targetTaxonomicScope',
            'target_gene', 'target_subfragment',
@@ -735,9 +738,18 @@ def main(argv=None):
             if not c:
                 out.append({'query': q, 'matched_by': 'not found', 'candidates_for_query': 0})
     else:
-        text = '\n\n'.join(Path(p).read_text(encoding='utf-8', errors='replace') for p in args.text)
+        parts = []
+        for p in args.text:
+            part = ft.read_text(p)   # plain text, markdown or a PDF
+            if not part.split():
+                print(f'WARNING: no text could be read from {Path(p).name}. A PDF of scanned pages has none: save '
+                      f'the methods as text and give that instead.')
+            parts.append(part)
+        text = '\n\n'.join(parts)
         found = text_candidates(t, text)
         for e in found:
+            # evidence as one line each, whatever line breaks the text (a PDF, say) had inside it
+            e['evidence'] = [' '.join(str(x).split()) for x in e['evidence']]
             print(f"{e['assay_name'] or '-'} {e['pcr_primer_name_forward']}/{e['pcr_primer_name_reverse']} "
                   f"{e['pcr_primer_forward']} {e['pcr_primer_reverse']} [{e['target_gene']}] "
                   f"({e['pcr_primer_reference_forward']}) <- {'; '.join(e['evidence'][:3])}")

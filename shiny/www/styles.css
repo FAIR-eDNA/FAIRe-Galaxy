@@ -92,3 +92,21 @@ table.dataTable td { max-width: 360px; }
 .wb-preview td { white-space: nowrap; max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
 table.setup td { font-size: 0.85rem; vertical-align: top; word-break: break-word; }
 table.setup td:first-child { width: 1.5rem; }
+
+/* remove one file */
+.rm-file { margin-left: auto; border: 0; background: transparent; color: #8a959b; padding: 0 0.25rem; line-height: 1; border-radius: 4px; }
+.rm-file:hover, .rm-file:focus-visible { color: #a03a3a; background: #f8e3e3; outline: none; }
+
+/* the question mark that explains a term */
+.term-help { color: #6b767c; cursor: help; font-size: 0.85em; }
+.term-help:hover, .term-help:focus-visible { color: var(--faire-teal, #0a6c7c); outline: none; }
+
+/* identify: what each file is, which the person can correct */
+table.identify td { vertical-align: top; font-size: 0.86rem; }
+table.identify .kind-select { min-width: 11rem; }
+table.identify .examples { color: #6b767c; font-size: 0.78rem; }
+
+/* step d: the mandatory project terms still to give */
+.missing-terms { background: #fff3d6; border-radius: 6px; padding: 0.5rem 0.7rem; margin-bottom: 0.6rem; font-size: 0.86rem; }
+.term-chip { display: inline-block; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.8rem;
+             background: white; border: 1px solid #e2d3a8; border-radius: 4px; padding: 0 0.35rem; margin: 0.2rem 0.2rem 0 0; }

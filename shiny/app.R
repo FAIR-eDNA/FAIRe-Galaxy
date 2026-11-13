@@ -16,7 +16,7 @@ for (f in c("runner.R", "tools.R", "helpers.R", "ui.R"))
 
 options(shiny.maxRequestSize = 500 * 1024^2, DT.fillContainer = FALSE)
 
-APP_VERSION <- "0.2.0"
+APP_VERSION <- "0.3.0"
 DEMO_DIR <- file.path(getOption("faire.app_dir"), "demo")
 
 theme <- bs_theme(version = 5, primary = "#1f6f78", secondary = "#5b6770", success = "#3c8d5a",
@@ -120,11 +120,14 @@ server <- function(input, output, session) {
               options = list(scrollX = TRUE, pageLength = page, dom = if (nrow(df) > page) "ftip" else "t", ...))
   }
 
-  # Choices from the files the person added, optionally of some kinds only.
-  file_names <- function(pattern = NULL) {
+  # Choices from the files the person added: those whose names end as the pattern says, and those
+  # a. Your files found to be of one of the kinds (a FASTA file need not end in .fa, say).
+  file_names <- function(pattern = NULL, kinds = NULL) {
     n <- names(rv$files)
-    if (!is.null(pattern)) n <- n[grepl(pattern, n, ignore.case = TRUE)]
-    n
+    if (is.null(pattern) && is.null(kinds)) return(n)
+    by_name <- if (is.null(pattern)) rep(FALSE, length(n)) else grepl(pattern, n, ignore.case = TRUE)
+    by_kind <- if (is.null(kinds)) rep(FALSE, length(n)) else vapply(n, function(f) kind_of(f) %in% kinds, logical(1))
+    n[by_name | by_kind]
   }
   kind_of <- function(name) {
     idf <- rv$identify
@@ -213,12 +216,29 @@ server <- function(input, output, session) {
     tagList(
       tags$ul(class = "lib", lapply(names(rv$files), function(n) {
         k <- kind_of(n)
-        tags$li(title = n, icon(if (grepl("xlsx$", n)) "file-excel" else if (grepl("txt$|md$", n)) "file-lines" else "file-csv"),
-                tags$span(class = "fname", n), if (nzchar(k)) tags$span(class = "kind", k))
+        ic <- if (grepl("xlsx$", n, ignore.case = TRUE)) "file-excel" else if (grepl("pdf$", n, ignore.case = TRUE)) "file-pdf"
+              else if (k == "sequences (FASTA)" || grepl("\\.(fa|fasta|fna|fas)$", n, ignore.case = TRUE)) "dna"
+              else if (grepl("txt$|md$", n, ignore.case = TRUE)) "file-lines" else "file-csv"
+        tags$li(title = n, icon(ic), tags$span(class = "fname", n), if (nzchar(k)) tags$span(class = "kind", k),
+                tags$button(type = "button", class = "rm-file", title = paste("Remove", n), `aria-label` = paste("Remove", n),
+                            onclick = sprintf("Shiny.setInputValue('remove_file', %s, {priority: 'event'})",
+                                              jsonlite::toJSON(n, auto_unbox = TRUE)),
+                            icon("xmark")))
       })),
       actionLink("clear_files", "Remove all files", icon = icon("xmark")))
   })
   observeEvent(input$clear_files, { rv$files <- character(); rv$identify <- NULL })
+  # One file at a time. The run folders keep their copies, so results already written are not affected.
+  observeEvent(input$remove_file, {
+    n <- input$remove_file
+    if (!n %in% names(rv$files)) return()
+    rv$files <- rv$files[names(rv$files) != n]
+    if (!is.null(rv$identify)) {
+      rv$identify <- rv$identify[rv$identify$file != n, , drop = FALSE]
+      if (!nrow(rv$identify)) rv$identify <- NULL
+    }
+    showNotification(paste("Removed", n), type = "message", duration = 3)
+  })
 
   output$current_workbook <- renderUI({
     if (is.null(rv$workbook)) return(help_text("None yet. Write one with the FAIRe mapper, or choose one of your files on the Check page."))
@@ -279,19 +299,49 @@ server <- function(input, output, session) {
   output$identify_result <- renderUI({
     res <- rv$res$identify
     if (is.null(res)) return(NULL)
-    tagList(result_ui(res, show_files = FALSE), if (!is.null(rv$identify)) DTOutput("identify_table"))
+    tagList(result_ui(res, show_files = FALSE), if (!is.null(rv$identify)) uiOutput("identify_table"))
   })
-  output$identify_table <- renderDT({
+  # Each file, what it seems to be (which the person can correct) and where it goes in this app.
+  output$identify_table <- renderUI({
     d <- rv$identify; req(d)
-    keep <- intersect(c("file", "sheet", "kind", "looks like", "why", "give it as", "then"), names(d))
-    table_dt(d[, keep], page = 15)
+    rows <- lapply(seq_len(nrow(d)), function(i) {
+      k <- d$kind[i]
+      ch <- unique(c(names(KIND_PLACE), k))
+      tags$tr(
+        tags$td(tags$b(d$file[i]), if (!is.na(d$sheet[i] %||% NA) && nzchar(d$sheet[i])) tags$div(class = "examples", paste("sheet", d$sheet[i]))),
+        tags$td(tags$select(class = "form-select form-select-sm kind-select",
+                            `aria-label` = paste("What", d$file[i], "is"),
+                            onchange = sprintf("Shiny.setInputValue('set_kind', {row: %d, kind: this.value}, {priority: 'event'})", i),
+                            lapply(ch, function(x) tags$option(value = x, selected = if (identical(x, k)) NA, x))),
+                if (isTRUE(d$set_by_you[i])) tags$div(class = "examples", "set by you")),
+        tags$td(d$why[i]),
+        tags$td(KIND_PLACE[[k]] %||% ""))
+    })
+    tagList(
+      help_text("Check what each file seems to be. If one is wrong, choose the right kind: the app then offers the",
+                "file in the right places."),
+      div(class = "table-responsive",
+          tags$table(class = "table table-sm identify",
+                     tags$thead(tags$tr(tags$th("File"), tags$th(term_label("Kind", "file_kind")), tags$th("Why"),
+                                        tags$th("Where it goes in this app"))),
+                     tags$tbody(rows))))
+  })
+  observeEvent(input$set_kind, {
+    s <- input$set_kind
+    d <- rv$identify
+    if (is.null(d) || s$row > nrow(d) || !s$kind %in% names(KIND_PLACE)) return()
+    d$kind[s$row] <- s$kind
+    if (!"set_by_you" %in% names(d)) d$set_by_you <- FALSE
+    d$set_by_you[s$row] <- TRUE
+    rv$identify <- d
   })
 
   # ------------------------------------------------------------ mapper b: propose
   output$map_table_ui <- renderUI({
-    ch <- file_names("\\.(csv|tsv|txt|tab|xlsx)$")
+    ch <- file_names("\\.(csv|tsv|txt|tab|xlsx)$", kinds = "sample table")
     default <- if (rv$demo && "SEA-MES_10L_samples.csv" %in% ch) "SEA-MES_10L_samples.csv" else guess_file("sample table")
-    selectInput("map_table", "Sample table", c("Choose a file" = "", ch), selected = keep_or("map_table", default))
+    selectInput("map_table", term_label("Sample table", "sample_table"), c("Choose a file" = "", ch),
+                selected = keep_or("map_table", default))
   })
   output$map_sheet_ui <- renderUI({
     p <- fpath(input$map_table)
@@ -301,7 +351,9 @@ server <- function(input, output, session) {
   })
   output$map_dictionary_ui <- renderUI({
     ch <- file_names()
-    selectInput("map_dictionary", "Data dictionary (optional)", c("None" = "", ch), selected = keep_or("map_dictionary", ""))
+    # a plain drop-down, so None can be chosen again after a file
+    selectInput("map_dictionary", term_label("Data dictionary (optional)", "data_dictionary"), c("None" = "", ch),
+                selected = keep_or("map_dictionary", ""), selectize = FALSE)
   })
 
   observeEvent(input$run_map, {
@@ -476,8 +528,9 @@ server <- function(input, output, session) {
         div(class = "rv-replace", rep_select))
     })
     div(id = "review-grid",
-        div(class = "rv-row rv-head", div("Input term and some values"), div("Proposed FAIRe term and score"),
-            div("Mapper's call"), div("Mapper's reasoning"), div("Reviewer's decision"), div("Replacement FAIRe term")),
+        div(class = "rv-row rv-head", div(term_label("Input term", "input_term"), " and some values"),
+            div("Proposed FAIRe term and score"), div(term_label("Mapper's call", "mappers_call")), div("Mapper's reasoning"),
+            div(term_label("Reviewer's decision", "decision")), div("Replacement FAIRe term")),
         rows)
   })
 
@@ -631,7 +684,7 @@ server <- function(input, output, session) {
   })
 
   output$own_crosswalk_ui <- renderUI({
-    selectInput("own_crosswalk", "Crosswalk from your files", c("Choose a file" = "", file_names("\\.(tsv|csv|txt)$")))
+    selectInput("own_crosswalk", "Crosswalk from your files", c("Choose a file" = "", file_names("\\.(tsv|csv|txt)$", kinds = "crosswalk")))
   })
   observeEvent(input$use_own_crosswalk, {
     p <- fpath(input$own_crosswalk)
@@ -642,11 +695,20 @@ server <- function(input, output, session) {
 
   # ------------------------------------------------------------ mapper d: primers and project values
   output$pr_texts_ui <- renderUI({
-    ch <- file_names("\\.(txt|md)$")
+    ch <- file_names("\\.(txt|md|pdf)$", kinds = "text")
     sel <- isolate(input$pr_texts) %||% (if (rv$demo) intersect("methods.txt", ch) else ch[vapply(ch, kind_of, "") == "text"])
-    selectInput("pr_texts", "Methods text", ch, selected = sel, multiple = TRUE)
+    tagList(
+      selectInput("pr_texts", term_label("Your methods (text or PDF)", "methods"), ch, selected = sel, multiple = TRUE),
+      if (!length(ch)) help_text("Add your methods to Your files (left), as text or a PDF."))
   })
-  output$pr_own_ui <- renderUI(selectInput("pr_own", "My primer table", c("Choose a file" = "", file_names("\\.(tsv|tab|txt)$"))))
+  # Links to the chosen methods, to open beside the project values
+  output$pr_texts_open <- renderUI({
+    f <- input$pr_texts
+    if (!length(f)) return(NULL)
+    help_text("Open:", lapply(f, function(n) tags$span(file_link(fpath(n)), " ")))
+  })
+  output$pr_own_ui <- renderUI(selectInput("pr_own", term_label("My primer table", "primer_table"),
+                                           c("Choose a file" = "", file_names("\\.(tsv|tab|txt)$", kinds = "primer table"))))
   observeEvent(input$run_primers, {
     texts <- unname(unlist(lapply(input$pr_texts, fpath)))
     if (input$pr_mode == "text" && !length(texts)) return(showNotification("Choose the methods text.", type = "error"))
@@ -718,7 +780,7 @@ server <- function(input, output, session) {
     rv$pv <- rbind(rv$pv, data.frame(term = input$pv_term, value = input$pv_value, assay = trimws(input$pv_assay)))
     updateTextInput(session, "pv_value", value = "")
   })
-  output$pv_file_ui <- renderUI(selectInput("pv_file", NULL, c("Choose a file" = "", file_names("\\.(tsv|tab|txt|csv)$"))))
+  output$pv_file_ui <- renderUI(selectInput("pv_file", NULL, c("Choose a file" = "", file_names("\\.(tsv|tab|txt|csv)$", kinds = "project values"))))
   observeEvent(input$pv_load, {
     p <- fpath(input$pv_file); req(p)
     d <- if (galaxy_ext(p) == "csv") utils::read.csv(p, colClasses = "character", check.names = FALSE) else read_tsv(p)
@@ -726,6 +788,18 @@ server <- function(input, output, session) {
       return(showNotification("The table needs columns named term and value.", type = "error"))
     if (!"assay" %in% names(d)) d$assay <- ""
     rv$pv <- d[, c("term", "value", "assay")]
+  })
+  # The mandatory project terms no file covers yet (propose mapping's list), less those given here.
+  output$pv_missing <- renderUI({
+    m <- if (!is.null(rv$map)) read_tsv(rv$map$outputs$missing) else NULL
+    if (is.null(m) || !nrow(m)) return(NULL)
+    left <- setdiff(m$term[m$sheet == "projectMetadata"], c(rv$pv$term, "project_id", "assay_name", "assay_type",
+                                                             "checkls_ver"))
+    if (!length(left)) return(div(class = "res-ok", icon("circle-check"),
+                                  "Every mandatory project term the mapping found missing has a value here."))
+    div(class = "missing-terms",
+        tags$b("Mandatory terms still to give"), " (from b. Propose a mapping):",
+        tags$div(lapply(left, function(t) tags$span(class = "term-chip", title = m$description[m$term == t][1], t))))
   })
   output$pv_download <- downloadHandler("project_values.tsv", function(file) write_tsv(rv$pv, file))
 
@@ -761,51 +835,53 @@ server <- function(input, output, session) {
   output$otu_blocks <- renderUI({
     n <- rv$otu_n
     if (!n) return(help_text("No OTU tables. The workbook will hold the sample and project metadata only."))
-    ch <- c("Choose a file" = "", file_names("\\.(csv|tsv|tab|txt|xlsx)$"))
+    ch <- c("Choose a file" = "", file_names("\\.(csv|tsv|tab|txt|xlsx)$", kinds = "OTU or ASV table"))
     lapply(seq_len(n), function(i) {
       b <- function(field) bid("otu", i, field)
       div(class = "block",
           tags$h6(paste("OTU table", i)),
-          selectInput(b("file"), "OTU or ASV table", ch, selected = bval("otu", i, "file")),
+          selectInput(b("file"), term_label("OTU or ASV table", "otu_table"), ch, selected = bval("otu", i, "file")),
           layout_columns(
             col_widths = c(4, 4, 4),
-            textInput(b("assay"), "Assay", bval("otu", i, "assay")),
-            textInput(b("run"), "Sequencing run ID", bval("otu", i, "run")),
-            selectInput(b("stage"), "Write as", c("final (otuFinal, taxaFinal)" = "final", "raw (otuRaw, taxaRaw)" = "raw"),
+            textInput(b("assay"), term_label("Assay", "assay"), bval("otu", i, "assay")),
+            textInput(b("run"), term_label("Sequencing run ID", "run_id"), bval("otu", i, "run")),
+            selectInput(b("stage"), term_label("Write as", "stage"), c("final (otuFinal, taxaFinal)" = "final", "raw (otuRaw, taxaRaw)" = "raw"),
                         selected = bval("otu", i, "stage", "final"))),
           accordion(open = FALSE, accordion_panel(
             "More for this table",
-            selectInput(b("taxa"), "Taxonomy table (optional)", c("In the OTU table" = "", file_names("\\.(csv|tsv|tab|txt|xlsx)$")),
-                        selected = bval("otu", i, "taxa")),
-            selectInput(b("sequences"), "Sequences of this table (FASTA, optional)",
-                        c("In the OTU table" = "", file_names("\\.(fa|fasta|fna|fas|txt)$")),
-                        selected = bval("otu", i, "sequences")),
+            # plain drop-downs, so 'In the OTU table' can be chosen again after a file
+            selectInput(b("taxa"), term_label("Taxonomy table (optional)", "taxonomy_table"),
+                        c("In the OTU table" = "", file_names("\\.(csv|tsv|tab|txt|xlsx)$", kinds = "taxonomy table")),
+                        selected = bval("otu", i, "taxa"), selectize = FALSE),
+            selectInput(b("sequences"), term_label("Sequences of this table (FASTA, optional)", "sequences"),
+                        c("In the OTU table" = "", file_names("\\.(fa|fasta|fna|fas|txt)$", kinds = "sequences (FASTA)")),
+                        selected = bval("otu", i, "sequences"), selectize = FALSE),
             help_text("For a table that names its sequences (ASV_1, ASV_2 ...) but does not hold them, such as an",
                       "LCA output: a FASTA file whose headers are those names."),
             layout_columns(
               col_widths = c(6, 6),
               textInput(b("sheet"), "Excel sheet (OTU table)", bval("otu", i, "sheet")),
               textInput(b("taxa_sheet"), "Excel sheet (taxonomy table)", bval("otu", i, "taxa_sheet"))),
-            selectInput(b("layout"), "Layout", c("Work it out" = "detect", "Samples as columns" = "columns",
+            selectInput(b("layout"), term_label("Layout", "layout"), c("Work it out" = "detect", "Samples as columns" = "columns",
                                                  "Samples as rows" = "rows", "Long (one row per sample and sequence)" = "long"),
                         selected = bval("otu", i, "layout", "detect")),
             layout_columns(
               col_widths = c(4, 4, 4),
               textInput(b("assay_column"), "Column that gives each row's assay", bval("otu", i, "assay_column")),
-              textInput(b("curated_column"), "Column of curated names", bval("otu", i, "curated_column")),
-              textInput(b("lineage"), "Lineage column to use", bval("otu", i, "lineage"))))))
+              textInput(b("curated_column"), term_label("Column of curated names", "curated_column"), bval("otu", i, "curated_column")),
+              textInput(b("lineage"), term_label("Lineage column to use", "lineage"), bval("otu", i, "lineage"))))))
     })
   })
 
   output$lib_blocks <- renderUI({
     n <- rv$lib_n
     if (!n) return(help_text("No library tables."))
-    ch <- c("Choose a file" = "", file_names("\\.(csv|tsv|tab|txt|xlsx)$"))
+    ch <- c("Choose a file" = "", file_names("\\.(csv|tsv|tab|txt|xlsx)$", kinds = "library table"))
     lapply(seq_len(n), function(i) {
       b <- function(field) bid("lib", i, field)
       div(class = "block",
           tags$h6(paste("Library table", i)),
-          selectInput(b("file"), "Library table", ch, selected = bval("lib", i, "file")),
+          selectInput(b("file"), term_label("Library table", "library_table"), ch, selected = bval("lib", i, "file")),
           layout_columns(
             col_widths = c(4, 4, 4),
             textInput(b("assay"), "Assays of these libraries", bval("lib", i, "assay")),

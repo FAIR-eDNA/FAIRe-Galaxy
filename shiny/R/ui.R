@@ -22,6 +22,79 @@ help_text <- function(...) tags$p(class = "help-text", ...)
 step_intro <- function(...) div(class = "step-intro", ...)
 run_button <- function(id, label) actionButton(id, label, class = "btn-primary run-btn", icon = icon("play"))
 
+# Short explanations of the words the app uses, shown when the pointer rests on (or keyboard focus
+# reaches) the small question mark beside a label.
+GLOSSARY <- c(
+  sample_table = paste("Your table of sample details: one row per sample, with columns such as the sample name, date,",
+                       "place, depth and volume. The mapper proposes a FAIRe term for each of its columns."),
+  data_dictionary = paste("A file that says what each column of your sample table holds, such as 'Days frozen: number",
+                          "of days the water was frozen before filtering'. It can be a table (column name, description,",
+                          "units) or a ReadMe with one line per column. It helps the mapper with unclear column names.",
+                          "Leave it as None if you don't have one."),
+  header_row = "The row of your table that holds the column names. Use it when a title or notes sit above them.",
+  assay_type = paste("Metabarcoding: sequencing a marker gene (12S, 16S, 18S, COI ...) to see which taxa are present.",
+                     "Targeted: a qPCR or ddPCR test for one species."),
+  sample_types = "What was sampled (water, sediment, soil ...). It decides which FAIRe terms apply.",
+  other_terms = paste("MIxS (Genomic Standards Consortium) and Darwin Core (TDWG) are the standards FAIRe builds on.",
+                      "When FAIRe has no term for a column, the FAIRe guidelines ask for one of theirs before a name of",
+                      "your own."),
+  input_term = "One column heading of your sample table.",
+  mappers_call = paste("Accept: the mapper is sure of the match. Review: a person should decide. No match: no FAIRe term",
+                       "fits, so the column is kept under its own name (a user-defined field) unless you choose one."),
+  decision = paste("Accept uses the proposed term. Reject keeps the column as your own term. Change uses the",
+                   "replacement you pick."),
+  methods = paste("The methods section of your paper, report or protocol, as text or a PDF. Find primers looks in it",
+                  "for primer names, citations and sequences. A PDF of scanned pages has no text to read."),
+  primer_table = paste("A table of primer names and sequences. The tools come with one (Takahashi et al. 2023, Wilderlab's",
+                       "assays and a bacteria and archaea list); you can add your own."),
+  project_values = paste("FAIRe terms with one value for the whole project, or for each assay: the primers, target gene,",
+                         "extraction kit, sequencing platform, reference database and so on. They go in projectMetadata."),
+  assay = paste("A name for one PCR assay, such as Fish16S or Euk18S. It links the project values, OTU tables and",
+                "libraries of that assay."),
+  otu_table = paste("Read counts: one row per sequence (OTU or ASV) or taxon, one column per sample, or the other way",
+                    "round. Taxonomy can be in the same table."),
+  taxonomy_table = "A table of each sequence's taxonomy (kingdom to species, or a lineage), when it is separate from the read counts.",
+  sequences = paste("A FASTA file of the sequences: a header line starting with > before each sequence. Needed when",
+                    "the OTU table names its sequences (ASV_1 ...) but does not hold them, as LCA outputs do."),
+  stage = paste("Final: the reads you report, after your curation. Raw: the reads as they came from the pipeline,",
+                "before curation. FAIRe keeps each in its own pair of sheets."),
+  run_id = "A name for the sequencing run these reads came from, such as AGRF_2024-12.",
+  library_table = paste("A table of sequencing libraries: library names, sequence file names and checksums, such as ENA's",
+                        "or NCBI's run report, or your sequencing facility's run sheet."),
+  crosswalk = paste("The record of which column of your table goes to which FAIRe term. The review sheet is the version",
+                    "to fill in; the SSSOM table is the same record in a standard format for term mappings."),
+  review_sheet = paste("An Excel workbook with one row per column of your sample table, with the proposed term and the",
+                       "mapper's call. You choose Accept, Reject or Change for each row."),
+  utc_offset = paste("How far local time is ahead of (+) or behind (-) UTC where the samples were taken, such as +10:00",
+                     "for Australian Eastern Standard Time. Used to give times of collection in local time."),
+  curated_column = "A column of the OTU table that holds your curated names, if they differ from the lineage's.",
+  lineage = "The column of the lineage to use when the table has more than one (from SILVA and PR2, say).",
+  layout = "How the read counts are laid out: samples as columns, samples as rows, or one row per sample and sequence.",
+  file_kind = paste("What the file seems to be, from its layout, column names and values. If it is wrong, choose the",
+                    "right kind: the app then offers the file in the right places.")
+)
+
+# Each kind of file identify reports, and where it goes in this app.
+KIND_PLACE <- c(
+  "sample table" = "b. Propose a mapping: Sample table",
+  "OTU or ASV table" = "e. Write the workbook: OTU or ASV table",
+  "taxonomy table" = "e. Write the workbook: Taxonomy table (under More for this table)",
+  "library table" = "e. Write the workbook: Library table",
+  "crosswalk" = "c. Review: Add a review sheet you filled in, or Use a crosswalk you edited yourself",
+  "data dictionary" = "b. Propose a mapping: Data dictionary",
+  "project values" = "d. Values for the whole project: Or load a table of values",
+  "primer table" = "d. Find primers: My primer table",
+  "sequences (FASTA)" = "e. Write the workbook: Sequences of this table (under More for this table)",
+  "text" = "d. Find primers: Your methods (text or PDF)",
+  "not recognised" = "Check the file: its column names may be below a title (set the header row) or on another sheet.")
+
+# A label with a question mark beside it that explains the term on hover or focus.
+term_label <- function(label, key) {
+  tags$span(label, " ", bslib::tooltip(
+    tags$span(class = "term-help", tabindex = "0", `aria-label` = paste("What is", label), icon("circle-question")),
+    GLOSSARY[[key]], placement = "right"))
+}
+
 workbook_picker <- function(id) uiOutput(paste0(id, "_ui"))
 
 start_page <- function() {
@@ -115,8 +188,9 @@ mapper_panel <- function() {
         card(
           card_header("Say what each file is"),
           step_intro("Add every file you have for the dataset to ", tags$em("Your files"), " (on the left):",
-                     " the sample table, OTU or ASV tables, taxonomy tables, run reports, and methods or ReadMe",
-                     " texts. This step looks at each one and says what it seems to be and which step it goes to."),
+                     " the sample table, OTU or ASV tables, taxonomy tables, sequences (FASTA), run reports, and",
+                     " your methods or ReadMe (text or PDF). This step looks at each one and says what it seems to",
+                     " be and which step it goes to. If it gets one wrong, choose the right kind in the table."),
           help_text("A sample table is the spreadsheet you keep for your samples, with one row per sample or filter",
                     "and columns such as site, date, coordinates, depth, volume filtered and which samples are",
                     "controls. Reads per ASV or taxon, and taxon assignments, go in separately as OTU and",
@@ -133,14 +207,14 @@ mapper_panel <- function() {
             card_header("Your sample table"),
             uiOutput("map_table_ui"),
             uiOutput("map_sheet_ui"),
-            numericInput("map_header_row", "Row holding the column headers", 1, min = 1, max = 50),
+            numericInput("map_header_row", term_label("Row holding the column headers", "header_row"), 1, min = 1, max = 50),
             help_text("Change this when the sheet has a title or notes above the headers. Comment lines",
                       "starting with # (as in NCBI and ENA submission sheets) are skipped without it."),
-            radioButtons("map_assay_type", "Assay type", c("Metabarcoding" = "metabarcoding",
+            radioButtons("map_assay_type", term_label("Assay type", "assay_type"), c("Metabarcoding" = "metabarcoding",
                                                            "Targeted" = "targeted", "Either" = "any"), inline = TRUE),
-            checkboxGroupInput("map_sample_types", "Sample types", SAMPLE_TYPES, selected = "Water", inline = TRUE),
+            checkboxGroupInput("map_sample_types", term_label("Sample types", "sample_types"), SAMPLE_TYPES, selected = "Water", inline = TRUE),
             uiOutput("map_dictionary_ui"),
-            checkboxInput("map_other_terms", "Suggest MIxS or Darwin Core terms for columns with no FAIRe term", TRUE),
+            checkboxInput("map_other_terms", term_label("Suggest MIxS or Darwin Core terms for columns with no FAIRe term", "other_terms"), TRUE),
             help_text("The FAIRe guidelines ask for a MIxS or Darwin Core term, where one exists, before a name of",
                       "your own. These suggestions are always for review."),
             run_button("run_map", "Propose a mapping")
@@ -202,29 +276,34 @@ mapper_panel <- function() {
         layout_columns(
           col_widths = c(5, 7),
           card(
-            card_header("Find primers"),
-            step_intro("Looks for primer names, citations and sequences in your methods text, or looks up the names",
-                       "you give, in the primer table bundled with the tools (Takahashi et al. 2023, Wilderlab's",
-                       "assays and a bacteria and archaea list)."),
-            radioButtons("pr_mode", "Look for primers in", c("Methods text" = "text", "Names or citations I type" = "names"),
+            card_header("Your methods and the primers"),
+            step_intro("Your methods (text or PDF) are where the values for the whole project come from. The app",
+                       "reads them for primers: it looks for primer names, citations and sequences, and finds them in",
+                       "the primer table bundled with the tools (Takahashi et al. 2023, Wilderlab's assays and a",
+                       "bacteria and archaea list). The other values, such as the target gene, PCR conditions,",
+                       "extraction kit, sequencing platform, reference databases and protocols, come from you: open",
+                       "your methods beside the table on the right and add them there."),
+            radioButtons("pr_mode", "Look for primers in", c("My methods" = "text", "Names or citations I type" = "names"),
                          inline = TRUE),
             conditionalPanel("input.pr_mode == 'text'", uiOutput("pr_texts_ui")),
+            uiOutput("pr_texts_open"),
             conditionalPanel("input.pr_mode == 'names'",
                              textAreaInput("pr_names", "Names or citations, one per line", rows = 4,
                                            placeholder = "MiFish-U\nLeray et al. 2013"),
                              textInput("pr_gene", "Only primers for this gene (optional)", placeholder = "for example 12S")),
-            radioButtons("pr_source", "Primer table", c("Bundled" = "bundled", "Bundled and mine" = "both", "Mine only" = "own"),
+            radioButtons("pr_source", term_label("Primer table", "primer_table"), c("Bundled" = "bundled", "Bundled and mine" = "both", "Mine only" = "own"),
                          inline = TRUE),
             conditionalPanel("input.pr_source != 'bundled'", uiOutput("pr_own_ui")),
             run_button("run_primers", "Find primers"),
             uiOutput("primers_result")
           ),
           card(
-            card_header("Values for the whole project"),
+            card_header(term_label("Values for the whole project", "project_values")),
             step_intro("Some FAIRe fields hold one value for the whole project or for each assay: the primers, the",
-                       "extraction kit, the sequencing platform, the reference database and so on. List them here",
-                       "and they are written to projectMetadata. Leave the assay empty for a value that applies",
-                       "to every assay."),
+                       "extraction kit, the sequencing platform, the reference database and so on. Most come from",
+                       "your methods. List them here and they are written to projectMetadata. Leave the assay empty",
+                       "for a value that applies to every assay."),
+            uiOutput("pv_missing"),
             DTOutput("pv_table"),
             div(class = "btn-row",
                 actionButton("pv_delete", "Delete the selected rows", icon = icon("trash")),
@@ -255,7 +334,7 @@ mapper_panel <- function() {
               textInput("ap_assay_name", "Assay name(s)", placeholder = "for example Fish16S"),
               help_text("Separated by commas. Leave empty when an OTU table names its assays in a column."),
               textInput("ap_country", "Country or sea for geo_loc_name (optional)", placeholder = "for example Australia"),
-              textInput("ap_utc_offset", "UTC offset of the times of collection (optional)", placeholder = "for example +10:00"),
+              textInput("ap_utc_offset", term_label("UTC offset of the times of collection (optional)", "utc_offset"), placeholder = "for example +10:00"),
               help_text("When the table gives the time of collection in its own column, the time is joined to its",
                         "date in eventDate, in local time. Give the offset of local time from UTC, such as +10:00",
                         "for Australian Eastern Standard Time; times the column name says are UTC are converted to",
