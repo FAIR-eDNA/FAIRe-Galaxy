@@ -11,7 +11,9 @@ go into one table in the 10 L sheet's form (MIxS names, as submitted to NCBI):
 - deep-tow rows from file 2, with Voyage IN2024_V03 (the deep-tow study was on the second
   voyage); CN167, the "Clean Dry Lab Control", is a field negative from the deep-tow sampler,
   probably the water used to rinse the filtration equipment (B. Deagle, 6 November 2026);
-- 2 L rows from the 18S sample table: the date and UTC time as ISO 8601, latitude and longitude as
+- 2 L rows from the 18S sample table: the date and time as ISO 8601 in local time (the UTC date and
+  time converted to Australian Eastern Standard Time, +10:00, as all were taken off Victoria and
+  Tasmania in July 2023; local time is what daily cycles follow), latitude and longitude as
   MIxS lat_lon, geo_loc_name as "Australia: <Locality>" (as in the 18S trial), the volume in mL,
   the pore size, temperature, salinity and the three ENVO terms of the 10 L sheet;
 - 2 L samples with no details in the record (not in the 18S table) with their name and voyage only;
@@ -22,6 +24,7 @@ CN166 are then deep-tow rows too.
 
 A column *Sample set* says which set each row comes from.
 """
+import datetime
 import re
 import sys
 
@@ -49,12 +52,17 @@ def lat_lon(lat, lon):
 
 
 def iso_date(d, t):
+    """The UTC date (5/07/2023) and UTC time (11:48) as local time: 2023-07-05T21:48+10:00."""
     m = re.match(r'^(\d{1,2})/(\d{1,2})/(\d{4})$', d.strip())
     if not m:
         return d
     day = f'{m.group(3)}-{int(m.group(2)):02d}-{int(m.group(1)):02d}'
     hm = re.match(r'^(\d{1,2}):(\d{2})$', t.strip())
-    return f'{day}T{int(hm.group(1)):02d}:{hm.group(2)}Z' if hm else day
+    if not hm:
+        return day
+    local = datetime.datetime.fromisoformat(day) + datetime.timedelta(hours=int(hm.group(1)) + 10,
+                                                                      minutes=int(hm.group(2)))
+    return local.strftime('%Y-%m-%dT%H:%M') + '+10:00'
 
 
 def main(m_csv, cn_xlsx, s_csv, wl_csv, out_csv):

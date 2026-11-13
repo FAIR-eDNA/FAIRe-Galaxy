@@ -7,7 +7,9 @@ without modifying them, and adds:
     raise an unexplained KeyError or write invalid XML;
   * conversion of eventDate values with a +hh:mm/-hh:mm offset (or stored as
     Excel dates) to a form ENA accepts, so they are not replaced with
-    'not provided';
+    'not provided': the local time, which daily cycles follow, with the offset
+    in whole hours as ENA's pattern takes it (+10), or UTC for an offset with
+    minutes (+09:30);
   * a choice of NCBI taxon for the samples (upstream hard-codes 408172,
     marine metagenome);
   * filtering of runs to one assay or to some sequencing runs, and an optional FTP sub-directory prefix
@@ -62,13 +64,21 @@ def is_blank(value):
     return value is None or (isinstance(value, float) and pd.isna(value)) or str(value).strip() == ''
 
 
+def _stamp(when):
+    return when.strftime('%Y-%m-%dT%H:%M' + (':%S' if when.second else ''))
+
+
 def normalise_date(value):
-    """Return a collection date string ENA's regular expression accepts."""
+    """Return a collection date string ENA's regular expression accepts. ENA's pattern takes a time
+    zone as Z or whole hours (+10), so a time with an offset keeps its local time, which daily cycles
+    follow, with the offset in hours; an offset with minutes (+09:30) can only be written in UTC."""
     if isinstance(value, (pd.Timestamp, datetime.datetime)):
         ts = pd.Timestamp(value)
         if ts.tzinfo is not None:
-            ts = ts.tz_convert('UTC')
-            return ts.strftime('%Y-%m-%dT%H:%M' + (':%S' if ts.second else '') + 'Z')
+            minutes = int(ts.utcoffset().total_seconds() // 60)
+            if minutes % 60 == 0:
+                return _stamp(ts) + f'{"-" if minutes < 0 else "+"}{abs(minutes) // 60:02d}'
+            return _stamp(ts.tz_convert('UTC')) + 'Z'
         if (ts.hour, ts.minute, ts.second) == (0, 0, 0):
             return ts.strftime('%Y-%m-%d')
         return ts.strftime('%Y-%m-%dT%H:%M' + (':%S' if ts.second else ''))
@@ -80,11 +90,19 @@ def normalise_date(value):
     match = OFFSET_RE.match(text)
     if match:
         local, hours, minutes = match.groups()
+        when = datetime.datetime.fromisoformat(local.split('.')[0])
+        if minutes == '00':
+            return _stamp(when) + hours
         sign = -1 if hours.startswith('-') else 1
         offset = datetime.timedelta(hours=abs(int(hours)), minutes=int(minutes)) * sign
-        utc = datetime.datetime.fromisoformat(local.split('.')[0]) - offset
-        return utc.strftime('%Y-%m-%dT%H:%M' + (':%S' if utc.second else '') + 'Z')
+        return _stamp(when - offset) + 'Z'
     return text
+
+
+def minute_offset(value):
+    """The offset of an eventDate value when it has minutes (+09:30), which ENA cannot take."""
+    match = OFFSET_RE.match(str(value).strip()) if isinstance(value, str) else None
+    return f'{match.group(2)}:{match.group(3)}' if match and match.group(3) != '00' else None
 
 
 # ENA's water checklist (ERC000024, read on 11 November 2026) wants these attributes as plain numbers
@@ -338,9 +356,14 @@ def run_sample(args):
     if args.convert_dates and 'eventDate' in df.columns:
         # repr() keeps Excel dates (read as Timestamps) apart from text, so they count as converted
         before = df['eventDate'].apply(lambda v: v if isinstance(v, str) else repr(v))
+        in_minutes = [(str(n), minute_offset(v)) for n, v in zip(df['samp_name'], df['eventDate']) if minute_offset(v)]
         df['eventDate'] = df['eventDate'].apply(normalise_date).astype(object)
         changed = int((before != df['eventDate'].apply(lambda v: v if isinstance(v, str) else repr(v))).sum())
         print(f"INFO: converted {changed} eventDate value(s) to a form ENA accepts")
+        if in_minutes:
+            print(f"INFO: {len(in_minutes)} eventDate value(s) written in UTC, as ENA takes offsets in whole hours "
+                  f"only ({in_minutes[0][1]} is not one): " + ', '.join(n for n, _ in in_minutes[:10])
+                  + (' ...' if len(in_minutes) > 10 else ''))
     elif 'eventDate' in df.columns:
         df['eventDate'] = df['eventDate'].apply(lambda v: v if is_blank(v) else str(v)).astype(object)
 

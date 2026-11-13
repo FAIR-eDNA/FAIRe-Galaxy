@@ -1,0 +1,97 @@
+# Values for the whole project (no assay) or one assay, for the day-night study (West et al. 2024,
+# Environmental DNA 6: e70018, https://doi.org/10.1002/edn3.70018, CC BY), from its methods (sections
+# 2.1 to 2.3, Table 1), the sample sheet's notes and the fastq ReadMe (assay names). The ENVO terms and
+# the control types are the trial's choices, for the authors to confirm.
+term	value	assay
+project_id	West2024_DayNight
+project_name	Continual eDNA detectability amidst diel reef species fluctuations on diver transects
+project_contact	Katrina West, CSIRO (corresponding author of https://doi.org/10.1002/edn3.70018)
+institution	CSIRO
+recordedBy	Tyson Jones | Olivia Johnson | Ella Clausius
+study_factor	time of day (10 am, 4 pm, 10 pm, 4 am) | site
+neg_cont_0_1	1
+pos_cont_0_1	0
+env_broad_scale	marine biome [ENVO:00000447]
+env_local_scale	marine subtidal rocky reef [ENVO:01000150]
+env_medium	ocean water [ENVO:00002149]
+habitat_natural_artificial_0_1	0
+samp_collect_method	Five 1 L seawater samples were collected by divers adjacent to the seafloor (5 m depth) at the start and end of 50 m Reef Life Survey transects: ten per time point per site (https://doi.org/10.1002/edn3.70018).
+samp_collect_device	bleach-sterilised 1 L Nalgene bottle
+minimumDepthInMeters	5
+maximumDepthInMeters	5
+samp_size	1
+samp_size_unit	L
+biological_rep	10
+filter_passive_active_0_1	1
+size_frac	0.45
+filter_diameter	47
+filter_material	cellulose ester
+filter_name	MF-Millipore mixed cellulose ester (MCE) membrane
+samp_mat_process	Filtered within 1 h of collection with a Masterflex L/S Variable-Speed Digital Drive pump; membranes kept at about 5 °C, then stored at -80 °C until extraction.
+samp_store_temp	-80
+samp_store_loc	CSIRO Marine Laboratories, Hobart
+sterilise_method	Sampling bottles were bleach-sterilised. Filtration equipment was cleaned with 10% bleach between time points at a site and rinsed in Milli-Q water; 1 L of the rinse water was filtered between the day and night intervals as a filtration control.
+samp_vol_we_dna_ext	500
+samp_vol_we_dna_ext_unit	mL
+nucl_acid_ext_kit	DNeasy Blood and Tissue Kit (Qiagen)
+nucl_acid_ext_lysis	enzymatic
+nucl_acid_ext_sep	column-based
+nucl_acid_ext_modify	Half of each filter membrane was extracted within 2 months of collection, with 540 µL ATL lysis buffer, 60 µL proteinase K and a 3-h digest at 56 °C; 300 µL of the digest was combined with 300 µL buffer AL and 300 µL ethanol. An extraction blank was processed with every set of 23 samples.
+nucl_acid_amp	https://doi.org/10.1002/edn3.70018
+pcr_0_1	1
+barcoding_pcr_appr	two-step PCR
+commercial_mm	QIAGEN Multiplex PCR Master Mix (QIAGEN Multiplex PCR Kit)
+amplificationReactionVolume	25
+pcr_dna_vol	2
+pcr_cycles	40
+thermocycler	Thermo Fisher Scientific, QuantStudio 5 Real-Time PCR System
+pcr_method_additional	First-stage qPCR with locus-specific primers carrying a unique dual 6 bp index and a Nextera-style overhang, 0.4 µM of each primer and 1× EvaGreen Dye (Biotium); second-stage PCR with Nextera-style dual 8 bp index primers at AGRF.
+sequencing_location	Australian Genome Research Facility (AGRF)
+platform	ILLUMINA
+instrument	Illumina NovaSeq 6000 [OBI_0002630]
+seq_kit	NovaSeq 6000 SP Reagent Kit (500 cycles)
+lib_layout	paired end
+trim_method	Cutadapt v4.5
+demux_tool	Cutadapt v4.5
+min_len_cutoff	100
+min_len_tool	DADA2 (R v4.2.1)
+error_rate_tool	DADA2 (R v4.2.1)
+error_rate_type	expected error rate
+error_rate_cutoff	2
+chimera_check_method	DADA2 (R v4.2.1)
+otu_clust_tool	DADA2 (R v4.2.1), pool = "pseudo"
+otu_clust_cutoff	100
+otu_db	NCBI GenBank nucleotide database (accessed August 2023)
+tax_assign_cat	sequence similarity
+otu_seq_comp_appr	BLASTn (minimum identity 85%, query coverage 96%, maximum target sequences 10)
+tax_class_id_cutoff	85
+tax_class_query_cutoff	96
+tax_class_collapse	eDNAFlow LCA script (qCov 96%, minimum identity 85%, Diff 1): where an ASV had several top hits within 1% of each other, the taxonomy was collapsed to their lowest common ancestor.
+tax_class_other	A species-level assignment needed at least 98% identity and 100% query coverage.
+sop_bioinformatics	https://github.com/mahsa-mousavi/eDNAFlow
+otu_raw_description	The eDNAFlow LCA output: the DADA2 ASVs with a taxonomic assignment, with their lineage from domain to species.
+targetTaxonomicAssay	Fish	16S_Fish
+targetTaxonomicScope	Teleostei | Elasmobranchii	16S_Fish
+target_gene	16S rRNA (LSU mitochondria)	16S_Fish
+target_subfragment	not applicable	16S_Fish
+ampliconSize	178-228	16S_Fish
+pcr_primer_name_forward	16SF/D	16S_Fish
+pcr_primer_forward	GACCCTATGGAGCTTTAGAC	16S_Fish
+pcr_primer_reference_forward	Berry et al. 2017	16S_Fish
+pcr_primer_name_reverse	16S2R-degenerate	16S_Fish
+pcr_primer_reverse	CGCTGTTATCCCTADRGTAACT	16S_Fish
+pcr_primer_reference_reverse	Deagle et al. 2007	16S_Fish
+annealingTemp	54	16S_Fish
+pcr_cond	initial denaturation:95_15;denaturation:95_0.5;annealing:54_1.5;elongation:72_1.5;final elongation:72_10;40	16S_Fish
+targetTaxonomicAssay	Metazoa	COI_Leray
+targetTaxonomicScope	fish and macroinvertebrates	COI_Leray
+target_gene	COI	COI_Leray
+ampliconSize	313	COI_Leray
+pcr_primer_name_forward	mlCOIintF	COI_Leray
+pcr_primer_forward	GGWACWGGWTGAACWGTWTAYCCYCC	COI_Leray
+pcr_primer_reference_forward	https://doi.org/10.1186/1742-9994-10-34	COI_Leray
+pcr_primer_name_reverse	jgHCO2198	COI_Leray
+pcr_primer_reverse	TAIACYTCIGGRTGICCRAARAAYCA	COI_Leray
+pcr_primer_reference_reverse	https://doi.org/10.1186/1742-9994-10-34	COI_Leray
+annealingTemp	46	COI_Leray
+pcr_cond	initial denaturation:95_15;denaturation:95_0.5;annealing:46_1.5;elongation:72_1.5;final elongation:72_10;40	COI_Leray

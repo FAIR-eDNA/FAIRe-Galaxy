@@ -163,6 +163,24 @@ def _count(v):
     return math.isfinite(x) and x >= 0
 
 
+def id_column(df, count_cols):
+    """The column of sequence IDs in a table with the samples as columns: the first column, unless its
+    values repeat and another column (not a count column) named as an ID or a sequence (OTU, ASV,
+    seq_id, sequence ...) has a different value on every row."""
+    first = df.columns[0]
+    vals = [norm_id(v) for v in df[first] if not _blank(v)]
+    if not vals or len(set(vals)) == len(vals):
+        return first
+    names = set(TAXA_ALIASES['seq_id']) | set(TAXA_ALIASES['dna_sequence'])
+    for c in df.columns[1:]:
+        if c in count_cols or _key(c) not in names:
+            continue
+        v = [norm_id(x) for x in df[c]]
+        if all(v) and len(set(v)) == len(v):
+            return c
+    return first
+
+
 def drop_footer(df, sample_cols):
     """Rows below the counts that hold sample details instead (Sample ID, Voyage, Latitude ...), as
     some tables keep them: from the first row in the lower half whose sample columns are mostly not
@@ -262,12 +280,18 @@ def read_otu(path, sheet, sample_names, lib_to_samp, log, label, is_detail=None,
         if outside:
             log(f'{label}: {len(outside)} columns of counts are not samples of the sample table and are left out: '
                 + ', '.join(outside[:5]) + (' ...' if len(outside) > 5 else ''))
-        df = df[[not _blank(v) for v in df.iloc[:, 0]]]
-        ids = [norm_id(v) for v in df.iloc[:, 0]]
+        idc = id_column(df, cols)
+        if idc != df.columns[0]:
+            # An LCA output (eDNAFlow's: domain ... species, then OTU, then the samples) puts its ranks first.
+            log(f"{label}: the sequence IDs are in the column '{idc}' (the first column, '{df.columns[0]}', "
+                f"repeats)")
+            first_header = str(idc)
+        df = df[[not _blank(v) for v in df[idc]]]
+        ids = [norm_id(v) for v in df[idc]]
         counts = df[cols].copy()
         counts.index = ids
         counts.columns = [norm_id(c) for c in cols]
-        ann = df[[df.columns[0]] + rest].copy()
+        ann = df[[idc] + [c for c in [df.columns[0]] + rest if c != idc]].copy()
         ann.index = ids
     elif in_rows:
         orientation = 'samples as rows'

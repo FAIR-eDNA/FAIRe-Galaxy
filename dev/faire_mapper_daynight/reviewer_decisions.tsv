@@ -1,0 +1,4 @@
+# Review of the crosswalk that propose mapping wrote for the prepared day-night sample sheet
+# (prepare_table.py). action: confirm | delete | term:<FAIRe term> | add:<FAIRe term>
+column	action	reason
+Collected by	delete	the three collectors' names in the first rows, not one value per sample; recordedBy is given for the whole project

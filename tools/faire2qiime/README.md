@@ -71,6 +71,12 @@ Upstream: [aomlomics/faire2qiime](https://github.com/aomlomics/faire2qiime) at c
    file is changed, and the run stops if upstream no longer reads a sheet that way. On the test
    workbooks without such values, the outputs are byte for byte the same as upstream's. The copies
    made for assays converted one at a time (item 6) now keep text starting with `=` too.
+8. **No value in the file names** (12 November 2026, from the day-night trial). Upstream names its
+   files by the first word of target_gene and target_subfragment, so FAIRe's term for no value,
+   *not applicable* (for a fish 16S marker with no named region), gave `16S-not_metadata.tsv`; the
+   SEA-MES demonstration set too, once its target_subfragment was filled. `normalise_faire.py`
+   empties FAIRe's missing-value terms in those two rows of projectMetadata, so the files are named
+   by the gene alone (`16S_metadata.tsv`), and says so in the log.
 
 ## Upstream issues to report
 
@@ -93,6 +99,8 @@ Upstream: [aomlomics/faire2qiime](https://github.com/aomlomics/faire2qiime) at c
 - Output files are named by gene and subfragment, not assay_name, so assays on the same fragment
   overwrite each other (the verte_quadeloupe FAIRe example kept 4 of 22 rows).
 - Empty file names become `nan` in the manifests.
+- A FAIRe missing-value term in target_subfragment ("not applicable") becomes part of the file
+  names (`16S-not`); the wrapper works around it (item 8).
 - A tagged release and a pip or bioconda package would help (see below).
 
 ## Before deployment on Galaxy Australia
@@ -139,6 +147,8 @@ Upstream: [aomlomics/faire2qiime](https://github.com/aomlomics/faire2qiime) at c
 - `test-data/faire_same_gene_text_values.xlsx`: `faire_same_gene.xlsx` with `=see notes` in
   serial_number for `GOMECC4_27N_Sta1_DCM_A` (assays converted one at a time). Written by the same
   script.
+- `test-data/faire_subfragment_na.xlsx`: `faire_single_assay.xlsx` with target_subfragment
+  *not applicable*. Written by `dev/faire_mapper_daynight/make_testdata.py`.
 
 The GOMECC-4 data reuse some `lib_id` values across the two assays. That is a feature of the
 example data, and it shows up in the manifests as 16S-style IDs in an 18S run.
@@ -168,3 +178,4 @@ workbook for FAIRe2QIIME (item 7; tests 6 and 7).
 | 5 | Sample ID column that does not exist: stops with a clear message | passed |
 | 6 | Text values reach both metadata tables as written: `=see notes`, `Sta1 #2` (upstream alone cuts the row off at the `#`) and materialSampleID `001` (upstream alone writes `1`) | passed |
 | 7 | Assays converted one at a time: `=see notes` reaches both metadata tables | passed |
+| 8 (12 Nov) | target_subfragment *not applicable*: the metadata file named by the gene alone (`16S`), with a note in the log | see below |

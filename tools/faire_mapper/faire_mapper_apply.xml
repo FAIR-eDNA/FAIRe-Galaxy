@@ -27,6 +27,9 @@ python '$__tool_directory__/faire_mapper_apply.py'
         --country '$country'
     #end if
     --date_order '$date_order'
+    #if str($utc_offset).strip():
+        '--utc_offset=$utc_offset'
+    #end if
     $include_review
     #if $project_values:
         --project_values '$project_values'
@@ -42,6 +45,12 @@ python '$__tool_directory__/faire_mapper_apply.py'
         --otu '$o.otu' --otu_name '$oname' --otu_sheet '$o.otu_sheet' --otu_assay '$o.otu_assay' --otu_run '$o.otu_run'
         --otu_assay_column '$o.otu_assay_column' --otu_curated_column '$o.otu_curated_column'
         --otu_lineage '$o.otu_lineage' --otu_stage '$o.otu_stage' --otu_layout '$o.otu_layout'
+        #if $o.otu_sequences:
+            #set $sname = str($o.otu_sequences.element_identifier).replace("'", "")
+            --otu_sequences '$o.otu_sequences' --otu_sequences_name '$sname'
+        #else:
+            --otu_sequences '' --otu_sequences_name ''
+        #end if
         #if $o.taxa:
             --taxa '$o.taxa' --taxa_sheet '$o.taxa_sheet'
         #else:
@@ -93,6 +102,10 @@ python '$__tool_directory__/faire_mapper_apply.py'
             <option value="dmy">Day first (6 September 2017)</option>
             <option value="mdy">Month first (9 June 2017)</option>
         </param>
+        <param name="utc_offset" type="text" value="" optional="true" label="UTC offset of the times of collection (optional)"
+            help="When your table gives the time of collection in its own column (matched to verbatimEventTime), the tool joins each time to its date in eventDate, as FAIRe asks for the date and time of sampling. Give the offset of the local time from UTC, such as +10:00 for Australian Eastern Standard Time or +11:00 for Australian Eastern Daylight Time, so the time is unambiguous. eventDate keeps the local time, as daily cycles follow it: if the column name says the times are UTC, the tool converts them to local time with this offset. Leave empty to write local times without an offset.">
+            <validator type="regex" message="An offset such as +11:00, -04:00 or Z">^(Z|[+-](0\d|1[0-4]):[0-5]\d)?$</validator>
+        </param>
         <param name="include_review" type="boolean" truevalue="--include_review" falsevalue="" checked="false"
             label="Also apply the matches for review (skos:closeMatch)"
             help="Use this for a first draft. The log lists every match applied, so you can check them."/>
@@ -133,6 +146,8 @@ python '$__tool_directory__/faire_mapper_apply.py'
                 help="Used when the table has no library or run columns: the tool then writes one experimentRunMetadata row per sample of this table, with samp_name, assay_name and this run ID, and lib_id made from those three.">
                 <validator type="regex" message="Letters, digits, _, - or . only">^[A-Za-z0-9_.-]*$</validator>
             </param>
+            <param name="otu_sequences" type="data" format="fasta" optional="true" label="Sequences of this table (FASTA, optional)"
+                help="For a table that names its sequences (ASV_1, ASV_2 ...) but does not hold them, such as an LCA output: a FASTA file whose headers are those names. FAIRe needs each sequence (dna_sequence in taxaRaw and taxaFinal). Sequences in the FASTA file that the table does not list are left out."/>
             <param name="taxa" type="data" format="tabular,csv,xlsx,txt" optional="true" label="Taxonomy table (optional)"
                 help="One row per ASV or OTU, keyed by its ID (or its sequence): FAIRe columns (kingdom ... specificEpithet, scientificName), rank columns (Kingdom ... Species, as DADA2 writes), or one lineage column (k__Animalia; p__Chordata ...). Taxonomy columns in the OTU table itself are read too; with neither, names in a table of reads per taxon are used."/>
             <param name="taxa_sheet" type="text" value="" optional="true" label="Excel sheet (taxonomy table)">
@@ -155,7 +170,7 @@ python '$__tool_directory__/faire_mapper_apply.py'
         <repeat name="library_tables" title="Library table" min="0" default="0"
             help="Which sequence files belong to which sample: the run report of your study from ENA or the SRA, the SRA submission sheet, or your own run sheet. Fills experimentRunMetadata with lib_id, filename and filename2, their checksums, and associatedSequences (links to the run, BioSample and BioProject).">
             <param name="library" type="data" format="tabular,csv,xlsx,txt" label="Library table"
-                help="From ENA: the study's read_run file report (TSV), with library_name, run_accession, sample_accession, study_accession, fastq_ftp and fastq_md5 (or submitted_ftp and submitted_md5). From the SRA: RunInfo, or the SRA submission sheet. Your own sheet: columns such as sample name, library ID, filename, filename2 and md5. Each library is matched to a sample by a sample name column, or by a library name that starts with the sample name (M159_16SFish matches M159)."/>
+                help="From ENA: the study's read_run file report (TSV), with library_name, run_accession, sample_accession, study_accession, fastq_ftp and fastq_md5 (or submitted_ftp and submitted_md5). From the SRA: RunInfo, or the SRA submission sheet. Your own sheet: columns such as sample name, library ID, filename, filename2 and md5, or a list of fastq files, one per line (a folder listing, md5sum's output or PowerShell's Get-FileHash CSV too), which the tool pairs by R1 and R2. Each library is matched to a sample by a sample name column, or by a library name that starts with the sample name (M159_16SFish matches M159)."/>
             <param name="library_sheet" type="text" value="" optional="true" label="Excel sheet (library table)"
                 help="Leave empty for the first sheet that names libraries or files.">
                 <validator type="regex" message="Sheet names cannot contain quotes">^[^'"]*$</validator>
@@ -421,7 +436,7 @@ python '$__tool_directory__/faire_mapper_apply.py'
                     <has_text text="checksum_method = MD5 (projectMetadata)"/>
                     <has_text text="5 of 6 libraries have 'COI' in their name"/>
                     <has_text text="4 rows for 4 samples, matched by start of the library name (4)"/>
-                    <has_text text="1 libraries match no samp_name and are left out: LIZ_99_COI"/>
+                    <has_text text="1 library matches no samp_name and is left out: LIZ_99_COI"/>
                     <has_text text="1 files beside a read pair (reads that could not be paired) left out"/>
                     <has_text text="4 names read as sample names without Illumina's sample number and lane ('LIZ_01_S1_L001' as 'LIZ_01')"/>
                     <has_text text="the library tables name Illumina MiSeq (4 libraries)"/>
@@ -898,6 +913,208 @@ python '$__tool_directory__/faire_mapper_apply.py'
                 <has_text text="'Layout of this table' is samples as rows, but no value in the first column matches samp_name"/>
             </assert_stderr>
         </test>
+        <!-- From the day-night trial (12 November 2026): the time of collection in its own column joined
+             to the date in eventDate, with the UTC offset; controls not given the habitat values of the
+             samples, and their empty mandatory cells given "not applicable: control sample"; a values
+             file with no trailing tabs; an amplicon size given as a range; an LCA output whose OTU
+             column follows the rank columns, with its sequences in a FASTA file -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef_times.xlsx" ftype="xlsx"/>
+            <param name="crosswalk" value="apply_reef_times.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="reef_times"/>
+            <param name="assay_name" value="Fish16S,COILeray"/>
+            <param name="country" value="Australia"/>
+            <param name="utc_offset" value="+10:00"/>
+            <param name="project_values" value="apply_reef_times_values.tsv" ftype="tabular"/>
+            <repeat name="otu_tables">
+                <param name="otu" value="otu_lca_ranks.tsv" ftype="tabular"/>
+                <param name="otu_assay" value="Fish16S"/>
+                <param name="otu_run" value="reef_run1"/>
+                <param name="otu_sequences" value="otu_lca_ranks.fasta" ftype="fasta"/>
+            </repeat>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet3.xml">
+                        <has_text text="2017-09-06T10:00+10:00"/>
+                        <has_text text="2017-09-06T22:00+10:00"/>
+                        <has_text text="not applicable: control sample"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="eventDate: the times in 'Time' (verbatimEventTime) joined to the dates, with the UTC offset +10:00, in 4 rows (e.g. '2017-09-06' at '10:00' as '2017-09-06T10:00+10:00')"/>
+                    <has_text_matching expression="env_broad_scale, env_local_scale, env_medium: written as 'not applicable: control sample' for the 2 controls"/>
+                    <has_text_matching expression="'not applicable: control sample' written in the 2 empty mandatory cells of 1 control \(eventDate, geo_loc_name\)"/>
+                    <has_text text="ampliconSize = 178-228 (projectMetadata, assay Fish16S)"/>
+                    <not_has_text text="ampliconSize = 178-228 (projectMetadata, assay Fish16S) (not an allowed value)"/>
+                    <not_has_text text="neg_cont_type (sampleMetadata; mandatory if samp_category = negative control): empty in"/>
+                    <has_text text="otu_lca_ranks.tsv: the sequence IDs are in the column 'OTU'"/>
+                    <has_text text="otu_lca_ranks.tsv: dna_sequence from otu_lca_ranks.fasta for 3 of 3 sequences"/>
+                    <not_has_text text="dna_sequence (mandatory in FAIRe) is empty"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Times in a column whose name says UTC, with no offset given: joined to the dates with Z, and a
+             warning that eventDate holds UTC times, not the local times that daily cycles follow -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_times_utc.csv"/>
+            <param name="crosswalk" value="apply_times_utc.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="reef_times"/>
+            <param name="assay_name" value="Fish16S"/>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet3.xml">
+                        <has_text text="2017-09-06T00:30Z"/>
+                        <has_text text="2017-09-06T14:45Z"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="joined to the dates in UTC (Z), as the column name says, in 3 rows"/>
+                    <has_text text="eventDate: the times are in UTC. Give the UTC offset of the sampling sites"/>
+                    <not_has_text text="the times have no UTC offset"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- The same UTC times with the UTC offset of the sites given: converted to local time, which daily
+             cycles follow, so 14:45 UTC on 6 September is 00:45 on 7 September at +10:00 -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_times_utc.csv"/>
+            <param name="crosswalk" value="apply_times_utc.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="reef_times"/>
+            <param name="assay_name" value="Fish16S"/>
+            <param name="utc_offset" value="+10:00"/>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet3.xml">
+                        <has_text text="2017-09-06T10:30+10:00"/>
+                        <has_text text="2017-09-06T16:30+10:00"/>
+                        <has_text text="2017-09-07T00:45+10:00"/>
+                        <not_has_text text="T14:45"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="converted from UTC to local time at +10:00, in 3 rows"/>
+                    <not_has_text text="the times are in UTC. Give"/>
+                    <not_has_text text="check which is right"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- A negative offset (west of Greenwich, with minutes) reaches the tool as one argument:
+             00:30 UTC on 6 September is 21:00 on 5 September at -03:30 -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_times_utc.csv"/>
+            <param name="crosswalk" value="apply_times_utc.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="reef_times"/>
+            <param name="assay_name" value="Fish16S"/>
+            <param name="utc_offset" value="-03:30"/>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet3.xml">
+                        <has_text text="2017-09-05T21:00-03:30"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- A list of fastq files with their MD5s, as Windows PowerShell's Get-FileHash | Export-Csv writes
+             it (a #TYPE line, then Algorithm, Hash and the full Windows path): the forward and reverse reads
+             of each library paired by their read number, the file names without their folders; library
+             names that end with the assay (LIZ_01_Fish16S) get only the run added to their lib_id -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef_times.xlsx" ftype="xlsx"/>
+            <param name="crosswalk" value="apply_reef_times.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="reef_times"/>
+            <param name="assay_name" value="Fish16S"/>
+            <repeat name="library_tables">
+                <param name="library" value="library_file_list.csv" ftype="csv"/>
+                <param name="library_run" value="reef_run1"/>
+            </repeat>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet4.xml">
+                        <has_text text="LIZ_01_Fish16S_R1.fastq.gz"/>
+                        <has_text text="LIZ_01_Fish16S_R2.fastq.gz"/>
+                        <has_text text="02020202020202020202020202020202"/>
+                        <has_text text="LIZ_01_Fish16S_reef_run1"/>
+                        <not_has_text text="Fish16S_Fish16S"/>
+                        <not_has_text text="Users"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="library_file_list.csv: 8 files paired into 4 libraries by their read number (R1 and R2)"/>
+                    <has_text text="library_file_list.csv: 4 rows for 4 samples"/>
+                    <has_text text="checksum_method = MD5"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- The same files as a list of names, one per line with their folder and no header, as CSIRO's
+             Data Access Portal lists them: read as a file list, the folders taken off -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef_times.xlsx" ftype="xlsx"/>
+            <param name="crosswalk" value="apply_reef_times.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="reef_times"/>
+            <param name="assay_name" value="Fish16S"/>
+            <repeat name="library_tables">
+                <param name="library" value="library_file_names.txt" ftype="txt"/>
+                <param name="library_run" value="reef_run1"/>
+            </repeat>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet4.xml">
+                        <has_text text="LIZ_03_Fish16S_R2.fastq.gz"/>
+                        <has_text text="LIZ_03_Fish16S_reef_run1"/>
+                        <not_has_text text="fastq_files/"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="library_file_names.txt: read as a list of sequence file names, one per line"/>
+                    <has_text text="library_file_names.txt: 8 files paired into 4 libraries by their read number (R1 and R2)"/>
+                    <not_has_text text="checksum_method"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- The same files as md5sum writes them (checksum, two spaces, file name; no header) -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef_times.xlsx" ftype="xlsx"/>
+            <param name="crosswalk" value="apply_reef_times.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="reef_times"/>
+            <param name="assay_name" value="Fish16S"/>
+            <repeat name="library_tables">
+                <param name="library" value="library_md5sum.txt" ftype="txt"/>
+                <param name="library_run" value="reef_run1"/>
+            </repeat>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet4.xml">
+                        <has_text text="LIZ_02_Fish16S_R2.fastq.gz"/>
+                        <has_text text="ab12ab12ab12ab12ab12ab12ab12ab12"/>
+                        <has_text text="LIZ_02_Fish16S_reef_run1"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="library_md5sum.txt: read as a list of checksums and file names, as md5sum writes it"/>
+                    <has_text text="library_md5sum.txt: 8 files paired into 4 libraries by their read number (R1 and R2)"/>
+                    <has_text text="checksum_method = MD5"/>
+                </assert_contents>
+            </output>
+        </test>
     </tests>
     <help><![CDATA[
 @EARLY_VERSION@
@@ -1035,7 +1252,13 @@ tick *Leave out columns that are not matched to a FAIRe term*.
 - **Library tables** (optional). These say which sequence files belong to which sample. You can
   give the run report of your study from ENA (the *read_run* file report: on the study's ENA page,
   choose the columns library_name, run_accession, sample_accession, study_accession, fastq_ftp and
-  fastq_md5) or from the SRA (RunInfo), the SRA submission sheet, or your own run sheet. The tool
+  fastq_md5) or from the SRA (RunInfo), the SRA submission sheet, or your own run sheet. A plain
+  list of your fastq files also works: one name per line, with or without a header, and an md5
+  column if you have the checksums. The checksum files that sequencing providers send (md5sum's output: the checksum, two
+  spaces and the file name on each line) and the CSV that Windows PowerShell writes
+  (``Get-FileHash -Algorithm MD5 *.fastq.gz | Export-Csv md5.csv``) are read as they are. The tool
+  pairs the files by their read number (1A_16S_Fish_R1.fastq.gz and 1A_16S_Fish_R2.fastq.gz make
+  library 1A_16S_Fish) and logs how many it paired. The tool
   matches each library to a sample by a sample name column, or by a library name that starts with
   the sample name (M159_16SFish_LerayCOI matches M159). Libraries of other samples are left out and
   listed in the log.
@@ -1051,7 +1274,8 @@ tick *Leave out columns that are not matched to a FAIRe term*.
 - **lib_id.** FAIRe defines a library as "an amplicon of a sample with unique MIDs", so each row of
   experimentRunMetadata is one amplicon of one sample in one sequencing run. The tool writes lib_id
   as the library name, the assay name and the run ID, joined by underscores
-  (M097_16SFish_LerayCOI_Fish16S_AGRF_2024-12). A library that holds the amplicons of several
+  (M097_16SFish_LerayCOI_Fish16S_AGRF_2024-12). When the library name already ends with the assay
+  name, the assay is not repeated (1A_16S_Fish_AGRF_NovaSeq6000_SP). A library that holds the amplicons of several
   assays in one set of files, as in the SEA-MES 16S and COI data, gets a lib_id for each amplicon,
   and the rows share the files. The log lists such libraries. The names are long, but they are
   machine readable, and FAIRe2NCBI and FAIRe2ENA take the assay and run off again so that the

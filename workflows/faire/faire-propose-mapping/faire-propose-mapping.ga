@@ -2,10 +2,10 @@
     "name": "FAIRe mapper: propose a mapping",
     "a_galaxy_workflow": "true",
     "format-version": "0.1",
-    "annotation": "The first step from a lab's own sample table to a FAIRe workbook. Profiles the columns of the\nsample table, proposes a FAIRe term for each (a crosswalk for review), lists the mandatory FAIRe\nterms not yet covered, and finds the primer pairs a methods text names, cites or gives as\nsequences. Review the crosswalk, then run \"FAIRe mapper: write and check a FAIRe workbook\".\n",
+    "annotation": "The first step from a lab's own sample table to a FAIRe workbook. Profiles the columns of the\nsample table, proposes a FAIRe term for each (a crosswalk for review), lists the mandatory FAIRe\nterms not yet covered and what only a person can decide (a sample name used twice, controls not\nmarked, columns of notes, times with no time zone), and finds the primer pairs a methods text\nnames, cites or gives as sequences. Review the crosswalk, then run \"FAIRe mapper: write and check a FAIRe workbook\".\n",
     "tags": [],
     "license": "MIT",
-    "release": "0.1",
+    "release": "0.2",
     "uuid": "5764cb7d-4f44-41c9-a2e7-142bdc937e44",
     "creator": [
         {
@@ -123,6 +123,10 @@
                 {
                     "label": "mandatory_not_covered",
                     "output_name": "missing"
+                },
+                {
+                    "label": "things_to_decide",
+                    "output_name": "review"
                 }
             ],
             "post_job_actions": {}

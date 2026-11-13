@@ -1,0 +1,4 @@
+domain	phylum	class	order	family	genus	species	OTU	LIZ_01	LIZ_02	LIZ_03	LIZ_FB	LIZ_EB
+Eukaryota	Chordata	Actinopteri	Perciformes	Lutjanidae	Lutjanus	Lutjanus carponotatus	ASV_1	1520	88	0	0	0
+Eukaryota	Chordata	Actinopteri	Labriformes	Labridae	Thalassoma	NA	ASV_2	0	412	37	0	0
+Eukaryota	Chordata	Mammalia	Primates	Hominidae	Homo	Homo sapiens	ASV_4	5	0	0	12	0

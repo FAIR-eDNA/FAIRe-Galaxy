@@ -21,6 +21,11 @@ and, for the size-fraction fields (12 November 2026):
 
 - GOMECC4_27N_Sta1_DCM_A: size_frac_low 20 (a 20 µm pre-filter: ENA's size-fraction upper threshold).
 
+and, for the collection date (13 November 2026):
+
+- GOMECC4_BROWNSVILLE_Sta63_DCM_A: eventDate 2021-10-02T14:27+09:30, an offset with minutes, which
+  ENA's date pattern cannot hold (it takes whole hours, +10), so it is written in UTC.
+
 faire_single_end.xlsx is faire_two_assays.xlsx with lib_layout 'single end' and the reverse-read file
 and checksum taken out of the ssu16sv4v5-emp rows; the ssu18sv9-emp rows keep theirs, so that a run
 of that assay shows the check for a second file in a single-end library.
@@ -39,7 +44,7 @@ CHANGES = {
                                'diss_oxygen_unit': 'mmol/kg'},
     'GOMECC4_BROWNSVILLE_Sta63_DCM_A': {'samp_store_temp': 'ambient temperature', 'samp_size': 2,
                                         'samp_size_unit': 'kg', 'nitrite_unit': '\u00b5mol/L',
-                                        'nitrate_unit': None},
+                                        'nitrate_unit': None, 'eventDate': '2021-10-02T14:27+09:30'},
 }
 
 

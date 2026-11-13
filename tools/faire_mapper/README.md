@@ -9,7 +9,7 @@ Developed by Oliver Berry (CSIRO), with Claude (Anthropic).
 | Tool | Galaxy ID | Input | Outputs |
 |---|---|---|---|
 | FAIRe mapper: profile columns | `faire_mapper_profile` | CSV, TSV or Excel table | one row per column describing its values |
-| FAIRe mapper: propose mapping | `faire_mapper_map` | the table, optional answers file | mapping report, SSSOM crosswalk, mandatory terms not covered, columns to review, summary |
+| FAIRe mapper: propose mapping | `faire_mapper_map` | the table, optional answers file | mapping report, SSSOM crosswalk, mandatory terms not covered, columns to review, things to decide, summary |
 | FAIRe mapper: find primers | `faire_primers_find` | methods text, or primer names and citations; optional own primer table | candidate primer pairs with sequences, references and sources |
 | FAIRe mapper: build primer table | `faire_primers_build` | primer spreadsheets or TSVs | a primer table (added to the bundled one, or new), problems found |
 | FAIRe mapper: apply mapping | `faire_mapper_apply` | the table, the reviewed crosswalk, optional values for the whole project, optional OTU and taxonomy tables, optional library tables | FAIRe workbook in the FAIRe-ator layout, with OTU and taxonomy sheets; log |
@@ -26,7 +26,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
 
 ## Status
 
-- Version 0.5.1. `planemo lint`: passes with no warnings. `pyflakes`: clean.
+- Version 0.6.0. `planemo lint`: passes with no warnings. `pyflakes`: clean.
 - Goes to Galaxy Australia as an early version with the wrapped FAIRe tools (decided 6 November
   2026). Each tool's help starts with a note saying so, which asks users to check the results and
   send problems to the Galaxy Australia help desk (to confirm with Galaxy Australia, question 8).
@@ -43,6 +43,30 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   independent answer keys (`dev/faire_mapper_real_datasets/`, `dev/faire_mapper_australian_datasets/`,
   summarised below), and end to end on CSIRO's SEA-MES data (`dev/faire_mapper_seames/`). Not yet
   tried on datasets from Australian labs that already have a FAIRe version.
+- New in 0.6.0 (12 November 2026), from the day-night trial (`dev/faire_mapper_daynight/`): a
+  column of times of day (Excel time cells, or 10:00, 4 pm) is proposed as verbatimEventTime, and
+  apply mapping joins each time to its date in eventDate, with the UTC offset given on its form
+  (*UTC offset of the times of collection*), or Z when the column's name says UTC, as FAIRe's
+  eventDate is the date and time of sampling.
+  When an OTU table's first column repeats (eDNAFlow's LCA output starts with its rank columns), the
+  sequence IDs are taken from the column named as them (OTU, ASV, seq_id ...). Each OTU table can
+  have a FASTA file of its sequences. A values file whose rows leave off empty fields at the end is
+  read. A range (178-228) is accepted where the checklist allows one (ampliconSize). Controls are
+  not given the project values FAIRe asks only of samples (the habitat terms), and their empty
+  mandatory cells are written as "not applicable: control sample". The log's list of empty
+  mandatory terms follows each term's condition (neg_cont_type for the negative controls only).
+  Propose mapping has a new output, *things to decide*: what only a person can decide, each with
+  what to do about it (a sample name used on more than one row, sample names that read as controls
+  when no column marks the controls, columns with values only in the first rows, and times with no
+  time zone). It lists them and changes nothing; the propose-mapping workflow gives it as
+  *things_to_decide*. A plain list of fastq files, one per line with or without a header (as
+  CSIRO's Data Access Portal lists a collection's files), works as a library table, and so do
+  md5sum's checksum files and the CSV from PowerShell's Get-FileHash: the files are paired into
+  libraries by their read number (R1 and R2), and *identify your files* names such lists as
+  library tables. eventDate keeps the local time, which daily cycles follow: a time column whose
+  name says UTC is converted to local time when the UTC offset is given, and *things to decide*
+  lists UTC-only times. The offset can now be negative on the command line (`--utc_offset=-03:30`). A library name that already ends with the assay name
+  (1A_16S_Fish) gets only the run added in lib_id, unless the library holds several assays.
 - New in 0.5.1 (12 November 2026): each crosswalk comment says, in plain sentences and the same
   order, what the FAIRe term means (from the checklist), why it was proposed (with the table's own
   values), what apply mapping will do with the values, and, for rows to review, what to check. A
@@ -619,7 +643,12 @@ errors: *Sample* (file names) matched *sampler* (fixed on 5 November: it now goe
 20 are accepted); a column of station codes joined geo_loc_name; and *Filtered by* took recordedBy
 from *Collected by*. After review, and with the primers and methods
 from the report as values for the whole project, the 18S workbook went through every tool;
-FAIRe-fier passed sampleMetadata and reported only `checkls_ver` in projectMetadata.
+FAIRe-fier passed sampleMetadata and reported only `checkls_ver` in projectMetadata. With 0.6.0
+(12 November), the 18S table's *Collection Time (UTC)* goes to verbatimEventTime and its times join
+the dates in eventDate. As daily cycles follow local time, the trial gives the sites' UTC offset
+(+10:00, AEST, off Victoria and Tasmania in July), and apply mapping converts the times to local time
+(2023-07-07T00:45+10:00 for 14:45 UTC on 6 July). The table's *Collection Time (AEST)* column is an
+hour ahead of AEST (22:48 for 11:48 UTC), so it is left out.
 
 The COI table then joined the 16S workbook as a second assay (11,643 ASVs, not curated), with the
 values that differ between the assays given an assay column. Every tool takes the two-assay
@@ -775,6 +804,25 @@ test.
 - `otu_pr2_silva.csv`: four zOTUs by the apply_reef samples, with PR2 and SILVA lineages and Wang
   classifier confidences in the form of the SEA-MES 18S table (lineages from that table; sequences
   made up).
+- `apply_reef_times.xlsx`, `apply_reef_times.sssom.tsv` and `apply_reef_times_values.tsv`: four
+  made-up reef samples, a field blank and an extraction blank in the layout of the day-night study's
+  sheet (the time of collection in its own column of Excel time cells), their crosswalk, and values
+  for the whole project and two assays (no trailing tabs, an amplicon size as a range). Made by
+  `dev/faire_mapper_daynight/make_testdata.py`.
+- `otu_lca_ranks.tsv` and `otu_lca_ranks.fasta`: an eDNAFlow LCA output (domain to species, the
+  OTU column, then the samples) for those samples, and its ASV sequences. Made up, by the same
+  script.
+- `apply_times_utc.csv` and `apply_times_utc.sssom.tsv`: two samples with a *Collection Time (UTC)*
+  column, as in the SEA-MES 18S table.
+- `library_file_list.csv` and `library_md5sum.txt`: eight fastq files with made-up MD5s, as Windows
+  PowerShell's `Get-FileHash -Algorithm MD5 | Export-Csv` writes them (a #TYPE line, then
+  Algorithm, Hash and the full path) and as md5sum writes them, named with the assay at the end as
+  the day-night study names its files (LIZ_01_Fish16S_R1.fastq.gz); and `library_file_names.txt`:
+  their names only, one per line with a folder, as the Data Access Portal lists files. By the same
+  script.
+- `map_review.csv`: 11 rows in the form of the day-night study's sheet: a sample name used twice,
+  a filtration control named but not marked, notes in the first rows of two columns, and times with
+  no time zone.
 - `primer_methods_sequences.txt`: a methods text with primer sequences: the TAReuk 18S V4 pair, an
   Illumina overhang, and a made-up pair on rows of their own.
 - `survey_sheet.xlsx`: 15 rows of a held-out benchmark table (eDNA provider form style), on a sheet
@@ -804,7 +852,9 @@ November the model tool was added, with 5 tests (a preview with and without a se
 providing no model, own service without credentials, and an unreachable service, the last two
 passing credentials as Galaxy would); all 42 tests passed in Galaxy `release_26.1` here. On 7
 November the identify tool was added, with 2 tests, and 5 apply mapping tests for files in the
-wrong field and the layout setting; all 49 tests passed in Galaxy `release_26.1` here.
+wrong field and the layout setting; all 49 tests passed in Galaxy `release_26.1` here. On 12
+November (0.6.0) the day-night trial added 7 apply mapping tests, 3 propose mapping tests and 1
+identify test; all 60 tests passed in Galaxy `release_25.0` here.
 
 | Tool | Test | Checks | Result |
 |---|---|---|---|
@@ -850,5 +900,16 @@ wrong field and the layout setting; all 49 tests passed in Galaxy `release_26.1`
 | apply mapping | 23 | Raw and final the wrong way round, and an OTU table given as the taxonomy table: a warning for each, naming the setting | passed |
 | apply mapping | 24 | *Layout of this table* set to samples as columns: read as set | passed |
 | apply mapping | 25 | *Layout of this table* set to samples as rows for a table with samples as columns: stops, naming the setting | passed |
+| apply mapping | 26 | Day-night layouts: a time column joined to the dates in eventDate at +10:00; the habitat project values written as "not applicable: control sample" for the two controls, and the extraction blank's empty eventDate and geo_loc_name too; a values file with no trailing tabs; ampliconSize 178-228 accepted; no empty neg_cont_type reported for the samples; an LCA output with the OTU column after the ranks, its sequences from a FASTA file | passed |
+| apply mapping | 27 | A time column named *Collection Time (UTC)*, with no offset given: joined to the dates with Z, and a warning that eventDate holds UTC, not local time | passed |
+| apply mapping | 28 | The same UTC times with the sites' offset (+10:00): converted to local time, 14:45 UTC on 6 September as 2017-09-07T00:45+10:00 | passed |
+| apply mapping | 29 | A negative offset with minutes (-03:30) reaches the tool as one argument: 2017-09-05T21:00-03:30 | passed |
+| apply mapping | 30 | A list of fastq files with their MD5s as PowerShell's Get-FileHash and Export-Csv write it (a #TYPE line; Algorithm, Hash and the full Windows path): paired into four libraries by read number, file names without their folders, checksums written and checksum_method MD5, lib_id LIZ_01_Fish16S_reef_run1 (the assay not repeated) | passed |
+| apply mapping | 31 | The same files as a list of names, one per line with their folder and no header (as the Data Access Portal lists them): read as a file list, paired, folders taken off, no checksum_method | passed |
+| apply mapping | 32 | The same files as md5sum writes them (no header): read as a checksum list, paired, checksums written | passed |
+| map | 9 | Excel time cells in a Time column: verbatimEventTime (times of day), with a note that apply mapping joins them to the dates | passed |
+| map | 11 | Times in UTC only: *things to decide* lists them, with how to get local time | passed |
+| map | 10 | A sheet in the day-night study's form: the *things to decide* list gives a repeated sample name, a filtration control not marked as a control, two columns of notes and the times with no time zone | passed |
 | identify | 1 | Eight files: sample, OTU, taxonomy, library, dictionary, text, curated OTU table and crosswalk, each named with its reason | passed |
 | identify | 2 | Two Excel files: each sheet on its own (the SRA sheet's library sheet, a primer register); no sample table found | passed |
+| identify | 3 | A checksum file as md5sum writes it, and a list of file names with no header: library tables, not text | passed |

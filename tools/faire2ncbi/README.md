@@ -63,7 +63,9 @@ answer, and writes all answers to the **config** output, which the upstream scri
 3. **Collection dates.** NCBI wants times in UTC. Upstream passes `2021-09-14T11:00-04:00`
    through unchanged and writes Excel date cells as `2021-09-14 11:00:00`. The driver converts
    offsets to UTC (`2021-09-14T15:00Z`) and Excel cells to ISO dates, and warns about dates NCBI
-   may not read (such as `7/6/19` in the NOAA example). Users can turn conversion off.
+   may not read (such as `7/6/19` in the NOAA example). Users can turn conversion off. The local
+   time, which daily cycles follow, stays in the BioSample table as verbatimEventTime (an extra
+   field) when the workbook has it.
 4. **Organism.** FAIRe has no `organism` term, so `*organism` is empty for every FAIRe-ator
    workbook, and upstream would fill it with "not collected", which NCBI rejects. The form offers
    common metagenome names; values already in the workbook are kept.

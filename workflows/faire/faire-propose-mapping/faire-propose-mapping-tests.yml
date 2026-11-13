@@ -17,6 +17,10 @@
       asserts:
         has_line_matching:
           expression: "^date_collected\teventDate\tsampleMetadata\taccept\t.*"
+    things_to_decide:
+      asserts:
+        has_line:
+          line: "check\tcolumns\trows\twhat_to_do"
     column_profile:
       asserts:
         has_text:

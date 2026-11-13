@@ -1,0 +1,12 @@
+Sample ID,Location,Time,Latitude,Longitude,Date,Collected by,Information:
+1A,Fortescue Bay,10:00,-43.1392,147.9679,2021-11-01,A. Person,Five 1 L samples at each end of a transect.
+1B,Fortescue Bay,10:00,-43.1392,147.9679,2021-11-01,B. Person,Filtered on 0.45 um membranes.
+1C,Fortescue Bay,10:00,-43.1392,147.9679,2021-11-01,,Controls after every second set of samples.
+1D,Fortescue Bay,10:00,-43.1392,147.9679,2021-11-01,,
+1E,Fortescue Bay,10:00,-43.1392,147.9679,2021-11-01,,
+2A,Fortescue Bay,16:00,-43.1392,147.9679,2021-11-01,,
+2B,Fortescue Bay,16:00,-43.1392,147.9679,2021-11-01,,
+2B,Fortescue Bay,16:00,-43.1392,147.9679,2021-11-01,,
+2D,Fortescue Bay,16:00,-43.1392,147.9679,2021-11-01,,
+2E,Fortescue Bay,16:00,-43.1392,147.9679,2021-11-01,,
+Filtration control 1 + 2,Fortescue Bay,16:00,-43.1392,147.9679,2021-11-01,,

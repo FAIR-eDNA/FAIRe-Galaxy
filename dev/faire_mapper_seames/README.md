@@ -99,7 +99,7 @@ For Wilderlab:
   of Milli-Q water filtered on the ship alongside the CTD samples, a field negative, as the authors
   described it); 9 deep-tow rows from file 2 (CN167, a "Clean Dry Lab Control", a field negative
   from the deep-tow sampler); 37 2 L rows from the 18S sample table, with the
-  date and UTC time as ISO 8601, latitude and longitude as MIxS lat_lon and the volume in mL; and 5
+  date and time as ISO 8601 in local time (UTC converted to AEST, +10:00), latitude and longitude as MIxS lat_lon and the volume in mL; and 5
   2 L samples (S099 to S102 and S128) with only their name and voyage, as the record has no details
   for them.
 - `reviewer_decisions_WL.tsv`: confirms the control column, deletes sample_title and Location.

@@ -1,0 +1,4 @@
+subject_id	subject_label	predicate_id	object_id	object_label	mapping_justification
+local:Sample_ID	Sample ID	skos:exactMatch	FAIRe:samp_name	samp_name	semapv:ManualMappingCuration
+local:Date	Date	skos:exactMatch	FAIRe:eventDate	eventDate	semapv:ManualMappingCuration
+local:Collection_Time__UTC_	Collection Time (UTC)	skos:exactMatch	FAIRe:verbatimEventTime	verbatimEventTime	semapv:ManualMappingCuration
