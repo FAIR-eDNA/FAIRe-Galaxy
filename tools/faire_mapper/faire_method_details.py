@@ -235,6 +235,7 @@ def split_sentences(text, source=''):
     # hyphenated word ("two-  step"); "micro- and macro-" keeps its space
     text = re.sub(r'(?<=[a-z]) -\n(?=[a-z])', '', text)
     text = re.sub(r'(?<=[A-Za-z0-9])-[ \u00a0]+(?!(?:and|or|to|for|through|https?)\b)(?=[a-z])', '-', text)
+    text = re.sub(r'◦(?=\s?C\b)', '°', text)   # MDPI PDFs write degrees as a small circle
     text = re.sub(r'(?<=\bat\s)[–−-]\s+(?=\d{1,3}\s*(?:°|º|˚)\s?C)', '-', text)
     text = rebuild_paragraphs(text)
     out = []
@@ -494,6 +495,9 @@ def parse_cycling(text):
     before = [x for x in steps if x[0] < cyc.start()]
     inside = [x for x in steps if x[0] >= cyc.start() and (not fin or x[0] < fin.start())]
     after = [x for x in steps if fin and x[0] >= fin.start()]
+    # a long step at the extension temperature after the cycles, written without "final" ("..., and 72 °C for 5 min")
+    if not fin and len(inside) >= 3 and 68 <= inside[-1][1] <= 75 and float(inside[-1][3]) >= 3:
+        after, inside = [inside[-1]], inside[:-1]
     parts, anneal = [], None
     for _, t, tv, mins in before:
         parts.append(f"{'initial denaturation' if t >= 90 else 'initial step'}:{tv}_{mins}")
@@ -567,7 +571,8 @@ def rule_pcr(f):
                              r'(?=[^.;]{0,25}(?:reaction|volume|containing|consisting|comprising|mix))', txt):
             f.add(pcr_term(pre, 'amplificationReactionVolume'), num(m.group(1)), s, 'the volume of the PCR reaction (µL)',
                   span=m.span())
-        if re.search(r'\bq?PCRs?\b|amplif|reactions?\b', txt, re.I) and not re.search(r'purif|clean|elut', txt, re.I):
+        cleanup = re.search(r'purif\w*\s+(?:\w+\s+){0,2}?(?:using|with)|clean(?:ed)?\s+(?:up\s+)?(?:using|with)|elut', txt, re.I)
+        if re.search(r'\bq?PCRs?\b|amplif|reactions?\b', txt, re.I) and not cleanup:
             ul = r'\s*' + MU + r'?\s?[lL]'
             for m in re.finditer(r'(?:final|total)\s+(?:reaction\s+)?volume\s+(?:of\s+|was\s+|=\s*)?(\d+(?:\.\d+)?)' + ul + r'\b|'
                                  r'(\d+(?:\.\d+)?)' + ul + r'\s+(?:PCR\s+)?(?:reactions?|volumes?)\b|'
@@ -576,8 +581,9 @@ def rule_pcr(f):
                       'the volume of the PCR reaction (µL)', span=m.span())
         for m in re.finditer(r'\b(?:template\s+)?DNA\s*\(\s*(\d+(?:\.\d+)?)\s*' + MU + r'?\s?[lL]\s*\)', txt):
             f.add(pcr_term(pre, 'pcr_dna_vol'), num(m.group(1)), s, 'the volume of DNA template in each PCR (µL)', span=m.span())
+        template = r'template|DNA|extract|eDNA' + (r'|(?:PCR\s+)?products?|amplicons?' if pre else '')
         for m in re.finditer(r'(\d+(?:\.\d+)?)(?:\s*[-–]\s*(\d+(?:\.\d+)?))?\s*(?:' + MU + r'?\s?[lL]\s+of|' + MU + r'\s?[lL])\s+'
-                             r'(?:\w+\s+){0,3}?(?:template|DNA|extract|eDNA)\b(?!\s+polymerase)', txt):
+                             r'(?:\w+\s+){0,3}?(?:' + template + r')\b(?!\s+polymerase)', txt):
             v = f'{num(m.group(1))}-{num(m.group(2))}' if m.group(2) else num(m.group(1))
             f.add(pcr_term(pre, 'pcr_dna_vol'), v, s, 'the volume of DNA template in each PCR (µL)',
                   'a range: give the volume used' if m.group(2) else '', span=m.span())
@@ -1016,20 +1022,27 @@ def rule_samples(f):
         if re.search(r'collect|sampl|taken|using|from', txt, re.I):
             for e, m in find_named(f.vocab.get('device', []), txt):
                 f.add('samp_collect_device', e.name, s, 'a sampling device named in the methods', span=m.span())
-        # Volumes of water
-        for m in re.finditer(r'(\d+(?:\.\d+)?|one|two|five|ten)[\s-]*(L|l|litres?|liters?|mL|ml|millilit(?:re|er)s?)\b'
-                             r'(?!\s*(?:Niskin|bottle|Nalgene|container|of\s+(?:ATL|buffer|ethanol)))', txt):
-            if not re.search(r'water|seawater|sample|replicate', txt[max(0, m.start() - 60):m.end() + 60], re.I):
+        # Volumes of water: not a container's size ("a 50 mL syringe"), a reagent's volume, or the water of a
+        # blank or control; a range ("500-1000 mL") is kept whole
+        controls = re.search(r'\bblanks?\b|negative\s+controls?|positive\s+controls?|field\s+controls?', txt, re.I)
+        for m in re.finditer(r'(?:(\d+(?:\.\d+)?)\s*(?:-|–|to)\s*)?(\d+(?:\.\d+)?|one|two|five|ten)[\s-]*'
+                             r'(L|l|litres?|liters?|mL|ml|millilit(?:re|er)s?)\b'
+                             r'(?!\s*(?:Niskin|bottle|Nalgene|container|of\s+(?:ATL|buffer|ethanol)))'
+                             r'(?!\s+(?:[\w-]+\s+){0,3}?(?:syringes?|tubes?|bags?|falcons?|canisters?|cups?|flasks?|jars?|vials?)\b)', txt):
+            if controls or not re.search(r'water|seawater|sample|replicate', txt[max(0, m.start() - 60):m.end() + 60], re.I):
                 continue
-            n = as_number(m.group(1))
-            unit = 'L' if m.group(2).lower().startswith('l') else 'mL'
+            if re.search(r'RNAlater|buffer|ethanol|Longmire|\(\s*$', txt[max(0, m.start() - 25):m.start()], re.I):
+                continue
+            n = as_number(m.group(2))
+            v = f'{num(float(m.group(1)))}-{num(n)}' if m.group(1) else num(n)
+            unit = 'L' if m.group(3).lower().startswith('l') else 'mL'
             near = txt[max(0, m.start() - 60):m.end() + 80]
             if re.search(r'filter', near, re.I):
-                f.add('samp_vol_we_dna_ext', num(n), s, 'a volume of water filtered for DNA extraction', confused('samp_vol_we_dna_ext'),
+                f.add('samp_vol_we_dna_ext', v, s, 'a volume of water filtered for DNA extraction', confused('samp_vol_we_dna_ext'),
                       span=m.span())
                 f.add('samp_vol_we_dna_ext_unit', unit, s, 'the unit of the volume filtered')
             elif re.search(r'collect|sampled|taken|replicates?', txt, re.I):
-                f.add('samp_size', num(n), s, 'a volume of water collected', confused('samp_size'), span=m.span())
+                f.add('samp_size', v, s, 'a volume of water collected', confused('samp_size'), span=m.span())
                 f.add('samp_size_unit', unit, s, 'the unit of the volume collected')
         if filt:
             for m in re.finditer(r'(\d+(?:\.\d+)?)\s*' + MU + r'm\b', txt):

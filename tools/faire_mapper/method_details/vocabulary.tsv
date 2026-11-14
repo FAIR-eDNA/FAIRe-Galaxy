@@ -247,5 +247,5 @@ software	Bowtie2	Bowtie2|Bowtie 2			sequence similarity	taxonomy	method name
 software	BLCA	BLCA	exact		probabilistic	taxonomy	method name
 pipeline	Anacapa Toolkit	Anacapa Toolkit|Anacapa			https://github.com/limey-bean/Anacapa		pipeline name
 pipeline	metaBEAT	metaBEAT			https://github.com/HullUni-bioinformatics/metaBEAT		pipeline name
-pipeline	metabarTOAD	metabarTOAD			https://github.com/tomjenkins/metabarTOAD		pipeline name
+pipeline	metabarTOAD	metabarTOAD			https://github.com/leholman/metabarTOAD		pipeline name
 pipeline	NextITS	NextITS			https://github.com/vmikk/NextITS		pipeline name
