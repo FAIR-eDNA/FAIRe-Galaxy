@@ -59,7 +59,7 @@ SAMPLE_TERMS = {'samp_collect_device', 'samp_size', 'samp_size_unit', 'samp_mat_
 METHOD_SECTIONS = ('PCR', 'Library preparation sequencing', 'Bioinformatics')
 # Terms that hold a description: the sentences found for one are joined into one value, for the
 # person to shorten.
-DESCRIPTION_TERMS = {'sterilise_method', 'samp_mat_process', 'lib_screen', 'nucl_acid_ext_modify', 'inhibition_check',
+DESCRIPTION_TERMS = {'sterilise_method', 'trim_param', 'samp_mat_process', 'lib_screen', 'nucl_acid_ext_modify', 'inhibition_check',
                      'tax_class_collapse', 'tax_class_other', 'screen_contam_method', 'screen_geograph_method',
                      'screen_nontarget_method', 'bioinfo_method_additional', 'otu_db_custom', 'seq_method_additional'}
 SECTION_NAMES = OrderedDict([
@@ -184,6 +184,7 @@ EDNA_WORK = re.compile(r'\be?DNA\s+samples?\b|\beDNA\b|environmental\s+DNA|\bwat
                        r'\bsediment\s+samples?|\bsoil\s+samples?', re.I)
 
 
+LIGATURES = str.maketrans({'\ufb00': 'ff', '\ufb01': 'fi', '\ufb02': 'fl', '\ufb03': 'ffi', '\ufb04': 'ffl'})
 SENTENCE_END = re.compile(r'[.!?:]["\u201d\u2019)]?\s*(?:\d{1,3}(?:\s*[,\u2013-]\s*\d{1,3})*)?$')
 
 
@@ -227,8 +228,14 @@ def rebuild_paragraphs(text):
 
 def split_sentences(text, source=''):
     text = text.replace('\r\n', '\n').replace('\r', '\n').replace('\u00ad', '')
+    text = text.translate(LIGATURES)
     text = FURNITURE.sub('', text)
     text = re.sub(r'(?<=[a-z])-\n(?=[a-z])', '', text)
+    # Some PDFs (Wiley's) split a word at the end of a line as "fol -" and leave spaces inside a
+    # hyphenated word ("two-  step"); "micro- and macro-" keeps its space
+    text = re.sub(r'(?<=[a-z]) -\n(?=[a-z])', '', text)
+    text = re.sub(r'(?<=[A-Za-z0-9])-[ \u00a0]+(?!(?:and|or|to|for|through|https?)\b)(?=[a-z])', '-', text)
+    text = re.sub(r'(?<=\bat\s)[–−-]\s+(?=\d{1,3}\s*(?:°|º|˚)\s?C)', '-', text)
     text = rebuild_paragraphs(text)
     out = []
     paras = []
@@ -276,7 +283,7 @@ def alias_regex(alias):
     if alias.startswith('re:'):
         return alias[3:]
     parts = re.split(r'\s+', alias.strip())
-    sep = r'[®™]?(?:[\s \-‐–]*)'
+    sep = r'(?:[\s\u00a0\-\u2010\u2013]*[®™])?[\s\u00a0\-\u2010\u2013]*'
     body = sep.join(re.escape(p).replace(r'\&', r'(?:&|and)') for p in parts)
     return body + r'[®™]?'
 
@@ -306,7 +313,7 @@ def load_vocabulary(path=VOCABULARY):
         aliases = [a for a in split_aliases(r['aliases']) if a.strip()] or [r['name']]
         pattern = '|'.join(f'(?:{alias_regex(a)})' for a in sorted(aliases, key=len, reverse=True))
         flags = 0 if r['case'] == 'exact' else re.I
-        rx = re.compile(r'(?<![A-Za-z0-9])(?:' + pattern + r')(?![A-Za-z0-9])', flags)
+        rx = re.compile(r'(?<![A-Za-z0-9])(?:' + pattern + r')(?:(?![A-Za-z0-9])|(?=v\d)|(?<=[a-z])(?=\d{1,3}(?!\d|\.\d)))', flags)
         uses, parent = (), ''
         if r['uses'].startswith('parent='):
             parent = r['uses'][7:]
@@ -336,7 +343,7 @@ def find_named(entries, text):
     return sorted(out, key=lambda x: x[1].start())
 
 
-VERSION = re.compile(r'\s*(?:\(\s*|,\s*)?(?:v(?:ersion)?\.?\s*(\d+(?:\.\d+){0,3}[a-z]?\+?)|(\d+\.\d+(?:\.\d+){0,2}[a-z]?\+?))\b')
+VERSION = re.compile(r'\s*(?:\(\s*|,\s*)?(?:v(?:ersion)?\.?\s*[-:]?\s*(\d+(?:\.\d+){0,3}[a-z]?\+?)|(\d+\.\d+(?:\.\d+){0,2}[a-z]?\+?))\b')
 
 
 def version_after(text, end):
@@ -510,11 +517,14 @@ def parse_cycling(text):
 
 def rule_pcr(f):
     sents = f.lab()
+    # in a two-step library, a PCR sentence about the indexes or library preparation is the second PCR
+    two = any(two_step(x.text) for x in sents)
     for i, s in enumerate(sents):
         txt = s.text
         if not PCR_WORDS.search(txt) and not CYCLES.search(txt):
             continue
-        pre = stage(s)
+        indexes = re.search(r'\bindex(?:es|ed|ing)?\b|Nextera|library\s+prep', txt, re.I)
+        pre = stage(s) or ('pcr2_' if two and indexes and not re.search(r'first|1st|initial\s+PCR', txt, re.I) else '')
         # The PCR programme, joined to a sentence before it that gives the initial denaturation and to
         # one after it that gives the final extension.
         if CYCLES.search(txt) and len(re.findall(TEMP, txt)) >= 2:
@@ -542,6 +552,12 @@ def rule_pcr(f):
                           'a range: give the number of cycles used (for each assay if they differ)')
                 else:
                     f.add(pcr_term(pre, 'pcr_cycles'), cycles, s, 'the number of cycles in the PCR programme')
+        short_cycles = not any(p.sentence is s and p.term.endswith('cycles') for p in f.out) and \
+            re.search(r'\bPCR|amplif', txt, re.I) and not re.search(r'sequencing|kit|flow\s*cell|chemistry|thermal\s+cycl', txt, re.I)
+        if short_cycles:
+            m = re.search(r'\b(\d{1,2}|' + '|'.join(WORD_NUMBERS) + r')[\s,-]+(?:PCR\s+)?cycles?\b', txt, re.I)
+            if m and 3 <= as_number(m.group(1)) <= 60:
+                f.add(pcr_term(pre, 'pcr_cycles'), num(as_number(m.group(1))), s, 'the number of cycles of the PCR', span=m.span())
         for m in re.finditer(r'anneal\w*\s+(?:temperature\s+)?(?:(?:of|at|was|=)\s+)?' + TEMP, txt, re.I):
             f.add(pcr_term(pre, 'annealingTemp'), temp_value(m.group(1), m.group(2)), s, "an annealing temperature",
                   span=m.span())
@@ -551,11 +567,32 @@ def rule_pcr(f):
                              r'(?=[^.;]{0,25}(?:reaction|volume|containing|consisting|comprising|mix))', txt):
             f.add(pcr_term(pre, 'amplificationReactionVolume'), num(m.group(1)), s, 'the volume of the PCR reaction (µL)',
                   span=m.span())
-        for m in re.finditer(r'(\d+(?:\.\d+)?)(?:\s*[-–]\s*(\d+(?:\.\d+)?))?\s*' + MU + r'?\s?[lL]\s+of\s+(?:\w+\s+){0,3}?'
-                             r'(?:template|DNA|extract|eDNA)\b', txt):
+        if re.search(r'\bq?PCRs?\b|amplif|reactions?\b', txt, re.I) and not re.search(r'purif|clean|elut', txt, re.I):
+            ul = r'\s*' + MU + r'?\s?[lL]'
+            for m in re.finditer(r'(?:final|total)\s+(?:reaction\s+)?volume\s+(?:of\s+|was\s+|=\s*)?(\d+(?:\.\d+)?)' + ul + r'\b|'
+                                 r'(\d+(?:\.\d+)?)' + ul + r'\s+(?:PCR\s+)?(?:reactions?|volumes?)\b|'
+                                 r'\bPCRs?\s*\(\s*(\d+(?:\.\d+)?)' + ul + r'\s*\)', txt, re.I):
+                f.add(pcr_term(pre, 'amplificationReactionVolume'), num(m.group(1) or m.group(2) or m.group(3)), s,
+                      'the volume of the PCR reaction (µL)', span=m.span())
+        for m in re.finditer(r'\b(?:template\s+)?DNA\s*\(\s*(\d+(?:\.\d+)?)\s*' + MU + r'?\s?[lL]\s*\)', txt):
+            f.add(pcr_term(pre, 'pcr_dna_vol'), num(m.group(1)), s, 'the volume of DNA template in each PCR (µL)', span=m.span())
+        for m in re.finditer(r'(\d+(?:\.\d+)?)(?:\s*[-–]\s*(\d+(?:\.\d+)?))?\s*(?:' + MU + r'?\s?[lL]\s+of|' + MU + r'\s?[lL])\s+'
+                             r'(?:\w+\s+){0,3}?(?:template|DNA|extract|eDNA)\b(?!\s+polymerase)', txt):
             v = f'{num(m.group(1))}-{num(m.group(2))}' if m.group(2) else num(m.group(1))
             f.add(pcr_term(pre, 'pcr_dna_vol'), v, s, 'the volume of DNA template in each PCR (µL)',
                   'a range: give the volume used' if m.group(2) else '', span=m.span())
+        # Primer volume and stock concentration ("1.5 µL each, 10 µM"; "1.2 µL of each 2.5 µM primer")
+        if not pre:
+            ul, um = r'\s*' + MU + r'\s?[lL]', r'\s*' + MU + r'M'
+            n = r'(\d+(?:\.\d+)?)'
+            forms = (n + ul + r'\s+(?:of\s+)?(?:each\s+)?(?:of\s+)?(?:the\s+)?' + n + um + r'\s+(?:[\w/-]+\s+){0,4}?primers?\b',
+                     r'primers?[^.;]{0,60}?\(\s*' + n + ul + r'\s+each,?\s*' + n + um + r'\s*\)',
+                     n + ul + r'\s+of\s+(?:each\s+)?(?:forward\s+and\s+reverse\s+)?primers?\s*\(\s*' + n + um + r'\s*\)')
+            for m in re.finditer('|'.join(forms), txt):
+                vol, conc = [g for g in m.groups() if g][:2]
+                for d in ('forward', 'reverse'):
+                    f.add(f'pcr_primer_vol_{d}', num(vol), s, 'the volume of each primer per reaction (µL)', span=m.span())
+                    f.add(f'pcr_primer_conc_{d}', num(conc), s, 'the stock concentration of each primer (µM)', span=m.span())
         # Replicates
         if re.search(r'\bPCR|\bqPCR|amplif', txt, re.I):
             for m in re.finditer(r'\b(?:in|as)\s+(duplicate|triplicate|quadruplicate)\b|\b(duplicate|triplicate|quadruplicate)\s+'
@@ -592,14 +629,48 @@ def rule_pcr(f):
 
 # ------------------------------------------------------------------ library preparation and sequencing
 
+FACILITY_WORD = r'(?:Facilit(?:y|ies)|facilit(?:y|ies)|Cent(?:re|er)|Lab(?:oratory|oratories)?|lab(?:oratory)?|Institute|Polyomics|Genomics|' \
+                r'BIOTECH|Biotech|Core|core\s+(?:lab(?:oratory)?|facility))'
+FACILITY = re.compile(r'(?:\b(?:at|by)|(?:sent|shipped|submitted)\s+to)\s+(?:the\s+)?'
+                      r'((?:(?:[A-Z][\w&.-]*(?:[’\']s)?|of|for|and|&|de)\s+){0,8}?(?:[A-Z][\w&.-]*(?:[’\']s)?\s+)?'
+                      r'(?:[a-z]+\s+){0,2}?' + FACILITY_WORD + r'\b(?:\s+(?:for|of)(?:\s+(?:[A-Z][\w&.-]*|&|and)){1,5})?'
+                      r'(?:\s*\((?![^()]*(?:et\s+al|\b(?:19|20)\d\d\s*\)))[^()]{2,90}\))?)')
+
+
+def facility_phrase(txt):
+    """The sequencing facility a sentence about sequencing the libraries names ("carried out at the Glasgow
+    Polyomics lab", "performed by GATC BIOTECH (Germany)", "at the KAUST core laboratory"), as (value, span)."""
+    if not re.search(r'\bsequenc(?:ed|ing)\b', txt, re.I) or re.search(r'\bSanger\b|comput|queried|BLAST', txt) or \
+            not re.search(r'librar|amplicon|MiSeq|NovaSeq|HiSeq|NextSeq|iSeq|Illumina|Ion\s|PacBio|Nanopore|platform|\brun', txt, re.I):
+        return None
+    for m in FACILITY.finditer(txt):
+        name = m.group(1).strip()
+        if re.match(r'[A-Z]', name):
+            return name, m.span(1)
+    m = re.search(r'(?:sent|shipped|submitted)\s+to\s+(?:the\s+)?([A-Z][\w&.-]*(?:\s+[A-Z][\w&.-]*){0,4}(?:\s*\([^()]{2,60}\))?)\s+'
+                  r'for\s+(?:[\w-]+\s+){0,5}?(?:sequencing|library)', txt, re.I)
+    if m and re.match(r'[A-Z]', m.group(1)):
+        return m.group(1).strip(), m.span(1)
+    return None
+
+
+def two_step(txt):
+    """True for a sentence that describes a two-step library: "a two-step PCR", "a second PCR added the
+    indexes", "indexed using Nextera XT indexes"."""
+    if re.search(r'two[- ]?step|second[- ]stage|second[- ]round|first[- ]stage|index(?:ing)?\s+PCR', txt, re.I):
+        return bool(re.search(r'PCR|librar|index', txt, re.I))
+    if re.search(r'(?:second|2nd)\s+(?:PCR|amplification)', txt, re.I):
+        return all(re.search(rx, txt, re.I) for rx in (r'(?:add|attach|append|introduc|incorporat)\w*', r'index|adapt|barcode'))
+    return bool(re.search(r'index\w*\s+(?:using|with)\s+(?:\w+\s+){0,3}Nextera|Nextera\s+XT\s+(?:v2\s+)?index', txt, re.I))
+
+
 def rule_library(f):
     sents = f.lab()
     instruments = []
     for s in sents:
         txt = s.text
         # How the samples were indexed
-        if re.search(r'two[- ]step|second[- ]stage|second[- ]round|first[- ]stage|index(?:ing)?\s+PCR', txt, re.I) and \
-                re.search(r'PCR|librar|index', txt, re.I):
+        if two_step(txt):
             f.add('barcoding_pcr_appr', 'two-step PCR', s, 'the methods describe a second PCR that adds the indexes')
         elif re.search(r'single[- ]step|one[- ]step|fusion[- ]?tag|fusion\s+PCR|fusion\s+primers?|MID[- ]tag\w*\s+(?:q?PCR|primers?)',
                        txt, re.I):
@@ -635,9 +706,15 @@ def rule_library(f):
         elif re.search(r'single[- ](?:end|read)|\b1\s*[x×]\s*\d{2,3}\b', txt, re.I):
             f.add('lib_layout', 'single end', s, 'the methods describe single-end reads')
         # Where the sequencing was done
-        for e, m in find_named(f.vocab.get('facility', []), txt):
-            if re.search(r'sequenc|sent|platform|housed|run', txt, re.I):
+        named = find_named(f.vocab.get('facility', []), txt)
+        for e, m in named:
+            if re.search(r'sequenc|sent|platform|housed|run', txt, re.I) and not re.search(r'\bSanger\b', txt):
                 f.add('sequencing_location', e.name, s, 'a sequencing facility named in the methods', span=m.span())
+        if not named:
+            hit = facility_phrase(txt)
+            if hit:
+                f.add('sequencing_location', hit[0], s, 'the place the libraries were sequenced, as the methods name it',
+                      span=hit[1])
         # Library checks: size selection, clean-up, quantification, pooling
         if re.search(r'size[- ]selec|Pippin|purif|clean(?:ed)?(?:[- ]up)?\b|AMPure|bead|quantif|Qubit|TapeStation|Bioanalyzer|'
                      r'equimolar|normali[sz]ed\s+(?:prior|before)', txt, re.I) and re.search(r'librar|amplicon|pool', txt, re.I) \
@@ -658,6 +735,10 @@ SEQ_KIT = re.compile(
     r'(?:\s*\(\s*\d{2,4}\s*cycles?\s*\))?)|'
     r'(?:\b(?:MiSeq|NextSeq|NovaSeq|iSeq|MiniSeq|HiSeq)[®™]?\s*[-‐–]?\s*(?:Reagent\s+)?(?:Kit\s+)?v[1-3](?:\.\d)?\b'
     r'(?:[^.;()]{0,20}?\bkit\b)?)|'
+    r'(?:\b(?:Reagent\s+)?Kit\s*(?:v[1-3](?:\.\d)?\s*)?\(\s*\d{2,4}[\s-]*cycles?\s*\))|'
+    r'(?:\bv[1-3](?:\.\d)?\s+(?:\d\s*[x×]\s*\d{2,3}[\s-]*bp\s+)?(?:reagent\s+)?(?:kit|chemistry|reagents)\b)|'
+    r'(?:\bReagent\s+Kit\s+v[1-3](?:\.\d)?\b)|'
+    r'(?:\bIon\s+(?:PGM\s+|S5\s+)?(?:Hi-?Q\s+)?(?:Sequencing\s+)?\d{3}\s+Kit(?:\s+v\d)?\b)|(?:\bIon\s+\d{3}(?:\s*v\d)?\s+Chips?\b)|'
     r'(?:\bSQK-[A-Z0-9-]+\b)|(?:\b(?:Ligation|Native\s+Barcoding|Rapid\s+Barcoding)\s+(?:Sequencing\s+)?Kit\b)', re.I)
 
 
@@ -679,13 +760,16 @@ def kit_phrase(txt, a, b):
 
 STAGE_WORDS = {
     'trim': r'\btrim|adapt[eo]rs?\b.{0,30}remov|primers?\s+(?:sequences?\s+)?(?:were|was)\s+(?:removed|trimmed)|'
-            r'remov\w*\s+(?:the\s+)?(?:primers?|adapt)|clip',
+            r'remov\w*\s+(?:the\s+)?(?:primers?|adapt)|clip|'
+            r'primers?\s+(?:sequences?\s+|regions?\s+)?(?:were\s+|was\s+)?(?:matched|detected|located|identified|found)',
     'demux': r'demultiplex|de-multiplex|sorted\b.{0,40}\bback|assigned\s+to\s+(?:their|each|the)\s+(?:respective\s+)?samples?|'
              r'ngsfilter|obisplit',
     'merge': r'\bmerg|paired[- ]end\s+reads?\s+(?:were\s+)?(?:joined|assembled|overlapped)|\bjoin|overlap|illuminapairedend|'
              r'fastq_mergepairs|mergePairs',
     'filter': r'quality[- ]?(?:filter|control|trim|check)|\bfiltered\b|maxEE|expected\s+errors?|phred|quality\s+scores?|'
-              r'minimum\s+(?:sequence\s+|read\s+)?length|minlen',
+              r'minimum\s+(?:sequence\s+|read\s+)?length|minlen|shorter\s+than\s+\d+',
+    'abundance': r'(?:fewer|less)\s+than\s+\d+\s+(?:reads|copies|sequences)|at\s+least\s+\d+\s+(?:reads|copies)|singletons?|'
+                 r'minsize|minimum\s+(?:abundance|size|read\s+count)',
     'denoise': r'denois|\bASVs?\b|\bZOTUs?\b|\bzOTUs?\b|\bESVs?\b|amplicon\s+sequence\s+variants?|unoise',
     'cluster': r'\bclust',
     'chimera': r'chim[ae]r|bimera|uchime',
@@ -730,12 +814,20 @@ def tools_in(f, s):
 
 def rule_bioinformatics(f):
     sents = f.sentences
+    before = (None, [])   # the paragraph and software of the last sentence that named software
     for i, s in enumerate(sents):
         txt = s.text
         stages = {k for k, rx in STAGE_WORDS.items() if re.search(rx, txt, re.I)}
         if not stages:
             continue
         tools = tools_in(f, s)
+        if tools:
+            before = (s.para, tools)
+        elif 'filter' in stages and before[0] == s.para and re.search(r'maxEE|expected\s+errors?|trunc', txt, re.I):
+            # "... processed with the DADA2 pipeline. Sequences were truncated and filtered for maxEE of 2."
+            for e, label, m in before[1]:
+                if 'filter' in (e.uses or ()):
+                    f.add('error_rate_tool', label, s, 'software named in the sentence before, for this filtering step')
         # Which software did which step
         for stg in ('trim', 'demux', 'merge', 'filter', 'denoise', 'cluster', 'chimera', 'taxonomy'):
             if stg not in stages:
@@ -777,11 +869,19 @@ def rule_bioinformatics(f):
         for m in re.finditer(r'(?:minimum|min\.?)\s+(?:sequence\s+|read\s+|amplicon\s+)?length\s*(?:of|=|was|:)?\s*(\d+)|'
                              r'minlen\s*=\s*(\d+)|(?:shorter|less)\s+than\s+(\d+)\s*(?:bp|nt|bases)', txt, re.I):
             f.add('min_len_cutoff', next(g for g in m.groups() if g), s, 'a minimum read length', span=m.span())
-        for m in re.finditer(r'(?:maximum|max\.?)\s+(?:number\s+of\s+)?expected\s+errors?\s*(?:of|=|was|:|\()?\s*(\d+(?:\.\d+)?)|'
-                             r'maxEE\s*=?\s*(?:c\()?\s*(\d+(?:\.\d+)?)', txt, re.I):
+        for m in re.finditer(r'(?:maximum|max\.?)\s+(?:number\s+of\s+)?[“"]?expected\s+errors?[”"]?\s*(?:\(maxEE\)\s*)?'
+                             r'(?:of|=|was|:|\()?\s*(\d+(?:\.\d+)?)|'
+                             r'maxEE\)?\s*(?:of|=)?\s*(?:c\()?\s*(\d+(?:\.\d+)?)', txt, re.I):
             f.add('error_rate_type', 'expected error rate', s, 'a maximum number of expected errors', span=m.span())
             f.add('error_rate_cutoff', num(m.group(1) or m.group(2)), s, 'a maximum number of expected errors',
                   span=m.span())
+        if re.search(r'\btrunc(?:ated|ation|Len|Q)|trimLeft|trimRight', txt, re.I) and re.search(r'\d', txt):
+            f.add('trim_param', txt, s, 'a sentence that gives truncation or trimming settings')
+        m = re.search(r'minBoot\s*(?:of|=)?\s*(\d+)|bootstrap\s+(?:confidence\s+)?(?:threshold|cut-?off|value|support)\s+'
+                      r'(?:of\s+)?(\d+)|(\d+)\s*%?\s+bootstrap\s+(?:confidence|support|threshold)', txt, re.I)
+        if m:
+            f.add('tax_class_other', f'minimum bootstrap confidence of {m.group(1) or m.group(2) or m.group(3)}', s,
+                  'a bootstrap threshold for the classifier', span=m.span())
         for m in re.finditer(r'(?:phred|quality)\s+(?:quality\s+)?score\s*(?:of|was\s+set\s+(?:at|to)|=|:|>|≥|above|below)?\s*'
                              r'(?:of\s+)?(\d{1,2})\b|\bQ(\d{2})\b', txt, re.I):
             f.add('error_rate_type', 'Phred score', s, 'a minimum quality (Phred) score', span=m.span())
@@ -803,18 +903,26 @@ def rule_bioinformatics(f):
                 f.add('demux_max_mismatch', num(as_number(n)), s, 'mismatches allowed in the index or tag sequences',
                       span=m.span())
         # Clustering threshold, or ASVs (not clustered)
-        cl = re.search(r'clust\w*[^.;]{0,60}?(\d{2,3}(?:\.\d+)?)\s*%|(\d{2,3}(?:\.\d+)?)\s*%\s+(?:sequence\s+)?'
-                       r'(?:similarity|identity)[^.;]{0,40}clust', txt, re.I)
-        if cl:
-            f.add('otu_clust_cutoff', num(cl.group(1) or cl.group(2)), s, 'the similarity threshold for clustering',
+        cl = re.search(r'clust\w*[^.;]{0,100}?(\d{2,3}(?:\.\d+)?)\s*%|(\d{2,3}(?:\.\d+)?)\s*%\s+(?:sequence\s+)?'
+                       r'(?:similarity|identity)[^.;]{0,40}clust|'
+                       r'(?:OTUs?\b|operational\s+taxonomic\s+units?)[^.;]{0,60}?(?:similarity|identity)\s+(?:cut-?off|threshold)\s+'
+                       r'(?:of\s+)?(\d{2,3}(?:\.\d+)?)\s*%|clust\w*[^.;]{0,60}?(?:similarity|identity|\bid)\s*=\s*0?\.(\d{2,3})\b',
+                       txt, re.I)
+        if cl and not (cl.group(1) or cl.group(2) or cl.group(3)) and cl.group(4):
+            v = cl.group(4)
+            f.add('otu_clust_cutoff', num(float(v[:2] + '.' + v[2:]) if len(v) > 2 else v), s,
+                  'the similarity threshold for clustering', span=cl.span())
+        elif cl:
+            f.add('otu_clust_cutoff', num(cl.group(1) or cl.group(2) or cl.group(3)), s, 'the similarity threshold for clustering',
                   span=cl.span())
         elif 'denoise' in stages and re.search(r'denois|unoise', txt, re.I):
             f.add('otu_clust_cutoff', '100', s, 'the reads were denoised into ASVs or ZOTUs, which are not clustered',
                   'FAIRe gives 100% for ASVs')
         # Low-abundance filter
         for m in re.finditer(r'minimum\s+(?:abundance|size|read\s+count|number\s+of\s+reads)\s*(?:of|=|was)?\s*(\d+)|'
-                             r'minsize\s*=?\s*(\d+)|(?:fewer|less)\s+than\s+(\d+)\s+(?:reads|copies|sequences)', txt, re.I):
-            f.add('min_reads_cutoff', m.group(1) or m.group(2) or m.group(3), s, 'a minimum number of reads',
+                             r'minsize\s*=?\s*(\d+)|(?:fewer|less)\s+than\s+(\d+)\s+(?:reads|copies|sequences)|'
+                             r'(?:count|abundance)\s+of\s+at\s+least\s+(\d+)\s+(?:copies|reads)', txt, re.I):
+            f.add('min_reads_cutoff', m.group(1) or m.group(2) or m.group(3) or m.group(4), s, 'a minimum number of reads',
                   span=m.span())
             f.add('min_reads_cutoff_unit', 'reads', s, 'a minimum number of reads')
             for e, label, _ in tools:
@@ -933,8 +1041,8 @@ def rule_samples(f):
             for m in re.finditer(r'(\d{2,3})\s*mm\b', txt):
                 if 10 <= float(m.group(1)) <= 300:
                     f.add('filter_diameter', m.group(1), s, 'the diameter of the filter (mm)', span=m.span())
-            mats = [('cellulose ester', r'(?:mixed\s+)?cellulose\s+(?:nitrate\s+)?esters?|\bMCE\b'),
-                    ('polyethersulfone', r'polyethersulph?one|\bPES\b'), ('nylon', r'\bnylon\b'),
+            mats = [('cellulose ester', r'(?:mixed\s+)?cellulose\s+(?:nitrate\s+)?esters?|\bMCE\b|cellulose\s+nitrate|nitrocellulose'),
+                    ('polyethersulfone', r'polyether\s?sul(?:ph|f)one|\bPES\b'), ('nylon', r'\bnylon\b'),
                     ('glass fiber', r'glass[- ]fib(?:re|er)|\bGF/[CDF]\b'),
                     ('track etched polycarbonate', r'polycarbonate'), ('other: PVDF', r'\bPVDF\b|polyvinylidene')]
             for value, rx in mats:
@@ -946,11 +1054,14 @@ def rule_samples(f):
                       span=m.span())
                 if e.extra:
                     f.add('filter_material', e.extra, s, f'{e.name} filters are {e.extra}')
-            if re.search(r'filtered|filtration|filtering', txt, re.I):
-                if re.search(r'\bpump|peristaltic|vacuum|syringe', txt, re.I):
-                    f.add('filter_passive_active_0_1', '1', s, 'the water was pumped or pushed through the filter (active)')
-                elif re.search(r'passive', txt, re.I):
+            if re.search(r'filtered|filtration|filtering|filter\s+(?:the\s+)?(?:water|samples?)', txt, re.I):
+                if re.search(r'passive|submerged|immersed', txt, re.I):
                     f.add('filter_passive_active_0_1', '0', s, 'passive filtration')
+                elif re.search(r'\bpump|peristaltic|vacuum|syringe|manifold|Sterivex|capsule', txt, re.I):
+                    f.add('filter_passive_active_0_1', '1', s, 'the water was pumped or pushed through the filter (active)')
+                elif re.search(r'\d+(?:\.\d+)?\s*(?:m?L|litres?|liters?)\b[^.;]{0,80}?filtered\s+(?:\w+\s+){0,4}?(?:through|onto|across|using)|'
+                               r'filtered\s+(?:\w+\s+){0,3}?\d+(?:\.\d+)?\s*(?:m?L|litres?|liters?)\b', txt):
+                    f.add('filter_passive_active_0_1', '1', s, 'a volume of water was filtered (active filtration)')
                 if re.search(r'(?:filtered|filtering)\s+(?:\w+\s+){0,6}?(?:through|across|onto|using|with)|filtration\s+(?:was|through)',
                              txt, re.I):
                     f.add('samp_mat_process', txt, s, 'a sentence about how the samples were filtered')
@@ -969,7 +1080,7 @@ def rule_samples(f):
                           'the temperature the samples were stored at',
                           'FAIRe asks for the storage temperature before any processing (filtering, say); the storage '
                           'temperature after it goes in prepped_samp_store_temp', span=m.span())
-            m = re.search(r'(?:preserved|stored|fixed|immersed)\s+(?:\w+\s+){0,3}?in\s+(?:\w+\s+){0,3}?'
+            m = re.search(r'(?:preserved|stored|fixed|immersed|submerged|placed|kept)\s+(?:\w+\s+){0,3}?in\s+[^.;]{0,40}?'
                           r"(Longmire['’]?s?(?:\s+(?:buffer|solution))?|ethanol|RNAlater|lysis\s+buffer|sodium\s+acetate)", txt, re.I)
             if m:
                 word = m.group(1).lower()
@@ -1100,6 +1211,11 @@ def tidy(proposals, terms):
     models = [p.value for p in rows if p.term == 'instrument']
     rows = [p for p in rows
             if not (p.term == 'instrument' and any(v != p.value and v.startswith(p.value + ' ') for v in models))]
+    # A superscript reference number joined to a version in a PDF ("Cutadapt v.1.1687" for v1.16 and reference 87)
+    for p in rows:
+        if re.search(r'\bv\d+(?:\.\d+)*\.\d{3,}\b', p.value):
+            extra = 'check the version: a reference number may be joined to it'
+            p.note = f'{p.note}. {extra}' if p.note else extra
     counts = {}
     for p in rows:
         counts[p.term] = counts.get(p.term, 0) + 1

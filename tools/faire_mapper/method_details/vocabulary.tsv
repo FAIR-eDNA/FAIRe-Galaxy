@@ -83,18 +83,21 @@ master_mix	Platinum SuperFi II PCR Master Mix	Platinum SuperFi II|Platinum Super
 master_mix	Phusion High-Fidelity PCR Master Mix	Phusion High-Fidelity PCR Master Mix|Phusion Hot Start		Thermo Fisher Scientific			Thermo Fisher product name
 master_mix	Q5 High-Fidelity 2X Master Mix	Q5 Hot Start High-Fidelity 2X Master Mix|Q5 High-Fidelity 2X Master Mix|Q5 Hot Start|Q5 High-Fidelity		New England Biolabs			NEB product name
 master_mix	Luna Universal qPCR Master Mix	Luna Universal qPCR Master Mix|Luna Universal Probe qPCR Master Mix		New England Biolabs			FAIRe checklist v1.0.2 example
+master_mix	MyFi Mix	MyFi Mix|MyFi		Bioline			product name
 master_mix	MyTaq HS Red Mix	MyTaq HS Red Mix|MyTaq Red Mix|MyTaq HS Mix		Bioline			Bioline product name
 master_mix	GoTaq G2 Master Mix	GoTaq G2 Hot Start Master Mix|GoTaq G2 Master Mix|GoTaq Master Mix|GoTaq		Promega			Promega product name
 master_mix	HotStarTaq Master Mix	HotStarTaq Plus Master Mix|HotStarTaq Master Mix		QIAGEN			QIAGEN product name
 master_mix	SsoAdvanced Universal Probes Supermix	SsoAdvanced Universal Probes Supermix|SsoAdvanced Universal SYBR Green Supermix|SsoAdvanced		Bio-Rad			Bio-Rad product name
 master_mix	ddPCR Supermix for Probes	ddPCR Supermix for Probes (No dUTP)|ddPCR Supermix for Probes|ddPCR Supermix		Bio-Rad			Bio-Rad product name
 master_mix	Immolase DNA Polymerase	Immolase		Bioline			Bioline product name
-extraction_kit	DNeasy Blood and Tissue Kit	DNeasy Blood and Tissue|DNeasy Blood & Tissue|DNeasy Blood Tissue	 	QIAGEN	column-based		QIAGEN product name
+extraction_kit	DNeasy Blood and Tissue Kit	DNeasy Blood and Tissue|DNeasy Blood & Tissue|DNeasy Blood Tissue|re:DN[Ae]{1,2}asy\s+Tissue\s+(?:and|&)\s+Blood|re:QIAGEN\s+(?:DNA\s+)?blood\s+(?:and|&)\s+tissue	 	QIAGEN	column-based		QIAGEN product name
 extraction_kit	DNeasy PowerWater Sterivex Kit	DNeasy PowerWater Sterivex|PowerWater Sterivex		QIAGEN	column-based		QIAGEN product name
+extraction_kit	PowerWater DNA Isolation Kit	re:(?:MO\s?BIO\s+)?Power\s?Water\s+DNA\s+Isolation(?:\s+Kit)?|re:MO\s?BIO\s+Power\s?Water(?:\s+DNA)?(?:\s+Kit)?		MO BIO	column-based		MO BIO product name (now QIAGEN)
 extraction_kit	DNeasy PowerWater Kit	DNeasy PowerWater|PowerWater		QIAGEN	column-based		QIAGEN product name
 extraction_kit	DNeasy PowerSoil Pro Kit	DNeasy PowerSoil Pro|PowerSoil Pro		QIAGEN	column-based		QIAGEN product name
 extraction_kit	DNeasy PowerLyzer PowerSoil Kit	DNeasy PowerLyzer PowerSoil|DNeasy PowerLyser PowerSoil|PowerLyzer PowerSoil|PowerLyser PowerSoil		QIAGEN	column-based		QIAGEN product name
-extraction_kit	DNeasy PowerSoil Kit	DNeasy PowerSoil|PowerSoil		QIAGEN	column-based		QIAGEN product name
+extraction_kit	PowerSoil DNA Isolation Kit	re:(?:MO\s?BIO\s+)?Power\s?Soil\s+DNA(?:\s+Isolation)?(?:\s+Kit)?|re:MO\s?BIO\s+Power\s?Soil(?:\s+Kit)?		MO BIO	column-based		MO BIO product name (now QIAGEN)
+extraction_kit	DNeasy PowerSoil Kit	DNeasy PowerSoil|re:Power\s?Soil		QIAGEN	column-based		QIAGEN product name
 extraction_kit	DNeasy PowerMax Soil Kit	DNeasy PowerMax Soil|PowerMax Soil		QIAGEN	column-based		QIAGEN product name
 extraction_kit	MagAttract PowerSoil DNA Kit	MagAttract PowerSoil|MagAttract		QIAGEN	magnetic beads		QIAGEN product name
 extraction_kit	QIAamp DNA Mini Kit	QIAamp DNA Mini		QIAGEN	column-based		QIAGEN product name
@@ -113,7 +116,9 @@ extraction_kit	phenol-chloroform-isoamyl alcohol extraction	phenol-chloroform-is
 extraction_kit	CTAB extraction	CTAB			other: CTAB		method name
 cleanup_kit	OneStep PCR Inhibitor Removal Kit	OneStep PCR Inhibitor Removal|PCR Inhibitor Removal		Zymo Research			Zymo product name
 cleanup_kit	DNA Clean & Concentrator	DNA Clean & Concentrator|DNA Clean and Concentrator		Zymo Research			FAIRe checklist v1.0.2 example
-filter	Sterivex	re:Sterivex(?:[- ]?(?:GP|HV))?		Merck Millipore			Merck product name
+filter	Sterivex-HV	re:Sterivex[™®]?\s*[- ]?\s*HV		Merck Millipore	other: PVDF		product name
+filter	Sterivex-GP	re:Sterivex[™®]?\s*[- ]?\s*GP		Merck Millipore	polyethersulfone		product name
+filter	Sterivex	re:Sterivex		Merck Millipore			Merck product name
 filter	Supor	Supor		Pall Corporation	polyethersulfone		Pall product name
 filter	MF-Millipore	MF-Millipore		Merck Millipore	cellulose ester		Merck product name
 filter	Durapore	Durapore		Merck Millipore	other: PVDF		Merck product name
@@ -163,7 +168,7 @@ software	Geneious	Geneious				demux,trim	method name
 software	bcl2fastq	bcl2fastq|BCL Convert|bcl-convert				demux	Illumina software name
 software	MiSeq Reporter	MiSeq Reporter				demux	Illumina software name
 software	CASAVA	CASAVA	exact			demux	Illumina software name
-software	FLASH	FLASH	exact			merge	Galaxy eDNA tool evaluation
+software	FLASH	FLASH|re:Flash(?=\s*\(?\s*v(?:ersion)?\.?\s*\d|\s+\d+\.\d)	exact			merge	Galaxy eDNA tool evaluation
 software	PEAR	PEAR	exact			merge	Galaxy eDNA tool evaluation
 software	PANDAseq	PANDAseq				merge	method name
 software	BBMerge	BBMerge				merge	method name
@@ -176,7 +181,8 @@ software	DADA2	DADA2				filter,denoise,chimera,merge	Galaxy eDNA tool evaluation
 software	removeBimeraDenovo	removeBimeraDenovo				chimera	parent=DADA2
 software	assignTaxonomy	assignTaxonomy		 	sequence composition	taxonomy	parent=DADA2
 software	Deblur	Deblur				denoise	Galaxy eDNA tool evaluation
-software	QIIME 2	QIIME 2|QIIME2|QIIME				demux,taxonomy,normalise	Galaxy eDNA tool evaluation
+software	QIIME 2	QIIME 2|QIIME2|re:QIIME(?=\s*\(?\s*(?:v(?:ersion)?\.?\s*)?20\d\d)				demux,taxonomy,normalise	Galaxy eDNA tool evaluation
+software	QIIME	re:QIIME(?!\s*2)(?!2)				demux,filter,cluster,chimera,taxonomy	method name (QIIME 1)
 software	q2-feature-classifier	q2-feature-classifier|classify-sklearn		 	sequence composition	taxonomy	Galaxy eDNA tool evaluation (QIIME 2)
 software	mothur	mothur				merge,filter,cluster,chimera,taxonomy	Galaxy eDNA tool evaluation
 software	OptiClust	OptiClust				cluster	parent=mothur
@@ -192,7 +198,7 @@ software	SourceTracker	SourceTracker2|SourceTracker				decontam	Galaxy eDNA tool
 software	BLASTn	BLASTn|BLAST+|BLAST	 		sequence similarity	taxonomy	Galaxy eDNA tool evaluation
 software	MEGAN	MEGAN-CE|MEGAN-LR|MEGAN	exact			collapse	Galaxy eDNA tool evaluation
 software	eDNAFlow LCA script	re:LCA\s+(?:Python\s+)?script|LCA_taxonomyAssignment			sequence similarity	collapse	Galaxy eDNA tool evaluation
-software	RDP Classifier	RDP Classifier|RDP naive Bayesian classifier|RDP naïve Bayesian classifier			sequence composition	taxonomy	Galaxy eDNA tool evaluation
+software	RDP Classifier	RDP Classifier|RDP naive Bayesian classifier|RDP naïve Bayesian classifier|re:RDP(?!\s+(?:database|reference|release|training))			sequence composition	taxonomy	Galaxy eDNA tool evaluation
 software	SINTAX	SINTAX			sequence composition	taxonomy	Galaxy eDNA tool evaluation
 software	IDTAXA	IDTAXA			sequence composition	taxonomy	Galaxy eDNA tool evaluation
 software	DECIPHER	DECIPHER	exact			cluster,taxonomy	Galaxy eDNA tool evaluation
@@ -205,7 +211,8 @@ software	PROTAX	PROTAX			probabilistic	taxonomy	method name
 software	pplacer	pplacer|EPA-ng			phylogeny	taxonomy	method name
 software	ITSx	ITSx				trim	Galaxy eDNA tool evaluation (fungal ITS)
 software	phyloseq	phyloseq				normalise	Galaxy eDNA tool evaluation
-database	NCBI GenBank nucleotide database	re:(?:NCBI['’]?s?\s+)?GenBank(?:\s+nucleotide)?(?:\s+\(?nt\)?)?(?:\s+database)?|re:NCBI\s+(?:nt|nucleotide)(?:\s+database)?|re:nucleotide\s+\(nt\)\s+database					NCBI database name
+database	NCBI GenBank nucleotide database	re:(?:NCBI['’]?s?\s+)?GenBank(?:\s+nucleotide)?(?:\s+\(?nt\)?)?(?:\s+database)?|re:NCBI\s+(?:nt|nucleotide)(?:\s+database)?|re:nucleotide\s+\(nt\)\s+database|re:non-redundant\s+nucleotide\s+database|re:(?<![\w-])nt\s+database					NCBI database name
+database	ENA (EMBL nucleotide sequence database)	re:European\s+Nucleotide\s+Archive|re:ENA\s+Release|re:EMBL(?:\s+(?:nucleotide|reference|sequence))?(?:\s+(?:sequences|databases?))?					database name
 database	NCBI RefSeq	RefSeq					NCBI database name
 database	BOLD	re:BOLD(?:systems)?|Barcode of Life Data ?System|Barcode of Life Database	exact				database name
 database	SILVA	SILVA	exact				database name
@@ -225,3 +232,20 @@ facility	Novogene	Novogene					facility name
 facility	Macrogen	Macrogen					facility name
 facility	BGI	BGI	exact				facility name
 facility	Genewiz	Genewiz|GENEWIZ|Azenta					facility name
+database	EUKARYOME	EUKARYOME					database name
+database	Claident overall database	re:[“"]overall(?:_\w+)?[”"]\s+(?:reference\s+)?database|re:Claident\s+(?:reference\s+)?database					database name
+software	Sickle	Sickle	exact			trim,filter	method name
+software	SolexaQA++	SolexaQA\+\+|SolexaQA|DynamicTrim				trim,filter	method name
+software	TagCleaner	TagCleaner				trim	method name
+software	FASTX-Toolkit	FASTX-Toolkit|FASTX Toolkit|FastX-toolkit|fastx_trimmer|fastq_quality_filter				trim,filter	method name
+software	fastq-join	fastq-join|fastq_join				merge	method name
+software	illumina-utils	illumina-utils|iu-merge-pairs				merge,filter	method name
+software	obigrep	obigrep				filter	parent=OBITools
+software	obiclean	obiclean				denoise	parent=OBITools
+software	UPARSE	UPARSE|cluster_otus				cluster	parent=USEARCH
+software	Bowtie2	Bowtie2|Bowtie 2			sequence similarity	taxonomy	method name
+software	BLCA	BLCA	exact		probabilistic	taxonomy	method name
+pipeline	Anacapa Toolkit	Anacapa Toolkit|Anacapa			https://github.com/limey-bean/Anacapa		pipeline name
+pipeline	metaBEAT	metaBEAT			https://github.com/HullUni-bioinformatics/metaBEAT		pipeline name
+pipeline	metabarTOAD	metabarTOAD			https://github.com/tomjenkins/metabarTOAD		pipeline name
+pipeline	NextITS	NextITS			https://github.com/vmikk/NextITS		pipeline name
