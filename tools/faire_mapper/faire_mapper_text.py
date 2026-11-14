@@ -7,6 +7,8 @@ file by its content, not its name: Galaxy names its files dataset_N.dat, and peo
 
 import gzip
 import re
+import sys
+from pathlib import Path
 
 # A sequence line: nucleotide letters (IUPAC), gaps and the odd stop or end mark
 SEQUENCE_LINE = re.compile(r'^[ACGTURYSWKMBDHVNI.*-]+$', re.I)
@@ -85,8 +87,13 @@ def pdf_text(path):
                          'as text and give that instead.')
     reader = PdfReader(path)
     pages = []
-    for page in reader.pages:
-        t = (page.extract_text() or '').strip()
+    for number, page in enumerate(reader.pages, 1):
+        try:
+            t = (page.extract_text() or '').strip()
+        except Exception as err:   # a font pypdf cannot read: skip the page, not the whole file
+            print(f'WARNING: page {number} of {Path(path).name} could not be read ({type(err).__name__}) and was skipped',
+                  file=sys.stderr)
+            continue
         # A PDF keeps the page's line breaks, and a table's cells come out one per line, so the lines are
         # kept as they are (joining them would run the cells of different rows together). Only a primer
         # sequence that wrapped in its cell is joined again: a line of 15 or more bases followed by a

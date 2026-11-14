@@ -114,6 +114,48 @@ elsewhere. The rules should be tried on methods from other laboratories (a QIIME
 a MiFish study using Claident, a Nanopore study, say) before the numbers are quoted. Methods text from
 journal web pages could not be fetched word for word for this trial.
 
+## A larger trial: 30 papers from other laboratories
+
+The caution above led to a second trial on 30 published eDNA papers chosen for the variety of their
+methods (marine, freshwater, soil, sediment, air and plant studies; Illumina, Ion Torrent, PacBio,
+Nanopore, qPCR and ddPCR; QIIME, OBITools, DADA2, USEARCH, Anacapa, Claident and other pipelines).
+Microsoft Copilot read each paper and its supplements and filled in a workbook of FAIRe values, one row
+per workflow, with excerpts. Ten papers were drawn at random as a held-out set (one from each of the
+rarer kinds: Claident, long reads, targeted assays, plant markers, soil or sediment), and neither those
+papers nor their rows were opened until the rules were frozen. The papers are not stored here.
+
+Copilot's values guided the work but are not a reviewed answer key. They follow FAIRe closely for most
+terms, but not for four: they give lists of programs for sop_bioinformatics (FAIRe asks for a protocol
+or a link), PCR product clean-ups for dna_cleanup_method (FAIRe means clean-up of the extracted DNA) and
+"two-step PCR" for nucl_acid_amp (a link to a protocol). Those four are left out of the scores below, as
+is one development paper whose Copilot row is nearly empty. A value agrees when its numbers or names
+match Copilot's; the figures count the FAIRe terms for which Copilot gave a value.
+
+| Rules | Development (19 papers, 590 values) | Held out (10 papers, 282 values) |
+|---|---|---|
+| Before this trial | 219 agree (37%) | 93 agree (33%) |
+| After fixing how PDFs are read | 270 (46%) | 118 (42%) |
+| Frozen, after working through the development papers | 371 (63%) | 132 (47%) |
+
+Most of the gain that carried over to the held-out papers came from reading PDFs better. pypdf, which
+Galaxy uses, gives each page as one block of lines, so a page read as one paragraph and a single
+sentence about specimens could hide a page from the rules; Wiley PDFs split words ("fol - lowed",
+"two-  step"), some journals use ligatures, superscript reference numbers run into names and versions
+("Cutadapt v.1.1687" for v1.16 and reference 87), and MDPI writes degrees as a small circle. The rules
+written from the development papers (more ways of naming a two-step library, reaction and template
+volumes, sequencing facilities and kits, clustering thresholds, primer stock concentrations, and about
+40 kits, databases, programs and pipelines) added 17 points on those papers but 5 on the held-out ones:
+much of it fits the wording and products of the papers it came from.
+
+On the held-out papers the frozen rules missed products they had not seen (an M-Sorb-OOM kit, Phire
+and Phusion master mixes, an Ion PGM 400 kit), read nothing from three pages of one paper that pypdf
+5.1.0 cannot read (a newer pypdf reads them), and cannot read values that sit only in a supplementary
+spreadsheet. Some disagreements are Copilot's: zero-radius OTUs are given 100% for otu_clust_cutoff,
+as FAIRe asks for ASVs, where Copilot wrote "zOTUs".
+
+These held-out figures are provisional until the held-out rows have been checked by a person. Of the
+tool's 91 held-out values that Copilot did not give, some are right and some are not.
+
 ## Files
 
 - `run.sh OUTDIR [WEST_2024_TEXT]`: runs the tool on the development texts and, if given, the held-out
