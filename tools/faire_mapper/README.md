@@ -1048,7 +1048,11 @@ and one apply mapping test (MIxS and Darwin Core terms), and one of each for the
 propose mapping, 35 apply mapping and 3 identify tests pass in Galaxy `release_25.0` here, and so does
 the propose-mapping workflow test. 0.7.2 adds one apply mapping test (rows with no decision); all 15
 propose mapping and 36 apply mapping tests pass in Galaxy `release_25.0` here, and so do both workflow
-tests. 0.7.3 checks the table's name in an existing propose mapping test.
+tests. 0.7.3 checks the table's name in an existing propose mapping test. 0.9.0 (14 November) adds
+find method details with 2 tests (the SEA-MES methods as text, and a short PDF with no Methods
+heading) and one apply mapping test (two tables of project values, one of them a reviewed sheet from
+find method details); the 2 find method details, all 37 apply mapping and 5 find primers tests pass in
+Galaxy `release_25.0` here, and so do both workflow tests.
 
 | Tool | Test | Checks | Result |
 |---|---|---|---|
