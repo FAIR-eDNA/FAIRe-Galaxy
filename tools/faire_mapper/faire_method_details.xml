@@ -1,0 +1,181 @@
+<tool id="faire_method_details" name="FAIRe mapper: find method details" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="@PROFILE@" license="MIT">
+    <description>propose FAIRe values for the laboratory and bioinformatic methods, for review</description>
+    <macros>
+        <import>macros.xml</import>
+        <import>faire_guide.xml</import>
+    </macros>
+    <expand macro="creator"/>
+    <expand macro="requirements"/>
+    <version_command>python '$__tool_directory__/faire_method_details.py' --version</version_command>
+    <command detect_errors="exit_code"><![CDATA[
+#import re
+python '$__tool_directory__/faire_method_details.py'
+#for $t in $methods:
+    '$t'
+#end for
+#for $t in $methods:
+    #set $lab = $re.sub(r'[^A-Za-z0-9._ ()-]', '_', str($t.element_identifier))
+    --label '$lab'
+#end for
+--checklist '$__tool_directory__/checklist/FAIRe_checklist_v1.0.2.xlsx'
+--assay_type '$assay_type'
+#if str($assay_names).strip():
+    --assay_names '$assay_names'
+#end if
+$whole_text
+--output '$proposals'
+--review_sheet '$review_sheet'
+> '$summary'
+    ]]></command>
+    <inputs>
+        <param name="methods" type="data" format="txt,pdf" multiple="true" label="Methods"
+            help="The methods of the study as plain text, markdown or a PDF: a methods section, a whole paper, a report, or a README with methods. Give several files if the methods are spread over a paper and its supplement. A PDF of scanned pages holds pictures of the text, which the tool can't read: save it, or a Word file, as text first."/>
+        <param name="assay_type" type="select" label="Assay type">
+            <option value="metabarcoding" selected="true">Metabarcoding</option>
+            <option value="targeted">Targeted assay (qPCR or ddPCR)</option>
+        </param>
+        <param name="assay_names" type="text" value="" optional="true" label="Assay names (optional)"
+            help="Separated by commas, as in your other files (Fish16S, COI_Leray). A value found in a sentence that names one of them is proposed for that assay. Leave empty if the study has one assay.">
+            <validator type="regex" message="Letters, digits, spaces and _ - . , only">^[A-Za-z0-9_ .,-]*$</validator>
+        </param>
+        <param name="whole_text" type="boolean" truevalue="--whole_text" falsevalue="" checked="false"
+            label="Read the whole text"
+            help="By default, a text with a Methods heading is read from that heading to the Results, Discussion or References heading, with any supplementary methods after the references. Other parts of a paper name tools and kits that other studies used. Choose this if the tool misses part of your methods."/>
+    </inputs>
+    <outputs>
+        <data name="review_sheet" format="xlsx" label="${tool.name} on ${on_string}: review sheet"/>
+        <data name="proposals" format="tabular" label="${tool.name} on ${on_string}: values found"/>
+        <data name="summary" format="txt" label="${tool.name} on ${on_string}: summary"/>
+    </outputs>
+    <tests>
+        <!-- The SEA-MES methods (CC BY 4.0): PCR, sequencing and bioinformatics values with their sentences -->
+        <test expect_num_outputs="3">
+            <param name="methods" value="method_details_seames.txt" ftype="txt"/>
+            <output name="proposals">
+                <assert_contents>
+                    <has_line_matching expression="^PCR\tpcr_cond\tinitial denaturation:95_15;denaturation:95_0\.5;annealing:54_1\.5;elongation:72_1\.5;final elongation:72_10;40\t\t.*QuantStudio5.*"/>
+                    <has_line_matching expression="^PCR\tamplificationReactionVolume\t25\t.*"/>
+                    <has_line_matching expression="^PCR\tcommercial_mm\tQIAGEN Multiplex PCR Master Mix, QIAGEN\t.*"/>
+                    <has_line_matching expression="^Library preparation and sequencing\tinstrument\tIllumina NextSeq 2000\t.*"/>
+                    <has_line_matching expression="^Library preparation and sequencing\tbarcoding_pcr_appr\ttwo-step PCR\t.*"/>
+                    <has_line_matching expression="^DNA extraction\tnucl_acid_ext_kit\tDNeasy Blood and Tissue Kit \(QIAGEN\)\t.*"/>
+                    <has_line_matching expression="^Bioinformatics\totu_db\tNCBI GenBank nucleotide database \(accessed August 2023\)\t.*"/>
+                    <has_line_matching expression="^Bioinformatics\terror_rate_cutoff\t2\t.*maximum expected errors = 2.*"/>
+                    <has_line_matching expression="^Bioinformatics\ttax_class_query_cutoff\t96\t.*"/>
+                    <has_line_matching expression="^Filtration\tprepped_samp_store_temp\t-80\t.*"/>
+                    <has_line_matching expression="^Sample storage\tsamp_store_temp\t4\t.*"/>
+                </assert_contents>
+            </output>
+            <output name="review_sheet" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet1.xml">
+                        <has_text text="Reviewer"/>
+                        <has_text text="not found in the methods"/>
+                        <has_text text="DNeasy Blood and Tissue Kit (QIAGEN)"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="summary">
+                <assert_contents>
+                    <has_text text="the Methods section"/>
+                    <has_text_matching expression="\d+ values proposed for \d+ FAIRe terms"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- A short methods text as a PDF, with no Methods heading: read whole -->
+        <test expect_num_outputs="3">
+            <param name="methods" value="primer_methods.pdf" ftype="pdf"/>
+            <output name="summary">
+                <assert_contents>
+                    <has_text text="the whole text (no Methods heading found)"/>
+                </assert_contents>
+            </output>
+            <output name="proposals">
+                <assert_contents>
+                    <has_line_matching expression="^Bioinformatics\totu_clust_cutoff\t100\t.*denois.*"/>
+                </assert_contents>
+            </output>
+        </test>
+    </tests>
+    <help><![CDATA[
+@EARLY_VERSION@
+**What it does**
+
+Much of what FAIRe asks about a study is in its methods: how the water was filtered, the extraction
+kit, the PCR conditions, the sequencing instrument and kit, and the software, settings and reference
+databases of the bioinformatics. This tool reads the methods and proposes a value for each of these
+FAIRe terms it can recognise, with the sentence the value came from, so that you can check it. It
+writes a review sheet: you accept, reject or change each value, fill in what the tool did not find,
+and give the sheet to **FAIRe mapper: apply mapping** with your other values for the whole project.
+
+The tool reads by rules, not with a language model, so it runs offline and gives the same answer each
+time. It knows the instruments, thermocyclers, master mixes, extraction kits, filters, software,
+pipelines and reference databases listed in its vocabulary, and the usual ways methods sections state
+a value, such as "40 cycles of 95 °C for 30 s", "in 25 µL reactions", "maximum expected errors = 2" or
+"a query coverage of 96%". It can miss values written in other ways, and it cannot tell which assay a
+value belongs to unless the sentence names it. Every value is a proposal for you to check.
+
+Primers are left to **FAIRe mapper: find primers**, which looks them up in a table of published primers.
+
+-----
+
+**Inputs**
+
+- **Methods**: plain text, markdown or a PDF. When the text is a whole paper, the tool reads its
+  Methods section, from the Methods heading to the Results, Discussion or References heading, and any
+  supplementary methods after the references. The introduction and discussion name tools and kits that
+  other studies used, so they are left out.
+- **Assay names** (optional): with two or more assays, a value in a sentence that names one of them
+  is proposed for that assay.
+
+**Outputs**
+
+- **Review sheet** (Excel), with a *Method details* sheet and a *How to review* sheet. The first rows
+  are the values found, each with the FAIRe term, what FAIRe asks for, the proposed value, the sentence
+  it came from and how it was found. Choose a *Reviewer's decision* for each: Accept, Change (and write
+  the right value in *Your value*) or Reject. When a term has several values (two storage
+  temperatures, say), keep the one that applies to your eDNA samples. The rows after them are the
+  FAIRe method terms the tool did not find: write a value in *Your value* for any you know. Rows with
+  no decision and no value of your own are left out of the workbook. The sheet can be sorted and
+  filtered.
+- **Values found** (tabular): the same values, one per line, with the section, term, value, assay,
+  sentence, how it was found, a note and the status *review*.
+- **Summary**: what was read, and the terms found in each part of the methods.
+
+**What it looks for**
+
+- *Field and laboratory hygiene*: sentences about bleach, UV or other cleaning (sterilise_method).
+- *Sampling and filtration*: the sampling device; the volume collected and the volume filtered
+  (samp_size and samp_vol_we_dna_ext, which people often mix up, so the note says how they differ);
+  the filter's pore size, diameter, material and name; active or passive filtration; the sentence
+  that describes the filtration; the storage temperature before filtering (samp_store_temp) and after
+  it (prepped_samp_store_temp); what the samples were preserved in.
+- *DNA extraction*: the kit, how it lyses the cells and separates the DNA, the changes made to the
+  kit's protocol, and any clean-up kit.
+- *PCR*: the PCR programme in the FAIRe format (initial denaturation:95_15;denaturation:95_0.5;
+  annealing:54_1.5;elongation:72_1.5;final elongation:72_10;40), the annealing temperature and number
+  of cycles, the reaction and template volumes, PCR replicates, the master mix or the reaction's own
+  recipe, the thermocycler, and any test for inhibition. A second PCR that adds the indexes gives the
+  pcr2 terms.
+- *Library preparation and sequencing*: one-step or two-step indexing, the instrument (with its OBI
+  identifier where the tool knows it) and platform, the sequencing kit or flow cell, paired or single
+  reads, the sequencing facility, and how the libraries were checked and pooled.
+- *Bioinformatics*: the software for each step (trimming, demultiplexing, merging, quality and length
+  filtering, denoising or clustering, chimera removal, comparison with the reference) with its
+  version and settings; the cut-offs (minimum length, expected errors or Phred score, overlap,
+  mismatches, minimum reads, clustering threshold); the reference databases with their version or date;
+  how the taxonomy was assigned and the identity and coverage thresholds; the lowest common ancestor
+  step; and how taxa found in the controls, outside their range or outside the study's target were
+  removed.
+
+The vocabulary is a table, ``method_details/vocabulary.tsv`` beside the tool, which anyone can add
+rows to: an instrument, kit or program the tool does not know yet is one line.
+
+@HELP_INPUTS@
+
+@HELP_FAIRE_GUIDE@
+
+@HELP_ABOUT@
+    ]]></help>
+    <expand macro="citations"/>
+</tool>

@@ -28,7 +28,7 @@ ui <- page_navbar(
   title = tags$span(icon("dna"), "FAIRe tools"),
   window_title = "FAIRe tools",
   theme = theme,
-  header = tags$head(tags$link(rel = "stylesheet", href = "styles.css")),
+  header = tags$head(tags$link(rel = "stylesheet", href = "styles.css"), tags$script(src = "app.js")),
   sidebar = sidebar(
     width = 300, open = "desktop",
     tags$h6("Workbook in use"),
@@ -66,7 +66,8 @@ server <- function(input, output, session) {
   rv <- reactiveValues(files = character(), workbook = NULL, workbook_from = "", res = list(), runs = list(),
                        identify = NULL, map = NULL, map_args = NULL, profile = NULL, crosswalk = NULL,
                        crosswalk_from = "", review_version = 0, review_saved = NULL, model = NULL,
-                       primers = NULL, pv = data.frame(term = character(), value = character(), assay = character()),
+                       primers = NULL, details = NULL,
+                       pv = data.frame(term = character(), value = character(), assay = character()),
                        otu_n = 1, lib_n = 1, block_version = 0, demo = FALSE, eo_mapping = NULL)
 
   # ------------------------------------------------------------ shared helpers
@@ -912,14 +913,96 @@ server <- function(input, output, session) {
     rv$pv <- rbind(rv$pv, data.frame(term = input$pv_term, value = input$pv_value, assay = trimws(input$pv_assay)))
     updateTextInput(session, "pv_value", value = "")
   })
-  output$pv_file_ui <- renderUI(selectInput("pv_file", NULL, c("Choose a file" = "", file_names("\\.(tsv|tab|txt|csv)$", kinds = "project values"))))
+  output$pv_file_ui <- renderUI(selectInput("pv_file", NULL, c("Choose a file" = "", file_names("\\.(tsv|tab|txt|csv|xlsx)$", kinds = "project values"))))
   observeEvent(input$pv_load, {
     p <- fpath(input$pv_file); req(p)
-    d <- if (galaxy_ext(p) == "csv") utils::read.csv(p, colClasses = "character", check.names = FALSE) else read_tsv(p)
-    if (is.null(d) || !all(c("term", "value") %in% names(d)))
-      return(showNotification("The table needs columns named term and value.", type = "error"))
-    if (!"assay" %in% names(d)) d$assay <- ""
-    rv$pv <- d[, c("term", "value", "assay")]
+    if (galaxy_ext(p) == "xlsx") {
+      if (!"Method details" %in% xlsx_sheets(p))
+        return(showNotification("This workbook is not a review sheet from find method details.", type = "error"))
+      d <- read_method_review(p)
+    } else {
+      d <- if (galaxy_ext(p) == "csv") utils::read.csv(p, colClasses = "character", check.names = FALSE) else read_tsv(p)
+      if (is.null(d) || !all(c("term", "value") %in% names(d)))
+        return(showNotification("The table needs columns named term and value.", type = "error"))
+      if (!"assay" %in% names(d)) d$assay <- ""
+    }
+    add_values(d[, c("term", "value", "assay")])
+  })
+  # Values added to the project values; a term already there for the same assay keeps its value.
+  add_values <- function(d) {
+    d[] <- lapply(d, function(x) trimws(as.character(x)))
+    d <- d[nzchar(d$term) & nzchar(d$value), , drop = FALSE]
+    have <- paste(rv$pv$term, rv$pv$assay)
+    dup <- paste(d$term, d$assay) %in% have
+    rv$pv <- rbind(rv$pv, d[!dup, , drop = FALSE])
+    showNotification(paste0(sum(!dup), " values added", if (any(dup)) paste0("; ", sum(dup), " left out, as their terms ",
+                            "already have a value (delete it first to replace it)") else "", "."),
+                     type = "message", duration = 6)
+  }
+
+  # ------------------------------------------------------------ mapper d: other method details
+  observeEvent(input$run_details, {
+    texts <- unname(unlist(lapply(input$pr_texts, fpath)))
+    if (!length(texts)) return(showNotification("Choose your methods (under Look for primers in: My methods).", type = "error"))
+    assays <- unique(rv$pv$assay[nzchar(rv$pv$assay)])
+    res <- with_run("Reading the methods", run_method_details(sd, texts, input$pr_texts, paste(assays, collapse = ",")))
+    rv$res$details <- res
+    rv$details <- if (res$ok) read_tsv(res$outputs$proposals) else NULL
+  })
+  output$details_result <- renderUI({
+    res <- rv$res$details
+    if (is.null(res)) return(NULL)
+    d <- rv$details
+    tbl <- NULL
+    if (!is.null(d) && nrow(d)) {
+      ck <- checklist_terms()
+      items <- lapply(seq_len(nrow(d)), function(i) {
+        desc <- ck$description[match(d$term[i], ck$term)]
+        div(class = "md-item",
+            div(class = "md-head",
+                tags$input(type = "checkbox", id = paste0("md_keep_", i), class = "md-keep",
+                           `aria-label` = paste("Keep", d$term[i])),
+                tags$label(`for` = paste0("md_keep_", i), tags$b(d$term[i])),
+                tags$span(class = "md-section", d$section[i]),
+                if (!is.na(desc) && nzchar(desc)) bslib::tooltip(
+                  tags$span(class = "term-help", tabindex = "0", `aria-label` = paste("What is", d$term[i]),
+                            icon("circle-question")), desc)),
+            div(class = "md-fields",
+                textAreaInput(paste0("md_val_", i), NULL, d$value[i], rows = if (nchar(d$value[i]) > 70) 3 else 1),
+                textInput(paste0("md_assay_", i), NULL, d$assay[i], placeholder = "assay (all)")),
+            if (nzchar(d$note[i])) div(class = "md-note", d$note[i]),
+            tags$details(class = "md-evidence", tags$summary(substr(d$evidence[i], 1, 140),
+                                                             if (nchar(d$evidence[i]) > 140) "…"),
+                         if (nchar(d$evidence[i]) > 140) d$evidence[i]))
+      })
+      tbl <- tagList(
+        help_text("Tick the values to keep, after checking each against its sentence (open a sentence to read all of",
+                  "it). Correct a value in its box if it is nearly right. When a term has several values (two storage",
+                  "temperatures, say), keep the one for your eDNA samples. Give the assay only for a value that",
+                  "holds for one assay."),
+        div(class = "md-list", items),
+        div(class = "btn-row",
+            actionButton("md_add", "Add the ticked values to the project values", icon = icon("arrow-right")),
+            actionLink("md_all", "Tick all"), actionLink("md_none", "Untick all")),
+        help_text("Or download the review sheet, fill it in with Excel and load it on the right; it also lists the",
+                  "method terms not found, to fill in."))
+    } else if (res$ok) {
+      tbl <- help_text("No method details found in these files.")
+    }
+    tagList(result_ui(res), tbl)
+  })
+  observeEvent(input$md_all, session$sendCustomMessage("md_tick", TRUE))
+  observeEvent(input$md_none, session$sendCustomMessage("md_tick", FALSE))
+  observeEvent(input$md_add, {
+    d <- rv$details; req(d)
+    keep <- as.integer(input$md_kept %||% integer())
+    keep <- keep[keep >= 1 & keep <= nrow(d)]
+    if (!length(keep)) return(showNotification("Tick the values to keep first.", type = "error"))
+    add_values(data.frame(term = d$term[keep],
+                          value = vapply(keep, function(i) input[[paste0("md_val_", i)]] %||% d$value[i], character(1)),
+                          assay = vapply(keep, function(i) input[[paste0("md_assay_", i)]] %||% "", character(1)),
+                          stringsAsFactors = FALSE))
+    session$sendCustomMessage("md_tick", FALSE)
   })
   # The mandatory project terms no file covers yet (propose mapping's list), less those given here.
   output$pv_missing <- renderUI({

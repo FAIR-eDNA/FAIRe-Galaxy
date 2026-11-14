@@ -1,0 +1,227 @@
+# Named things that FAIRe mapper: find method details looks for in methods text. One row per thing.
+# kind: what it is (instrument, thermocycler, master_mix, extraction_kit, cleanup_kit, software, pipeline,
+#   database, filter, device, facility, qpcr_software). name: how the tool writes it. aliases: other
+#   spellings, separated by |; spaces also match hyphens and no space, and a word may carry (R) or (TM);
+#   an alias starting re: is a regular expression. case: exact for names that are also ordinary words
+#   (otherwise any case matches). maker: manufacturer or developer. extra: for instruments the OBI
+#   identifier; for filters the FAIRe filter_material; for extraction kits the FAIRe nucl_acid_ext_sep;
+#   for taxonomy software the FAIRe tax_assign_cat; for pipelines and some software the web address.
+#   uses: for software, the steps it does (trim, demux, merge, filter, denoise, cluster, chimera,
+#   taxonomy, collapse, curation, decontam, normalise); for instruments the FAIRe platform; for commands,
+#   parent= names the program they belong to. source: where the row comes from.
+kind	name	aliases	case	maker	extra	uses	source
+instrument	Illumina MiSeq	MiSeq				ILLUMINA	OBI via linkml valuesets SequencingPlatform
+instrument	Illumina MiniSeq	MiniSeq				ILLUMINA	Illumina product name
+instrument	Illumina iSeq 100	iSeq 100|iSeq				ILLUMINA	Illumina product name
+instrument	Illumina NextSeq 500	NextSeq 500			OBI_0002021	ILLUMINA	OBI via linkml valuesets SequencingPlatform
+instrument	Illumina NextSeq 550	NextSeq 550			OBI_0003387	ILLUMINA	OBI via linkml valuesets SequencingPlatform
+instrument	Illumina NextSeq 1000	NextSeq 1000				ILLUMINA	Illumina product name
+instrument	Illumina NextSeq 2000	NextSeq 2000				ILLUMINA	Illumina product name
+instrument	Illumina NextSeq	NextSeq				ILLUMINA	Illumina product name (model not given)
+instrument	Illumina NovaSeq 6000	NovaSeq 6000			OBI_0002630	ILLUMINA	OBI via linkml valuesets SequencingPlatform
+instrument	Illumina NovaSeq X	NovaSeq X Plus|NovaSeq X				ILLUMINA	Illumina product name
+instrument	Illumina NovaSeq	NovaSeq				ILLUMINA	Illumina product name (model not given)
+instrument	Illumina HiSeq 1500	HiSeq 1500			OBI_0003386	ILLUMINA	FAIRe checklist v1.0.2 example
+instrument	Illumina HiSeq 2000	HiSeq 2000			OBI_0002001	ILLUMINA	OBI via linkml valuesets SequencingPlatform
+instrument	Illumina HiSeq 2500	HiSeq 2500			OBI_0002002	ILLUMINA	OBI via linkml valuesets SequencingPlatform
+instrument	Illumina HiSeq 3000	HiSeq 3000			OBI_0002048	ILLUMINA	OBI via linkml valuesets SequencingPlatform
+instrument	Illumina HiSeq 4000	HiSeq 4000			OBI_0002049	ILLUMINA	OBI via linkml valuesets SequencingPlatform
+instrument	Illumina HiSeq X	HiSeq X			OBI_0002129	ILLUMINA	OBI via linkml valuesets SequencingPlatform
+instrument	Illumina HiSeq	HiSeq				ILLUMINA	Illumina product name (model not given)
+instrument	Ion Torrent PGM	Ion PGM|Personal Genome Machine|PGM				ION_TORRENT	Thermo Fisher product name
+instrument	Ion Torrent S5	Ion GeneStudio S5|Ion S5 XL|Ion S5				ION_TORRENT	Thermo Fisher product name
+instrument	Ion Torrent Proton	Ion Proton				ION_TORRENT	Thermo Fisher product name
+instrument	Oxford Nanopore MinION	MinION			OBI_0002750	OXFORD_NANOPORE	OBI via linkml valuesets SequencingPlatform
+instrument	Oxford Nanopore GridION	GridION			OBI_0002751	OXFORD_NANOPORE	OBI via linkml valuesets SequencingPlatform
+instrument	Oxford Nanopore PromethION	PromethION			OBI_0002752	OXFORD_NANOPORE	OBI via linkml valuesets SequencingPlatform
+instrument	Oxford Nanopore Flongle	Flongle				OXFORD_NANOPORE	Oxford Nanopore product name
+instrument	PacBio Sequel II	Sequel II|Sequel IIe			OBI_0002633	PACBIO_SMRT	OBI via linkml valuesets SequencingPlatform
+instrument	PacBio Sequel	Sequel	exact		OBI_0002632	PACBIO_SMRT	OBI via linkml valuesets SequencingPlatform
+instrument	PacBio RS II	PacBio RS II|RS II			OBI_0002012	PACBIO_SMRT	OBI via linkml valuesets SequencingPlatform
+instrument	PacBio Revio	Revio				PACBIO_SMRT	PacBio product name
+instrument	DNBSEQ-G400	DNBSEQ-G400|MGISEQ-2000				DNBSEQ	MGI product name
+instrument	DNBSEQ-T7	DNBSEQ-T7				DNBSEQ	MGI product name
+instrument	DNBSEQ-G99	DNBSEQ-G99				DNBSEQ	MGI product name
+instrument	BGISEQ-500	BGISEQ-500|BGISEQ				BGISEQ	MGI product name
+instrument	Element AVITI	AVITI				ELEMENT	Element Biosciences product name
+instrument	454 GS FLX	GS FLX|GS Junior|Roche 454|454 sequencing				LS454	Roche product name
+thermocycler	QuantStudio	re:QuantStudio\s?(?:\d+|12K)(?:\s?Flex)?|QuantStudio		Thermo Fisher Scientific			Thermo Fisher product name
+thermocycler	StepOnePlus	StepOnePlus|StepOne Plus		Applied Biosystems			Thermo Fisher product name
+thermocycler	StepOne	StepOne		Applied Biosystems			Thermo Fisher product name
+thermocycler	ViiA 7	ViiA 7|ViiA7		Applied Biosystems			Thermo Fisher product name
+thermocycler	7500 Fast Real-Time PCR System	7500 Fast|7500 Real-Time PCR		Applied Biosystems			Thermo Fisher product name
+thermocycler	Veriti	Veriti		Applied Biosystems			Thermo Fisher product name
+thermocycler	ProFlex	ProFlex		Applied Biosystems			Thermo Fisher product name
+thermocycler	SimpliAmp	SimpliAmp		Applied Biosystems			Thermo Fisher product name
+thermocycler	MiniAmp	MiniAmp		Applied Biosystems			Thermo Fisher product name
+thermocycler	GeneAmp PCR System 9700	GeneAmp 9700|GeneAmp PCR System 9700|GeneAmp		Applied Biosystems			Thermo Fisher product name
+thermocycler	CFX96	CFX96 Touch|CFX96		Bio-Rad			Bio-Rad product name
+thermocycler	CFX384	CFX384		Bio-Rad			Bio-Rad product name
+thermocycler	CFX Connect	CFX Connect		Bio-Rad			Bio-Rad product name
+thermocycler	CFX Opus	CFX Opus		Bio-Rad			Bio-Rad product name
+thermocycler	C1000 Touch	C1000 Touch|C1000		Bio-Rad			Bio-Rad product name
+thermocycler	T100	T100 Thermal Cycler|T100		Bio-Rad			Bio-Rad product name
+thermocycler	MyCycler	MyCycler		Bio-Rad			Bio-Rad product name
+thermocycler	Mastercycler	re:Mastercycler(?:\s(?:nexus|pro|X50\w*|gradient|ep))?		Eppendorf			Eppendorf product name
+thermocycler	LightCycler	re:LightCycler\s?(?:480|96|II)?		Roche			Roche product name
+thermocycler	Rotor-Gene Q	Rotor-Gene Q|RotorGene Q|Rotor-Gene		Qiagen			Qiagen product name
+thermocycler	Mic qPCR Cycler	Mic qPCR|Magnetic Induction Cycler		Bio Molecular Systems			Bio Molecular Systems product name
+thermocycler	Biometra TOne	Biometra TOne|Biometra TAdvanced|Biometra		Analytik Jena			Analytik Jena product name
+thermocycler	PTC-200	PTC-200|PTC-100		MJ Research			MJ Research product name
+thermocycler	Bento Lab	Bento Lab		Bento Bioworks			Bento Bioworks product name
+qpcr_software	QuantaSoft	QuantaSoft		Bio-Rad			Bio-Rad product name
+qpcr_software	QX Manager	QX Manager		Bio-Rad			Bio-Rad product name
+qpcr_software	CFX Maestro	CFX Maestro|CFX Manager		Bio-Rad			Bio-Rad product name
+qpcr_software	Design & Analysis	Design & Analysis|Design and Analysis		Thermo Fisher Scientific			Thermo Fisher product name
+master_mix	QIAGEN Multiplex PCR Master Mix	QIAGEN Multiplex PCR MasterMix|QIAGEN Multiplex PCR Master Mix|Multiplex PCR Master Mix|Multiplex PCR Kit		QIAGEN			QIAGEN product name
+master_mix	AmpliTaq Gold 360 Master Mix	AmpliTaq Gold 360 Master Mix		Applied Biosystems			Thermo Fisher product name
+master_mix	TaqMan Environmental Master Mix 2.0	TaqMan Environmental Master Mix		Applied Biosystems			Thermo Fisher product name
+master_mix	TaqMan Fast Advanced Master Mix	TaqMan Fast Advanced Master Mix		Applied Biosystems			Thermo Fisher product name
+master_mix	PowerUp SYBR Green Master Mix	PowerUp SYBR Green Master Mix		Applied Biosystems			Thermo Fisher product name
+master_mix	KAPA HiFi HotStart ReadyMix	KAPA HiFi HotStart ReadyMix|KAPA HiFi		Roche			Roche product name
+master_mix	Platinum SuperFi II PCR Master Mix	Platinum SuperFi II|Platinum SuperFi		Invitrogen			Thermo Fisher product name
+master_mix	Phusion High-Fidelity PCR Master Mix	Phusion High-Fidelity PCR Master Mix|Phusion Hot Start		Thermo Fisher Scientific			Thermo Fisher product name
+master_mix	Q5 High-Fidelity 2X Master Mix	Q5 Hot Start High-Fidelity 2X Master Mix|Q5 High-Fidelity 2X Master Mix|Q5 Hot Start|Q5 High-Fidelity		New England Biolabs			NEB product name
+master_mix	Luna Universal qPCR Master Mix	Luna Universal qPCR Master Mix|Luna Universal Probe qPCR Master Mix		New England Biolabs			FAIRe checklist v1.0.2 example
+master_mix	MyTaq HS Red Mix	MyTaq HS Red Mix|MyTaq Red Mix|MyTaq HS Mix		Bioline			Bioline product name
+master_mix	GoTaq G2 Master Mix	GoTaq G2 Hot Start Master Mix|GoTaq G2 Master Mix|GoTaq Master Mix|GoTaq		Promega			Promega product name
+master_mix	HotStarTaq Master Mix	HotStarTaq Plus Master Mix|HotStarTaq Master Mix		QIAGEN			QIAGEN product name
+master_mix	SsoAdvanced Universal Probes Supermix	SsoAdvanced Universal Probes Supermix|SsoAdvanced Universal SYBR Green Supermix|SsoAdvanced		Bio-Rad			Bio-Rad product name
+master_mix	ddPCR Supermix for Probes	ddPCR Supermix for Probes (No dUTP)|ddPCR Supermix for Probes|ddPCR Supermix		Bio-Rad			Bio-Rad product name
+master_mix	Immolase DNA Polymerase	Immolase		Bioline			Bioline product name
+extraction_kit	DNeasy Blood and Tissue Kit	DNeasy Blood and Tissue|DNeasy Blood & Tissue|DNeasy Blood Tissue	 	QIAGEN	column-based		QIAGEN product name
+extraction_kit	DNeasy PowerWater Sterivex Kit	DNeasy PowerWater Sterivex|PowerWater Sterivex		QIAGEN	column-based		QIAGEN product name
+extraction_kit	DNeasy PowerWater Kit	DNeasy PowerWater|PowerWater		QIAGEN	column-based		QIAGEN product name
+extraction_kit	DNeasy PowerSoil Pro Kit	DNeasy PowerSoil Pro|PowerSoil Pro		QIAGEN	column-based		QIAGEN product name
+extraction_kit	DNeasy PowerLyzer PowerSoil Kit	DNeasy PowerLyzer PowerSoil|DNeasy PowerLyser PowerSoil|PowerLyzer PowerSoil|PowerLyser PowerSoil		QIAGEN	column-based		QIAGEN product name
+extraction_kit	DNeasy PowerSoil Kit	DNeasy PowerSoil|PowerSoil		QIAGEN	column-based		QIAGEN product name
+extraction_kit	DNeasy PowerMax Soil Kit	DNeasy PowerMax Soil|PowerMax Soil		QIAGEN	column-based		QIAGEN product name
+extraction_kit	MagAttract PowerSoil DNA Kit	MagAttract PowerSoil|MagAttract		QIAGEN	magnetic beads		QIAGEN product name
+extraction_kit	QIAamp DNA Mini Kit	QIAamp DNA Mini		QIAGEN	column-based		QIAGEN product name
+extraction_kit	QIAamp Fast DNA Stool Mini Kit	QIAamp Fast DNA Stool|QIAamp DNA Stool		QIAGEN	column-based		QIAGEN product name
+extraction_kit	Monarch Genomic DNA Purification Kit	Monarch Genomic DNA Purification|Monarch		New England Biolabs	column-based		NEB product name
+extraction_kit	NucleoSpin Soil Kit	NucleoSpin Soil		Macherey-Nagel	column-based		Macherey-Nagel product name
+extraction_kit	NucleoSpin Tissue Kit	NucleoSpin Tissue		Macherey-Nagel	column-based		Macherey-Nagel product name
+extraction_kit	MagMAX Microbiome Ultra Nucleic Acid Isolation Kit	MagMAX Microbiome|MagMAX		Thermo Fisher Scientific	magnetic beads		Thermo Fisher product name
+extraction_kit	Maxwell RSC	Maxwell RSC|Maxwell 16|Maxwell		Promega	magnetic beads		Promega product name
+extraction_kit	Wizard Genomic DNA Purification Kit	Wizard Genomic		Promega	other: precipitation		Promega product name
+extraction_kit	ZymoBIOMICS DNA Miniprep Kit	ZymoBIOMICS DNA Miniprep|ZymoBIOMICS DNA Microprep|ZymoBIOMICS		Zymo Research	column-based		Zymo product name
+extraction_kit	Quick-DNA Fecal/Soil Microbe Kit	Quick-DNA Fecal/Soil Microbe|Quick-DNA		Zymo Research	column-based		Zymo product name
+extraction_kit	E.Z.N.A. Soil DNA Kit	re:E\.Z\.N\.A\.?(?:\s?\w+){0,2}		Omega Bio-tek	column-based		Omega Bio-tek product name
+extraction_kit	Chelex 100	Chelex		Bio-Rad	other: Chelex		Bio-Rad product name
+extraction_kit	phenol-chloroform-isoamyl alcohol extraction	phenol-chloroform-isoamyl alcohol|phenol chloroform isoamyl|phenol-chloroform|phenol:chloroform			phenol chloroform		method name
+extraction_kit	CTAB extraction	CTAB			other: CTAB		method name
+cleanup_kit	OneStep PCR Inhibitor Removal Kit	OneStep PCR Inhibitor Removal|PCR Inhibitor Removal		Zymo Research			Zymo product name
+cleanup_kit	DNA Clean & Concentrator	DNA Clean & Concentrator|DNA Clean and Concentrator		Zymo Research			FAIRe checklist v1.0.2 example
+filter	Sterivex	re:Sterivex(?:[- ]?(?:GP|HV))?		Merck Millipore			Merck product name
+filter	Supor	Supor		Pall Corporation	polyethersulfone		Pall product name
+filter	MF-Millipore	MF-Millipore		Merck Millipore	cellulose ester		Merck product name
+filter	Durapore	Durapore		Merck Millipore	other: PVDF		Merck product name
+filter	Isopore	Isopore		Merck Millipore	track etched polycarbonate		Merck product name
+filter	Nuclepore	Nuclepore		Whatman	track etched polycarbonate		Whatman product name
+filter	Whatman GF/F	GF/F|GF/C|GF/D		Whatman	glass fiber		Whatman product name
+filter	Smith-Root eDNA filter	Smith-Root|Smith Root		Smith-Root			Smith-Root product name
+device	Niskin bottle	Niskin bottle|Niskin					sampling device name
+device	Nalgene bottle	Nalgene bottle|Nalgene					sampling device name
+device	bailer	bailer|bailers					sampling device name
+device	Van Dorn sampler	Van Dorn					sampling device name
+device	Kemmerer sampler	Kemmerer					sampling device name
+device	bucket	bucket					sampling device name
+device	syringe	syringe|syringes					FAIRe checklist v1.0.2 (syringe [OBI_0000422])
+device	Smith-Root eDNA Sampler	Smith-Root eDNA Sampler					sampling device name
+device	OSMOS sampler	OSMOS					sampling device name
+device	grab sampler	grab sampler|Van Veen grab|Ponar grab					sampling device name
+device	sediment corer	push core|sediment core|corer					FAIRe checklist v1.0.2 example (push core)
+pipeline	eDNAFlow	eDNAFlow			https://github.com/mahsa-mousavi/eDNAFlow		FAIRe checklist v1.0.2 example; Galaxy eDNA tool evaluation
+pipeline	OceanOmics amplicon-nf	OceanOmics-amplicon-nf|OceanOmics amplicon-nf|OceanOmics			https://github.com/MinderooFoundation/OceanOmics-amplicon-nf		Galaxy eDNA tool evaluation
+pipeline	nf-core/ampliseq	nf-core/ampliseq|ampliseq			https://nf-co.re/ampliseq		Galaxy eDNA tool evaluation
+pipeline	MetaWorks	MetaWorks			https://github.com/terrimporter/MetaWorks		Galaxy eDNA tool evaluation
+pipeline	Claident	Claident			https://www.claident.org/		Galaxy eDNA tool evaluation
+pipeline	mothur MiSeq SOP	MiSeq SOP			https://mothur.org/wiki/miseq_sop/		Galaxy eDNA tool evaluation
+pipeline	Australian Microbiome amplicon workflow	AusMicrobiome|Australian Microbiome amplicon			https://github.com/AusMicrobiome/amplicon		Galaxy eDNA tool evaluation
+software	Cutadapt	cutadapt				trim,demux	Galaxy eDNA tool evaluation
+software	AdapterRemoval	AdapterRemoval|AdaptorRemoval|Adapter Removal				trim,merge,filter	Galaxy eDNA tool evaluation
+software	Trimmomatic	Trimmomatic				trim,filter	Galaxy eDNA tool evaluation
+software	fastp	fastp	exact			trim,filter,merge	Galaxy eDNA tool evaluation
+software	BBDuk	BBDuk				trim,filter	Galaxy eDNA tool evaluation
+software	PRINSEQ	PRINSEQ|PRINSEQ-lite				trim,filter	Galaxy eDNA tool evaluation
+software	FastQC	FastQC				filter	Galaxy eDNA tool evaluation
+software	FIGARO	FIGARO	exact			filter	Galaxy eDNA tool evaluation
+software	SeqKit	SeqKit				filter	Galaxy eDNA tool evaluation
+software	Seqtk	Seqtk				filter	Galaxy eDNA tool evaluation
+software	NanoFilt	NanoFilt				filter	Galaxy eDNA tool evaluation
+software	Filtlong	Filtlong				filter	Galaxy eDNA tool evaluation
+software	Chopper	Chopper	exact			filter	Galaxy eDNA tool evaluation
+software	Porechop	Porechop				trim,demux	Galaxy eDNA tool evaluation
+software	OBITools	OBITools3|OBITools|obitools				demux,merge,filter,taxonomy	Galaxy eDNA tool evaluation
+software	ngsfilter	ngsfilter				demux	parent=OBITools
+software	obisplit	obisplit				demux	parent=OBITools
+software	illuminapairedend	illuminapairedend				merge	parent=OBITools
+software	ecotag	ecotag		 	sequence similarity	taxonomy	parent=OBITools
+software	Sabre	Sabre	exact			demux	Galaxy eDNA tool evaluation
+software	Geneious	Geneious				demux,trim	method name
+software	bcl2fastq	bcl2fastq|BCL Convert|bcl-convert				demux	Illumina software name
+software	MiSeq Reporter	MiSeq Reporter				demux	Illumina software name
+software	CASAVA	CASAVA	exact			demux	Illumina software name
+software	FLASH	FLASH	exact			merge	Galaxy eDNA tool evaluation
+software	PEAR	PEAR	exact			merge	Galaxy eDNA tool evaluation
+software	PANDAseq	PANDAseq				merge	method name
+software	BBMerge	BBMerge				merge	method name
+software	SeqPrep	SeqPrep				merge	Galaxy eDNA tool evaluation (MetaWorks)
+software	VSEARCH	VSEARCH				merge,filter,denoise,cluster,chimera,taxonomy	Galaxy eDNA tool evaluation
+software	USEARCH	USEARCH				merge,filter,denoise,cluster,chimera,taxonomy	Galaxy eDNA tool evaluation
+software	UNOISE3	unoise3|UNOISE				denoise	Galaxy eDNA tool evaluation
+software	fastq_mergepairs	fastq_mergepairs				merge	parent=USEARCH
+software	DADA2	DADA2				filter,denoise,chimera,merge	Galaxy eDNA tool evaluation
+software	removeBimeraDenovo	removeBimeraDenovo				chimera	parent=DADA2
+software	assignTaxonomy	assignTaxonomy		 	sequence composition	taxonomy	parent=DADA2
+software	Deblur	Deblur				denoise	Galaxy eDNA tool evaluation
+software	QIIME 2	QIIME 2|QIIME2|QIIME				demux,taxonomy,normalise	Galaxy eDNA tool evaluation
+software	q2-feature-classifier	q2-feature-classifier|classify-sklearn		 	sequence composition	taxonomy	Galaxy eDNA tool evaluation (QIIME 2)
+software	mothur	mothur				merge,filter,cluster,chimera,taxonomy	Galaxy eDNA tool evaluation
+software	OptiClust	OptiClust				cluster	parent=mothur
+software	UCHIME	uchime3_denovo|uchime2_denovo|uchime_denovo|uchime_ref|UCHIME3|UCHIME2|UCHIME				chimera	Galaxy eDNA tool evaluation
+software	swarm	Swarm	exact			cluster	method name
+software	CD-HIT	CD-HIT				cluster	method name
+software	sumaclust	sumaclust				cluster	method name
+software	LULU	LULU	exact			curation	Galaxy eDNA tool evaluation
+software	UNCROSS	UNCROSS|uncross2				curation	Galaxy eDNA tool evaluation
+software	decontam	decontam	exact			decontam	Galaxy eDNA tool evaluation
+software	microDecon	microDecon|MicroDecon				decontam	Galaxy eDNA tool evaluation
+software	SourceTracker	SourceTracker2|SourceTracker				decontam	Galaxy eDNA tool evaluation
+software	BLASTn	BLASTn|BLAST+|BLAST	 		sequence similarity	taxonomy	Galaxy eDNA tool evaluation
+software	MEGAN	MEGAN-CE|MEGAN-LR|MEGAN	exact			collapse	Galaxy eDNA tool evaluation
+software	eDNAFlow LCA script	re:LCA\s+(?:Python\s+)?script|LCA_taxonomyAssignment			sequence similarity	collapse	Galaxy eDNA tool evaluation
+software	RDP Classifier	RDP Classifier|RDP naive Bayesian classifier|RDP naïve Bayesian classifier			sequence composition	taxonomy	Galaxy eDNA tool evaluation
+software	SINTAX	SINTAX			sequence composition	taxonomy	Galaxy eDNA tool evaluation
+software	IDTAXA	IDTAXA			sequence composition	taxonomy	Galaxy eDNA tool evaluation
+software	DECIPHER	DECIPHER	exact			cluster,taxonomy	Galaxy eDNA tool evaluation
+software	MetaCache	MetaCache			sequence composition	taxonomy	Galaxy eDNA tool evaluation
+software	Kraken 2	Kraken2|Kraken 2|Kraken			sequence composition	taxonomy	method name
+software	emu	Emu	exact		probabilistic	taxonomy	Galaxy eDNA tool evaluation
+software	NanoCLUST	NanoCLUST				cluster,taxonomy	Galaxy eDNA tool evaluation
+software	minimap2	minimap2			sequence similarity	taxonomy	Galaxy eDNA tool evaluation
+software	PROTAX	PROTAX			probabilistic	taxonomy	method name
+software	pplacer	pplacer|EPA-ng			phylogeny	taxonomy	method name
+software	ITSx	ITSx				trim	Galaxy eDNA tool evaluation (fungal ITS)
+software	phyloseq	phyloseq				normalise	Galaxy eDNA tool evaluation
+database	NCBI GenBank nucleotide database	re:(?:NCBI['’]?s?\s+)?GenBank(?:\s+nucleotide)?(?:\s+\(?nt\)?)?(?:\s+database)?|re:NCBI\s+(?:nt|nucleotide)(?:\s+database)?|re:nucleotide\s+\(nt\)\s+database					NCBI database name
+database	NCBI RefSeq	RefSeq					NCBI database name
+database	BOLD	re:BOLD(?:systems)?|Barcode of Life Data ?System|Barcode of Life Database	exact				database name
+database	SILVA	SILVA	exact				database name
+database	PR2	PR2|PR²	exact				database name
+database	MIDORI2	MIDORI2|MIDORI	exact				database name
+database	UNITE	UNITE	exact				database name
+database	Greengenes2	Greengenes2|Greengenes 2					database name
+database	Greengenes	Greengenes					database name
+database	MitoFish	MitoFish					database name
+database	12S Mitohelper	Mitohelper					database name
+database	MARES	MARES	exact				database name
+database	eKOI	eKOI					database name
+facility	Australian Genome Research Facility	Australian Genome Research Facility|AGRF					facility name
+facility	Ramaciotti Centre for Genomics	Ramaciotti Centre|Ramaciotti					facility name
+facility	TrEnD Laboratory, Curtin University	re:Trace\s*(?:&|and)\s*Environmental DNA \(TrEnD\) Laborator(?:y|ies)|TrEnD Laboratory|TrEnD Lab					facility name
+facility	Novogene	Novogene					facility name
+facility	Macrogen	Macrogen					facility name
+facility	BGI	BGI	exact				facility name
+facility	Genewiz	Genewiz|GENEWIZ|Azenta					facility name

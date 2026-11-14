@@ -54,6 +54,11 @@ A few things that help along the way:
   Takahashi et al. (2023) and Wilderlab's assays. This keeps primer names as they are in the
   literature and catches typos in sequences. If your primers are not in it, add your own table.
   The step says how to choose the pair you used for each assay, and which assay name to give it.
+- **Other method details**: under the primers, *Find method details* reads the same methods for the
+  filters, extraction kit, PCR conditions, sequencing kit, software, settings and reference databases,
+  and lists each value it finds with the sentence it came from. Tick the ones to keep (correcting any
+  that are nearly right) and add them to the values for the whole project. Its review sheet, which also
+  lists the method terms not found, can be downloaded, filled in with Excel and loaded back on the right.
 - **Adding a value** offers the FAIRe terms for one part of the checklist at a time, PCR and primers
   first, then library preparation and sequencing, bioinformatics and so on, or all of them.
 - **A question mark** beside a label explains the term (*data dictionary*, *assay*, *raw* and

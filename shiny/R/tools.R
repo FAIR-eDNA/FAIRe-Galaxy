@@ -132,6 +132,33 @@ run_primers <- function(session_dir, mode = "text", texts = character(), names_t
              list(candidates = file.path(d, "primer_candidates.tsv")))
 }
 
+# FAIRe mapper: find method details. texts are the methods files, labels the names the person knows them by.
+run_method_details <- function(session_dir, texts, labels = basename(texts), assay_names = "") {
+  d <- new_run_dir(session_dir, "method_details")
+  args <- c(texts, as.vector(rbind("--label", gsub("[^A-Za-z0-9._ ()-]", "_", labels))),
+            "--checklist", checklist(), "--assay_type", "metabarcoding",
+            if (!blank(assay_names)) c("--assay_names", assay_names),
+            "--output", "method_details.tsv", "--review_sheet", "method_details_review_sheet.xlsx")
+  s <- run_python(tool_path("faire_mapper", "faire_method_details.py"), args, d)
+  run_result("method_details", "FAIRe mapper: find method details", d, list(s),
+             list(proposals = file.path(d, "method_details.tsv"),
+                  review_sheet = file.path(d, "method_details_review_sheet.xlsx")))
+}
+
+# The values kept in a review sheet from find method details: Accept gives the proposed value, Change or a
+# value of the person's own gives theirs, and Reject or no decision leaves the row out.
+read_method_review <- function(path) {
+  r <- as.data.frame(readxl::read_excel(path, sheet = "Method details", col_types = "text"), check.names = FALSE)
+  r[is.na(r)] <- ""
+  dec <- tolower(trimws(r[["Reviewer's decision"]]))
+  yours <- trimws(r[["Your value"]])
+  value <- ifelse(dec == "accept", r[["Proposed value"]],
+                  ifelse(dec != "reject" & nzchar(yours), yours, ""))
+  keep <- nzchar(trimws(value)) & dec != "reject"
+  data.frame(term = r[["FAIRe term"]][keep], value = value[keep],
+             assay = if ("Assay" %in% names(r)) r[["Assay"]][keep] else rep("", sum(keep)), stringsAsFactors = FALSE)
+}
+
 # otu_tables and library_tables are lists of lists, one per table, with the wrapper's fields.
 run_apply <- function(session_dir, table, sheet, header_row, crosswalk, assay_type, sample_types, project_id,
                       assay_name = "", country = "", utc_offset = "", date_order = "stop", include_review = FALSE,

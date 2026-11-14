@@ -41,6 +41,7 @@ import faire_mapper_kinds as fk  # noqa: E402
 import faire_mapper_library as fl  # noqa: E402
 import faire_mapper_otu as fo  # noqa: E402
 import faire_mapper_review as fr  # noqa: E402
+import faire_method_details as fmd  # noqa: E402
 
 __version__ = fm.__version__
 CHECKLIST_VERSION_RE = re.compile(r'v(\d+(?:\.\d+)*)', re.I)
@@ -766,19 +767,40 @@ def build_workbook(args, df, rows, terms, by_name, log, others=()):
 
     # ---- values for the whole project or for every sample (e.g. from the methods text)
     if args.project_values:
-        pv = fm.read_table(args.project_values).astype(object).where(lambda x: x.notna(), '')
-        pv.columns = [str(c).strip().lower() for c in pv.columns]
-        pv = pv.map(lambda v: str(v) if v != '' else '')
+        # Several tables can be given (the primers and other values, a reviewed sheet of method details):
+        # they are read in order, and a term given twice keeps its first value.
+        records = []
+        for path in args.project_values:
+            if fmd.is_review_sheet(path):
+                recs = fmd.read_review_sheet(path)
+                done = sum(1 for r in recs if r['status'] == 'confirmed')
+                log.add('Project values', f'{Path(path).name}: a reviewed sheet from find method details, with {done} '
+                                          f'values accepted or given'
+                        + (f' and {len(recs) - done} not yet decided' if len(recs) > done else ''))
+                records += recs
+                continue
+            pv = fm.read_table(path).astype(object).where(lambda x: x.notna(), '')
+            pv.columns = [str(c).strip().lower() for c in pv.columns]
+            pv = pv.map(lambda v: str(v) if v != '' else '')
+            if not {'term', 'value'} <= set(pv.columns):
+                raise StopError(f'the project values file {Path(path).name} needs the columns term and value')
+            records += pv.to_dict('records')
         held_values, for_samples_only, from_values = {}, [], {}
+        given_here = {}
         ctrl = control_rows(sample_out, n)
-        if not {'term', 'value'} <= set(pv.columns):
-            raise StopError('the project values file needs the columns term and value')
-        for r in pv.to_dict('records'):
-            term, value = r['term'].strip(), r['value'].strip()
-            status = r.get('status', '').strip().lower()
-            assay = (r.get('assay') or r.get('assay_name') or '').strip()
+        for r in records:
+            term, value = str(r['term']).strip(), str(r['value']).strip()
+            status = str(r.get('status') or '').strip().lower()
+            assay = str(r.get('assay') or r.get('assay_name') or '').strip()
             if not term or not value:
                 continue
+            if (not status or status in ('supported', 'confirmed')) and (term, assay) in given_here:
+                if given_here[(term, assay)] != value:
+                    log.add('Warnings', f"project value {term}{f' for assay {assay}' if assay else ''}: given twice, as "
+                                        f"'{given_here[(term, assay)][:60]}' and '{value[:60]}'; the first is kept")
+                continue
+            if not status or status in ('supported', 'confirmed'):
+                given_here[(term, assay)] = value
             if status and status not in ('supported', 'confirmed'):
                 held_values.setdefault(status, {}).setdefault(term, 0)
                 held_values[status][term] += 1
@@ -1941,9 +1963,10 @@ def main(argv=None):
     ap.add_argument('--confused_terms', default=str(fm.CONFUSED_TERMS),
                     help='table of FAIRe terms people often confuse; a value for one of them in the project values '
                          'gets a note in the log (default: commonly_confused_terms.tsv beside faire_mapper.py)')
-    ap.add_argument('--project_values', help='table (CSV, TSV or Excel) with term and value (and status): values for the whole project, '
-                                             'e.g. from faire_mapper_methods.py; rows with status other than '
-                                             'supported or confirmed are left out')
+    ap.add_argument('--project_values', action='append',
+                    help='table (CSV, TSV or Excel) with term and value (and status): values for the whole project, '
+                         'e.g. from faire_mapper_methods.py, or the reviewed sheet from faire_method_details.py; rows '
+                         'with status other than supported or confirmed are left out; repeat for several tables')
     ap.add_argument('--drop_unmapped', action='store_true', help='leave out columns with no skos:exactMatch row in the crosswalk')
     ap.add_argument('--otu', action='append', help='OTU or ASV table (reads per sequence or taxon and sample); repeat '
                                                    'for each assay')

@@ -50,6 +50,11 @@ GLOSSARY <- c(
                        "that comes with the tools holds about 550 pairs: most from Takahashi et al. (2023, Science of the",
                        "Total Environment), plus Wilderlab's assays, the 18S V4 pairs and broad bacteria and archaea 16S",
                        "pairs. Your own table needs primer names and sequences."),
+  method_details = paste("FAIRe mapper: find method details reads the methods by rules: it knows the instruments,",
+                         "kits, software and reference databases in its vocabulary and the usual ways methods state a",
+                         "value (40 cycles of, in 25 µL reactions, maximum expected errors = 2). It can miss values",
+                         "written in other ways, and cannot tell which assay a value belongs to unless the sentence",
+                         "names it, so check each value against its sentence."),
   own_primer_table = paste("Your own table of primers, for primers not in the reference table: a TSV made by FAIRe mapper:",
                            "build primer table in Galaxy, or one with the same columns (pcr_primer_name_forward,",
                            "pcr_primer_forward, pcr_primer_name_reverse, pcr_primer_reverse and so on)."),
@@ -286,10 +291,10 @@ mapper_panel <- function() {
           card(
             card_header("Your methods and the primers"),
             step_intro("Your methods (text or PDF) are where the values for the whole project come from. The app",
-                       "reads them for primers: it looks for primer names, citations and sequences, and checks them",
-                       "against a reference table of published primers. The other values, such as PCR conditions,",
-                       "extraction kit, sequencing platform, reference databases and protocols, come from you: open",
-                       "your methods beside the table on the right and add them there."),
+                       "reads them twice: for primers, which it checks against a reference table of published",
+                       "primers, and for the other method details, such as the filters, extraction kit, PCR",
+                       "conditions, sequencing kit, software and reference databases. Both give proposals for you",
+                       "to check; what you keep goes into the values for the whole project, on the right."),
             radioButtons("pr_mode", "Look for primers in", c("My methods" = "text", "Names or citations I type" = "names"),
                          inline = TRUE),
             conditionalPanel("input.pr_mode == 'text'", uiOutput("pr_texts_ui")),
@@ -308,7 +313,13 @@ mapper_panel <- function() {
                       "primers are not in it."),
             conditionalPanel("input.pr_source != 'bundled'", uiOutput("pr_own_ui")),
             run_button("run_primers", "Find primers"),
-            uiOutput("primers_result")
+            uiOutput("primers_result"),
+            tags$hr(),
+            tags$h6(term_label("Other method details", "method_details")),
+            help_text("Reads the same methods for the filtration, extraction, PCR, sequencing and bioinformatics, and",
+                      "proposes a FAIRe value for each term it recognises, with the sentence it came from."),
+            run_button("run_details", "Find method details"),
+            uiOutput("details_result")
           ),
           card(
             card_header(term_label("Values for the whole project", "project_values")),
@@ -334,7 +345,8 @@ mapper_panel <- function() {
               textInput("pv_assay", "Assay (optional)")),
             actionButton("pv_add", "Add", icon = icon("plus")),
             tags$h6("Or load a table of values"),
-            help_text("A table with the columns term, value and (optionally) assay, from your files."),
+            help_text("A table with the columns term, value and (optionally) assay, or a review sheet from find",
+                      "method details that you filled in with Excel, from your files. Its values are added to these."),
             uiOutput("pv_file_ui"),
             actionButton("pv_load", "Load these values", icon = icon("file-import"))
           )
