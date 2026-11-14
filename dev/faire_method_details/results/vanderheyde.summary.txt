@@ -1,12 +1,12 @@
 FAIRe mapper: find method details 0.9.0
 Read methods.txt: the whole text (no Methods heading found): 55 sentences.
-52 values proposed for 48 FAIRe terms:
+58 values proposed for 52 FAIRe terms:
   Field and laboratory hygiene: sterilise_method
   Sample collection: samp_collect_device, samp_size, samp_size_unit
   Filtration: filter_material, filter_name, filter_passive_active_0_1, samp_mat_process, size_frac
   Sample storage: samp_store_temp
   DNA extraction: nucl_acid_ext_kit, nucl_acid_ext_lysis, nucl_acid_ext_modify, nucl_acid_ext_sep
-  PCR: annealingTemp, inhibition_check, inhibition_check_0_1, pcr_0_1, pcr_cond, pcr_cycles, pcr_rep
-  Library preparation and sequencing: barcoding_pcr_appr, instrument, lib_layout, lib_screen, platform, seq_kit
+  PCR: amplificationReactionVolume, annealingTemp, custom_mm, inhibition_check, inhibition_check_0_1, pcr_0_1, pcr_cond, pcr_cycles, pcr_dna_vol, pcr_rep
+  Library preparation and sequencing: barcoding_pcr_appr, instrument, lib_layout, lib_screen, platform, seq_kit, sequencing_location
   Bioinformatics: bioinfo_method_additional, demux_max_mismatch, demux_tool, error_rate_cutoff, error_rate_tool, error_rate_type, merge_min_overlap, min_len_cutoff, min_reads_cutoff, min_reads_cutoff_unit, min_reads_tool, otu_clust_cutoff, otu_clust_tool, otu_db, otu_db_custom, otu_seq_comp_appr, tax_assign_cat, tax_class_collapse, tax_class_id_cutoff, tax_class_query_cutoff, trim_param
-41 other method terms not found (listed in the review sheet to fill in).
+38 other method terms not found (listed in the review sheet to fill in).

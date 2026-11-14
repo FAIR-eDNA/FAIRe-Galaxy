@@ -71,13 +71,22 @@ SECTION_NAMES = OrderedDict([
 
 # ------------------------------------------------------------------ the methods section of a paper
 
-_NUM = r'(?:[0-9IVX]+(?:\.\d+)*\s*[.|)]?\s*\|?\s*)?'
+_NUM = r'(?:[■●•▪]\s*)?(?:[0-9IVX]+(?:\.\d+)*\s*[.|)]?\s*\|?\s*)?'
 START = re.compile(r'^\s*' + _NUM + r'(?:materials?\s+(?:and|&)\s+methods|methods(?:\s+(?:and|&)\s+materials?)?|'
-                   r'methodology|experimental\s+procedures?)\s*:?\s*$', re.I | re.M)
+                   r'methodology|experimental\s+procedures?)\s*[:.]?\s*$', re.I | re.M)
 END_HEADING = re.compile(r'^\s*' + _NUM + r'(?:results?(?:\s+(?:and|&)\s+discussion)?|discussion|conclusions?|references|'
-                         r'literature\s+cited|bibliography|acknowledge?ments?)\s*:?\s*$', re.I | re.M)
-REFERENCES_HEADING = re.compile(r'^\s*(?:references|literature\s+cited|bibliography)\s*:?\s*$', re.I | re.M)
+                         r'literature\s+cited|bibliography|acknowledge?ments?)\s*[:.]?\s*$', re.I | re.M)
+REFERENCES_HEADING = re.compile(r'^\s*(?:[■●•▪]\s*)?(?:references|literature\s+cited|bibliography)\s*:?\s*$', re.I | re.M)
 YEAR = re.compile(r'\b(?:19|20)\d\d\b')
+
+
+def _dotted_heading_ok(text, m):
+    """A heading ending in a full stop ("Methods.") counts only after a line that ends a sentence:
+    otherwise it is the last word of a sentence that wrapped ("... found in the / Discussion.")."""
+    if not m.group(0).rstrip().endswith('.'):
+        return True
+    before = text[:m.start()].rstrip().rsplit('\n', 1)[-1].strip()
+    return re.match(r'\s*\S*\s*[A-Z]', m.group(0)) is not None and (not before or re.search(r'[.!?:]["”’)]?$', before))
 
 
 class _Headings:
@@ -89,8 +98,10 @@ class _Headings:
 
     def search(self, text, pos=0):
         for m in self.rx.finditer(text, pos):
+            if not _dotted_heading_ok(text, m):
+                continue
             after = text[m.end():m.end() + 600]
-            if re.match(r'\s*(?:references|literature|bibliography)', m.group(0).strip(' \t\n0123456789.|'), re.I) \
+            if re.match(r'\s*(?:references|literature|bibliography)', m.group(0).strip(' \t\n0123456789.|■●•▪'), re.I) \
                     or self.refs:
                 if len(YEAR.findall(after)) >= 3:
                     return m
@@ -118,7 +129,7 @@ def methods_part(text):
     """The parts of a text to read, and a note of what was read. A text with a Methods heading is read
     from each Methods heading to the next Results, Discussion or References heading, plus any
     supplementary sections; other texts are read whole, apart from a references list."""
-    starts = list(START.finditer(text))
+    starts = [m for m in START.finditer(text) if _dotted_heading_ok(text, m)]
     spans = []
     for m in starts:
         end = END.search(text, m.end())
@@ -168,12 +179,57 @@ FURNITURE = re.compile(r'^.*(?:Downloaded\s+from\s+https?://|See\s+the\s+Terms\s
                        r'governed\s+by\s+the\s+applicable\s+Creative\s+Commons).*$|^\s*(?:Page\s+)?\d{1,3}(?:\s+of\s+\d{1,3})?\s*$',
                        re.I | re.M)
 REFERENCE_WORK = re.compile(r'\bspecimens?\b|\bvouchers?\b|\btissue\s+samples?\b', re.I)
+# words that place a sentence or paragraph with the eDNA samples, though it also mentions specimens
+EDNA_WORK = re.compile(r'\be?DNA\s+samples?\b|\beDNA\b|environmental\s+DNA|\bwater\s+samples?|\bfilters?\b|\bfiltered\b|'
+                       r'\bsediment\s+samples?|\bsoil\s+samples?', re.I)
+
+
+SENTENCE_END = re.compile(r'[.!?:]["\u201d\u2019)]?\s*(?:\d{1,3}(?:\s*[,\u2013-]\s*\d{1,3})*)?$')
+
+
+def _heading_line(line, full):
+    """A line that is a heading: short, no closing punctuation, starting with a capital or a number."""
+    return (0 < len(line) <= min(70, 0.7 * full) and len(line.split()) <= 9 and re.match(r'[A-Z0-9\u25a0\u25cf\u2022\u25aa]', line)
+            and not re.search(r'[.,;:!?\-\u2013(]$', line) and not re.match(r'(?:Fig|Table)', line))
+
+
+def rebuild_paragraphs(text):
+    """A PDF's text keeps the lines of each page, with no blank line between paragraphs, so a page reads
+    as one paragraph. A short line that ends a sentence ends a paragraph, and a heading is a short line
+    on its own: both get a blank line after them. Text with one paragraph per line is split at each line."""
+    out = []
+    for block in re.split(r'\n\s*\n', text):
+        lines = [ln.rstrip() for ln in block.split('\n')]
+        long_lines = sorted(len(ln.strip()) for ln in lines if len(ln.strip()) > 30)
+        if len(lines) < 4 or not long_lines:
+            out.append(block)
+            continue
+        full = long_lines[len(long_lines) // 2]   # the length of a full line
+        if full > 200:
+            out.append('\n\n'.join(lines))
+            continue
+        new = [lines[0]]
+        for prev, line in zip(lines, lines[1:]):
+            p, ln = prev.strip(), line.strip()
+            starts = re.match(r'[A-Z0-9(\u201c"\u2018\u25a0\u25cf\u2022\u25aa]', ln)
+            ends = bool(SENTENCE_END.search(p))
+            # a run-in heading in small capitals comes out in lower case ("eDnA samples. Twelve sites ...")
+            run_in = re.search(r'[.!?]["\u201d\u2019)]?$', p) and len(p) < 0.7 * full and not ABBREV_END.search(p) and \
+                re.match(r'[a-z][A-Za-z-]*(?: [A-Za-z-]+){0,5}\. [A-Z0-9]', ln)
+            para_end = ends and len(p) < 0.8 * full
+            heading = _heading_line(p, full) or (ends and _heading_line(ln, full))
+            if p and ((starts and (para_end or heading)) or run_in):
+                new.append('')
+            new.append(line)
+        out.append('\n'.join(new))
+    return '\n\n'.join(out)
 
 
 def split_sentences(text, source=''):
     text = text.replace('\r\n', '\n').replace('\r', '\n').replace('\u00ad', '')
     text = FURNITURE.sub('', text)
     text = re.sub(r'(?<=[a-z])-\n(?=[a-z])', '', text)
+    text = rebuild_paragraphs(text)
     out = []
     paras = []
     for para in re.split(r'\n\s*\n', text):
@@ -188,7 +244,9 @@ def split_sentences(text, source=''):
         else:
             paras.append(para)
     for pi, para in enumerate(paras):
-        ref = bool(REFERENCE_WORK.search(para))
+        # a paragraph about specimens (a reference library) is left out, unless it is also about the eDNA
+        # samples (tissue used to test an assay, say); then only its sentences about specimens are
+        ref = bool(REFERENCE_WORK.search(para)) and not EDNA_WORK.search(para)
         merged = []
         for piece in SENT_SPLIT.split(para):
             if merged and ABBREV_END.search(merged[-1]):
@@ -196,7 +254,7 @@ def split_sentences(text, source=''):
             else:
                 merged.append(piece)
         for s in merged:
-            out.append(Sentence(s, pi, len(out), ref, source))
+            out.append(Sentence(s, pi, len(out), ref or bool(REFERENCE_WORK.search(s) and not EDNA_WORK.search(s)), source))
     return out
 
 

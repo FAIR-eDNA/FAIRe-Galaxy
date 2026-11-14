@@ -1,5 +1,5 @@
 FAIRe mapper: find method details 0.9.0
-Read methods.txt: the Methods section (2297 words): 99 sentences.
+Read methods.txt: the Methods section (2297 words): 92 sentences.
 59 values proposed for 52 FAIRe terms:
   Field and laboratory hygiene: sterilise_method
   Sample collection: samp_collect_device, samp_size, samp_size_unit
