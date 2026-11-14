@@ -26,7 +26,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
 
 ## Status
 
-- Version 0.8.0. `planemo lint`: passes with no warnings. `pyflakes`: clean.
+- Version 0.9.0. `planemo lint`: passes with no warnings. `pyflakes`: clean.
 - Goes to Galaxy Australia as an early version with the wrapped FAIRe tools (decided 6 November
   2026). Each tool's help starts with a note saying so, which asks users to check the results and
   send problems to the Galaxy Australia help desk (to confirm with Galaxy Australia, question 8).
@@ -43,6 +43,26 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   independent answer keys (`dev/faire_mapper_real_datasets/`, `dev/faire_mapper_australian_datasets/`,
   summarised below), and end to end on CSIRO's SEA-MES data (`dev/faire_mapper_seames/`). Not yet
   tried on datasets from Australian labs that already have a FAIRe version.
+- New in 0.9.0 (14 November 2026), from the FAIRe team's second review of the Shiny app, which asked
+  whether more than primers could be found in the methods:
+  - New tool **FAIRe mapper: find method details** (`faire_method_details.py`). It reads the methods
+    (text or PDF; for a whole paper, its Methods section and supplementary methods) and proposes values
+    for the FAIRe terms about filtration, DNA extraction, PCR, library preparation, sequencing and
+    bioinformatics, each with the sentence it came from, in a review sheet. It works by rules and a
+    vocabulary of instruments, kits, software and databases (`method_details/vocabulary.tsv`), not a
+    language model. See "Method details from the methods text" below, and the trial in
+    `dev/faire_method_details/`.
+  - **Apply mapping** takes several tables of values for the whole project, and reads the reviewed
+    sheet from find method details as one of them: accepted and changed values are applied, and rows
+    with no decision are listed in the log. A term given in two tables keeps its first value, with a
+    warning if the values differ.
+- New in 0.8.1 (14 November 2026), from the FAIRe team's second review of the Shiny app: *Find
+  primers* calls its primer table the *reference table of primers to check against*, says that the
+  one that comes with the tool holds about 550 published pairs, most from Takahashi et al. (2023) and
+  Wilderlab's assays, and that checking against it keeps primer names as in the literature and
+  catches typos in sequences. Its choices are the reference table, the reference table and your own,
+  or your own only. The help now names Wilderlab's assays among the table's sources. No change to
+  what the tools do.
 - New in 0.8.0 (13 November 2026), from the FAIRe team's trial of the Shiny app:
   - Methods can be a PDF. *Find primers* (and the methods script, `faire_mapper_methods.py`) read
     the text of a PDF with pypdf, which all the mapper tools now list as a requirement. The PDF's
@@ -242,10 +262,12 @@ model is used, as agreed; the tools are built so one can be added later (see bel
 | `faire_mapper_kinds.py` | Says what kind of input a table looks like (sample, OTU, taxonomy, library table and others) and where it goes |
 | `faire_mapper_identify.py` | Reports on every uploaded file (`faire_mapper_identify.xml`) |
 | `faire_mapper_text.py` | Reads methods given as text or PDF, and recognises FASTA files by their content |
+| `faire_method_details.py` | Proposes values for the method terms from methods text, by rules, in a review sheet, and reads the reviewed sheet for apply mapping (`faire_method_details.xml`) |
+| `method_details/vocabulary.tsv` | The instruments, thermocyclers, master mixes, extraction kits, filters, sampling devices, software, pipelines, reference databases and sequencing facilities find method details knows, with their makers, OBI identifiers and the steps each program does; one row per thing, so it is easy to add to |
 | `faire_mapper_library.py` | Reads library tables (run reports and run sheets) for apply mapping |
 | `faire_primers.py` | Builds and updates primer tables, and finds primer pairs for names, citations or methods text (`faire_primers_find.xml`, `faire_primers_build.xml`) |
 | `primers/faire_primers.tsv` | The bundled primer table (553 pairs) and its sources and update steps (`primers/README.md`). Most rows come from Takahashi et al. 2023 and keep its CC BY-NC 4.0 licence |
-| `faire_mapper_identify.xml`, `faire_mapper_profile.xml`, `faire_mapper_map.xml`, `faire_mapper_apply.xml`, `faire_mapper_model.xml`, `macros.xml` | Galaxy tool definitions |
+| `faire_mapper_identify.xml`, `faire_mapper_profile.xml`, `faire_mapper_map.xml`, `faire_mapper_apply.xml`, `faire_mapper_model.xml`, `faire_method_details.xml`, `macros.xml` | Galaxy tool definitions |
 | `checklist/FAIRe_checklist_v1.0.2.xlsx` | FAIRe checklist, copied unchanged from FAIR-eDNA/FAIRe_checklist |
 | `mixs_dwc_terms.tsv` | The MIxS (v7.0.1, CC0) and Darwin Core (CC BY 4.0) terms that FAIRe lacks, suggested for columns with no FAIRe term; built by `dev/faire_mapper_other_terms/build_terms.py`, with each standard's attribution at its top |
 | `checklist/FAIRe_checklist_v1.0.2_FULLtemplate.xlsx` | FAIRe full template, as bundled with FAIRe-ator (the layout apply mapping writes) |
@@ -608,6 +630,38 @@ written in the text are suggested too, marked as stated, and named from the tabl
 as the adjudication script:
 `--model`, `--answers_from`, `--dry_run`. Methods in Word files need converting to text first (for
 example with pandoc).
+
+### Method details from the methods text, by rules
+
+`faire_method_details.py` (Galaxy: **FAIRe mapper: find method details**) does without a model what
+`faire_mapper_methods.py` does with one, for the terms about how the samples were processed. It reads
+the methods sentence by sentence and proposes a value for each FAIRe term it recognises, with the
+sentence it came from:
+
+- *Filtration and storage*: the sampling device, the volumes collected and filtered, the filter's pore
+  size, diameter, material and name, active or passive filtration, a description of the filtration,
+  and the storage temperature before filtering (samp_store_temp) and after it (prepped_samp_store_temp).
+- *Extraction*: the kit, its lysis and separation, the changes to its protocol, any clean-up kit.
+- *PCR*: the programme in the FAIRe format (initial denaturation:95_15;denaturation:95_0.5;
+  annealing:54_1.5;elongation:72_1.5;final elongation:72_10;40), annealing temperature, cycles,
+  reaction and template volumes, replicates, master mix or recipe, thermocycler, inhibition tests; the
+  pcr2 terms for a second PCR that adds the indexes.
+- *Sequencing*: one-step or two-step indexing, instrument (with its OBI identifier where known),
+  platform, kit or flow cell, read layout, facility, library checks.
+- *Bioinformatics*: the program for each step, with its version and settings (assigned by the step
+  its sentence describes), the cut-offs, the reference databases with their version or date, how
+  taxonomy was assigned and its thresholds, the lowest common ancestor step, and the screening of taxa
+  found in controls, outside their range or outside the target.
+
+The rules look for named things in the vocabulary and for the ways methods usually state a value, each
+seen in at least two of the texts the rules were written on. For a whole paper, only the Methods section
+and any supplementary methods are read. Every value goes to the review sheet, where the person accepts,
+rejects or changes it; the sheet also lists the method terms not found, for the person to fill in.
+
+On the held-out paper of the trial (West et al. 2024, read whole), the tool proposed 40 of the 52 values
+written by hand from the paper as the rules stood, and 44 after three general faults the run showed were
+fixed, with none of its proposals wrong; the paper comes from the same group as two of the development
+texts, so methods from other laboratories are likely to do less well (`dev/faire_method_details/`).
 
 ## How accurate is it?
 
@@ -994,7 +1048,11 @@ and one apply mapping test (MIxS and Darwin Core terms), and one of each for the
 propose mapping, 35 apply mapping and 3 identify tests pass in Galaxy `release_25.0` here, and so does
 the propose-mapping workflow test. 0.7.2 adds one apply mapping test (rows with no decision); all 15
 propose mapping and 36 apply mapping tests pass in Galaxy `release_25.0` here, and so do both workflow
-tests. 0.7.3 checks the table's name in an existing propose mapping test.
+tests. 0.7.3 checks the table's name in an existing propose mapping test. 0.9.0 (14 November) adds
+find method details with 2 tests (the SEA-MES methods as text, and a short PDF with no Methods
+heading) and one apply mapping test (two tables of project values, one of them a reviewed sheet from
+find method details); the 2 find method details, all 37 apply mapping and 5 find primers tests pass in
+Galaxy `release_25.0` here, and so do both workflow tests.
 
 | Tool | Test | Checks | Result |
 |---|---|---|---|

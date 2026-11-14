@@ -16,7 +16,7 @@ for (f in c("runner.R", "tools.R", "helpers.R", "ui.R"))
 
 options(shiny.maxRequestSize = 500 * 1024^2, DT.fillContainer = FALSE)
 
-APP_VERSION <- "0.3.0"
+APP_VERSION <- "0.4.0"
 DEMO_DIR <- file.path(getOption("faire.app_dir"), "demo")
 
 theme <- bs_theme(version = 5, primary = "#1f6f78", secondary = "#5b6770", success = "#3c8d5a",
@@ -28,7 +28,7 @@ ui <- page_navbar(
   title = tags$span(icon("dna"), "FAIRe tools"),
   window_title = "FAIRe tools",
   theme = theme,
-  header = tags$head(tags$link(rel = "stylesheet", href = "styles.css")),
+  header = tags$head(tags$link(rel = "stylesheet", href = "styles.css"), tags$script(src = "app.js")),
   sidebar = sidebar(
     width = 300, open = "desktop",
     tags$h6("Workbook in use"),
@@ -66,7 +66,8 @@ server <- function(input, output, session) {
   rv <- reactiveValues(files = character(), workbook = NULL, workbook_from = "", res = list(), runs = list(),
                        identify = NULL, map = NULL, map_args = NULL, profile = NULL, crosswalk = NULL,
                        crosswalk_from = "", review_version = 0, review_saved = NULL, model = NULL,
-                       primers = NULL, pv = data.frame(term = character(), value = character(), assay = character()),
+                       primers = NULL, details = NULL,
+                       pv = data.frame(term = character(), value = character(), assay = character()),
                        otu_n = 1, lib_n = 1, block_version = 0, demo = FALSE, eo_mapping = NULL)
 
   # ------------------------------------------------------------ shared helpers
@@ -126,14 +127,15 @@ server <- function(input, output, session) {
     n <- names(rv$files)
     if (is.null(pattern) && is.null(kinds)) return(n)
     by_name <- if (is.null(pattern)) rep(FALSE, length(n)) else grepl(pattern, n, ignore.case = TRUE)
-    by_kind <- if (is.null(kinds)) rep(FALSE, length(n)) else vapply(n, function(f) kind_of(f) %in% kinds, logical(1))
+    by_kind <- if (is.null(kinds)) rep(FALSE, length(n)) else vapply(n, function(f) any(kind_of(f) %in% kinds), logical(1))
     n[by_name | by_kind]
   }
+  # What a file was found to be: one kind per sheet of a workbook.
   kind_of <- function(name) {
     idf <- rv$identify
     if (is.null(idf)) return("")
-    k <- idf$kind[idf$file == name]
-    if (length(k)) k[1] else ""
+    k <- unique(idf$kind[idf$file == name])
+    if (length(k)) k else ""
   }
   guess_file <- function(kind) {
     idf <- rv$identify
@@ -216,10 +218,14 @@ server <- function(input, output, session) {
     tagList(
       tags$ul(class = "lib", lapply(names(rv$files), function(n) {
         k <- kind_of(n)
+        k1 <- if (length(k) > 1) sprintf("%d kinds of sheet", length(k)) else k
         ic <- if (grepl("xlsx$", n, ignore.case = TRUE)) "file-excel" else if (grepl("pdf$", n, ignore.case = TRUE)) "file-pdf"
-              else if (k == "sequences (FASTA)" || grepl("\\.(fa|fasta|fna|fas)$", n, ignore.case = TRUE)) "dna"
+              else if ("sequences (FASTA)" %in% k || grepl("\\.(fa|fasta|fna|fas)$", n, ignore.case = TRUE)) "dna"
               else if (grepl("txt$|md$", n, ignore.case = TRUE)) "file-lines" else "file-csv"
-        tags$li(title = n, icon(ic), tags$span(class = "fname", n), if (nzchar(k)) tags$span(class = "kind", k),
+        tags$li(title = n, icon(ic),
+                tags$span(class = "fname", n,
+                          if (nzchar(k1[1])) tags$span(class = "kind", title = paste(k, collapse = ", "), k1)),
+                preview_button(n),
                 tags$button(type = "button", class = "rm-file", title = paste("Remove", n), `aria-label` = paste("Remove", n),
                             onclick = sprintf("Shiny.setInputValue('remove_file', %s, {priority: 'event'})",
                                               jsonlite::toJSON(n, auto_unbox = TRUE)),
@@ -238,6 +244,98 @@ server <- function(input, output, session) {
       if (!nrow(rv$identify)) rv$identify <- NULL
     }
     showNotification(paste("Removed", n), type = "message", duration = 3)
+  })
+
+  # ------------------------------------------------------------ a look inside a file
+  preview_button <- function(n, label = NULL) {
+    tags$button(type = "button", class = if (is.null(label)) "look-file" else "look-file with-label",
+                title = paste("Look inside", n), `aria-label` = paste("Look inside", n),
+                onclick = sprintf("Shiny.setInputValue('preview_file', %s, {priority: 'event'})",
+                                  jsonlite::toJSON(n, auto_unbox = TRUE)),
+                icon("eye"), label)
+  }
+  col_letters <- function(j) vapply(j, function(i) {
+    s <- ""
+    while (i > 0) { r <- (i - 1) %% 26; s <- paste0(LETTERS[r + 1], s); i <- (i - 1) %/% 26 }
+    s
+  }, character(1))
+  raw_table_ui <- function(t, letters = FALSE) {
+    if (is.null(t)) return(help_text("The app could not read this as a table."))
+    d <- t$rows
+    cut <- function(x) if (nchar(x) > 40) paste0(substr(x, 1, 39), "\u2026") else x
+    tagList(
+      div(class = "table-responsive preview-raw",
+          tags$table(class = "table table-sm table-bordered",
+                     tags$thead(tags$tr(tags$th("Row"), lapply(seq_along(d), function(j)
+                       tags$th(if (letters) col_letters(j) else j)))),
+                     tags$tbody(lapply(seq_len(nrow(d)), function(i)
+                       tags$tr(tags$th(i), lapply(d[i, ], function(x) tags$td(title = if (nchar(x) > 40) x, cut(x)))))))),
+      if (t$more_cols) help_text(sprintf("And %d more columns.", t$more_cols)))
+  }
+  preview_body <- function(n, p) {
+    kind <- sniff_file(p)
+    table_note <- help_text("The first rows as they are in the file. Check which row holds the column names: if it",
+                            "is not row 1, give its number as the row holding the column headers when you map the table.")
+    switch(kind,
+      pdf = {
+        wd <- file.path(sd, "preview")
+        dir.create(wd, showWarnings = FALSE)
+        out <- file.path(wd, "pdf.json")
+        run_python(file.path(app_dir(), "python", "pdf_preview.py"), c(tool_path("faire_mapper"), p, out), wd, timeout = 120)
+        j <- if (file.exists(out)) jsonlite::fromJSON(out) else list(error = "the PDF could not be read")
+        tagList(
+          tags$p(tags$a(href = file_href(p), target = "_blank", icon("file-pdf"), "Open the PDF"),
+                 if (!is.null(j$pages)) sprintf(" (%d pages)", j$pages)),
+          if (!is.null(j$error)) div(class = "res-fail", j$error)
+          else if (!nzchar(trimws(j$text))) div(class = "res-fail", "This PDF has no text to read: its pages are",
+                                                "pictures (a scan). Save it as text first, or type the primer names.")
+          else tagList(help_text(paste0("Its text as the tools read it", if (isTRUE(j$cut)) " (the first part)", ".")),
+                       tags$pre(class = "preview-text", j$text)))
+      },
+      workbook = {
+        sh <- xlsx_sheets(p)
+        if (!length(sh)) return(help_text("The app could not read this workbook."))
+        shown <- head(sh, 10)
+        tagList(
+          help_text(sprintf("A workbook with %d sheet%s.", length(sh), if (length(sh) > 1) "s" else ""),
+                    "The first rows of each sheet as they are in the file. Check which row holds the column names:",
+                    "if it is not row 1 (FAIRe workbooks have them in row 3), give its number as the row holding the",
+                    "column headers when you map the table."),
+          do.call(bslib::navset_tab, lapply(shown, function(x)
+            bslib::nav_panel(x, raw_table_ui(preview_raw_table(p, "workbook", sheet = x), letters = TRUE)))),
+          if (length(sh) > length(shown)) help_text(sprintf("And %d more sheets.", length(sh) - length(shown))))
+      },
+      fasta = {
+        l <- preview_lines(p, 12)
+        l <- ifelse(nchar(l) > 100, paste0(substr(l, 1, 99), "\u2026"), l)
+        tagList(help_text("A FASTA file of sequences: each starts with a line beginning with >. Its first lines:"),
+                tags$pre(class = "preview-text", paste(l, collapse = "\n")))
+      },
+      tab = , csv = tagList(
+        help_text(if (kind == "tab") "A table with tabs between its columns." else "A table with commas between its columns."),
+        table_note, raw_table_ui(preview_raw_table(p, kind))),
+      {
+        l <- preview_lines(p, 120)
+        txt <- paste(l, collapse = "\n")
+        cut <- nchar(txt) > 6000
+        tagList(help_text("Text. Its first", if (cut || length(l) == 120) "part" else "lines", "as they are in the file:"),
+                tags$pre(class = "preview-text", if (cut) paste0(substr(txt, 1, 6000), "\u2026") else txt))
+      })
+  }
+  observeEvent(input$preview_file, {
+    n <- input$preview_file
+    p <- fpath(n)
+    if (is.null(p)) return()
+    idf <- rv$identify
+    said <- if (!is.null(idf) && n %in% idf$file) {
+      i <- which(idf$file == n)
+      tags$p(class = "preview-kind", tags$b("Identify your files says: "),
+             paste(unique(idf$kind[i]), collapse = ", "), if (nzchar(idf$why[i[1]])) paste0(" (", idf$why[i[1]], ")"))
+    }
+    body <- withProgress(message = "Opening the file", value = 0.5, preview_body(n, p))
+    showModal(modalDialog(
+      title = tagList(icon("eye"), " ", n), size = "xl", easyClose = TRUE, footer = modalButton("Close"),
+      tags$p(class = "preview-kind", fmt_bytes(file.size(p))), said, body))
   })
 
   output$current_workbook <- renderUI({
@@ -308,7 +406,8 @@ server <- function(input, output, session) {
       k <- d$kind[i]
       ch <- unique(c(names(KIND_PLACE), k))
       tags$tr(
-        tags$td(tags$b(d$file[i]), if (!is.na(d$sheet[i] %||% NA) && nzchar(d$sheet[i])) tags$div(class = "examples", paste("sheet", d$sheet[i]))),
+        tags$td(tags$b(d$file[i]), if (!is.na(d$sheet[i] %||% NA) && nzchar(d$sheet[i])) tags$div(class = "examples", paste("sheet", d$sheet[i])),
+                tags$div(preview_button(d$file[i], "Look inside"))),
         tags$td(tags$select(class = "form-select form-select-sm kind-select",
                             `aria-label` = paste("What", d$file[i], "is"),
                             onchange = sprintf("Shiny.setInputValue('set_kind', {row: %d, kind: this.value}, {priority: 'event'})", i),
@@ -319,7 +418,7 @@ server <- function(input, output, session) {
     })
     tagList(
       help_text("Check what each file seems to be. If one is wrong, choose the right kind: the app then offers the",
-                "file in the right places."),
+                "file in the right places. Look inside a file to see its first rows or its text."),
       div(class = "table-responsive",
           tags$table(class = "table table-sm identify",
                      tags$thead(tags$tr(tags$th("File"), tags$th(term_label("Kind", "file_kind")), tags$th("Why"),
@@ -696,7 +795,7 @@ server <- function(input, output, session) {
   # ------------------------------------------------------------ mapper d: primers and project values
   output$pr_texts_ui <- renderUI({
     ch <- file_names("\\.(txt|md|pdf)$", kinds = "text")
-    sel <- isolate(input$pr_texts) %||% (if (rv$demo) intersect("methods.txt", ch) else ch[vapply(ch, kind_of, "") == "text"])
+    sel <- isolate(input$pr_texts) %||% (if (rv$demo) intersect("methods.txt", ch) else ch[vapply(ch, function(f) identical(kind_of(f), "text"), logical(1))])
     tagList(
       selectInput("pr_texts", term_label("Your methods (text or PDF)", "methods"), ch, selected = sel, multiple = TRUE),
       if (!length(ch)) help_text("Add your methods to Your files (left), as text or a PDF."))
@@ -707,7 +806,7 @@ server <- function(input, output, session) {
     if (!length(f)) return(NULL)
     help_text("Open:", lapply(f, function(n) tags$span(file_link(fpath(n)), " ")))
   })
-  output$pr_own_ui <- renderUI(selectInput("pr_own", term_label("My primer table", "primer_table"),
+  output$pr_own_ui <- renderUI(selectInput("pr_own", term_label("My own primer table", "own_primer_table"),
                                            c("Choose a file" = "", file_names("\\.(tsv|tab|txt)$", kinds = "primer table"))))
   observeEvent(input$run_primers, {
     texts <- unname(unlist(lapply(input$pr_texts, fpath)))
@@ -728,19 +827,45 @@ server <- function(input, output, session) {
     tagList(
       result_ui(res, show_files = TRUE),
       if (!is.null(rv$primers) && nrow(rv$primers)) tagList(
-        help_text("Choose a primer pair, check it against the primary reference, and add its details to the",
-                  "values for the whole project for one of your assays."),
+        div(class = "how-to",
+            tags$b("Choose the primer pair you used"),
+            tags$ol(
+              tags$li("Each row is a published primer pair that matches your methods (or the names you typed), with",
+                      "the words it was found from. One primer name can match several published pairs, so there can be",
+                      "more rows than assays."),
+              tags$li("Click the row of the pair you used, and check it against the paper it cites. Choose one pair",
+                      "per assay."),
+              tags$li("Give the assay's name below, the same as for its OTU table in e. Write the workbook (for example",
+                      "Fish16S). Leave it empty if the project has one assay."),
+              tags$li("Press Add this pair to the project values. The pair's names, sequences, gene, target taxon and",
+                      "references go into the table on the right: check them there, and change any that do not fit",
+                      "your study."),
+              tags$li("For a second assay (say 18S as well as 16S), click its pair, give its name and add it too."))),
         DTOutput("primers_table"),
+        uiOutput("pr_chosen"),
         layout_columns(col_widths = c(6, 6),
-                       textInput("pr_assay", "For assay", value = if (rv$demo) "Fish16S" else ""),
-                       div(class = "pt-4", actionButton("pr_add", "Add to the project values", icon = icon("arrow-right"))))))
+                       textInput("pr_assay", term_label("Assay this pair was used for", "primer_assay"),
+                                 value = if (rv$demo) "Fish16S" else "", placeholder = "for example Fish16S"),
+                       div(class = "pt-4", actionButton("pr_add", "Add this pair to the project values", icon = icon("arrow-right"))))))
   })
   output$primers_table <- renderDT({
     d <- rv$primers; req(d)
-    keep <- intersect(c("query", "assay_name", "target_gene", "pcr_primer_name_forward", "pcr_primer_forward",
-                        "pcr_primer_name_reverse", "pcr_primer_reverse", "pcr_primer_reference_forward", "notes"), names(d))
-    datatable(d[, keep], rownames = FALSE, selection = "single", class = "compact stripe",
+    cols <- c(query = "Found from", matched_by = "Found by", assay_name = "Assay", target_gene = "Gene",
+              pcr_primer_name_forward = "Forward primer", pcr_primer_forward = "Forward sequence",
+              pcr_primer_name_reverse = "Reverse primer", pcr_primer_reverse = "Reverse sequence",
+              pcr_primer_reference_forward = "Reference", notes = "Notes")
+    keep <- intersect(names(cols), names(d))
+    datatable(d[, keep], rownames = FALSE, selection = "single", class = "compact stripe", colnames = unname(cols[keep]),
               options = list(scrollX = TRUE, pageLength = 5, dom = "tip"))
+  })
+  output$pr_chosen <- renderUI({
+    i <- input$primers_table_rows_selected
+    if (!length(i)) return(help_text("No pair chosen yet: click a row of the table."))
+    r <- rv$primers[i, ]
+    nm <- function(x) if (x %in% names(r) && !is.na(r[[x]])) r[[x]] else ""
+    div(class = "res-ok", icon("circle-check"),
+        sprintf(" Chosen: %s / %s (%s).", nm("pcr_primer_name_forward"), nm("pcr_primer_name_reverse"),
+                if (nzchar(nm("target_gene"))) nm("target_gene") else "gene not given"))
   })
   observeEvent(input$pr_add, {
     i <- input$primers_table_rows_selected
@@ -755,10 +880,18 @@ server <- function(input, output, session) {
     showNotification(sprintf("%d values added for %s.", length(f), if (nzchar(assay)) assay else "every assay"), type = "message")
   })
 
+  # The project terms of the chosen section of the checklist (PCR and primers first), or all of them
+  # grouped by section.
   observe({
     t <- checklist_terms()
-    pm <- t$term[t$sheet == "projectMetadata"]
-    updateSelectizeInput(session, "pv_term", choices = c("", pm), server = TRUE)
+    t <- t[grepl("projectMetadata", t$sheet), , drop = FALSE]
+    sec <- input$pv_section %||% "PCR"
+    order <- c("PCR", "Library preparation sequencing", "Bioinformatics", "Project", "Data management",
+               "Targeted assay detection", "Sample collection")
+    if (sec != "all") t <- t[t$section == sec, , drop = FALSE]
+    groups <- intersect(c(order, setdiff(unique(t$section), order)), unique(t$section))
+    ch <- setNames(lapply(groups, function(g) { x <- t$term[t$section == g]; setNames(as.list(x), x) }), groups)
+    updateSelectizeInput(session, "pv_term", choices = ch, selected = character(), server = FALSE)
   })
   output$pv_table <- renderDT({
     datatable(rv$pv, rownames = FALSE, editable = list(target = "cell"), class = "compact stripe",
@@ -780,14 +913,96 @@ server <- function(input, output, session) {
     rv$pv <- rbind(rv$pv, data.frame(term = input$pv_term, value = input$pv_value, assay = trimws(input$pv_assay)))
     updateTextInput(session, "pv_value", value = "")
   })
-  output$pv_file_ui <- renderUI(selectInput("pv_file", NULL, c("Choose a file" = "", file_names("\\.(tsv|tab|txt|csv)$", kinds = "project values"))))
+  output$pv_file_ui <- renderUI(selectInput("pv_file", NULL, c("Choose a file" = "", file_names("\\.(tsv|tab|txt|csv|xlsx)$", kinds = "project values"))))
   observeEvent(input$pv_load, {
     p <- fpath(input$pv_file); req(p)
-    d <- if (galaxy_ext(p) == "csv") utils::read.csv(p, colClasses = "character", check.names = FALSE) else read_tsv(p)
-    if (is.null(d) || !all(c("term", "value") %in% names(d)))
-      return(showNotification("The table needs columns named term and value.", type = "error"))
-    if (!"assay" %in% names(d)) d$assay <- ""
-    rv$pv <- d[, c("term", "value", "assay")]
+    if (galaxy_ext(p) == "xlsx") {
+      if (!"Method details" %in% xlsx_sheets(p))
+        return(showNotification("This workbook is not a review sheet from find method details.", type = "error"))
+      d <- read_method_review(p)
+    } else {
+      d <- if (galaxy_ext(p) == "csv") utils::read.csv(p, colClasses = "character", check.names = FALSE) else read_tsv(p)
+      if (is.null(d) || !all(c("term", "value") %in% names(d)))
+        return(showNotification("The table needs columns named term and value.", type = "error"))
+      if (!"assay" %in% names(d)) d$assay <- ""
+    }
+    add_values(d[, c("term", "value", "assay")])
+  })
+  # Values added to the project values; a term already there for the same assay keeps its value.
+  add_values <- function(d) {
+    d[] <- lapply(d, function(x) trimws(as.character(x)))
+    d <- d[nzchar(d$term) & nzchar(d$value), , drop = FALSE]
+    have <- paste(rv$pv$term, rv$pv$assay)
+    dup <- paste(d$term, d$assay) %in% have
+    rv$pv <- rbind(rv$pv, d[!dup, , drop = FALSE])
+    showNotification(paste0(sum(!dup), " values added", if (any(dup)) paste0("; ", sum(dup), " left out, as their terms ",
+                            "already have a value (delete it first to replace it)") else "", "."),
+                     type = "message", duration = 6)
+  }
+
+  # ------------------------------------------------------------ mapper d: other method details
+  observeEvent(input$run_details, {
+    texts <- unname(unlist(lapply(input$pr_texts, fpath)))
+    if (!length(texts)) return(showNotification("Choose your methods (under Look for primers in: My methods).", type = "error"))
+    assays <- unique(rv$pv$assay[nzchar(rv$pv$assay)])
+    res <- with_run("Reading the methods", run_method_details(sd, texts, input$pr_texts, paste(assays, collapse = ",")))
+    rv$res$details <- res
+    rv$details <- if (res$ok) read_tsv(res$outputs$proposals) else NULL
+  })
+  output$details_result <- renderUI({
+    res <- rv$res$details
+    if (is.null(res)) return(NULL)
+    d <- rv$details
+    tbl <- NULL
+    if (!is.null(d) && nrow(d)) {
+      ck <- checklist_terms()
+      items <- lapply(seq_len(nrow(d)), function(i) {
+        desc <- ck$description[match(d$term[i], ck$term)]
+        div(class = "md-item",
+            div(class = "md-head",
+                tags$input(type = "checkbox", id = paste0("md_keep_", i), class = "md-keep",
+                           `aria-label` = paste("Keep", d$term[i])),
+                tags$label(`for` = paste0("md_keep_", i), tags$b(d$term[i])),
+                tags$span(class = "md-section", d$section[i]),
+                if (!is.na(desc) && nzchar(desc)) bslib::tooltip(
+                  tags$span(class = "term-help", tabindex = "0", `aria-label` = paste("What is", d$term[i]),
+                            icon("circle-question")), desc)),
+            div(class = "md-fields",
+                textAreaInput(paste0("md_val_", i), NULL, d$value[i], rows = if (nchar(d$value[i]) > 70) 3 else 1),
+                textInput(paste0("md_assay_", i), NULL, d$assay[i], placeholder = "assay (all)")),
+            if (nzchar(d$note[i])) div(class = "md-note", d$note[i]),
+            tags$details(class = "md-evidence", tags$summary(substr(d$evidence[i], 1, 140),
+                                                             if (nchar(d$evidence[i]) > 140) "…"),
+                         if (nchar(d$evidence[i]) > 140) d$evidence[i]))
+      })
+      tbl <- tagList(
+        help_text("Tick the values to keep, after checking each against its sentence (open a sentence to read all of",
+                  "it). Correct a value in its box if it is nearly right. When a term has several values (two storage",
+                  "temperatures, say), keep the one for your eDNA samples. Give the assay only for a value that",
+                  "holds for one assay."),
+        div(class = "md-list", items),
+        div(class = "btn-row",
+            actionButton("md_add", "Add the ticked values to the project values", icon = icon("arrow-right")),
+            actionLink("md_all", "Tick all"), actionLink("md_none", "Untick all")),
+        help_text("Or download the review sheet, fill it in with Excel and load it on the right; it also lists the",
+                  "method terms not found, to fill in."))
+    } else if (res$ok) {
+      tbl <- help_text("No method details found in these files.")
+    }
+    tagList(result_ui(res), tbl)
+  })
+  observeEvent(input$md_all, session$sendCustomMessage("md_tick", TRUE))
+  observeEvent(input$md_none, session$sendCustomMessage("md_tick", FALSE))
+  observeEvent(input$md_add, {
+    d <- rv$details; req(d)
+    keep <- as.integer(input$md_kept %||% integer())
+    keep <- keep[keep >= 1 & keep <= nrow(d)]
+    if (!length(keep)) return(showNotification("Tick the values to keep first.", type = "error"))
+    add_values(data.frame(term = d$term[keep],
+                          value = vapply(keep, function(i) input[[paste0("md_val_", i)]] %||% d$value[i], character(1)),
+                          assay = vapply(keep, function(i) input[[paste0("md_assay_", i)]] %||% "", character(1)),
+                          stringsAsFactors = FALSE))
+    session$sendCustomMessage("md_tick", FALSE)
   })
   # The mandatory project terms no file covers yet (propose mapping's list), less those given here.
   output$pv_missing <- renderUI({
