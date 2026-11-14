@@ -1192,11 +1192,12 @@ def read_review_sheet(path):
     Accept gives the proposed value, Change or a value of your own gives yours, and a row with neither
     is left for review (apply mapping lists it)."""
     from openpyxl import load_workbook
-    wb = load_workbook(path, read_only=True, data_only=True)
-    if SHEET not in wb.sheetnames:
+    with open(path, 'rb') as fh:   # by content: Galaxy names its files dataset_N.dat
+        wb = load_workbook(fh, read_only=True, data_only=True)
+        rows = list(wb[SHEET].iter_rows(values_only=True)) if SHEET in wb.sheetnames else None
+    if rows is None:
         raise SystemExit(f'ERROR: {Path(path).name} has no sheet called {SHEET}, so it is not a review sheet from find '
                          'method details')
-    rows = list(wb[SHEET].iter_rows(values_only=True))
     if not rows:
         return []
     head = [str(h or '').strip() for h in rows[0]]
@@ -1231,9 +1232,14 @@ def read_review_sheet(path):
 
 
 def is_review_sheet(path):
+    """True for a review sheet from this tool, whatever the file's name."""
     try:
-        from openpyxl import load_workbook
-        return SHEET in load_workbook(path, read_only=True).sheetnames
+        with open(path, 'rb') as fh:
+            if fh.read(4) != b'PK\x03\x04':
+                return False
+            fh.seek(0)
+            from openpyxl import load_workbook
+            return SHEET in load_workbook(fh, read_only=True).sheetnames
     except Exception:
         return False
 

@@ -31,9 +31,11 @@ python '$__tool_directory__/faire_mapper_apply.py'
         '--utc_offset=$utc_offset'
     #end if
     $include_review
-    #for $pv in $project_values:
-        --project_values '$pv'
-    #end for
+    #if $project_values:
+        #for $pv in $project_values:
+            --project_values '$pv'
+        #end for
+    #end if
     #if $req_lev:
         --req_lev 'M,$req_lev'
     #else:
