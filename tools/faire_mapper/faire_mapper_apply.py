@@ -78,7 +78,8 @@ BEFORE_SUBMITTING = ('Check the workbook before you submit it anywhere. FAIRe ma
 
 class Log:
     def __init__(self):
-        self.sections = {'Inputs': [], 'Columns written': [], 'Project values': [], 'Commonly confused terms': [],
+        self.sections = {'Inputs': [], 'Columns written': [], 'Project values': [], 'Values from find method details': [],
+                         'Commonly confused terms': [],
                          'Library tables': [],
                          'OTU and taxonomy tables': [], 'Left out': [], 'Warnings': [],
                          'Mandatory terms with no value': []}
@@ -777,6 +778,15 @@ def build_workbook(args, df, rows, terms, by_name, log, others=()):
                 log.add('Project values', f'{Path(path).name}: a reviewed sheet from find method details, with {done} '
                                           f'values accepted or given'
                         + (f' and {len(recs) - done} not yet decided' if len(recs) > done else ''))
+                # Where each value came from, so a curator can see what a machine proposed and a person confirmed
+                how = {'accepted': 'proposed by find method details and accepted by the reviewer',
+                       'changed': 'proposed by find method details and changed by the reviewer (proposed: {p})',
+                       'given': 'given by the reviewer in the review sheet'}
+                for r in recs:
+                    if r['status'] == 'confirmed':
+                        label = r['term'] + (' (' + r['assay'] + ')' if r['assay'] else '')
+                        log.add('Values from find method details',
+                                f"{label} = {r['value'][:80]}: " + how[r['decision']].format(p=r['proposed'][:60]))
                 records += recs
                 continue
             pv = fm.read_table(path).astype(object).where(lambda x: x.notna(), '')
@@ -873,6 +883,12 @@ def build_workbook(args, df, rows, terms, by_name, log, others=()):
         for status, counts in held_values.items():
             log.add('Left out', f'project values with status {status}, not applied: '
                     + ', '.join(f'{t} ({k})' if k > 1 else t for t, k in counts.items()))
+        # checks that need no reading of the methods (cycles that differ from the PCR programme, a number out of range)
+        checked = {}
+        for (term, assay), value in given_here.items():
+            checked.setdefault(term, []).append(value)
+        for _, message in fmd.plausibility(checked):
+            log.add('Warnings', f'project values: {message}')
 
     # ---- the project contact: FAIRe's project_contact is the contact's email, and recordedBy the people
     # responsible for the dataset, so "Name (email)" fills both when recordedBy is not given

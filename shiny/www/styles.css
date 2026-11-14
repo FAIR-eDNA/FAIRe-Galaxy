@@ -140,5 +140,11 @@ ul.lib .look-file + .rm-file { margin-left: 0; }
 .md-fields .form-group { margin-bottom: 0; width: auto; }
 .md-fields textarea, .md-fields input { font-size: 0.8rem; padding: 0.15rem 0.35rem; }
 .md-note { font-size: 0.75rem; color: #8a5a00; margin-top: 0.2rem; }
+.md-tested { font-size: 0.72rem; color: #5b6b70; margin-top: 0.15rem; }
+.md-level { font-size: 0.72rem; background: #eef0f1; color: #4a5a60; border-radius: 3px; padding: 0 0.3rem; }
+.md-level-high { background: #fde9cf; color: #7a4a00; }
+.md-part { font-size: 0.8rem; font-weight: 600; padding: 0.45rem 0.4rem; margin-top: 0.3rem; border-radius: 3px; }
+.md-part-reliable { background: #e3f1e6; color: #24553a; }
+.md-part-check { background: #fcebd5; color: #6b4300; }
 .md-evidence { font-size: 0.76rem; color: #4a5a60; margin-top: 0.2rem; }
 .md-evidence summary { cursor: pointer; }

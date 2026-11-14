@@ -56,8 +56,11 @@ A few things that help along the way:
   The step says how to choose the pair you used for each assay, and which assay name to give it.
 - **Other method details**: under the primers, *Find method details* reads the same methods for the
   filters, extraction kit, PCR conditions, sequencing kit, software, settings and reference databases,
-  and lists each value it finds with the sentence it came from. Tick the ones to keep (correcting any
-  that are nearly right) and add them to the values for the whole project. Its review sheet, which also
+  and lists each value it finds with the sentence it came from, its FAIRe requirement level and its
+  term's record in papers tested. Values for terms found reliably come first and the rest are listed as
+  values to check; *Tick all reliable values* ticks only the first group, so each of the others takes its
+  own tick. Tick the ones to keep (correcting any that are nearly right) and add them to the values for
+  the whole project. Its review sheet, which also
   lists the method terms not found, can be downloaded, filled in with Excel and loaded back on the right.
 - **Adding a value** offers the FAIRe terms for one part of the checklist at a time, PCR and primers
   first, then library preparation and sequencing, bioinformatics and so on, or all of them.

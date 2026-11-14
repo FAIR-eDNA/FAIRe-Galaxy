@@ -10,10 +10,17 @@
   document.addEventListener('change', function (e) {
     if (e.target && e.target.classList && e.target.classList.contains('md-keep')) report();
   });
-  document.addEventListener('shiny:connected', function () {
-    Shiny.addCustomMessageHandler('md_tick', function (on) {
-      document.querySelectorAll('.md-keep').forEach(function (el) { el.checked = !!on; });
-      report();
+  // Shiny announces its connection as a jQuery event, which addEventListener does not hear, so the handler is
+  // registered once the page has loaded (Shiny takes handlers before it connects)
+  function tick(msg) {
+    var on = Array.isArray(msg) ? msg[0] : msg;   // R may send a one-item list
+    // "reliable" ticks only the values found reliably: the others each need their own tick
+    document.querySelectorAll('.md-keep').forEach(function (el) {
+      if (on === 'reliable') { if (el.dataset.tier === 'reliable') el.checked = true; } else { el.checked = !!on; }
     });
+    report();
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.Shiny && Shiny.addCustomMessageHandler) Shiny.addCustomMessageHandler('md_tick', tick);
   });
 })();

@@ -115,6 +115,14 @@ a value, such as "40 cycles of 95 °C for 30 s", "in 25 µL reactions", "maximum
 "a query coverage of 96%". It can miss values written in other ways, and it cannot tell which assay a
 value belongs to unless the sentence names it. Every value is a proposal for you to check.
 
+Because it proposes many values, it helps you decide where to look hardest. Each value carries its
+term's record: how often the tool agreed with an independent reading of the same papers when it was
+tested on 29 published studies. Values for terms with a good record come first; the others, and any
+value that fails a simple check (cycles that differ from the PCR programme, a number out of range, an
+instrument of another platform, more water extracted than collected), are listed as values to check.
+Within each group, Mandatory terms come first, then Highly recommended, Recommended and Optional ones.
+Apply mapping uses only the values you accept or give, and lists which ones came from this tool.
+
 Primers are left to **FAIRe mapper: find primers**, which looks them up in a table of published primers.
 
 -----
@@ -130,16 +138,18 @@ Primers are left to **FAIRe mapper: find primers**, which looks them up in a tab
 
 **Outputs**
 
-- **Review sheet** (Excel), with a *Method details* sheet and a *How to review* sheet. The first rows
-  are the values found, each with the FAIRe term, what FAIRe asks for, the proposed value, the sentence
-  it came from and how it was found. Choose a *Reviewer's decision* for each: Accept, Change (and write
+- **Review sheet** (Excel), with a *Method details* sheet and a *How to review* sheet. The rows come in
+  three parts: values for terms found reliably, values to check, and the method terms not found. Each
+  value has the FAIRe term and its requirement level, what FAIRe asks for, the proposed value, how
+  reliable the term has been, the sentence it came from and how it was found. Choose a *Reviewer's decision* for each: Accept, Change (and write
   the right value in *Your value*) or Reject. When a term has several values (two storage
   temperatures, say), keep the one that applies to your eDNA samples. The rows after them are the
   FAIRe method terms the tool did not find: write a value in *Your value* for any you know. Rows with
   no decision and no value of your own are left out of the workbook. The sheet can be sorted and
   filtered.
 - **Values found** (tabular): the same values, one per line, with the section, term, value, assay,
-  sentence, how it was found, a note and the status *review*.
+  sentence, how it was found, a note, the status *review*, the term's FAIRe level, its confidence
+  (*reliable* or *check*) and its record in papers tested.
 - **Summary**: what was read, and the terms found in each part of the methods.
 
 **What it looks for**

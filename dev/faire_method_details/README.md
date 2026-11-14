@@ -153,6 +153,9 @@ and Phusion master mixes, an Ion PGM 400 kit), read nothing from three pages of 
 spreadsheet. Some disagreements are Copilot's: zero-radius OTUs are given 100% for otu_clust_cutoff,
 as FAIRe asks for ASVs, where Copilot wrote "zOTUs".
 
+The per-term counts from both sets are in `tools/faire_mapper/method_details/reliability.tsv`, which the
+tool uses to sort its proposals into values for terms found reliably and values to check.
+
 These held-out figures are provisional until the held-out rows have been checked by a person. Of the
 tool's 91 held-out values that Copilot did not give, some are right and some are not.
 

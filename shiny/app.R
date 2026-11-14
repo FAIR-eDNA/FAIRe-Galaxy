@@ -956,13 +956,17 @@ server <- function(input, output, session) {
     tbl <- NULL
     if (!is.null(d) && nrow(d)) {
       ck <- checklist_terms()
-      items <- lapply(seq_len(nrow(d)), function(i) {
+      tier <- if ("confidence" %in% names(d)) d$confidence else rep("check", nrow(d))
+      item <- function(i) {
         desc <- ck$description[match(d$term[i], ck$term)]
         div(class = "md-item",
             div(class = "md-head",
-                tags$input(type = "checkbox", id = paste0("md_keep_", i), class = "md-keep",
+                tags$input(type = "checkbox", id = paste0("md_keep_", i), class = "md-keep", `data-tier` = tier[i],
                            `aria-label` = paste("Keep", d$term[i])),
                 tags$label(`for` = paste0("md_keep_", i), tags$b(d$term[i])),
+                if ("level" %in% names(d) && nzchar(d$level[i]))
+                  tags$span(class = paste("md-level", if (d$level[i] %in% c("Mandatory", "Highly recommended")) "md-level-high"),
+                            d$level[i]),
                 tags$span(class = "md-section", d$section[i]),
                 if (!is.na(desc) && nzchar(desc)) bslib::tooltip(
                   tags$span(class = "term-help", tabindex = "0", `aria-label` = paste("What is", d$term[i]),
@@ -970,20 +974,29 @@ server <- function(input, output, session) {
             div(class = "md-fields",
                 textAreaInput(paste0("md_val_", i), NULL, d$value[i], rows = if (nchar(d$value[i]) > 70) 3 else 1),
                 textInput(paste0("md_assay_", i), NULL, d$assay[i], placeholder = "assay (all)")),
+            if ("tested" %in% names(d) && nzchar(d$tested[i])) div(class = "md-tested", "Record: ", d$tested[i]),
             if (nzchar(d$note[i])) div(class = "md-note", d$note[i]),
             tags$details(class = "md-evidence", tags$summary(substr(d$evidence[i], 1, 140),
                                                              if (nchar(d$evidence[i]) > 140) "…"),
                          if (nchar(d$evidence[i]) > 140) d$evidence[i]))
-      })
+      }
+      rel <- which(tier == "reliable")
+      chk <- which(tier != "reliable")
       tbl <- tagList(
         help_text("Tick the values to keep, after checking each against its sentence (open a sentence to read all of",
                   "it). Correct a value in its box if it is nearly right. When a term has several values (two storage",
                   "temperatures, say), keep the one for your eDNA samples. Give the assay only for a value that",
                   "holds for one assay."),
-        div(class = "md-list", items),
+        div(class = "md-list",
+            if (length(rel)) tagList(div(class = "md-part md-part-reliable", paste0(
+              "Found reliably (", length(rel), "): terms the tool has proposed reliably in published papers it was ",
+              "tested on")), lapply(rel, item)),
+            if (length(chk)) tagList(div(class = "md-part md-part-check", paste0(
+              "Also found in the methods (", length(chk), "): check each against its sentence before you tick it. ",
+              "These terms are less reliable, or a check found a problem")), lapply(chk, item))),
         div(class = "btn-row",
             actionButton("md_add", "Add the ticked values to the project values", icon = icon("arrow-right")),
-            actionLink("md_all", "Tick all"), actionLink("md_none", "Untick all")),
+            if (length(rel)) actionLink("md_all", "Tick all reliable values"), actionLink("md_none", "Untick all")),
         help_text("Or download the review sheet, fill it in with Excel and load it on the right; it also lists the",
                   "method terms not found, to fill in."))
     } else if (res$ok) {
@@ -991,7 +1004,7 @@ server <- function(input, output, session) {
     }
     tagList(result_ui(res), tbl)
   })
-  observeEvent(input$md_all, session$sendCustomMessage("md_tick", TRUE))
+  observeEvent(input$md_all, session$sendCustomMessage("md_tick", "reliable"))
   observeEvent(input$md_none, session$sendCustomMessage("md_tick", FALSE))
   observeEvent(input$md_add, {
     d <- rv$details; req(d)

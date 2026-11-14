@@ -43,6 +43,9 @@ __version__ = '0.9.0'
 
 HERE = Path(__file__).resolve().parent
 VOCABULARY = HERE / 'method_details' / 'vocabulary.tsv'
+RELIABILITY = HERE / 'method_details' / 'reliability.tsv'
+LEVEL_NAMES = {'M': 'Mandatory', 'HR': 'Highly recommended', 'R': 'Recommended', 'O': 'Optional'}
+LEVEL_ORDER = {'M': 0, 'HR': 1, 'R': 2, 'O': 3}
 CONFUSED = HERE / 'commonly_confused_terms.tsv'
 
 # Terms find primers gives (from the primer table), so this tool leaves them out of its list of terms
@@ -367,6 +370,8 @@ class Proposal:
     span: tuple = ()
     others: int = 0
     extra_sentences: list = field(default_factory=list)
+    tier: str = 'check'    # 'reliable': a term the tool has proposed reliably in papers tested; 'check': any other
+    tested: str = ''       # how the term has fared in papers tested
 
 
 class Finder:
@@ -1190,7 +1195,84 @@ def find(texts, vocab, assay_names=(), whole_text=False):
     return f.out, read, sentences
 
 
-def tidy(proposals, terms):
+# ------------------------------------------------------------------ how far to trust a proposal
+
+def load_reliability(path=RELIABILITY):
+    """How often the tool agreed with an independent reading of the same papers, per term (reliability.tsv)."""
+    try:
+        lines = [ln for ln in Path(path).read_text(encoding='utf-8').splitlines() if ln.strip() and not ln.startswith('#')]
+    except FileNotFoundError:
+        return {}
+    return {r['term']: {k: int(v) for k, v in r.items() if k != 'term'} for r in csv.DictReader(lines, delimiter='\t')}
+
+
+def reliability_of(term, rel):
+    """('reliable' or 'check', how the term has fared). A term is reliable when the tool and an independent
+    reading agreed in at least 5 papers and in 9 of 10 papers where both gave a value, and the tool did not often
+    propose a value that the reading did not find. Descriptions are always to check."""
+    c = rel.get(term)
+    if not c or not c['papers_agreed'] + c['papers_differed']:
+        return 'check', 'not yet tested against papers'
+    a, d, t = c['papers_agreed'], c['papers_differed'], c['papers_tool_only']
+    text = f"agreed in {a} of {a + d} paper{'s' if a + d != 1 else ''} tested" + \
+        (f'; proposed in {t} more where an independent reading found none' if t else '')
+    ok = term not in DESCRIPTION_TERMS and a >= 5 and a >= 0.9 * (a + d) and t <= a
+    return ('reliable' if ok else 'check'), text
+
+
+INSTRUMENT_PLATFORM = [(r'MiSeq|NovaSeq|HiSeq|NextSeq|iSeq|MiniSeq|Illumina', 'ILLUMINA'), (r'\bIon\b|PGM|Ion\s+S5', 'ION_TORRENT'),
+                       (r'MinION|GridION|PromethION|Flongle|Nanopore', 'OXFORD_NANOPORE'), (r'PacBio|Sequel|Revio', 'PACBIO_SMRT'),
+                       (r'DNBSEQ|MGISEQ|BGISEQ', 'DNBSEQ|BGISEQ'), (r'AVITI|Element', 'ELEMENT')]
+RANGES = {'size_frac': (0.01, 100), 'annealingTemp': (35, 75), 'pcr2_annealingTemp': (35, 75), 'pcr_cycles': (1, 60),
+          'pcr2_cycles': (1, 45), 'samp_store_temp': (-200, 40), 'prepped_samp_store_temp': (-200, 40),
+          'amplificationReactionVolume': (1, 200), 'pcr2_amplificationReactionVolume': (1, 200), 'pcr_dna_vol': (0.1, 50),
+          'pcr2_dna_vol': (0.1, 50), 'otu_clust_cutoff': (50, 100), 'tax_class_id_cutoff': (50, 100),
+          'tax_class_query_cutoff': (1, 100), 'min_len_cutoff': (10, 5000), 'filter_diameter': (5, 300)}
+
+
+def _numbers(v):
+    # a dash straight after a number is a range ("51-54"), not a minus sign
+    return [float(x) for x in re.findall(r'(?<![\d.])-?\d+(?:\.\d+)?', str(v).replace('−', '-'))]
+
+
+def plausibility(values):
+    """Checks on values that need no reading of the methods: a number outside the range the term allows, PCR
+    cycles or an annealing temperature that differ from the PCR programme, an instrument of another platform,
+    more water extracted than collected. values: {term: [value, ...]}. Returns [(terms, message)]."""
+    out = []
+    for term, (lo, hi) in RANGES.items():
+        for v in values.get(term, []):
+            nums = [abs(n) if term.endswith(('cycles', 'cutoff', 'Volume', 'dna_vol', 'diameter')) else n
+                    for n in _numbers(v)]
+            if nums and any(n < lo or n > hi for n in nums):
+                out.append(([term], f'{v} is outside the usual range for {term} ({lo:g} to {hi:g})'))
+    for pre in ('', 'pcr2_'):
+        cond, cyc, ann = values.get(pre + 'cond' if pre else 'pcr_cond', []), values.get(pre + 'cycles' if pre else 'pcr_cycles', []), \
+            values.get(pre + 'annealingTemp' if pre else 'annealingTemp', [])
+        for c in cond:
+            last = c.rsplit(';', 1)[-1].strip()
+            if cyc and last and not any(last == x.strip() for x in cyc):
+                out.append(([(pre or 'pcr_') + 'cycles', 'pcr2_cond' if pre else 'pcr_cond'],
+                            f"the PCR programme gives {last} cycles, not {' or '.join(cyc)}"))
+            m = re.search(r'annealing:([-\d.]+)', c)
+            if ann and m and not any(m.group(1) == a.strip() for a in ann):
+                out.append(([(pre or '') + 'annealingTemp', 'pcr2_cond' if pre else 'pcr_cond'],
+                            f"the PCR programme anneals at {m.group(1)} °C, not {' or '.join(ann)}"))
+    platforms = values.get('platform', [])
+    for inst in values.get('instrument', []):
+        for rx, plat in INSTRUMENT_PLATFORM:
+            if re.search(rx, inst) and platforms and not any(re.fullmatch(plat, p) for p in platforms):
+                out.append((['instrument', 'platform'], f"the instrument {inst} is not of the platform {' or '.join(platforms)}"))
+                break
+    sz, vol = values.get('samp_size', []), values.get('samp_vol_we_dna_ext', [])
+    su, vu = values.get('samp_size_unit', []), values.get('samp_vol_we_dna_ext_unit', [])
+    if len(sz) == 1 and len(vol) == 1 and su == vu and _numbers(sz[0]) and _numbers(vol[0]) and \
+            max(_numbers(vol[0])) > max(_numbers(sz[0])):
+        out.append((['samp_vol_we_dna_ext', 'samp_size'], f'more extracted ({vol[0]}) than collected ({sz[0]})'))
+    return out
+
+
+def tidy(proposals, terms, rel=None):
     """One row per term and value (and assay), the first sentence kept, others counted; a note on
     each term found with different values."""
     seen = OrderedDict()
@@ -1224,6 +1306,18 @@ def tidy(proposals, terms):
     models = [p.value for p in rows if p.term == 'instrument']
     rows = [p for p in rows
             if not (p.term == 'instrument' and any(v != p.value and v.startswith(p.value + ' ') for v in models))]
+    # How far to trust each row: the term's record in papers tested, then checks that need no reading
+    rel = load_reliability() if rel is None else rel
+    for p in rows:
+        p.tier, p.tested = reliability_of(p.term, rel)
+    values = {}
+    for p in rows:
+        values.setdefault(p.term, []).append(p.value)
+    for affected, message in plausibility(values):
+        for p in rows:
+            if p.term in affected:
+                p.tier = 'check'
+                p.note = f'{p.note}. check: {message}' if p.note else f'check: {message}'
     # A superscript reference number joined to a version in a PDF ("Cutadapt v.1.1687" for v1.16 and reference 87)
     for p in rows:
         if re.search(r'\bv\d+(?:\.\d+)*\.\d{3,}\b', p.value):
@@ -1234,12 +1328,15 @@ def tidy(proposals, terms):
         counts[p.term] = counts.get(p.term, 0) + 1
     for p in rows:
         if counts[p.term] > 1:
+            p.tier = 'check'   # someone has to choose
             extra = (f'{counts[p.term]} different values found for this term: keep the one that applies to your '
                      'eDNA samples (for each assay, if they differ), and reject the others')
             p.note = f'{extra}. {p.note}' if p.note else extra
     order = {t: i for i, t in enumerate(terms)}
     sec_order = {s: i for i, s in enumerate(SECTION_NAMES)}
-    rows.sort(key=lambda p: (sec_order.get(terms[p.term]['section'], 99), order[p.term], p.sentence.index))
+    # reliable rows first, then those to check; within each, Mandatory to Optional, then the checklist's order
+    rows.sort(key=lambda p: (p.tier != 'reliable', LEVEL_ORDER.get(terms[p.term]['level'], 9),
+                             sec_order.get(terms[p.term]['section'], 99), order[p.term], p.sentence.index))
     return rows
 
 
@@ -1256,7 +1353,8 @@ def excerpt(p, limit=500):
     return t[:limit] + '…'
 
 
-COLUMNS = ['section', 'term', 'value', 'assay', 'evidence', 'found_by', 'note', 'status', 'source']
+COLUMNS = ['section', 'term', 'value', 'assay', 'evidence', 'found_by', 'note', 'status', 'source', 'level', 'confidence',
+           'tested']
 
 
 def write_tsv(rows, terms, path):
@@ -1266,7 +1364,8 @@ def write_tsv(rows, terms, path):
         for p in rows:
             w.writerow([SECTION_NAMES.get(terms[p.term]['section'], terms[p.term]['section']), p.term, clean(p.value),
                         p.assay, clean(excerpt(p)), p.found_by + (f' (and {p.others} more sentences)' if p.others else ''),
-                        clean(p.note), 'review', p.sentence.source])
+                        clean(p.note), 'review', p.sentence.source, LEVEL_NAMES.get(terms[p.term]['level'], ''), p.tier,
+                        p.tested])
 
 
 def clean(v):
@@ -1290,8 +1389,13 @@ def missing_terms(rows, terms):
     return sorted(out, key=lambda n: (sec_order.get(terms[n]['section'], 99), order[n]))
 
 
-REVIEW_HEADERS = ['Section', 'FAIRe term', 'What FAIRe asks for', 'Proposed value', 'Assay', 'From the methods',
-                  'How it was found', 'Note', "Reviewer's decision", 'Your value']
+REVIEW_HEADERS = ['Section', 'FAIRe term', 'FAIRe level', 'What FAIRe asks for', 'Proposed value', 'How reliable', 'Assay',
+                  'From the methods', 'How it was found', 'Note', "Reviewer's decision", 'Your value']
+PART_TITLES = {'reliable': 'Found reliably: terms the tool has proposed reliably in papers tested. Check each against its '
+                           'sentence all the same.',
+               'check': 'Also found in the methods: check each one against its sentence before you accept it. These '
+                        'terms are less reliable, or a check found a problem (see Note).',
+               'missing': 'FAIRe method terms not found: give a value only if you know it.'}
 SHEET = 'Method details'
 
 
@@ -1304,18 +1408,33 @@ def write_review_sheet(rows, terms, path, read, label):
     ws.title = SHEET
     ws.append(REVIEW_HEADERS)
     found_fill = PatternFill('solid', fgColor='FFF7E6')
-    for p in rows:
-        t = terms[p.term]
-        ws.append([SECTION_NAMES.get(t['section'], t['section']), p.term, asks(t), clean(p.value), p.assay,
-                   clean(excerpt(p)), p.found_by + (f' (and {p.others} more sentences)' if p.others else ''),
-                   clean(p.note), '', ''])
-        for c in ws[ws.max_row][8:10]:
-            c.fill = found_fill
-    for name in missing_terms(rows, terms):
+    part_fill = {'reliable': 'E3F1E6', 'check': 'FCEBD5', 'missing': 'E8ECEE'}
+    part_rows = []
+
+    def part(key):
+        ws.append([PART_TITLES[key]] + [''] * (len(REVIEW_HEADERS) - 1))
+        part_rows.append((ws.max_row, key))
+
+    for key in ('reliable', 'check'):
+        group = [p for p in rows if p.tier == key]
+        if not group:
+            continue
+        part(key)
+        for p in group:
+            t = terms[p.term]
+            ws.append([SECTION_NAMES.get(t['section'], t['section']), p.term, LEVEL_NAMES.get(t['level'], ''), asks(t),
+                       clean(p.value), p.tested, p.assay, clean(excerpt(p)),
+                       p.found_by + (f' (and {p.others} more sentences)' if p.others else ''), clean(p.note), '', ''])
+            for c in ws[ws.max_row][10:12]:
+                c.fill = found_fill
+    missing = sorted(missing_terms(rows, terms), key=lambda n: LEVEL_ORDER.get(terms[n]['level'], 9))
+    if missing:
+        part('missing')
+    for name in missing:
         t = terms[name]
-        ws.append([SECTION_NAMES.get(t['section'], t['section']), name, asks(t), '', '', '',
-                   'not found in the methods', '', '', ''])
-    widths = [16, 26, 48, 50, 12, 70, 34, 40, 14, 30]
+        ws.append([SECTION_NAMES.get(t['section'], t['section']), name, LEVEL_NAMES.get(t['level'], ''), asks(t), '', '', '',
+                   '', 'not found in the methods', '', '', ''])
+    widths = [16, 26, 14, 48, 50, 30, 12, 70, 34, 40, 14, 30]
     for i, w in enumerate(widths):
         ws.column_dimensions[chr(65 + i)].width = w
     for row in ws.iter_rows(min_row=2):
@@ -1324,19 +1443,28 @@ def write_review_sheet(rows, terms, path, read, label):
     for c in ws[1]:
         c.font = Font(bold=True)
         c.alignment = Alignment(wrap_text=True, vertical='top')
+    for r, key in part_rows:
+        ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=len(REVIEW_HEADERS))
+        ws.cell(r, 1).font = Font(bold=True)
+        ws.cell(r, 1).fill = PatternFill('solid', fgColor=part_fill[key])
     ws.freeze_panes = 'C2'
-    ws.auto_filter.ref = f'A1:J{ws.max_row}'
+    ws.auto_filter.ref = f'A1:{chr(64 + len(REVIEW_HEADERS))}{ws.max_row}'
     dv = DataValidation(type='list', formula1='"Accept,Reject,Change"', allow_blank=True)
     dv.error = 'Choose Accept, Reject or Change'
     ws.add_data_validation(dv)
-    dv.add(f'I2:I{max(2, ws.max_row)}')
+    dv.add(f'K2:K{max(2, ws.max_row)}')
     how = wb.create_sheet('How to review')
     lines = [
         f'Values for the whole study found in {label} by FAIRe mapper: find method details {__version__}.',
         'Read: ' + '; '.join(read) + '.',
         '',
-        'The first rows are values the tool found, each with the sentence it came from. For each one, choose a '
-        "Reviewer's decision:",
+        'The rows come in three parts. First, values for terms the tool has found reliably in published papers it '
+        'was tested on. Then values it also found, for terms that are less reliable or that a check flagged (see '
+        'Note): check each of these against its sentence. Last, the FAIRe method terms it did not find. Within each '
+        'part, Mandatory terms come first, then Highly recommended, Recommended and Optional ones. How reliable says '
+        'how often the tool agreed with an independent reading of the same papers.',
+        '',
+        "For each value found, choose a Reviewer's decision:",
         '  Accept: the proposed value is right.',
         '  Change: the value is nearly right; write the right one in Your value.',
         '  Reject: the value does not apply (it may describe other work in the paper, or another assay).',
@@ -1349,6 +1477,9 @@ def write_review_sheet(rows, terms, path, read, label):
         '',
         'Rows with no decision and no value of your own are left out of the workbook, and apply mapping lists '
         'them. The sheet can be sorted and filtered: each row is read on its own.',
+        '',
+        'Accept only what you have checked. A value with no decision is not used, and apply mapping lists which '
+        'values came from this tool and whether a person accepted or changed them.',
         '',
         'Give this sheet to FAIRe mapper: apply mapping as values for the whole project (with your other project '
         'values, if any). Project terms go to projectMetadata, and sample terms (filter, extraction and storage) '
@@ -1407,14 +1538,16 @@ def read_review_sheet(path):
             continue
         if decision == 'change' or (yours and decision != 'accept'):
             if yours:
-                out.append(dict(term=term, value=yours, assay=assay, status='confirmed'))
+                out.append(dict(term=term, value=yours, assay=assay, status='confirmed', proposed=proposed,
+                                decision='changed' if proposed else 'given'))
             continue
         if decision == 'accept':
             if proposed:
-                out.append(dict(term=term, value=proposed, assay=assay, status='confirmed'))
+                out.append(dict(term=term, value=proposed, assay=assay, status='confirmed', proposed=proposed,
+                                decision='accepted'))
             continue
         if proposed:
-            out.append(dict(term=term, value=proposed, assay=assay, status='review'))
+            out.append(dict(term=term, value=proposed, assay=assay, status='review', proposed=proposed, decision=''))
     return out
 
 
@@ -1472,6 +1605,8 @@ def main(argv=None):
     for r in read:
         print(f'Read {r}: {sum(1 for s in sentences if s.source == r.split(": ")[0])} sentences.')
     print(f'{len(rows)} values proposed for {len({p.term for p in rows})} FAIRe terms:')
+    print(f"  {sum(p.tier == 'reliable' for p in rows)} for terms found reliably in papers tested, "
+          f"{sum(p.tier != 'reliable' for p in rows)} to check against their sentences")
     for sec, ts in by_section.items():
         print(f"  {sec}: {', '.join(sorted(ts))}")
     print(f'{len(missing_terms(rows, terms))} other method terms not found (listed in the review sheet to fill in).')
