@@ -1057,6 +1057,8 @@ def tidy(proposals, terms):
 
 
 def excerpt(p, limit=500):
+    if p.term in DESCRIPTION_TERMS and p.value.startswith(p.sentence.text[:60]):
+        return 'The proposed value is the sentences themselves.'
     texts = [p.sentence.text] + [x.text for x in p.extra_sentences]
     t = ' '.join(texts)
     if len(t) <= limit:
@@ -1126,7 +1128,7 @@ def write_review_sheet(rows, terms, path, read, label):
         t = terms[name]
         ws.append([SECTION_NAMES.get(t['section'], t['section']), name, asks(t), '', '', '',
                    'not found in the methods', '', '', ''])
-    widths = [16, 26, 48, 34, 12, 70, 34, 40, 14, 30]
+    widths = [16, 26, 48, 50, 12, 70, 34, 40, 14, 30]
     for i, w in enumerate(widths):
         ws.column_dimensions[chr(65 + i)].width = w
     for row in ws.iter_rows(min_row=2):
