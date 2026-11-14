@@ -277,8 +277,10 @@ python '$__tool_directory__/faire_mapper_apply.py'
             <param name="drop_unmapped" value="true"/>
             <output name="workbook" ftype="xlsx">
                 <assert_contents>
-                    <has_archive_member path="xl/sharedStrings.xml">
+                    <has_archive_member path="xl/worksheets/sheet3.xml">
                         <has_text text="DNeasy Blood and Tissue Kit (QIAGEN)"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/worksheets/sheet2.xml">
                         <has_text text="Illumina NextSeq 2000"/>
                     </has_archive_member>
                 </assert_contents>
