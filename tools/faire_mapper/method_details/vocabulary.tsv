@@ -3,7 +3,8 @@
 #   database, filter, device, facility, qpcr_software). name: how the tool writes it. aliases: other
 #   spellings, separated by |; spaces also match hyphens and no space, and a word may carry (R) or (TM);
 #   an alias starting re: is a regular expression. case: exact for names that are also ordinary words
-#   (otherwise any case matches). maker: manufacturer or developer. extra: for instruments the OBI
+#   (otherwise any case matches). maker: manufacturer or developer (for a thermocycler, two names separated
+#   by | give the one the sentence uses). extra: for instruments the OBI
 #   identifier; for filters the FAIRe filter_material; for extraction kits the FAIRe nucl_acid_ext_sep;
 #   for taxonomy software the FAIRe tax_assign_cat; for pipelines and some software the web address.
 #   uses: for software, the steps it does (trim, demux, merge, filter, denoise, cluster, chimera,
@@ -45,7 +46,7 @@ instrument	DNBSEQ-G99	DNBSEQ-G99				DNBSEQ	MGI product name
 instrument	BGISEQ-500	BGISEQ-500|BGISEQ				BGISEQ	MGI product name
 instrument	Element AVITI	AVITI				ELEMENT	Element Biosciences product name
 instrument	454 GS FLX	GS FLX|GS Junior|Roche 454|454 sequencing				LS454	Roche product name
-thermocycler	QuantStudio	re:QuantStudio\s?(?:\d+|12K)(?:\s?Flex)?|QuantStudio		Thermo Fisher Scientific			Thermo Fisher product name
+thermocycler	QuantStudio	re:QuantStudio\s?(?:\d+|12K)(?:\s?Flex)?|QuantStudio		Applied Biosystems|Thermo Fisher Scientific			Applied Biosystems (Thermo Fisher) product name; the maker as the sentence names it
 thermocycler	StepOnePlus	StepOnePlus|StepOne Plus		Applied Biosystems			Thermo Fisher product name
 thermocycler	StepOne	StepOne		Applied Biosystems			Thermo Fisher product name
 thermocycler	ViiA 7	ViiA 7|ViiA7		Applied Biosystems			Thermo Fisher product name
@@ -109,7 +110,9 @@ extraction_kit	MagMAX Microbiome Ultra Nucleic Acid Isolation Kit	MagMAX Microbi
 extraction_kit	Maxwell RSC	Maxwell RSC|Maxwell 16|Maxwell		Promega	magnetic beads		Promega product name
 extraction_kit	Wizard Genomic DNA Purification Kit	Wizard Genomic		Promega	other: precipitation		Promega product name
 extraction_kit	ZymoBIOMICS DNA Miniprep Kit	ZymoBIOMICS DNA Miniprep|ZymoBIOMICS DNA Microprep|ZymoBIOMICS		Zymo Research	column-based		Zymo product name
-extraction_kit	Quick-DNA Fecal/Soil Microbe Kit	Quick-DNA Fecal/Soil Microbe|Quick-DNA		Zymo Research	column-based		Zymo product name
+extraction_kit	Quick-DNA Fecal/Soil Microbe Kit	Quick-DNA Fecal/Soil Microbe		Zymo Research	column-based		Zymo product name
+extraction_kit	Quick-DNA Miniprep Plus Kit	Quick-DNA Miniprep Plus|Quick-DNA Miniprep		Zymo Research	column-based		Zymo product name
+extraction_kit	Quick-DNA Kit	Quick-DNA		Zymo Research	column-based		Zymo product name, when the paper does not say which
 extraction_kit	E.Z.N.A. Soil DNA Kit	re:E\.Z\.N\.A\.?(?:\s?\w+){0,2}		Omega Bio-tek	column-based		Omega Bio-tek product name
 extraction_method	Chelex 100	Chelex		Bio-Rad	other: Chelex		Bio-Rad product name
 extraction_method	phenol-chloroform-isoamyl alcohol extraction	phenol-chloroform-isoamyl alcohol|phenol chloroform isoamyl|phenol-chloroform|phenol:chloroform			phenol chloroform		method name
@@ -187,7 +190,7 @@ software	q2-feature-classifier	q2-feature-classifier|classify-sklearn		 	sequenc
 software	mothur	mothur				merge,filter,cluster,chimera,taxonomy	Galaxy eDNA tool evaluation
 software	OptiClust	OptiClust				cluster	parent=mothur
 software	UCHIME	uchime3_denovo|uchime2_denovo|uchime_denovo|uchime_ref|UCHIME3|UCHIME2|UCHIME				chimera	Galaxy eDNA tool evaluation
-software	swarm	Swarm	exact			cluster	method name
+software	swarm	Swarm|SWARM|re:swarm(?=\s+v?\d)	exact			cluster	method name
 software	CD-HIT	CD-HIT				cluster	method name
 software	sumaclust	sumaclust				cluster	method name
 software	LULU	LULU	exact			curation	Galaxy eDNA tool evaluation
@@ -195,7 +198,9 @@ software	UNCROSS	UNCROSS|uncross2				curation	Galaxy eDNA tool evaluation
 software	decontam	decontam	exact			decontam	Galaxy eDNA tool evaluation
 software	microDecon	microDecon|MicroDecon				decontam	Galaxy eDNA tool evaluation
 software	SourceTracker	SourceTracker2|SourceTracker				decontam	Galaxy eDNA tool evaluation
-software	BLASTn	BLASTn|BLAST	 		sequence similarity	taxonomy	Galaxy eDNA tool evaluation
+software	BLASTn	BLASTn	 		sequence similarity	taxonomy	Galaxy eDNA tool evaluation
+software	Primer-BLAST	Primer-BLAST|Primer BLAST|re:Primer\s?[–-]\s?BLAST	 				NCBI's primer specificity tool, not a taxonomy search
+software	BLAST	BLAST	 		sequence similarity	taxonomy	the program as a paper names it, when it does not say which BLAST
 software	BLAST+	BLAST+	 		sequence similarity	taxonomy	Galaxy eDNA tool evaluation
 software	MEGAN	MEGAN-CE|MEGAN-LR|MEGAN	exact			collapse	Galaxy eDNA tool evaluation
 software	eDNAFlow LCA script	re:LCA\s+(?:Python\s+)?script|LCA_taxonomyAssignment			sequence similarity	collapse	Galaxy eDNA tool evaluation
@@ -232,7 +237,8 @@ facility	TrEnD Laboratory, Curtin University	re:Trace\s*(?:&|and)\s*Environmenta
 facility	Novogene	Novogene					facility name
 facility	Macrogen	Macrogen					facility name
 facility	BGI	BGI	exact				facility name
-facility	Genewiz	Genewiz|GENEWIZ|Azenta					facility name
+facility	Genewiz	Genewiz|GENEWIZ					facility name
+facility	Azenta Life Sciences	Azenta Life Sciences|Azenta					facility name (Genewiz is part of Azenta; the name is kept as the paper writes it)
 database	EUKARYOME	EUKARYOME					database name
 database	Claident overall database	re:[“"]overall(?:_\w+)?[”"]\s+(?:reference\s+)?database|re:Claident\s+(?:reference\s+)?database					database name
 software	Sickle	Sickle	exact			trim,filter	method name

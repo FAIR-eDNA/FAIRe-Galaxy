@@ -128,6 +128,39 @@ def supplementary_methods(text, m):
         not re.match(r'\s*additional\s+supporting\s+information\s+can\s+be\s+found', after, re.I)
 
 
+def _strip_line_numbers(lines, pattern):
+    """Line numbers of a preprint, at the start or end of each line: numbers that rise by 1 to 3 from one
+    line to the next, on at least a quarter of the lines (20 or more). Others, such as "Site 3" in a
+    table, are kept."""
+    found = [(i, int(m.group(1))) for i, ln in enumerate(lines) for m in [pattern.search(ln)] if m]
+    keep = set()
+    for k, (i, n) in enumerate(found):
+        if (k + 1 < len(found) and 1 <= found[k + 1][1] - n <= 3) or (k and 1 <= n - found[k - 1][1] <= 3):
+            keep.add(i)
+    if len(keep) < max(20, 0.25 * sum(1 for ln in lines if ln.strip())):
+        return lines, False
+    return [pattern.sub('', ln) if i in keep else ln for i, ln in enumerate(lines)], True
+
+
+TRAILING_NUMBER = re.compile(r'(?:(?<=\S)\s+|(?<=-))(\d{1,5})\s*$')
+LEADING_NUMBER = re.compile(r'^\s*(\d{1,5})\s+(?=\S)')
+NUMBER_LINE = re.compile(r'^\s*(\d{1,5})\s*$')
+
+
+def repair_text(text):
+    """Fixes for how PDFs come out as text: a minus sign that the font did not map (a control character,
+    or "/C0" in Wiley's PDFs) and the line numbers of a preprint, which would otherwise hide its
+    headings ("MATERIAL & METHODS 64") and break its sentences."""
+    text = re.sub(r'(?:\x00|/C0)\s?(?=\d)', '\u2212', text)
+    text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', ' ', text)
+    lines = text.split('\n')
+    for pattern in (TRAILING_NUMBER, LEADING_NUMBER, NUMBER_LINE):
+        lines, done = _strip_line_numbers(lines, pattern)
+        if done and pattern is not NUMBER_LINE:
+            break
+    return '\n'.join(lines)
+
+
 def methods_part(text):
     """The parts of a text to read, and a note of what was read. A text with a Methods heading is read
     from each Methods heading to the next Results, Discussion or References heading, plus any
@@ -172,6 +205,7 @@ class Sentence:
     index: int
     reference_work: bool = False   # about specimens for a reference library, not the eDNA samples
     source: str = ''
+    own_reference: bool = False    # the sentence itself is about reference specimens, not only its paragraph
 
 
 SENT_SPLIT = re.compile(r'(?<=[.!?])\s+(?=[A-Z0-9(\[“"‘\'])')
@@ -179,12 +213,19 @@ ABBREV_END = re.compile(r'(?:\bet\s+al|\be\.g|\bi\.e|\bapprox|\bca|\bcf|\bFigs?|
                         r'\bSt|\bspp?|\bv|\bver|\bvol|\bpp|\bU\.S\.A|\bU\.S|(?<![°º˚\d])\b[A-Z])\.$')
 # Lines a PDF repeats on every page: the publisher's footer, download notices and page numbers
 FURNITURE = re.compile(r'^.*(?:Downloaded\s+from\s+https?://|See\s+the\s+Terms\s+and\s+Conditions|Wiley\s+Online\s+Library\s+for\s+rules|'
-                       r'governed\s+by\s+the\s+applicable\s+Creative\s+Commons|\d{1,4}\s*[–-]\s*\d{1,4}\s*\((?:19|20)\d\d\),?\s*DOI:?\s*10\.).*$|^\s*(?:Page\s+)?\d{1,3}(?:\s+of\s+\d{1,3})?\s*$',
+                       r'governed\s+by\s+the\s+applicable\s+Creative\s+Commons|bioRxiv\s+preprint|medRxiv\s+preprint|'
+                       r'not\s+certified\s+by\s+peer\s+review|International\s+license|\d{1,4}\s*[–-]\s*\d{1,4}\s*\((?:19|20)\d\d\),?\s*DOI:?\s*10\.).*$|^\s*(?:Page\s+)?\d{1,3}(?:\s+of\s+\d{1,3})?\s*$',
                        re.I | re.M)
 # words of a sentence about reads and sequences, not about water or sediment
 BIOINFORMATIC = re.compile(r'\breads\b|\bsequences\b|\bASVs?\b|\bOTUs?\b|\bZOTUs?\b|quality[- ]filter|Phred|maxEE|'
                            r'cutadapt|DADA2|USEARCH|VSEARCH|taxonomically|\bR\s+v\.?\s*\d', re.I)
+# words of a sentence about statistics ("filtering those correlations with q values < 0.01")
+STATISTICS = re.compile(r'correlat|statistic|\bnetworks?\b|R\s+package|\b[pq][\s-]?values?\b|regression|ANOVA|'
+                        r'PERMANOVA|ordination|\bNMDS\b', re.I)
 REFERENCE_WORK = re.compile(r'\bspecimens?\b|\bvouchers?\b|\btissue\s+samples?\b', re.I)
+# words that mark only their own sentence as about something other than the eDNA samples: vouchered tissue,
+# Sanger sequencing of references, blood taken from animals (not the DNeasy Blood & Tissue Kit)
+REFERENCE_SENTENCE = re.compile(r'\bvouchered\b|\bSanger[- ]sequenc|\bblood\b(?!\s*(?:and|&)\s*tissue)', re.I)
 # words that place a sentence or paragraph with the eDNA samples, though it also mentions specimens
 EDNA_WORK = re.compile(r'\be?DNA\s+samples?\b|\beDNA\b|environmental\s+DNA|\bwater\s+samples?|\bfilters?\b|\bfiltered\b|'
                        r'\bsediment\s+samples?|\bsoil\s+samples?', re.I)
@@ -268,7 +309,8 @@ def split_sentences(text, source=''):
             else:
                 merged.append(piece)
         for s in merged:
-            out.append(Sentence(s, pi, len(out), ref or bool(REFERENCE_WORK.search(s) and not EDNA_WORK.search(s)), source))
+            about_reference = (REFERENCE_WORK.search(s) or REFERENCE_SENTENCE.search(s)) and not EDNA_WORK.search(s)
+            out.append(Sentence(s, pi, len(out), ref or bool(about_reference), source, bool(about_reference)))
     return out
 
 
@@ -445,7 +487,7 @@ def temp_value(a, b=None):
 # ------------------------------------------------------------------ PCR
 
 SECOND_PCR = re.compile(r'second[- ]?(?:stage|round|step)|(?:stage|round|step)[- ]?(?:2|two)\b|index(?:ing)?\s+PCR|'
-                        r'\bindexing\b|library\s+PCR|\bPCR\s?2\b|second\s+PCR', re.I)
+                        r'\bindexing\b|library\s+PCR|\bPCR\s?2\b|second\W+(?:[\w-]+\W+){0,3}?PCR', re.I)
 PCR_WORDS = re.compile(r'\bPCR|\bqPCR|amplif|\breactions?\b', re.I)
 
 
@@ -453,7 +495,12 @@ PCR_WORDS = re.compile(r'\bPCR|\bqPCR|amplif|\breactions?\b', re.I)
 SECOND_START = re.compile(r'(?:second|2nd)[- ](?:PCR|round|stage|step)|\bPCR\s?2\b|index(?:ing)?\s+PCR', re.I)
 
 
+ONE_STEP = re.compile(r'\b(?:single|one)\s*-?\s*step\b', re.I)
+
+
 def stage(s):
+    if ONE_STEP.search(s.text):
+        return ''   # "single-step qPCR reactions ... adapter-fusion, indexing and amplification": one PCR
     return 'pcr2_' if SECOND_PCR.search(s.text) else ''
 
 
@@ -471,16 +518,30 @@ def _temp(a, b):
 
 
 def _time(d, u, x):
-    return (rf'(?P<{d}>\d+(?:\.\d+)?)\s*(?P<{u}>hours?|hrs?|h|minutes?|mins?|min|seconds?|secs?|sec|s)\b'
+    # a capital S right after a number is a gene ("18S"), not seconds ("30 S")
+    return (rf'(?P<{d}>\d+(?:\.\d+)?)\s*(?P<{u}>hours?|hrs?|h|minutes?|mins?|min|seconds?|secs?|sec|(?-i:s)|(?<=\s)(?-i:S))\b'
             rf'(?:\s*(?:and\s*)?(?P<{x}>\d+)\s*(?:seconds?|secs?|sec|s)\b)?')
 
 
 # A step of a PCR programme: 95 °C for 30 s, or 30 s at 95 °C
-STEP = re.compile(rf'(?:{_temp("ta", "tb")}\s*(?:for|,|:|\()?\s*{_time("da", "ua", "sa")})|'
+STEP = re.compile(rf'(?:{_temp("ta", "tb")}(?:\s+(?:was|were)\s+(?:conducted|performed|carried\s+out|held|run|applied))?'
+                  rf'\s*(?:for|,|:|\()?\s*{_time("da", "ua", "sa")})|'
                   rf'(?:(?:for\s+)?{_time("db", "ub", "sb")}\s*(?:at|@)\s*{_temp("tc", "td")})', re.I)
-CYCLES = re.compile(r'(\d+)(?:\s*[-–]\s*(\d+))?\s*(?:(?:subsequent|further|additional|consecutive|repeated)\s+)?'
+# numbers of cycles written as words ("twenty cycles of ...")
+CYCLE_WORDS = {'five': 5, 'six': 6, 'eight': 8, 'ten': 10, 'twelve': 12, 'fifteen': 15, 'eighteen': 18, 'twenty': 20,
+               'twenty-five': 25, 'thirty': 30, 'thirty-two': 32, 'thirty-five': 35, 'forty': 40, 'forty-five': 45,
+               'fifty': 50}
+_CYC_NUM = r'(\d+|' + '|'.join(sorted(CYCLE_WORDS, key=len, reverse=True)) + r')'
+CYCLES = re.compile(_CYC_NUM + r'(?:\s*[-–]\s*(\d+))?\s*(?:(?:subsequent|further|additional|consecutive|repeated)\s+)?'
                     r'(?:PCR\s+|thermal\s+|amplification\s+)?cycles?\b', re.I)
-FINAL = re.compile(r'final\s+(?:extension|elongation)|extension\s+(?:step\s+)?(?:at|of)\s+\d+\s*°|(?:followed\s+by|and|with)\s+'
+
+
+def cycle_count(x):
+    return str(CYCLE_WORDS.get(x.lower(), x))
+
+
+FINAL = re.compile(r'final\s+(?:extension|elongation)|terminal\s+(?:hold|extension|elongation|step)|'
+                   r'extension\s+(?:step\s+)?(?:at|of)\s+\d+\s*°|(?:followed\s+by|and|with)\s+'
                    r'(?:a\s+)?(?:final\s+)?(?:hold|extension)', re.I)
 MELT = re.compile(r'(?:,\s*)?(?:a\s+|and\s+)?melt(?:ing)?\s*curve.*?(?=(?:,?\s*(?:and|with|followed\s+by)\s+)?'
                   r'(?:a\s+)?final|$)', re.I | re.S)
@@ -528,7 +589,7 @@ def parse_cycling(text):
             parts.append(f'final elongation:{tv}_{mins}')
     if not inside:
         return None
-    cycles = f'{cyc.group(1)}-{cyc.group(2)}' if cyc.group(2) else cyc.group(1)
+    cycles = f'{cycle_count(cyc.group(1))}-{cyc.group(2)}' if cyc.group(2) else cycle_count(cyc.group(1))
     return ';'.join(parts + [cycles]), anneal, cycles
 
 
@@ -541,7 +602,10 @@ def rule_pcr(f):
         txt = s.text
         first = re.search(r'\b(?:first|1st)\b(?:[- ](?:step|round|stage)\b)?[^.;]{0,20}(?:PCR|reactions?|amplification)|'
                           r'initial\s+PCR|PCR\s?1\b|primer\s+pairs?|gene[- ]specific|target[- ]specific', txt, re.I)
-        if SECOND_START.search(txt) and not first:
+        sec = SECOND_START.search(txt)
+        if first and sec and sec.start() < first.start():
+            first = None   # "The second PCR used 5 µL of the first PCR product": about the second PCR
+        if sec and not first:
             second = s.para
         elif first or s.para != second:
             second = None
@@ -549,7 +613,7 @@ def rule_pcr(f):
             continue
         indexes = re.search(r'\bindex(?:es|ed|ing)?\b|Nextera|library\s+prep', txt, re.I)
         # a sentence after one about the second PCR, in the same paragraph, is about it too ("Conditions were: ...")
-        pre = stage(s) or ('pcr2_' if two and (indexes or second is not None) and not first else '')
+        pre = '' if ONE_STEP.search(txt) else stage(s) or ('pcr2_' if two and (indexes or second is not None) and not first else '')
         # The PCR programme, joined to a sentence before it that gives the initial denaturation and to
         # one after it that gives the final extension.
         if CYCLES.search(txt) and len(re.findall(TEMP, txt)) >= 2:
@@ -639,7 +703,10 @@ def rule_pcr(f):
             f.add(pcr_term(pre, 'custom_mm'), recipe, s, 'the recipe of the PCR reaction (MgCl2, dNTPs and so on)')
         for e, m in find_named(f.vocab.get('thermocycler', []), txt):
             model = m.group(0).replace('®', '').strip()
-            f.add(pcr_term(pre, 'thermocycler'), f'{e.maker}, {model}' if e.maker else model, s, 'a thermocycler named in the methods',
+            # a brand with two names (Applied Biosystems, of Thermo Fisher): the one the sentence uses
+            makers = [x.strip() for x in e.maker.split('|') if x.strip()]
+            maker = next((x for x in makers if re.search(re.escape(x.split()[0]), txt, re.I)), makers[0] if makers else '')
+            f.add(pcr_term(pre, 'thermocycler'), f'{maker}, {model}' if maker else model, s, 'a thermocycler named in the methods',
                   span=m.span())
         for e, m in find_named(f.vocab.get('qpcr_software', []), txt):
             f.add(pcr_term(pre, 'pcr_analysis_software'), f'{e.maker} {e.name}' if e.maker else e.name, s,
@@ -786,13 +853,14 @@ def kit_phrase(txt, a, b):
 # ------------------------------------------------------------------ bioinformatics
 
 STAGE_WORDS = {
-    'trim': r'\btrim(?!momatic)|adapt[eo]rs?\b.{0,30}remov|primers?\s+(?:sequences?\s+)?(?:were|was)\s+(?:removed|trimmed)|'
+    'trim': r'\btrim(?!momatic)|adapt[eo]rs?\b.{0,30}remov|primers?\s+(?:sequences?\s+)?(?:(?:were|was)\s+)?(?:removed|trimmed)|'
             r'remov\w*\s+(?:the\s+)?(?:primers?|adapt)|clip|'
             r'primers?\s+(?:sequences?\s+|regions?\s+)?(?:were\s+|was\s+)?(?:matched|detected|located|identified|found)',
     'demux': r'demultiplex|de-multiplex|sorted\b.{0,40}\bback|assigned\s+to\s+(?:their|each|the)\s+(?:respective\s+)?samples?|'
              r'ngsfilter|obisplit',
-    'merge': r'\bmerg|paired[- ]end\s+reads?\s+(?:were\s+)?(?:joined|assembled|overlapped)|\bjoin|overlap|illuminapairedend|'
-             r'fastq_mergepairs|mergePairs',
+    'merge': r'\bmerg\w*[^.;]{0,60}(?:\breads?\b|\bpairs?\b|paired|forward|reverse|R1|R2)|(?:\breads?\b|\bpairs?\b|paired|forward|reverse)'
+             r'[^.;]{0,60}\bmerg|\bsequences\b(?:(?!identical|ASVs?\b|OTUs?\b|tables?)[^.;]){0,120}\bmerg|paired[- ]end\s+reads?\s+(?:were\s+)?(?:joined|assembled|overlapped)|\bjoin|overlap|'
+             r'illuminapairedend|fastq_mergepairs|mergePairs|\bmerg\w*\s+(?:using|with)\s+(?:PEAR|FLASH|fastq-join|PANDAseq|vsearch|usearch)',
     'filter': r'quality[- ]?(?:filter|control|trim|check)|\bfiltered\b|maxEE|expected\s+errors?|phred|quality\s+scores?|'
               r'minimum\s+(?:sequence\s+|read\s+)?length|minlen|shorter\s+than\s+\d+',
     'abundance': r'(?:fewer|less)\s+than\s+\d+\s+(?:reads|copies|sequences)|at\s+least\s+\d+\s+(?:reads|copies)|singletons?|'
@@ -840,12 +908,57 @@ def tools_in(f, s):
     return out
 
 
+# Where a sentence breaks into clauses, each naming its own step: "dereplicated using vsearch and clustered
+# using SWARM", "filtered using vsearch, and primers removed using cutadapt"
+CLAUSE_BREAK = re.compile(r';|,\s+(?=(?:and|then|followed\s+by|before|after|prior\s+to|while|whereas)\b)|'
+                          r'\s+and\s+(?:then\s+)?(?=(?:[\w-]+\s+){0,2}?[\w-]+ed\b)', re.I)
+# A clause that names an earlier or later step as context: "Following demultiplexing, primers were trimmed"
+CONTEXT_CLAUSE = re.compile(r'\s*(?:and\s+|then\s+)?(?:following|after|prior\s+to|before|once|upon)\b', re.I)
+# a sentence about testing primers in silico ("primer pairs were tested in silico using BLAST")
+IN_SILICO = re.compile(r'in\s+silico|primer\s*[-–]?\s*BLAST|primers?\s+(?:pairs?\s+)?(?:were\s+)?tested', re.I)
+CUSTOM_DB = re.compile(r'(?:custom|in[- ]house|local|curated|own)\s+(?:[\w-]+\s+){0,5}?(?:reference\s+|barcode\s+)?'
+                       r'(?:database|library|db)\b', re.I)
+
+
+def clause_spans(txt):
+    """The clauses of a sentence, as (start, end); a break inside brackets ("(v1.2.9; Boyer et al., 2014)") is
+    no break."""
+    depth, inside = 0, []
+    for ch in txt:
+        depth = max(0, depth + (ch in '([') - (ch in ')]'))
+        inside.append(depth > 0)
+    spans, start = [], 0
+    lead = re.match(r'\s*(?:following|after|prior\s+to|before|once|upon)\b[^,;]{0,80},', txt, re.I)
+    breaks = [(lead.end() - 1, lead.end())] if lead else []
+    breaks += [(m.start(), m.end()) for m in CLAUSE_BREAK.finditer(txt) if m.end() > m.start() and not inside[m.start()]]
+    for a, b in sorted(set(breaks)):
+        if a >= start:
+            spans.append((start, a))
+            start = b
+    spans.append((start, len(txt)))
+    return spans
+
+
 def rule_bioinformatics(f):
     sents = f.sentences
     before = (None, [])   # the paragraph and software of the last sentence that named software
     for i, s in enumerate(sents):
         txt = s.text
-        stages = {k for k, rx in STAGE_WORDS.items() if re.search(rx, txt, re.I)}
+        if s.own_reference:
+            # a sentence about reference specimens says nothing of how the eDNA reads were processed,
+            # though it may describe the custom database built from them
+            if CUSTOM_DB.search(txt) and len(txt.split()) >= 8:
+                f.add('otu_db_custom', txt, s, 'a custom reference database described in this sentence')
+            continue
+        spans = clause_spans(txt)
+
+        def clause(pos):
+            return next(k for k, (a, b) in enumerate(spans) if a <= pos <= b)
+        context = {k for k, (a, b) in enumerate(spans) if CONTEXT_CLAUSE.match(txt[a:b])}
+        stage_clauses = {k: {clause(m.start()) for m in re.finditer(rx, txt, re.I)} for k, rx in STAGE_WORDS.items()}
+        stages = {k for k, cs in stage_clauses.items() if cs}
+        if IN_SILICO.search(txt):
+            stages.discard('taxonomy')   # testing primers, not classifying the reads
         if not stages:
             continue
         tools = tools_in(f, s)
@@ -860,7 +973,13 @@ def rule_bioinformatics(f):
         for stg in ('trim', 'demux', 'merge', 'filter', 'denoise', 'cluster', 'chimera', 'taxonomy'):
             if stg not in stages:
                 continue
-            names = [label for e, label, _ in tools if stg in (e.uses or ())]
+            able = [(e, label, m) for e, label, m in tools if stg in (e.uses or ())]
+            own = [t for t in able if clause(t[2].start()) in stage_clauses[stg]]
+            if own:
+                able = own   # software named in the clause of the step did it, not software of another clause
+            elif stage_clauses[stg] <= context:
+                continue     # the step is only context for what the sentence's software did
+            names = [label for e, label, _ in able]
             if not names:
                 continue
             value = ', '.join(dict.fromkeys(names))
@@ -870,9 +989,8 @@ def rule_bioinformatics(f):
                 if term == 'error_rate_tool' and not re.search(r'quality|error|phred|maxEE', txt, re.I):
                     continue
                 if term == 'otu_seq_comp_appr':
-                    for e, label, m in tools:
-                        if 'taxonomy' in (e.uses or ()):
-                            f.add(term, label + tool_settings(txt, m), s, TOOL_FOUND_BY[term])
+                    for e, label, m in able:
+                        f.add(term, label + tool_settings(txt, m), s, TOOL_FOUND_BY[term])
                     continue
                 if term == 'chimera_check_method' and re.search(r'de\s?novo|denovo', txt, re.I):
                     value_c = 'de novo, ' + value
@@ -965,8 +1083,7 @@ def rule_bioinformatics(f):
             for e, m in find_named(f.vocab.get('database', []), txt):
                 v = e.name + db_version(txt, m.end())
                 dbs.append(v)
-            custom = re.search(r'(?:custom|in[- ]house|local|curated|own)\s+(?:[\w-]+\s+){0,5}?(?:reference\s+|barcode\s+)?'
-                               r'(?:database|library|db)\b', txt, re.I)
+            custom = CUSTOM_DB.search(txt)
             if custom and len(txt.split()) >= 8:
                 dbs.append('custom')
                 f.add('otu_db_custom', txt, s, 'a custom reference database described in this sentence')
@@ -1035,8 +1152,14 @@ def db_version(txt, end):
 
 # ------------------------------------------------------------------ samples: collection, filtration, extraction, storage
 
+# The paper says that the whole filter went into the extraction, so the volume filtered is the volume extracted
+WHOLE_FILTER = re.compile(r'(?:whole|entire|complete|full)\s+(?:\w+\s+)?(?:filters?|membranes?|filter\s+papers?)|'
+                          r'(?:filters?|membranes?)\s+(?:were|was)\s+extracted\s+(?:whole|in\s+(?:their|its)\s+entirety)', re.I)
+
+
 def rule_samples(f):
     sents = f.lab()
+    whole_filter = next((s for s in sents if WHOLE_FILTER.search(s.text)), None)
     for s in sents:
         txt = s.text
         filt = re.search(r'filter|filtrat|membrane', txt, re.I)
@@ -1054,7 +1177,8 @@ def rule_samples(f):
         for m in re.finditer(r'(?:(\d+(?:\.\d+)?)\s*(?:-|–|to)\s*)?(\d+(?:\.\d+)?|one|two|five|ten)[\s-]*'
                              r'(L|l|litres?|liters?|mL|ml|millilit(?:re|er)s?)\b'
                              r'(?!\s*(?:Niskin|bottle|Nalgene|container|of\s+(?:ATL|buffer|ethanol)))'
-                             r'(?!\s+(?:[\w-]+\s+){0,3}?(?:syringes?|tubes?|bags?|falcons?|canisters?|cups?|flasks?|jars?|vials?)\b)', txt):
+                             r'(?!\s+(?:[\w-]+\s+){0,3}?(?:syringes?|tubes?|bags?|falcons?|canisters?|cups?|flasks?|jars?|vials?|tanks?|buckets?|'
+                             r'carboys?|coolers?|aquari(?:a|ums?)|mesocosms?)\b)', txt):
             if controls or not re.search(r'water|seawater|sample|replicate', txt[max(0, m.start() - 60):m.end() + 60], re.I):
                 continue
             if re.search(r'RNAlater|buffer|ethanol|Longmire|\(\s*$', txt[max(0, m.start() - 25):m.start()], re.I):
@@ -1064,9 +1188,18 @@ def rule_samples(f):
             unit = 'L' if m.group(3).lower().startswith('l') else 'mL'
             near = txt[max(0, m.start() - 60):m.end() + 80]
             if re.search(r'filter', near, re.I):
-                f.add('samp_vol_we_dna_ext', v, s, 'a volume of water filtered for DNA extraction', confused('samp_vol_we_dna_ext'),
-                      span=m.span())
-                f.add('samp_vol_we_dna_ext_unit', unit, s, 'the unit of the volume filtered')
+                # The volume filtered is the volume extracted only if the paper says that the whole filter was
+                # extracted; otherwise a part of the filter may have been
+                if whole_filter:
+                    f.add('samp_vol_we_dna_ext', v, s, 'a volume of water filtered, and the whole filter extracted',
+                          confused('samp_vol_we_dna_ext'), span=m.span(), extra=[whole_filter] if whole_filter is not s else [])
+                    f.add('samp_vol_we_dna_ext_unit', unit, s, 'the unit of the volume filtered')
+                elif re.search(r'collect|sampled|taken|replicates?', txt, re.I):
+                    f.add('samp_size', v, s, 'a volume of water collected (and filtered)', confused('samp_size'), span=m.span())
+                    f.add('samp_size_unit', unit, s, 'the unit of the volume collected')
+            elif re.search(r'extract\w*\s+(?:\w+\s+){0,3}?from\s+(?:\w+\s+){0,2}?$', txt[max(0, m.start() - 50):m.start()], re.I):
+                f.add('samp_vol_we_dna_ext', v, s, 'a volume of sample that DNA was extracted from', span=m.span())
+                f.add('samp_vol_we_dna_ext_unit', unit, s, 'the unit of the volume extracted')
             elif re.search(r'collect|sampled|taken|replicates?', txt, re.I):
                 f.add('samp_size', v, s, 'a volume of water collected', confused('samp_size'), span=m.span())
                 f.add('samp_size_unit', unit, s, 'the unit of the volume collected')
@@ -1094,7 +1227,7 @@ def rule_samples(f):
                 if e.extra:
                     f.add('filter_material', e.extra, s, f'{e.name} filters are {e.extra}')
             if re.search(r'filtered|filtration|filtering|filter\s+(?:the\s+)?(?:water|samples?)', txt, re.I) and \
-                    not BIOINFORMATIC.search(txt):
+                    not BIOINFORMATIC.search(txt) and not STATISTICS.search(txt):
                 if re.search(r'passive|submerged|immersed', txt, re.I):
                     f.add('filter_passive_active_0_1', '0', s, 'passive filtration')
                 elif re.search(r'\bpump|peristaltic|vacuum|syringe|manifold|Sterivex|capsule', txt, re.I):
@@ -1109,7 +1242,7 @@ def rule_samples(f):
         if not re.search(r'\bextracts?\b|\bDNA\s+(?:was|were)\s+(?:stored|kept)|eluted', txt, re.I):
             for m in re.finditer(r'(?:stored|frozen|kept|preserved|held|transported)\s+(?:\w+\s+){0,3}?(?:at|in\s+a)\s+' + TEMP,
                                  txt, re.I):
-                clause = txt[max(0, m.start() - 120):m.start()]
+                clause = txt[:m.start()]
                 if re.search(r'membranes?|filters?\b|filtrate|filtered|post-filter|after\s+filtration', clause + ' ' + txt[:40],
                              re.I) and \
                         not re.search(r'(?:before|prior\s+to|until)\s+(?:being\s+)?filt|filtered\s+within', txt, re.I):
@@ -1158,7 +1291,9 @@ def rule_samples(f):
             m = re.search(r'modifications?\s*(?:to\s+the\s+manufacturer[’\']?s\s+protocol)?\s*[:;–-]\s*(.+)$', s.text, re.I)
             parts, extra = [m.group(1)] if m and len(m.group(1)) > 20 else [], []
             for nxt in sents[i + 1:i + 4]:
-                if re.search(r'digest|lysis|buffer|proteinase|elut|incubat|\bbead|\bATL\b|\bAL\b|\bAE\b|\bEB\b|cut\s+into', nxt.text, re.I):
+                # buffer names in capitals only: "AL" is also the "al." of "et al."
+                if re.search(r'digest|lysis|buffer|proteinase|elut|incubat|\bbead|cut\s+into', nxt.text, re.I) or \
+                        re.search(r'\b(?:ATL|AL|AE|EB)\b', nxt.text):
                     parts.append(nxt.text)
                     extra.append(nxt)
                 else:
@@ -1205,16 +1340,28 @@ def load_terms(checklist, assay_type=None):
     return terms
 
 
+EDNA_TEXT = re.compile(r'\beDNA\b|environmental\s+DNA|metabarcod|amplicon|\bq?PCR\b|ddPCR|\bDNA\s+extract', re.I)
+
+
+def looks_like_edna(texts):
+    """False for a text with no word of eDNA, PCR or metabarcoding: not the methods of an eDNA study."""
+    return any(EDNA_TEXT.search(text) for _, text in texts)
+
+
 def find(texts, vocab, assay_names=(), whole_text=False):
-    """Proposals from the methods texts: (proposals, notes on what was read)."""
+    """Proposals from the methods texts: (proposals, notes on what was read). A text that is not about eDNA
+    gets none."""
     sentences, read = [], []
     for label, text in texts:
+        text = repair_text(text)
         part, where = (text, 'the whole text') if whole_text else methods_part(text)
         read.append(f'{label}: {where}')
         for s in split_sentences(part, label):
             s.index = len(sentences)
             sentences.append(s)
     f = Finder(sentences, vocab, assay_names)
+    if not looks_like_edna(texts):
+        return [], read, sentences
     rule_samples(f)
     rule_pcr(f)
     rule_library(f)
@@ -1415,7 +1562,7 @@ def clean(v):
     """One line of text for the outputs. A control character (a symbol the PDF's font did not map, often a
     minus sign) cannot go in an Excel cell, so it shows as � for the reviewer to check."""
     v = re.sub(r'\s+', ' ', str(v)).strip()
-    return re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '�', v)
+    return re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '\ufffd', v)
 
 
 def missing_terms(rows, terms):
@@ -1638,6 +1785,9 @@ def main(argv=None):
     terms = load_terms(args.checklist, args.assay_type)
     names = [a.strip() for a in args.assay_names.split(',') if a.strip()]
     proposals, read, sentences = find(texts, vocab, names, args.whole_text)
+    if not looks_like_edna(texts):
+        print('WARNING: the methods do not mention eDNA, PCR or metabarcoding, so nothing was proposed. Check that this '
+              'is the right file.', file=sys.stderr)
     rows = tidy(proposals, terms)
     write_tsv(rows, terms, args.output)
     label = ', '.join(t[0] for t in texts)

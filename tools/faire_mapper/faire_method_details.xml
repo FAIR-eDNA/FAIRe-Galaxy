@@ -150,13 +150,15 @@ Primers are left to **FAIRe mapper: find primers**, which looks them up in a tab
 - **Values found** (tabular): the same values, one per line, with the section, term, value, assay,
   sentence, how it was found, a note, the status *review*, the term's FAIRe level, its confidence
   (*reliable* or *check*) and its record in papers tested.
-- **Summary**: what was read, and the terms found in each part of the methods.
+- **Summary**: what was read, and the terms found in each part of the methods. A text that never
+  mentions eDNA, PCR or metabarcoding gets no proposals and a warning: check that it is the right file.
 
 **What it looks for**
 
 - *Field and laboratory hygiene*: sentences about bleach, UV or other cleaning (sterilise_method).
-- *Sampling and filtration*: the sampling device; the volume collected and the volume filtered
-  (samp_size and samp_vol_we_dna_ext, which people often mix up, so the note says how they differ);
+- *Sampling and filtration*: the sampling device; the volume collected (samp_size) and the volume
+  extracted (samp_vol_we_dna_ext), which people often mix up, so the note says how they differ; the
+  volume filtered counts as the volume extracted only when the paper says the whole filter was extracted;
   the filter's pore size, diameter, material and name; active or passive filtration; the sentence
   that describes the filtration; the storage temperature before filtering (samp_store_temp) and after
   it (prepped_samp_store_temp); what the samples were preserved in.

@@ -234,6 +234,87 @@ that now leave out a sentence from another step.
 
 These changes were made after the held-out papers were seen, so the next set of papers will test them.
 
+## Test set 2: 11 new papers, judged blind
+
+Eleven papers published in 2025 and 2026, none seen before, tested the tool as it stood after the reviews
+above (numbered 31 to 41). Only each paper's main PDF was read, as a user would usually have only the paper.
+The set included a study with no eDNA in it (38), as a negative test, and two studies with targeted ddPCR
+assays (39 and 41), the first test of the tool's targeted-assay mode.
+
+**An independent reading.** Microsoft Copilot could not complete the reading, so each paper was read by a
+separate Claude agent that had seen neither the tool, its rules nor its results, nor the earlier reviews. Each
+agent had only the paper's PDF, the table of FAIRe terms and the instructions Copilot had been given
+(`test_set_2_reader_instructions.md`), and read the PDF pages directly, not the text the tool extracts. Every
+value needed a word-for-word excerpt: a script found 872 of the 886 excerpts in the paper's text, and the other
+14 (table rows and symbols the PDF text garbles) were checked by hand. The reader also agreed with all 37
+values Copilot had given in a first, partial pass.
+
+**A blind review.** A person judged 453 pairs of paper and FAIRe term against the papers. The two values on
+each row were shown as A and B, with the tool's value on a random side, and the key was kept out of the sheet.
+The person judged every row where the values differed or only one was given, and 88 of the 214 rows where they
+agreed (85 confirmed); agreed rows left unjudged count as right. Primer terms were left out.
+
+| | Values given | Right | Partly right | Wrong |
+|---|---|---|---|---|
+| The tool | 244 | 220 (90%) | 9 (4%) | 15 (6%) |
+| The independent reader | 435 | 409 (94%) | 11 (3%) | 15 (3%) |
+
+The values for terms found reliably were right 93% of the time (124 of 134; 95% on the held-out papers) and
+those to check 87% (96 of 110; 88%), so the two groups held up on new papers. All 10 values of the Mandatory
+term pcr_0_1 were right, and all 33 values for the two ddPCR papers. Of the 431 values the papers give, the
+tool found 220 (51%) and the reader 409 (95%): a reader of the whole paper finds far more, and the tool's
+strengths are that it needs no AI service, gives the same answer every time and ties every value to its
+sentence.
+
+Most of the tool's 24 values that were not right fell into a few groups:
+
+- The volume extracted (9 values): the tool gave the volume filtered, where the paper did not say how much of
+  the filter was extracted.
+- A PCR's cycles written as a word ("twenty cycles") were missed, so the second (indexing) PCR was taken for
+  the first.
+- Programs in the wrong role: Cutadapt as the demultiplexer in "Following demultiplexing, primers were trimmed
+  using Cutadapt", DADA2 as the merge tool where identical ASVs were merged, BLAST from a sentence about
+  Sanger sequencing of vouchered tissue.
+- One value where the paper gives two (an NCBI and a custom database; sequencing in-house and at Azenta).
+- A syringe for blood taken from birds as the eDNA sampling device; descriptions built from a sentence of
+  another step (statistics, library preparation).
+- In the paper with no eDNA, the tanks of "three 203-L collection tanks" as the sample size.
+
+The reviewer also noted that some values repeat themselves, and that a syringe sometimes does take the sample.
+
+### Changes made after test set 2
+
+- Preprints' line numbers ("MATERIAL & METHODS 64") are removed, so the Methods heading is found and sentences
+  are whole; bioRxiv's page footer is left out.
+- A minus sign that a PDF's font does not map (a control character, or "/C0" in Wiley's PDFs) is read as a
+  minus, and the outputs never carry a control character (it once stopped the review sheet).
+- samp_vol_we_dna_ext is proposed only when the paper says the whole filter was extracted, or names the volume
+  DNA was extracted from; otherwise a volume collected and filtered is proposed as samp_size.
+- A text that never mentions eDNA, PCR or metabarcoding gets no proposals, and a warning.
+- A size before tank, bucket, carboy, cooler or aquarium is a container's size, not a sample's.
+- Sentences about vouchered tissue, Sanger sequencing of references or blood are left out of the sample, PCR
+  and bioinformatics rules (a sentence naming the DNeasy Blood & Tissue Kit is not).
+- Each program is paired with the step named in its own clause ("dereplicated using vsearch and clustered
+  using SWARM"), and a step named only as context ("Following demultiplexing, ...") is no step of the program.
+  Merging counts only for reads or read pairs; "primers removed" counts as trimming.
+- Software in a sentence about testing primers in silico (Primer-BLAST) is not the taxonomy method.
+- Cycles written as words ("twenty", "eight") are read; a "terminal hold" is a final extension; a second PCR
+  is recognised in "a second, five cycle, PCR" and in "The second PCR ... used the first PCR product"; a
+  single-step PCR with indexing is one PCR; a capital S right after a number is a gene (18S), not seconds.
+- Storage after filtering is recognised anywhere earlier in the sentence ("the filtrate ... was stored at").
+- Statistics ("filtering those correlations with q values") are not sample processing.
+- The vocabulary names BLAST, Azenta Life Sciences, SWARM, QuantStudio (Applied Biosystems) and Zymo's
+  Quick-DNA kits as papers write them.
+
+Measured against the 1,167 values judged in all three reviews, the changes drop 16 wrong and 10 partly right
+values. Of the 43 right values no longer proposed exactly as before, 27 are still there in another form (BLAST
+named as written, a program's version added, text without line numbers, a thermocycler moved from the second
+PCR to the only PCR) or gave way to a more exact value. The other 16 are 8 volumes extracted and their units,
+which the stricter rule leaves out because their papers do not say the whole filter was extracted; several now
+come through as the volume collected. The judgments of test set 2 are in `reliability.tsv`, which moved the
+demultiplexing, merging and BLAST-type programs and the sample size to the values to check, and the filter
+diameter, inhibition check and the second PCR's master mix and programme to the reliable group.
+
 ## Files
 
 - `run.sh OUTDIR [WEST_2024_TEXT]`: runs the tool on the development texts and, if given, the held-out
@@ -241,3 +322,5 @@ These changes were made after the held-out papers were seen, so the next set of 
 - `make_testdata.py`: writes `tools/faire_mapper/test-data/method_details_reviewed.xlsx`, the review
   sheet for SEA-MES filled in as a person might, for the apply mapping test.
 - `results/`: the values proposed for the development texts, and each run's summary.
+- `test_set_2_reader_instructions.md`: the instructions each independent reader of test set 2 followed
+  (with the table of FAIRe terms from the Copilot workbook).

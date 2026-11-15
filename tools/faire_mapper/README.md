@@ -660,7 +660,7 @@ rejects or changes it; the sheet also lists the method terms not found, for the 
 
 A tool that fills in many terms makes it tempting to accept them all unchecked, so the output steers
 attention. Each value carries its term's record from `method_details/reliability.tsv`: how often the
-tool agreed with an independent reading of the same papers in the 30-paper trial. A term counts as
+tool agreed with an independent reading of the same papers in the trial of 41 papers. A term counts as
 found reliably when the two agreed in at least 5 papers and in 9 of 10 where both gave a value, and the
 tool did not often propose a value the reading did not find; descriptions, terms with several values
 and values that fail a plausibility check (cycles or annealing temperature that differ from the PCR
@@ -669,10 +669,14 @@ collected) are always to check. The review sheet and the Shiny app list the reli
 the others as values to check, Mandatory terms first within each; in the app, *Tick all* ticks only the
 reliable values. Apply mapping uses only accepted or given values, logs which values came from this
 tool and whether a person accepted or changed them, and runs the same plausibility checks on the values
-it writes. The counts in `reliability.tsv` come from values checked by a person in 30 papers (all the
-held-out papers' values, and the development papers' values that Copilot did not confirm), and are meant to
-be updated as more papers are checked. On the held-out papers, judged by a person, 87% of the tool's values were right,
-6% partly right and 7% wrong; the values for terms found reliably were right 95% of the time.
+it writes. The counts in `reliability.tsv` come from values checked by a person in 41 papers (all the
+held-out papers' values, the development papers' values that Copilot did not confirm, and a blind review of
+11 new papers), and are meant to be updated as more papers are checked. On the held-out papers, judged by a
+person, 87% of the tool's values were right, 6% partly right and 7% wrong; on the 11 new papers, judged blind
+beside an independent reading, 90% were right, 4% partly right and 6% wrong, and the values for terms found
+reliably were right 93% of the time. The volume extracted (samp_vol_we_dna_ext) is proposed only when the
+paper says the whole filter was extracted or names the volume extracted, and a text that never mentions
+eDNA, PCR or metabarcoding gets no proposals and a warning.
 
 On the held-out paper of the trial (West et al. 2024, read whole), the tool proposed 40 of the 52 values
 written by hand from the paper as the rules stood, and 44 after three general faults the run showed were
