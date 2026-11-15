@@ -15,7 +15,7 @@ tables into a FAIRe workbook. The Galaxy eDNA Lab is at edna.dev.gvl.org.au.
 | `tools/faire2qiime` | FAIRe2QIIME | [aomlomics/faire2qiime](https://github.com/aomlomics/faire2qiime) | Lint clean; 8/8 tests pass; needs a trial importing its files into QIIME 2 |
 | `tools/faire2mdt` | FAIRe2MDT | [FAIR-eDNA/FAIRe2MDT](https://github.com/FAIR-eDNA/FAIRe2MDT) | Lint clean; 6/6 tests pass; leaves out control samples, as GBIF asks; ran on 11 assay and run combinations of the FAIRe examples; MDT trial reached an archive GBIF can index; CC BY 4.0 licence copied in (`LICENSE.upstream`) |
 | `tools/edna2obis` | edna2obis: match taxa; edna2obis: build Darwin Core tables | [aomlomics/edna2obis](https://github.com/aomlomics/edna2obis) | Lint clean; 14/14 tests pass (Galaxy 26.1, with internet access); one request at a time to WoRMS and GBIF by default, at most 4; needs a trial on Galaxy Australia and an IPT |
-| `tools/faire_mapper` | FAIRe mapper: identify your files (says what each file is and where it goes); profile columns; propose mapping; find primers; build primer table; apply mapping (writes a FAIRe workbook); ask a language model (optional answers for the columns to review) (plus a model script for methods text) | New code, from the project's `faire_mapper` prototype; bundled primer table from Takahashi et al. 2023 and a bacteria and archaea register | Lint clean; 61/61 tests pass (Galaxy 26.1); benchmarked, tried on four Dryad datasets, two Australian datasets, the SEA-MES record (16S, COI, 18S and Wilderlab), the day-night study of West et al. 2024 (16S and COI, `dev/faire_mapper_daynight/`) and nine FAIRe examples; model step not yet run against the API |
+| `tools/faire_mapper` | FAIRe mapper: identify your files (says what each file is and where it goes); profile columns; propose mapping; find primers; find method details (proposes values for the laboratory and bioinformatic methods from methods text, for review); build primer table; apply mapping (writes a FAIRe workbook); ask a language model (optional answers for the columns to review) (plus a model script for methods text) | New code, from the project's `faire_mapper` prototype; bundled primer table from Takahashi et al. 2023 and a bacteria and archaea register | Lint clean; 61/61 tests pass (Galaxy 26.1); benchmarked, tried on four Dryad datasets, two Australian datasets, the SEA-MES record (16S, COI, 18S and Wilderlab), the day-night study of West et al. 2024 (16S and COI, `dev/faire_mapper_daynight/`) and nine FAIRe examples; model step not yet run against the API |
 
 Each tool directory has its own README with what the wrapper adds, upstream issues found, and the
 steps still needed before deployment.
@@ -79,7 +79,7 @@ tools/
   faire2qiime/    one ToolShed repository
   faire2mdt/      one ToolShed repository
   edna2obis/      one ToolShed repository (two tools sharing macros.xml)
-  faire_mapper/   one ToolShed repository (seven tools sharing macros.xml; bundles the checklist v1.0.2, its full template and a primer table)
+  faire_mapper/   one ToolShed repository (eight tools sharing macros.xml; bundles the checklist v1.0.2, its full template and a primer table)
 workflows/faire/  three Galaxy workflows that chain the tools, each with its tests and test data
 shiny/            a Shiny app that runs the tools on a person's own computer, without Galaxy
 .github/workflows/pr.yaml   lint and tests on every change, adapted from the IUC's

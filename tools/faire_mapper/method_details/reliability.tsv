@@ -1,0 +1,105 @@
+# How often find method details proposed the right value for a FAIRe term, in published eDNA papers.
+# The tool sorts its proposals by these counts: a term it has proposed reliably is listed first, and the
+# others are listed as values to check (see faire_method_details.py, reliability_of). Replace the counts
+# as more papers are checked. papers_agreed: the tool was right; papers_differed: the tool gave a wrong or
+# partly right value; papers_tool_only: the tool gave a value that no one has judged; papers_missed: the
+# paper gives a value and the tool none.
+# Source, November 2026: 41 published eDNA papers. A person judged the tool's values for the 10 held-out
+# papers, and for the 20 development papers those where the tool and a reading by Microsoft Copilot
+# disagreed or Copilot gave none (for terms already judged three times, a sample). Values where the tool
+# and Copilot agreed count as right; values missed rest on Copilot's reading. For 11 further papers
+# (test set 2) a person judged, blind, the tool's values beside those of an independent reading of each
+# paper; values missed are those the reader found and the person judged right.
+term	papers_agreed	papers_differed	papers_tool_only	papers_missed
+amplificationReactionVolume	19	1	0	7
+annealingTemp	22	1	1	5
+assay_validation	0	0	0	7
+barcoding_pcr_appr	21	0	0	9
+bioinfo_method_additional	16	5	4	4
+chimera_check_method	5	1	2	3
+commercial_mm	17	0	0	7
+custom_mm	1	0	0	2
+demux_max_mismatch	2	0	0	1
+demux_tool	6	1	1	7
+dna_cleanup_0_1	0	0	0	1
+dna_cleanup_method	0	0	0	1
+error_rate_cutoff	6	2	2	4
+error_rate_tool	11	0	4	9
+error_rate_type	9	0	1	9
+filter_diameter	6	0	0	0
+filter_material	15	0	1	2
+filter_name	15	0	0	6
+filter_passive_active_0_1	23	0	2	2
+inhibition_check	5	0	1	0
+inhibition_check_0_1	5	0	1	0
+instrument	35	0	0	2
+lib_layout	25	0	1	5
+lib_screen	22	3	4	1
+merge_min_overlap	4	0	0	2
+merge_tool	14	2	1	6
+min_len_cutoff	7	0	0	10
+min_len_tool	5	0	0	8
+min_reads_cutoff	7	0	1	10
+min_reads_cutoff_unit	8	0	0	9
+min_reads_tool	4	0	0	2
+nucl_acid_amp	0	0	0	7
+nucl_acid_ext_kit	23	2	0	8
+nucl_acid_ext_lysis	8	0	1	10
+nucl_acid_ext_modify	5	2	0	15
+nucl_acid_ext_sep	25	0	4	3
+otu_clust_cutoff	14	2	4	4
+otu_clust_tool	26	0	0	8
+otu_db	26	2	1	4
+otu_db_custom	4	2	0	6
+otu_final_description	0	0	0	8
+otu_raw_description	0	0	0	4
+otu_seq_comp_appr	25	3	5	1
+pcr2_amplificationReactionVolume	7	0	0	6
+pcr2_annealingTemp	4	0	0	5
+pcr2_commercial_mm	5	0	0	6
+pcr2_cond	5	0	0	8
+pcr2_custom_mm	1	0	0	0
+pcr2_cycles	8	0	0	6
+pcr2_dna_vol	8	1	0	3
+pcr2_method_additional	0	0	0	5
+pcr2_thermocycler	1	0	0	0
+pcr_0_1	39	0	1	0
+pcr_analysis_software	0	0	0	3
+pcr_cond	24	3	1	1
+pcr_cycles	26	2	1	1
+pcr_dna_vol	25	1	0	3
+pcr_method_additional	0	0	0	17
+pcr_primer_conc_forward	6	0	0	6
+pcr_primer_conc_reverse	6	0	0	6
+pcr_primer_vol_forward	6	0	0	6
+pcr_primer_vol_reverse	6	0	0	6
+pcr_rep	25	0	0	3
+platform	35	0	0	2
+prepped_samp_store_temp	11	0	0	7
+samp_collect_device	11	3	2	9
+samp_mat_process	19	7	2	7
+samp_size	17	2	1	8
+samp_size_unit	17	2	1	8
+samp_store_sol	5	2	0	6
+samp_store_temp	7	0	1	6
+samp_vol_we_dna_ext	7	4	7	11
+samp_vol_we_dna_ext_unit	9	5	4	11
+screen_contam_method	8	0	2	15
+screen_geograph_method	1	0	0	4
+screen_nontarget_method	2	0	0	12
+screen_other	0	0	0	14
+seq_kit	12	1	0	8
+seq_method_additional	7	2	2	2
+sequencing_location	17	1	0	4
+size_frac	19	1	1	4
+size_frac_low	2	0	0	0
+sop_bioinformatics	0	0	0	6
+sterilise_method	14	5	2	5
+tax_assign_cat	24	6	1	5
+tax_class_collapse	2	0	3	3
+tax_class_id_cutoff	11	1	2	5
+tax_class_other	4	0	1	7
+tax_class_query_cutoff	0	0	0	5
+thermocycler	5	1	1	0
+trim_method	16	1	1	5
+trim_param	4	2	0	10

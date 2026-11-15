@@ -24,8 +24,9 @@ checklist_terms <- local({
   function() {
     if (is.null(cache)) {
       d <- readxl::read_excel(checklist(), sheet = "checklist")
-      cache <<- data.frame(term = d$term_name, sheet = d$data_type, level = d$requirement_level_code,
-                           description = d$description, example = d$example, stringsAsFactors = FALSE)
+      cache <<- data.frame(term = d$term_name, sheet = d$data_type, section = d$section,
+                           level = d$requirement_level_code, description = d$description, example = d$example,
+                           stringsAsFactors = FALSE)
     }
     cache
   }
@@ -125,6 +126,59 @@ preview_table <- function(path, sheet = NULL, n = 200) {
     } else NULL
   }, error = function(e) NULL)
   out
+}
+
+# ---------------------------------------------------------------- previewing a file
+
+# What a file is, judged by its first bytes (Galaxy and people name files in all sorts of ways): a PDF,
+# a workbook, a FASTA file, a table with tabs or commas between its columns, or plain text.
+sniff_file <- function(path) {
+  b <- tryCatch(readBin(path, "raw", 4096), error = function(e) raw())
+  if (length(b) >= 5 && rawToChar(b[1:5]) == "%PDF-") return("pdf")
+  if (length(b) >= 4 && identical(b[1:4], as.raw(c(0x50, 0x4b, 0x03, 0x04)))) return("workbook")
+  lines <- preview_lines(path, 30)
+  lines <- lines[nzchar(trimws(lines))]
+  if (!length(lines)) return("text")
+  if (startsWith(trimws(lines[1]), ">")) return("fasta")
+  same_count <- function(ch) {
+    n <- lengths(regmatches(lines, gregexpr(ch, lines, fixed = TRUE)))
+    n[1] > 0 && mean(n == n[1]) >= 0.8
+  }
+  e <- galaxy_ext(path)
+  if (e == "tabular" || same_count("\t")) return("tab")
+  if (e == "csv" || (length(lines) > 2 && same_count(","))) return("csv")
+  "text"
+}
+
+preview_lines <- function(path, n) {
+  con <- file(path, open = "r", encoding = "UTF-8")
+  on.exit(close(con))
+  tryCatch(suppressWarnings(readLines(con, n = n, warn = FALSE)), error = function(e) character())
+}
+
+# The first rows of a table as they are in the file, with no row taken as the column names, so the
+# person can see where the column names are.
+preview_raw_table <- function(path, kind, sheet = NULL, n = 15, max_cols = 30) {
+  d <- tryCatch({
+    if (kind == "workbook") {
+      # A range keeps empty rows at the top, so the row numbers are those Excel shows.
+      as.data.frame(readxl::read_excel(path, sheet = sheet, range = readxl::cell_rows(c(1, n)), col_names = FALSE,
+                                       col_types = "text", .name_repair = "minimal"))
+    } else {
+      # As many columns as the widest of the rows shown, so a short row of notes above the column names
+      # does not set the width.
+      lines <- preview_lines(path, n)
+      sep <- if (kind == "tab") "\t" else ","
+      quote <- if (kind == "tab") "" else "\""
+      w <- max(utils::count.fields(textConnection(lines), sep = sep, quote = quote, blank.lines.skip = FALSE),
+               na.rm = TRUE)
+      utils::read.table(text = lines, sep = sep, header = FALSE, fill = TRUE, quote = quote, comment.char = "",
+                        colClasses = "character", blank.lines.skip = FALSE, col.names = paste0("V", seq_len(w)))
+    }
+  }, error = function(e) NULL)
+  if (is.null(d) || !nrow(d)) return(NULL)
+  d[is.na(d)] <- ""
+  list(rows = d[, seq_len(min(ncol(d), max_cols)), drop = FALSE], more_cols = max(0, ncol(d) - max_cols))
 }
 
 # A FAIRe workbook sheet as a table: requirement and section rows above the field names on row 3.

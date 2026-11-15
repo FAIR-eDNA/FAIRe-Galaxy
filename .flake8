@@ -4,7 +4,7 @@
 [flake8]
 ignore = D,E501,W503
 import-order-style = smarkets
-application-import-names = faire_mapper,faire_mapper_adjudicate,faire_mapper_apply,faire_mapper_identify,faire_mapper_kinds,faire_mapper_library,faire_mapper_methods,faire_mapper_otu,faire_mapper_review,faire_mapper_text,faire_primers,faire2ena_run,faire2ena_sample,FAIRe2BioSample,FAIRe2SRA,FAIRe2NCBI,normalise_faire,faire2qiime,create_validator,config_data
+application-import-names = faire_mapper,faire_mapper_adjudicate,faire_mapper_apply,faire_mapper_identify,faire_mapper_kinds,faire_mapper_library,faire_mapper_methods,faire_mapper_otu,faire_mapper_review,faire_mapper_text,faire_method_details,faire_primers,faire2ena_run,faire2ena_sample,FAIRe2BioSample,FAIRe2SRA,FAIRe2NCBI,normalise_faire,faire2qiime,create_validator,config_data
 exclude =
     .git,
     tools/fairefier,

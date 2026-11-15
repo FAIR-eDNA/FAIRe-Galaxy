@@ -48,7 +48,7 @@ sheet. *FAIRe mapper: identify your files* says what each file looks like and wh
 |---|---|---|---|
 | 18S ASV table (data record file 7) | The lab, published | Read counts of 16,901 ASVs in 202 samples, with PR2 and SILVA lineages; below them, 37 rows of sample details, which a short script turns into the sample table | Steps 1, 2, 4 |
 | ENA's run report for PRJNA1263580 | ENA, downloaded | Each library's name, fastq files and MD5 checksums, and the six control libraries sequenced with the samples | Steps 1, 4, 9 |
-| The methods (the project's final report) | The lab, published | Primers, PCR, sequencing, storage and bioinformatics, read by *find primers* and by a person | Step 4, through the project values |
+| The methods (the project's final report) | The lab, published | Primers, PCR, sequencing, storage and bioinformatics, read by *find primers* and *find method details*, and checked by a person | Step 4, through the project values |
 | Values for the whole project (`project_values_18S.tsv`) | A person, from the methods and the 10 L samples' BioSample sheet | Project terms no table holds: project name and contact, primers, protocols, env_medium, storage temperature | Step 4 |
 | The reviewer's decisions | A person, in the review sheet | Accept, Reject or Change for each column of the sample table | Steps 3, 4 |
 | Tool settings | A person, on each tool's form | Sample type, assay, the sites' UTC offset; for ENA, the centre name, taxon, study accession and sequencer | Steps 2, 4, 6, 9 |

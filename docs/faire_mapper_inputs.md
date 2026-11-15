@@ -20,8 +20,12 @@ It tells you what each file looks like and which field of which tool it goes in.
    "TAReuk454FWD1 (CCAGCASCYGCGGTAATTCC)". It lists each candidate pair with its sequences, target
    gene and reference, so you can check them and copy the right ones into your values for the whole
    project.
-4. **FAIRe mapper: apply mapping** writes the FAIRe workbook, based on your review.
-5. **FAIRe-fier** checks the workbook. You can then use the submission tools to submit it to your
+4. **FAIRe mapper: find method details** reads the same methods for the filtration, extraction, PCR,
+   sequencing and bioinformatics, and proposes a FAIRe value for each term it recognises, with the
+   sentence it came from. You accept, reject or change each one in its review sheet, and fill in what
+   it did not find.
+5. **FAIRe mapper: apply mapping** writes the FAIRe workbook, based on your reviews.
+6. **FAIRe-fier** checks the workbook. You can then use the submission tools to submit it to your
    chosen repository - now in a FAIR format!
 
 Each step apart from your review uses a separate Galaxy tool, listed in the tool panel under the
@@ -70,21 +74,28 @@ In each description, say what kind of thing the column holds (a person, a place,
 a count or a code) and what any codes mean ("NC = negative control"). You can give a whole README,
 as the tool ignores lines that do not name a column in your table.
 
-**Methods text** (for the *find primers* tool). This is the methods section of your paper or
-protocol, as plain text or a PDF. (A PDF of scanned pages holds images of the text, which the tool
-can't read: save it as text first.) The tool finds the primer pairs it names, cites or gives as
-sequences, and lists them with their sequences for you to check. You can also type primer names or
-citations into the tool, one per line.
+**Methods text** (for the *find primers* and *find method details* tools). This is the methods
+section of your paper or protocol, or the whole paper, as plain text or a PDF. (A PDF of scanned pages
+holds images of the text, which the tools can't read: save it as text first.) *Find primers* finds the
+primer pairs it names, cites or gives as sequences, and lists them with their sequences for you to
+check. You can also type primer names or citations into it, one per line.
 
-The tools read the methods only for primers. The other values for the whole study that methods
-usually give, such as the target gene, PCR conditions, extraction kit, sequencing platform, reference
-databases and protocols, come from you: with the methods open beside you, type them into your values
-for the whole project (below). The *mandatory terms not covered* output of *propose mapping* lists
-the ones FAIRe needs.
+*Find method details* reads the methods for the other values for the whole study: the filters and
+storage, the extraction kit, the PCR conditions, master mix and thermocycler, the sequencing
+instrument and kit, and the software, settings and reference databases of the bioinformatics. Given a
+whole paper, it reads only the Methods section and any supplementary methods. It proposes each value
+with the sentence it came from, in a review sheet. Choose Accept, Reject or Change for each, and write
+in *Your value* any of the terms it lists as not found that you know. Then give the sheet to *apply
+mapping* with your other values for the whole project. The tool works by rules, not a language model,
+so it can miss values written in unusual ways, and it can't tell which assay a value belongs to unless
+the sentence names it. The *mandatory terms not covered* output of *propose mapping* lists the terms
+FAIRe needs that are still to give.
 
 **Values for the whole project** (for the *apply mapping* tool). These are things that are true of
-the whole study, such as the primers, the extraction kit or the sequencing platform. Give them as a
-table of FAIRe term names and values, in an Excel, CSV or tab-separated file:
+the whole study, such as the primers, the extraction kit or the sequencing platform. Give them as one
+or more tables of FAIRe term names and values, in Excel, CSV or tab-separated files, along with the
+review sheet from *find method details* once you have filled it in. A term given in two of them keeps
+the value of the first. A table looks like this:
 
 ```csv
 term,value
@@ -208,7 +219,7 @@ listed in `commonly_confused_terms.tsv`, which comes with the tool.
 
 The mapper matches columns in your sample table to any FAIRe term, including the ones listed below.
 For example, it matches *Collected by* to `recordedBy` and *Run* to `seq_run_id`. It does not search
-the methods text for these terms, as it reads the methods only for primers. For habitats, it matches
+the methods text for these terms, as the methods rarely give them. For habitats, it matches
 a column such as *Habitat* but keeps the values as you wrote them. FAIRe needs ENVO labels and IDs,
 such as `sea water [ENVO:00002149]`, so you will need to add these yourself.
 

@@ -32,7 +32,9 @@ python '$__tool_directory__/faire_mapper_apply.py'
     #end if
     $include_review
     #if $project_values:
-        --project_values '$project_values'
+        #for $pv in $project_values:
+            --project_values '$pv'
+        #end for
     #end if
     #if $req_lev:
         --req_lev 'M,$req_lev'
@@ -109,8 +111,8 @@ python '$__tool_directory__/faire_mapper_apply.py'
         <param name="include_review" type="boolean" truevalue="--include_review" falsevalue="" checked="false"
             label="Also apply the matches for review (skos:closeMatch)"
             help="Use this for a first draft. The log lists every match applied, so you can check them."/>
-        <param name="project_values" type="data" format="tabular,csv,xlsx,txt" optional="true" label="Values for the whole project (optional)"
-            help="Things true of the whole study, such as the primers, extraction kit or sequencing platform: a table (Excel, CSV or tab-separated) with the columns term (a FAIRe term name) and value, and optionally status and assay. Rows whose status is not supported or confirmed are left out. A project-level term goes to projectMetadata; a sample-level term is written for every sample. With several assays, a row with an assay name goes to that assay's column of projectMetadata (primers or target gene, say). A column of your sample table takes precedence."/>
+        <param name="project_values" type="data" format="tabular,csv,xlsx,txt" multiple="true" optional="true" label="Values for the whole project (optional)"
+            help="Things true of the whole study, such as the primers, extraction kit or sequencing platform. Give one or more tables (Excel, CSV or tab-separated) with the columns term (a FAIRe term name) and value, and optionally status and assay, and the review sheet from FAIRe mapper: find method details once you have filled it in. Rows whose status is not supported or confirmed are left out, as are the rows of the review sheet with no decision. A project-level term goes to projectMetadata; a sample-level term is written for every sample. With several assays, a row with an assay name goes to that assay's column of projectMetadata (primers or target gene, say). A column of your sample table takes precedence, and a term given in two tables keeps the value of the first."/>
         <param name="req_lev" type="select" multiple="true" optional="true" display="checkboxes" label="Requirement levels to include"
             help="Mandatory fields are always included.">
             <option value="HR" selected="true">Highly recommended</option>
@@ -260,6 +262,37 @@ python '$__tool_directory__/faire_mapper_apply.py'
                     <has_text text="pcr_0_1 = 1 (projectMetadata)"/>
                     <has_text text="project value samp_size = 2: a column of the table gives this term"/>
                     <has_text text="project values with status review, not applied: pcr_primer_forward"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Two tables of values for the whole project: a table and a reviewed sheet from find method details -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="assay_name" value="Fish16S"/>
+            <param name="include_review" value="true"/>
+            <param name="project_values" value="apply_project_values.tsv,method_details_reviewed.xlsx"/>
+            <param name="drop_unmapped" value="true"/>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet3.xml">
+                        <has_text text="DNeasy Blood and Tissue Kit (QIAGEN)"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/worksheets/sheet2.xml">
+                        <has_text text="Illumina NextSeq 2000"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="a reviewed sheet from find method details, with 10 values accepted or given and 47 not yet decided"/>
+                    <has_text_matching expression="pcr_cond = initial denaturation:95_15;denaturation:95_0\.5;annealing:54_1\.5.* \(projectMetadata\)"/>
+                    <has_text text="prepped_samp_store_temp = -80 (every sample)"/>
+                    <has_text text="pcr_0_1 = 1 (projectMetadata)"/>
+                    <has_text text="project values with status review, not applied: pcr_primer_forward, sterilise_method, samp_collect_device"/>
+                    <not_has_text text="samp_store_temp = 4"/>
                 </assert_contents>
             </output>
         </test>
