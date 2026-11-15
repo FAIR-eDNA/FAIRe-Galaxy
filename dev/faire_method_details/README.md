@@ -256,17 +256,17 @@ agreed (85 confirmed); agreed rows left unjudged count as right. Primer terms we
 
 | | Values given | Right | Partly right | Wrong |
 |---|---|---|---|---|
-| The tool | 244 | 220 (90%) | 9 (4%) | 15 (6%) |
-| The independent reader | 435 | 409 (94%) | 11 (3%) | 15 (3%) |
+| The tool | 244 | 221 (91%) | 9 (4%) | 14 (6%) |
+| The independent reader | 435 | 410 (94%) | 11 (3%) | 14 (3%) |
 
 The values for terms found reliably were right 93% of the time (124 of 134; 95% on the held-out papers) and
-those to check 87% (96 of 110; 88%), so the two groups held up on new papers. All 10 values of the Mandatory
+those to check 88% (97 of 110; 88%), so the two groups held up on new papers. All 10 values of the Mandatory
 term pcr_0_1 were right, and all 33 values for the two ddPCR papers. Of the 431 values the papers give, the
-tool found 220 (51%) and the reader 409 (95%): a reader of the whole paper finds far more, and the tool's
+tool found 221 (51%) and the reader 410 (95%): a reader of the whole paper finds far more, and the tool's
 strengths are that it needs no AI service, gives the same answer every time and ties every value to its
 sentence.
 
-Most of the tool's 24 values that were not right fell into a few groups:
+Most of the tool's 23 values that were not right fell into a few groups:
 
 - The volume extracted (9 values): the tool gave the volume filtered, where the paper did not say how much of
   the filter was extracted.

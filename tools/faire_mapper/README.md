@@ -673,7 +673,7 @@ it writes. The counts in `reliability.tsv` come from values checked by a person 
 held-out papers' values, the development papers' values that Copilot did not confirm, and a blind review of
 11 new papers), and are meant to be updated as more papers are checked. On the held-out papers, judged by a
 person, 87% of the tool's values were right, 6% partly right and 7% wrong; on the 11 new papers, judged blind
-beside an independent reading, 90% were right, 4% partly right and 6% wrong, and the values for terms found
+beside an independent reading, 91% were right, 4% partly right and 6% wrong, and the values for terms found
 reliably were right 93% of the time. The volume extracted (samp_vol_we_dna_ext) is proposed only when the
 paper says the whole filter was extracted or names the volume extracted, and a text that never mentions DNA,
 PCR, primers or amplification gets no proposals and a warning.

@@ -76,7 +76,7 @@ pcr_primer_vol_reverse	6	0	0	6
 pcr_rep	25	0	0	3
 platform	35	0	0	2
 prepped_samp_store_temp	11	0	0	7
-samp_collect_device	10	4	2	9
+samp_collect_device	11	3	2	9
 samp_mat_process	19	7	2	7
 samp_size	17	2	1	8
 samp_size_unit	17	2	1	8
