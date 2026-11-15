@@ -149,3 +149,7 @@ ul.lib .look-file + .rm-file { margin-left: 0; }
 .md-part-check { background: #fcebd5; color: #6b4300; }
 .md-evidence { font-size: 0.76rem; color: #4a5a60; margin-top: 0.2rem; }
 .md-evidence summary { cursor: pointer; }
+.md-confirm { padding-left: 1.1rem; }
+.md-confirm li { margin-bottom: 0.6rem; }
+.md-confirm-sentence { font-size: 0.85rem; color: #555; margin-top: 0.15rem; }
+.model-says .use-model { margin-left: 0.3rem; font-weight: 600; }

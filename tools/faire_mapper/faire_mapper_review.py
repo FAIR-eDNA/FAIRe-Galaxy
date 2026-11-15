@@ -262,11 +262,12 @@ def _matches(n):
     return f"{n} match{'' if n == 1 else 'es'} for review"
 
 
-def read_review_sheet(path, by_name, other_terms, log, include_review=False):
+def read_review_sheet(path, by_name, other_terms, log, include_review=False, hold=()):
     """The crosswalk for apply mapping, from a review sheet's decisions: Accept applies the proposed
     term (a FAIRe term, or a MIxS or Darwin Core term), Reject keeps the column as its own term, Change
     applies the replacement term, and no decision keeps the mapper's call (its matches for review are
-    applied with include_review, as for a crosswalk)."""
+    applied with include_review, as for a crosswalk, except for the terms in hold, which wait for a
+    decision: apply mapping's held_terms)."""
     with open(path, 'rb') as f:   # a file object, as Galaxy's file names end in .dat
         wb = load_workbook(io.BytesIO(f.read()), data_only=True)
     ws = wb[REVIEW]
@@ -277,7 +278,9 @@ def read_review_sheet(path, by_name, other_terms, log, include_review=False):
     at = {h: i for i, h in enumerate(head)}
     details = pd.read_excel(path, sheet_name=DETAILS, dtype=str, engine='openpyxl').fillna('')
     rows, counts, problems, seen = [], {'Accept': 0, 'Reject': 0, 'Change': 0, '': 0}, [], set()
-    undecided = {'none': 0, 'review': 0, 'applied': 0, 'accept': 0}   # rows with no decision, by the mapper's call
+    undecided = {'none': 0, 'review': 0, 'held': 0, 'applied': 0, 'accept': 0}   # rows with no decision, by the mapper's call
+    for_review = {'Accept': 0, 'Reject': 0, 'Change': 0, '': 0}         # decisions on the matches for review
+    by_model = 0                                                        # decisions that follow a model
     # Rows are read by their input term, so they can be sorted or filtered in any order.
     for r in ws.iter_rows(min_row=2, values_only=True):
         column = str(r[at[INPUT]] or '').strip()
@@ -290,6 +293,11 @@ def read_review_sheet(path, by_name, other_terms, log, include_review=False):
         decision = str(r[at[DECISION]] or '').strip().capitalize()
         decision = decision if decision in DECISIONS else ''
         counts[decision] += 1
+        call = str(r[at[CALL_HEAD]] or '').strip().lower() if CALL_HEAD in at else ''
+        if call.startswith('review'):
+            for_review[decision] += 1
+            # the reviewer took the model's suggestion (the app marks each one it confirmed)
+            by_model += 'model' in call and (decision == 'Accept' or 'confirmed' in call)
         mine = details[details['subject_label'].str.strip() == column].to_dict('records')
         main = [x for x in mine if x['predicate_id'] != 'skos:relatedMatch']
         if decision == 'Accept':
@@ -315,8 +323,11 @@ def read_review_sheet(path, by_name, other_terms, log, include_review=False):
                          'comment': 'changed by the reviewer', 'combine_order': '', 'value_part': ''})
         else:
             rows += main
+            faire = [x for x in main if str(x['object_id']).startswith('FAIRe:')]
             undecided['accept' if any(x['predicate_id'] == 'skos:exactMatch' for x in main)
-                      else 'applied' if include_review and any(str(x['object_id']).startswith('FAIRe:') for x in main)
+                      else 'held' if include_review and any(str(x['object_label']).strip().split(':')[-1] in hold
+                                                            for x in faire)
+                      else 'applied' if include_review and faire
                       else 'review' if main else 'none'] += 1
     # In the crosswalk's order (the table's), however the rows of the sheet were sorted
     order = {c: i for i, c in enumerate(dict.fromkeys(details['subject_label'].str.strip()))}
@@ -328,10 +339,16 @@ def read_review_sheet(path, by_name, other_terms, log, include_review=False):
     kept = ' and '.join(x for x in (f"{undecided['none']} with no proposed term" if undecided['none'] else '',
                                     _matches(undecided['review']) if undecided['review'] else '') if x)
     detail = '; '.join(x for x in (f'{kept}, kept as your own terms' if kept else '',
+                                   f"{_matches(undecided['held'])} to a Mandatory or commonly confused term, kept "
+                                   f"as your own terms until you decide {'it' if undecided['held'] == 1 else 'them'}"
+                                   if undecided['held'] else '',
                                    f"{_matches(undecided['applied'])}, applied as you asked"
                                    if undecided['applied'] else '',
                                    f"{undecided['accept']} of the mapper's accepted matches, applied"
                                    if undecided['accept'] else '') if x)
     log(f"review sheet: {counts['Accept']} accepted, {counts['Reject']} rejected, {counts['Change']} changed"
         + (f", {counts['']} with no decision ({detail})" if counts[''] else ''))
-    return pd.DataFrame(rows, columns=fm.CROSSWALK_COLUMNS).fillna(''), problems
+    cw = pd.DataFrame(rows, columns=fm.CROSSWALK_COLUMNS).fillna('')
+    # What the reviewer did, for apply mapping's review summary
+    cw.attrs['review'] = {'decisions': counts, 'undecided': undecided, 'for_review': for_review, 'by_model': by_model}
+    return cw, problems

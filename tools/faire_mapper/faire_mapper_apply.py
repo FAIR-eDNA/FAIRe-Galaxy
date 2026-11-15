@@ -26,6 +26,7 @@ import io
 import math
 import re
 import sys
+from collections import Counter
 from pathlib import Path
 
 import pandas as pd
@@ -73,16 +74,24 @@ class StopError(Exception):
 
 BEFORE_SUBMITTING = ('Check the workbook before you submit it anywhere. FAIRe mapper matched and converted '
                      'these values, and some may need correcting: this log lists every change, the values left '
-                     'out and the mandatory terms still empty. Run FAIRe-fier on the workbook too.')
+                     'out and the mandatory terms still empty. Run FAIRe-fier on the workbook too: it checks the '
+                     'format and the required fields, not whether the values are right.')
+# A warning that every value of a kind was accepted as proposed is given from this many values on
+RUBBER_STAMP = 10
 
 
 class Log:
     def __init__(self):
-        self.sections = {'Inputs': [], 'Columns written': [], 'Project values': [], 'Values from find method details': [],
+        self.sections = {'Inputs': [], 'Review': [], 'Columns written': [], 'Project values': [], 'Values from find method details': [],
                          'Commonly confused terms': [],
                          'Library tables': [],
                          'OTU and taxonomy tables': [], 'Left out': [], 'Warnings': [],
                          'Mandatory terms with no value': []}
+
+        self.review_columns = None    # what the reviewer did with the column mapping's review sheet
+        self.review_details = Counter()   # and with find method details' review sheets: {(tier, outcome): n}
+        self.draft_applied = []   # matches for review applied without a decision (include_review)
+        self.draft_held = []      # matches for review not applied all the same: Mandatory or commonly confused terms
 
     def add(self, section, line):
         self.sections[section].append(line)
@@ -93,6 +102,60 @@ class Log:
             for name, lines in self.sections.items():
                 f.write(f'\n## {name}\n\n')
                 f.write('\n'.join(f'- {x}' for x in lines) + '\n' if lines else '- none\n')
+
+
+# ------------------------------------------------------------------ what the reviewer did
+
+def _n(n, one, many):
+    return f'{n} {one if n == 1 else many}'
+
+
+def review_lines(log):
+    """(lines, warnings) on how the values reached the workbook: the reviewer's decisions on the column
+    mapping and on the values from find method details, the matches applied without a decision, and a
+    warning where every value of a kind was accepted as proposed (as when a decision is filled down a column)."""
+    lines, warnings = [], []
+    r = log.review_columns
+    if r:
+        d, u, fr = r['decisions'], r['undecided'], r['for_review']
+        line = (f"column mapping: {d['Accept']} accepted, {d['Change']} changed and {d['Reject']} rejected by the "
+                f"reviewer")
+        if d['']:
+            line += (f"; {d['']} with no decision ({_n(u['accept'], 'strong match', 'strong matches')} applied as proposed, "
+                     f"{_n(u['applied'], 'match', 'matches')} for review applied without a decision, "
+                     f"{u['review'] + u['none'] + u.get('held', 0)} kept as the lab's own names)")
+        lines.append(line)
+        if r['by_model']:
+            lines.append(f"{_n(r['by_model'], 'decision on a match for review', 'decisions on matches for review')} "
+                         f"followed a language model's suggestion")
+        n = sum(fr.values())
+        if n >= RUBBER_STAMP and fr['Accept'] == n:
+            warnings.append(f'every one of the {n} matches for review was accepted as proposed. If each was checked '
+                            f'against its column, nothing more is needed; if not, check them before you submit')
+    m = log.review_details
+    if m:
+        for tier, label in (('reliable', 'values for terms found reliably'), ('check', 'values to check'),
+                            ('', 'values')):
+            c = {o: m.get((tier, o), 0) for o in ('accepted', 'changed', 'rejected', 'undecided')}
+            if sum(c.values()):
+                lines.append(f"find method details, {label}: {c['accepted']} accepted as proposed, {c['changed']} "
+                             f"changed, {c['rejected']} rejected, {c['undecided']} not decided (left out)")
+        if m.get(('', 'given')):
+            lines.append(f"find method details: {m[('', 'given')]} values given by the reviewer for terms not found")
+        decided = sum(m.get(('check', o), 0) for o in ('accepted', 'changed', 'rejected'))
+        if decided >= RUBBER_STAMP and m.get(('check', 'accepted'), 0) == decided:
+            warnings.append(f'every one of the {decided} values to check from find method details was accepted as '
+                            f'proposed. If each was checked against its sentence, nothing more is needed; if not, '
+                            f'check them before you submit')
+    if log.draft_applied:
+        warnings.append(f"this workbook is a draft: {_n(len(log.draft_applied), 'match for review was', 'matches for review were')}"
+                        f" applied without a reviewer's decision ({fm._first(log.draft_applied, 5)}). Decide "
+                        f"{'it' if len(log.draft_applied) == 1 else 'them'} in the review sheet before you submit")
+    if log.draft_held:
+        lines.append(f"{_n(len(log.draft_held), 'match for review was', 'matches for review were')} not applied with "
+                     f"the others, as Mandatory and commonly confused terms need a reviewer's decision: "
+                     f"{fm._first(log.draft_held, 5)}")
+    return lines, warnings
 
 
 # ------------------------------------------------------------------ reading the crosswalk
@@ -133,9 +196,16 @@ def other_source(object_id, term, other_terms):
     return '' if oid.startswith('faire:') or term not in other_terms else other_terms[term].source
 
 
-def choose_rows(cw, table_columns, by_name, include_review, log, other_terms=None, others=None):
+def held_terms(by_name, confused_path=fm.CONFUSED_TERMS):
+    """The terms a draft never fills from a match for review: Mandatory terms and commonly confused ones."""
+    return {n for n, t in by_name.items() if t.requirement == 'Mandatory'} | set(fm.load_confused(confused_path)[0])
+
+
+def choose_rows(cw, table_columns, by_name, include_review, log, other_terms=None, others=None, hold=None):
     """The crosswalk rows to apply, as dicts with column, term, part (int) and value_part. Confirmed rows with
-    a MIxS or Darwin Core term, for columns with no FAIRe term, go to others (column, term, source, unit)."""
+    a MIxS or Darwin Core term, for columns with no FAIRe term, go to others (column, term, source, unit).
+    With include_review, matches for review are applied too, except for the terms in hold (held_terms)."""
+    hold = held_terms(by_name) if hold is None else hold
     stripped = {str(c).strip(): c for c in table_columns}
     other_terms = other_terms or {}
     others = [] if others is None else others
@@ -165,12 +235,30 @@ def choose_rows(cw, table_columns, by_name, include_review, log, other_terms=Non
         part = int(float(r['combine_order'])) if str(r['combine_order']).strip() else 0
         row = {'column': column, 'term': term, 'part': part, 'value_part': r['value_part'].strip().lower(),
                'predicate': pred}
+        mandatory = by_name[term].requirement == 'Mandatory'
+        if include_review and pred == 'skos:closeMatch' and term in hold:
+            # A Mandatory or commonly confused term needs the reviewer's decision, even in a draft
+            held.append({**row, 'protected': True})
+            log.draft_held.append(f"'{column}' to {term}")
+            log.add('Left out', f"'{column}' to {term}: a match for review, not applied with the others because "
+                                f"{term} is {'a Mandatory' if mandatory else 'a commonly confused'} term; accept it in "
+                                f"the review sheet (or confirm it as skos:exactMatch) to apply it")
+            continue
         if pred == 'skos:exactMatch' or (include_review and pred == 'skos:closeMatch'):
             applied.append(row)
+            if pred == 'skos:closeMatch':
+                log.draft_applied.append(f"'{column}' to {term}")
         else:
             held.append(row)
             log.add('Left out', f"'{column}' to {term}: {pred} (for review); confirm it as skos:exactMatch to apply it"
                     if pred == 'skos:closeMatch' else f"'{column}' to {term}: {pred} is not applied")
+    # The other matches for review of a held column wait with it (samp_size_unit with samp_size)
+    waiting = {r['column'] for r in held if r.get('protected')}
+    for r in [r for r in applied if r['column'] in waiting and r['predicate'] == 'skos:closeMatch']:
+        applied.remove(r)
+        log.draft_applied.remove(f"'{r['column']}' to {r['term']}")
+        log.add('Left out', f"'{r['column']}' to {r['term']}: a match for review, not applied with the others as "
+                            f"another match of '{r['column']}' needs the reviewer's decision")
     # A combined value is written only when all its parts are applied.
     for term in {r['term'] for r in held if r['part']}:
         dropped = [r for r in applied if r['term'] == term and r['part']]
@@ -774,6 +862,7 @@ def build_workbook(args, df, rows, terms, by_name, log, others=()):
         for path in args.project_values:
             if fmd.is_review_sheet(path):
                 recs = fmd.read_review_sheet(path)
+                log.review_details.update(fmd.review_summary(path))
                 done = sum(1 for r in recs if r['status'] == 'confirmed')
                 log.add('Project values', f'{Path(path).name}: a reviewed sheet from find method details, with {done} '
                                           f'values accepted or given'
@@ -794,6 +883,21 @@ def build_workbook(args, df, rows, terms, by_name, log, others=()):
             pv = pv.map(lambda v: str(v) if v != '' else '')
             if not {'term', 'value'} <= set(pv.columns):
                 raise StopError(f'the project values file {Path(path).name} needs the columns term and value')
+            # Values a person took from find method details in the app: their source, the proposed value and
+            # how reliable the term is, so the log says what a machine proposed and a person kept
+            if {'source', 'proposed'} <= set(pv.columns):
+                for r in pv.to_dict('records'):
+                    if r['source'].strip().lower() != 'find method details' or not r['value'].strip():
+                        continue
+                    tier = r.get('tier', '').strip().lower()
+                    same = r['value'].strip() == r['proposed'].strip()
+                    log.review_details[(tier if tier in ('reliable', 'check') else '',
+                                        'accepted' if same else 'changed')] += 1
+                    label = r['term'] + (' (' + r['assay'] + ')' if r.get('assay') else '')
+                    log.add('Values from find method details',
+                            f"{label} = {r['value'][:80]}: proposed by find method details and "
+                            + ('accepted by the reviewer' if same else
+                               f"changed by the reviewer (proposed: {r['proposed'][:60]})"))
             records += pv.to_dict('records')
         held_values, for_samples_only, from_values = {}, [], {}
         given_here = {}
@@ -1093,7 +1197,9 @@ def build_workbook(args, df, rows, terms, by_name, log, others=()):
 
     # ---- checks
     if 'samp_name' not in written:
-        raise StopError('no column is mapped to samp_name, which FAIRe needs to identify each sample')
+        waiting = [x for x in log.draft_held if x.endswith(' to samp_name')]
+        raise StopError('no column is mapped to samp_name, which FAIRe needs to identify each sample'
+                        + (f" (the match {waiting[0]} is for review: accept it in the review sheet)" if waiting else ''))
     names = [str(x) for x in sample_out['samp_name'] if not _blank(x)]
     dups = sorted({x for x in names if names.count(x) > 1})
     if dups:
@@ -1182,6 +1288,9 @@ def build_workbook(args, df, rows, terms, by_name, log, others=()):
               f"sample_type = {' | '.join(sample_types) if sample_types else 'all'}", '',
               'Requirement levels;', 'M = Mandatory', 'HR = Highly recommended', 'R = Recommended', 'O = Optional',
               '', 'Before you submit;', BEFORE_SUBMITTING]
+    lines, warnings = review_lines(log)
+    if lines or warnings:
+        readme += ['', 'Review;'] + [w[0].upper() + w[1:] for w in warnings] + [x[0].upper() + x[1:] for x in lines]
     for line in readme:
         ws.append([line])
     bold = Font(bold=True)
@@ -2046,10 +2155,12 @@ def main(argv=None):
         other_terms = {t.name: t for t in fm.load_other_terms(exclude=by_name)}
         log.add('Inputs', f"table: {args.table_name or Path(args.table).name}, {len(df)} rows and "
                           f"{len(df.columns)} columns" + ''.join(f'; {x}' for x in df.attrs.get('read_notes', [])))
+        hold = held_terms(by_name, args.confused_terms)
         if fr.is_review_sheet(args.crosswalk):
             try:
                 cw, problems = fr.read_review_sheet(args.crosswalk, by_name, other_terms,
-                                                    lambda m: log.add('Inputs', m), args.include_review)
+                                                    lambda m: log.add('Inputs', m), args.include_review, hold)
+                log.review_columns = cw.attrs.get('review')
             except (ValueError, KeyError) as e:
                 raise StopError(f'the review sheet could not be read: {e}')
             for x in problems:
@@ -2066,13 +2177,19 @@ def main(argv=None):
                           f"{args.project_id or '(none)'}; assays {args.assay_name or '(none)'}"
                           + (' (from the assay column of the OTU table)' if args.assay_name and not named else ''))
         others = []
-        rows = choose_rows(cw, list(df.columns), by_name, args.include_review, log, other_terms, others)
+        rows = choose_rows(cw, list(df.columns), by_name, args.include_review, log, other_terms, others, hold)
         counts = build_workbook(args, df, rows, terms, by_name, log, others)
     except StopError as e:
         log.add('Warnings', f'STOPPED: {e}')
         log.write(args.log)
         print(f'ERROR: {e}', file=sys.stderr)
         return 1
+    lines, warnings = review_lines(log)
+    for x in warnings + lines:
+        log.add('Review', x)
+    for w in warnings:
+        log.add('Warnings', w)
+        print(f'WARNING: {w}', file=sys.stderr)
     log.write(args.log)
     print(f"INFO: wrote {counts['samples']} samples and {counts['terms']} FAIRe terms, plus {counts['user_fields']} "
           f"user-defined fields; see the log for conversions and the mandatory terms still empty. Check the "

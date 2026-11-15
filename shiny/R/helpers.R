@@ -82,7 +82,8 @@ read_review_sheet <- function(path) {
 # Write decisions (a data frame with input, decision and replacement) into a copy of a review sheet.
 write_review_decisions <- function(sheet, decisions, out, wd) {
   tsv <- file.path(wd, "decisions.tsv")
-  write_tsv(decisions[, c("input", "decision", "replacement")], tsv)
+  if (!"chosen_by" %in% names(decisions)) decisions$chosen_by <- ""
+  write_tsv(decisions[, c("input", "decision", "replacement", "chosen_by")], tsv)
   run_python(file.path(app_dir(), "python", "fill_review_sheet.py"), c(sheet, tsv, out), wd)
 }
 

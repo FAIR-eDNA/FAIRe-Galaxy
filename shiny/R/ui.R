@@ -376,6 +376,8 @@ mapper_panel <- function() {
               checkboxGroupInput("ap_req_lev", "Fields to include as well as the mandatory ones", REQ_LEVELS,
                                  selected = REQ_LEVELS, inline = TRUE),
               checkboxInput("ap_include_review", "Also write the matches still for review (rows with no decision)", FALSE),
+              help_text("For a first draft only. Matches for Mandatory and commonly confused terms are still left out",
+                        "until you decide them, and the workbook's README and log say it is a draft."),
               checkboxInput("ap_drop_unmapped", "Leave out columns not matched to a FAIRe term", FALSE)
             ),
             card(

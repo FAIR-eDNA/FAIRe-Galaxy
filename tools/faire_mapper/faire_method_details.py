@@ -39,7 +39,7 @@ from pathlib import Path
 
 import faire_mapper_text as ft
 
-__version__ = '0.9.0'
+__version__ = '0.9.1'
 
 HERE = Path(__file__).resolve().parent
 VOCABULARY = HERE / 'method_details' / 'vocabulary.tsv'
@@ -1615,8 +1615,9 @@ def write_review_sheet(rows, terms, path, read, label):
         part(key)
         for p in group:
             t = terms[p.term]
+            how = ('Reliable' if p.tier == 'reliable' else 'Check') + (f': {p.tested}' if p.tested else '')
             ws.append([SECTION_NAMES.get(t['section'], t['section']), p.term, LEVEL_NAMES.get(t['level'], ''), asks(t),
-                       clean(p.value), p.tested, p.assay, clean(excerpt(p)),
+                       clean(p.value), how, p.assay, clean(excerpt(p)),
                        p.found_by + (f' (and {p.others} more sentences)' if p.others else ''), clean(p.note), '', ''])
             for c in ws[ws.max_row][10:12]:
                 c.fill = found_fill
@@ -1655,7 +1656,8 @@ def write_review_sheet(rows, terms, path, read, label):
         'was tested on. Then values it also found, for terms that are less reliable or that a check flagged (see '
         'Note): check each of these against its sentence. Last, the FAIRe method terms it did not find. Within each '
         'part, Mandatory terms come first, then Highly recommended, Recommended and Optional ones. How reliable says '
-        'how often the tool agreed with an independent reading of the same papers.',
+        'whether the value is for a term found reliably or one to check, and how often the tool agreed with an '
+        'independent reading of the same papers.',
         '',
         "For each value found, choose a Reviewer's decision:",
         '  Accept: the proposed value is right.',
@@ -1741,6 +1743,46 @@ def read_review_sheet(path):
             continue
         if proposed:
             out.append(dict(term=term, value=proposed, assay=assay, status='review', proposed=proposed, decision=''))
+    return out
+
+
+def review_summary(path):
+    """What the reviewer did with a review sheet from this tool: {(tier, outcome): count}, where tier is
+    'reliable', 'check' or '' (a sheet written before the tier was recorded, or a value of the person's own)
+    and outcome is 'accepted' (as proposed), 'changed', 'rejected', 'undecided' or 'given' (a value for a
+    term the tool did not find)."""
+    from collections import Counter
+    from openpyxl import load_workbook
+    with open(path, 'rb') as fh:
+        wb = load_workbook(fh, read_only=True, data_only=True)
+        rows = list(wb[SHEET].iter_rows(values_only=True)) if SHEET in wb.sheetnames else []
+    out = Counter()
+    if not rows:
+        return out
+    head = [str(h or '').strip() for h in rows[0]]
+    col = {h: head.index(h) for h in head if h}
+    for r in rows[1:]:
+        def get(h):
+            i = col.get(h)
+            return '' if i is None or i >= len(r) or r[i] is None else str(r[i]).strip()
+        if not get('FAIRe term'):
+            continue
+        how = get('How reliable').lower()
+        tier = 'reliable' if how.startswith('reliable') else 'check' if how.startswith('check') else ''
+        decision, proposed, yours = get("Reviewer's decision").lower(), get('Proposed value'), get('Your value')
+        if not proposed:
+            if yours:
+                out[('', 'given')] += 1
+            continue
+        if decision == 'reject':
+            outcome = 'rejected'
+        elif decision == 'accept':
+            outcome = 'accepted'
+        elif yours:
+            outcome = 'accepted' if yours == proposed else 'changed'
+        else:
+            outcome = 'undecided'
+        out[(tier, outcome)] += 1
     return out
 
 

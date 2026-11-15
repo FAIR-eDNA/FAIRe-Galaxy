@@ -17,7 +17,8 @@ hosted on a server (see *Hosting later*, below). It was first built in a private
 here, beside the tools it runs, on 13 November 2026 (version 0.2.0). Version 0.3.0 has the changes
 from the FAIRe team's first trial of it, and version 0.4.0 those from the second (14 November 2026).
 Version 0.4.1 (15 November 2026) adds the choice of assay type to *Find method details* and shows the
-tool's warnings there.
+tool's warnings there. Version 0.5.0 (15 November 2026) adds checks against values going into the
+workbook without a proper review (see *Keeping the review thorough*, below).
 
 ## What it covers
 
@@ -62,7 +63,9 @@ A few things that help along the way:
   term's record in papers tested. Values for terms found reliably come first and the rest are listed as
   values to check; *Tick all reliable values* ticks only the first group, so each of the others takes its
   own tick. Tick the ones to keep (correcting any that are nearly right) and add them to the values for
-  the whole project. Choose *Targeted (qPCR, ddPCR)* for methods of a targeted assay, so the values go to
+  the whole project. If any ticked values are values to check, the app lists them with their sentences
+  and asks you to confirm that you have checked them before it adds them. Keep one value per term: if
+  two are ticked for the same term (two sample volumes, say), the app asks you to choose one. Choose *Targeted (qPCR, ddPCR)* for methods of a targeted assay, so the values go to
   the targeted terms; the choice follows the assay type given under *b. Propose a mapping*. If the
   methods never mention DNA, PCR, primers or amplification, the step says so and proposes nothing. Its review sheet, which also
   lists the method terms not found, can be downloaded, filled in with Excel and loaded back on the right.
@@ -71,6 +74,36 @@ A few things that help along the way:
 - **A question mark** beside a label explains the term (*data dictionary*, *assay*, *raw* and
   *final* and so on) when the pointer rests on it, or when you move to it with the Tab key.
 - **Optional fields**, such as the data dictionary, can be set back to *None* after choosing a file.
+
+## Keeping the review thorough
+
+The tools propose; a person decides. Values that go into the workbook unchecked are the main risk, so
+the app makes the review hard to skip and leaves a record of how it was done:
+
+- **The language model's suggestions are taken one row at a time.** Each row for review shows the
+  model's suggestion with a *Use this suggestion* link. There is no button to take them all. The review
+  sheet records each match the reviewer took from the model (*chosen by a model, confirmed by the
+  reviewer*), and the workbook's log counts them.
+- **Values to check need a second look.** Adding values to check from *Find method details* opens a list
+  of them with their sentences, to confirm before they are added.
+- **Matches still for review stay out of Mandatory and commonly confused terms.** Ticking *Also write the
+  matches still for review* in *e. Write the workbook* gives a first draft only: the matches for Mandatory
+  terms and for terms that are often confused (such as `samp_size` and `samp_vol_we_dna_ext`) are still
+  left out until you decide them, and the workbook's README and log say it is a draft.
+- **The workbook says how it was reviewed.** The README sheet and the log have a *Review* section: how
+  many matches the reviewer accepted, changed and rejected, how many came from the model, and how many
+  values from *Find method details* were accepted as proposed or changed, for terms found reliably and
+  for values to check. Each value from *Find method details* is listed in the log with what the tool
+  proposed.
+- **A warning when everything was accepted.** If 10 or more matches for review, or 10 or more values to
+  check, were all accepted as proposed, the app shows a warning. That is what a decision filled down a
+  column looks like. If each was checked, nothing more is needed.
+- **A pass is not proof.** A workbook that passes FAIRe-fier has the right format and every required field
+  filled in. FAIRe-fier cannot tell whether the values are right; that rests on the review.
+
+The Galaxy tools do the same, apart from the first two, which belong to the app's screens: in Galaxy the
+model's answers stay in the review sheet for the reviewer to decide, and values from *Find method
+details* go through its review sheet.
 
 ## Downloading and running it
 
@@ -264,7 +297,7 @@ workbook for Fish16S, and FAIRe2QIIME, which writes a metadata file and a manife
   take by default. A workbook from the person's files can be chosen instead.
 - The language model step is optional, as in Galaxy. The key is passed to the tool through its
   environment and is never written to a file, and the model's answers are only suggestions that a
-  person confirms.
+  person confirms, row by row.
 
 ## Hosting later
 

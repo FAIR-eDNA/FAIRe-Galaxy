@@ -2,9 +2,11 @@
 
 Usage: python fill_review_sheet.py REVIEW_SHEET DECISIONS_TSV OUT
 
-DECISIONS_TSV has the columns input, decision (Accept, Reject, Change or empty) and replacement. Each row
-of the Review sheet takes the decision and replacement given for its input term; rows not in the file
-keep what they have. Everything else in the sheet (the drop-downs, shading and the other sheets) is kept.
+DECISIONS_TSV has the columns input, decision (Accept, Reject, Change or empty) and replacement, and
+optionally chosen_by: 'model' for a decision that follows a language model's suggestion, which the
+Mapper's call then records (apply mapping counts these). Each row of the Review sheet takes the decision
+and replacement given for its input term; rows not in the file keep what they have. Everything else in
+the sheet (the drop-downs, shading and the other sheets) is kept.
 """
 import csv
 import sys
@@ -20,6 +22,7 @@ def main(sheet, decisions, out):
     head = [str(c.value or '').strip() for c in ws[1]]
     col_input, col_decision, col_replacement = (
         head.index(h) + 1 for h in ('Input term', "Reviewer's decision", 'Replacement FAIRe term'))
+    col_call = head.index("Mapper's call") + 1 if "Mapper's call" in head else None
     n = 0
     for r in range(2, ws.max_row + 1):
         d = given.get(str(ws.cell(r, col_input).value or '').strip())
@@ -27,6 +30,8 @@ def main(sheet, decisions, out):
             continue
         ws.cell(r, col_decision).value = d['decision'].strip() or None
         ws.cell(r, col_replacement).value = d['replacement'].strip() or None
+        if col_call and (d.get('chosen_by') or '').strip() == 'model' and d['decision'].strip():
+            ws.cell(r, col_call).value = 'review (chosen by a model, confirmed by the reviewer)'
         n += 1
     wb.save(out)
     print(f'{n} decisions written to the review sheet')
