@@ -1412,7 +1412,10 @@ def write_tsv(rows, terms, path):
 
 
 def clean(v):
-    return re.sub(r'\s+', ' ', str(v)).strip()
+    """One line of text for the outputs. A control character (a symbol the PDF's font did not map, often a
+    minus sign) cannot go in an Excel cell, so it shows as � for the reviewer to check."""
+    v = re.sub(r'\s+', ' ', str(v)).strip()
+    return re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '�', v)
 
 
 def missing_terms(rows, terms):
