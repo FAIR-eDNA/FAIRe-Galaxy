@@ -191,6 +191,24 @@ The reviewer's notes point to what to improve next:
 
 These held-out papers have now been seen, so rules changed in response to them need new papers to test.
 
+### The development papers' values checked by a person
+
+The same person then judged the development papers' values that rested on Copilot alone: those only the tool
+gave, or where the tool and Copilot disagreed (357 values; for terms already judged three times, the rest
+were left). Of the 230 values that could be judged from their sentence, 196 (85%) were right, 19 partly right
+and 15 wrong; 19 could not be judged without the paper. With these judgments in `reliability.tsv`, 44 terms
+now count as found reliably, among them the extraction kit, lysis and separation, the programs for
+demultiplexing, trimming, merging and filtering, minimum length and read cut-offs, primer volumes and stock
+concentrations, and the identity threshold. The reviewer's notes add to the list of things to improve:
+
+- The volume filtered is not always the volume extracted: a paper that does not say how much was extracted
+  should leave samp_vol_we_dna_ext to the person.
+- A syringe or filter unit used for filtering is not the sampling device.
+- Specimens, macroinvertebrates and samples for morphology are not eDNA samples, whatever words describe
+  them.
+- Chelex is a reagent, not a kit.
+- Programs should be named as the paper names them (SINTAX, BLAST+).
+
 ## Files
 
 - `run.sh OUTDIR [WEST_2024_TEXT]`: runs the tool on the development texts and, if given, the held-out
