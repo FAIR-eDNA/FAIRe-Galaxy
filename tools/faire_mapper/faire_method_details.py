@@ -179,8 +179,11 @@ ABBREV_END = re.compile(r'(?:\bet\s+al|\be\.g|\bi\.e|\bapprox|\bca|\bcf|\bFigs?|
                         r'\bSt|\bspp?|\bv|\bver|\bvol|\bpp|\bU\.S\.A|\bU\.S|(?<![°º˚\d])\b[A-Z])\.$')
 # Lines a PDF repeats on every page: the publisher's footer, download notices and page numbers
 FURNITURE = re.compile(r'^.*(?:Downloaded\s+from\s+https?://|See\s+the\s+Terms\s+and\s+Conditions|Wiley\s+Online\s+Library\s+for\s+rules|'
-                       r'governed\s+by\s+the\s+applicable\s+Creative\s+Commons).*$|^\s*(?:Page\s+)?\d{1,3}(?:\s+of\s+\d{1,3})?\s*$',
+                       r'governed\s+by\s+the\s+applicable\s+Creative\s+Commons|\d{1,4}\s*[–-]\s*\d{1,4}\s*\((?:19|20)\d\d\),?\s*DOI:?\s*10\.).*$|^\s*(?:Page\s+)?\d{1,3}(?:\s+of\s+\d{1,3})?\s*$',
                        re.I | re.M)
+# words of a sentence about reads and sequences, not about water or sediment
+BIOINFORMATIC = re.compile(r'\breads\b|\bsequences\b|\bASVs?\b|\bOTUs?\b|\bZOTUs?\b|quality[- ]filter|Phred|maxEE|'
+                           r'cutadapt|DADA2|USEARCH|VSEARCH|taxonomically|\bR\s+v\.?\s*\d', re.I)
 REFERENCE_WORK = re.compile(r'\bspecimens?\b|\bvouchers?\b|\btissue\s+samples?\b', re.I)
 # words that place a sentence or paragraph with the eDNA samples, though it also mentions specimens
 EDNA_WORK = re.compile(r'\be?DNA\s+samples?\b|\beDNA\b|environmental\s+DNA|\bwater\s+samples?|\bfilters?\b|\bfiltered\b|'
@@ -446,6 +449,10 @@ SECOND_PCR = re.compile(r'second[- ]?(?:stage|round|step)|(?:stage|round|step)[-
 PCR_WORDS = re.compile(r'\bPCR|\bqPCR|amplif|\breactions?\b', re.I)
 
 
+# a sentence that starts the description of the second PCR ("The second PCR step used ...")
+SECOND_START = re.compile(r'(?:second|2nd)[- ](?:PCR|round|stage|step)|\bPCR\s?2\b|index(?:ing)?\s+PCR', re.I)
+
+
 def stage(s):
     return 'pcr2_' if SECOND_PCR.search(s.text) else ''
 
@@ -471,7 +478,8 @@ def _time(d, u, x):
 # A step of a PCR programme: 95 °C for 30 s, or 30 s at 95 °C
 STEP = re.compile(rf'(?:{_temp("ta", "tb")}\s*(?:for|,|:|\()?\s*{_time("da", "ua", "sa")})|'
                   rf'(?:(?:for\s+)?{_time("db", "ub", "sb")}\s*(?:at|@)\s*{_temp("tc", "td")})', re.I)
-CYCLES = re.compile(r'(\d+)(?:\s*[-–]\s*(\d+))?\s*(?:PCR\s+|thermal\s+|amplification\s+)?cycles?\b', re.I)
+CYCLES = re.compile(r'(\d+)(?:\s*[-–]\s*(\d+))?\s*(?:(?:subsequent|further|additional|consecutive|repeated)\s+)?'
+                    r'(?:PCR\s+|thermal\s+|amplification\s+)?cycles?\b', re.I)
 FINAL = re.compile(r'final\s+(?:extension|elongation)|extension\s+(?:step\s+)?(?:at|of)\s+\d+\s*°|(?:followed\s+by|and|with)\s+'
                    r'(?:a\s+)?(?:final\s+)?(?:hold|extension)', re.I)
 MELT = re.compile(r'(?:,\s*)?(?:a\s+|and\s+)?melt(?:ing)?\s*curve.*?(?=(?:,?\s*(?:and|with|followed\s+by)\s+)?'
@@ -528,12 +536,20 @@ def rule_pcr(f):
     sents = f.lab()
     # in a two-step library, a PCR sentence about the indexes or library preparation is the second PCR
     two = any(two_step(x.text) for x in sents)
+    second = None   # the paragraph of the last sentence about the second PCR
     for i, s in enumerate(sents):
         txt = s.text
+        first = re.search(r'\b(?:first|1st)\b(?:[- ](?:step|round|stage)\b)?[^.;]{0,20}(?:PCR|reactions?|amplification)|'
+                          r'initial\s+PCR|PCR\s?1\b|primer\s+pairs?|gene[- ]specific|target[- ]specific', txt, re.I)
+        if SECOND_START.search(txt) and not first:
+            second = s.para
+        elif first or s.para != second:
+            second = None
         if not PCR_WORDS.search(txt) and not CYCLES.search(txt):
             continue
         indexes = re.search(r'\bindex(?:es|ed|ing)?\b|Nextera|library\s+prep', txt, re.I)
-        pre = stage(s) or ('pcr2_' if two and indexes and not re.search(r'first|1st|initial\s+PCR', txt, re.I) else '')
+        # a sentence after one about the second PCR, in the same paragraph, is about it too ("Conditions were: ...")
+        pre = stage(s) or ('pcr2_' if two and (indexes or second is not None) and not first else '')
         # The PCR programme, joined to a sentence before it that gives the initial denaturation and to
         # one after it that gives the final extension.
         if CYCLES.search(txt) and len(re.findall(TEMP, txt)) >= 2:
@@ -729,7 +745,7 @@ def rule_library(f):
         # Library checks: size selection, clean-up, quantification, pooling
         if re.search(r'size[- ]selec|Pippin|purif|clean(?:ed)?(?:[- ]up)?\b|AMPure|bead|quantif|Qubit|TapeStation|Bioanalyzer|'
                      r'equimolar|normali[sz]ed\s+(?:prior|before)', txt, re.I) and re.search(r'librar|amplicon|pool', txt, re.I) \
-                and not re.search(r'rarefi|subsampl|dataset', txt, re.I):
+                and not re.search(r'rarefi|subsampl|dataset|\bSanger\b|sequencing\s+reactions?|BigDye|capillary', txt, re.I):
             f.add('lib_screen', txt, s, 'a sentence about checking, cleaning or pooling the libraries')
         if re.search(r'\bMD5\b', txt):
             f.add('checksum_method', 'MD5', s, 'the methods name MD5 checksums')
@@ -770,7 +786,7 @@ def kit_phrase(txt, a, b):
 # ------------------------------------------------------------------ bioinformatics
 
 STAGE_WORDS = {
-    'trim': r'\btrim|adapt[eo]rs?\b.{0,30}remov|primers?\s+(?:sequences?\s+)?(?:were|was)\s+(?:removed|trimmed)|'
+    'trim': r'\btrim(?!momatic)|adapt[eo]rs?\b.{0,30}remov|primers?\s+(?:sequences?\s+)?(?:were|was)\s+(?:removed|trimmed)|'
             r'remov\w*\s+(?:the\s+)?(?:primers?|adapt)|clip|'
             r'primers?\s+(?:sequences?\s+|regions?\s+)?(?:were\s+|was\s+)?(?:matched|detected|located|identified|found)',
     'demux': r'demultiplex|de-multiplex|sorted\b.{0,40}\bback|assigned\s+to\s+(?:their|each|the)\s+(?:respective\s+)?samples?|'
@@ -788,7 +804,8 @@ STAGE_WORDS = {
     'collapse': r'lowest\s+common\s+ancestor|\bLCA\b',
     'curation': r'curat|\bLULU\b|tag[- ]?jump|cross[- ]?talk',
     'decontam': r'contamin|\bblanks?\b|negative\s+controls?',
-    'normalise': r'rarefi|rarefaction|subsampl|normali[sz]',
+    'normalise': r'rarefi|rarefaction|normali[sz]\w*\s+(?:the\s+)?(?:reads|read\s+counts|sequenc|librar|depth)|'
+                 r'subsampl\w*[^.;]{0,40}(?:reads|sequences|depth)|(?:reads|sequences|depth)[^.;]{0,40}subsampl',
 }
 STAGE_TERMS = {'trim': ['trim_method'], 'demux': ['demux_tool'], 'merge': ['merge_tool'],
                'filter': ['error_rate_tool', 'min_len_tool'], 'denoise': ['otu_clust_tool'], 'cluster': ['otu_clust_tool'],
@@ -1026,6 +1043,10 @@ def rule_samples(f):
         # Sampling device
         if re.search(r'collect|sampl|taken|using|from', txt, re.I):
             for e, m in find_named(f.vocab.get('device', []), txt):
+                near = txt[max(0, m.start() - 45):m.end() + 45]
+                before = txt[max(0, m.start() - 100):m.end() + 30]
+                if re.search(r'filter', near, re.I) and not re.search(r'collect|sampled|taken', before, re.I):
+                    continue   # a syringe or filter unit used to filter the water, not to collect it
                 f.add('samp_collect_device', e.name, s, 'a sampling device named in the methods', span=m.span())
         # Volumes of water: not a container's size ("a 50 mL syringe"), a reagent's volume, or the water of a
         # blank or control; a range ("500-1000 mL") is kept whole
@@ -1072,7 +1093,8 @@ def rule_samples(f):
                       span=m.span())
                 if e.extra:
                     f.add('filter_material', e.extra, s, f'{e.name} filters are {e.extra}')
-            if re.search(r'filtered|filtration|filtering|filter\s+(?:the\s+)?(?:water|samples?)', txt, re.I):
+            if re.search(r'filtered|filtration|filtering|filter\s+(?:the\s+)?(?:water|samples?)', txt, re.I) and \
+                    not BIOINFORMATIC.search(txt):
                 if re.search(r'passive|submerged|immersed', txt, re.I):
                     f.add('filter_passive_active_0_1', '0', s, 'passive filtration')
                 elif re.search(r'\bpump|peristaltic|vacuum|syringe|manifold|Sterivex|capsule', txt, re.I):
@@ -1112,6 +1134,10 @@ def rule_samples(f):
                 f.add('nucl_acid_ext_kit', value, s, 'an extraction kit named in the methods', span=m.span())
                 if e.extra:
                     f.add('nucl_acid_ext_sep', e.extra, s, f'the {e.name} separates DNA by {e.extra.replace("other: ", "")}')
+            # a method or reagent, not a kit (CTAB, Chelex, phenol-chloroform): only how it separates the DNA
+            for e, m in find_named(f.vocab.get('extraction_method', []), txt):
+                if e.extra:
+                    f.add('nucl_acid_ext_sep', e.extra, s, f'{e.name} separates DNA by {e.extra}', span=m.span())
             if re.search(r'proteinase\s*K', txt, re.I):
                 f.add('nucl_acid_ext_lysis', 'enzymatic', s, 'Proteinase K digests the cells (enzymatic lysis)')
             if re.search(r'bead[- ]?beat|TissueLyser|bead\s+mill|homogeni[sz]ed\s+(?:for|at|using|with)', txt, re.I):
@@ -1143,7 +1169,8 @@ def rule_samples(f):
     # Field and laboratory hygiene
     for s in f.sentences:
         if re.search(r'bleach|hypochlorite|steril[iy]s|decontaminat|\bUV\b|DNA\s?Away|ELIMINase', s.text, re.I) and \
-                not s.reference_work:
+                not s.reference_work and not re.search(r'agarose|\bgels?\b|visuali[sz]|\bASVs?\b|\bOTUs?\b|community\s+table|'
+                                                       r'\breads\b|sequences\b', s.text, re.I):
             f.add('sterilise_method', s.text, s, 'a sentence about cleaning equipment or preventing contamination')
 
 
@@ -1211,6 +1238,8 @@ def reliability_of(term, rel):
     reading agreed in at least 5 papers and in 9 of 10 papers where both gave a value, and the tool did not often
     propose a value that the reading did not find. Descriptions are always to check."""
     c = rel.get(term)
+    if term in ALWAYS_CHECK:
+        return 'check', ALWAYS_CHECK[term]
     if not c or not c['papers_agreed'] + c['papers_differed']:
         return 'check', 'not yet tested against papers'
     a, d, t = c['papers_agreed'], c['papers_differed'], c['papers_tool_only']
@@ -1219,6 +1248,10 @@ def reliability_of(term, rel):
     ok = term not in DESCRIPTION_TERMS and a >= 5 and a >= 0.9 * (a + d) and t <= a
     return ('reliable' if ok else 'check'), text
 
+
+# Terms always to check, whatever their record, and why
+ALWAYS_CHECK = {'samp_vol_we_dna_ext': 'the volume filtered: it is the volume extracted only if the whole filter was extracted',
+                'samp_vol_we_dna_ext_unit': 'the unit of the volume filtered (see samp_vol_we_dna_ext)'}
 
 INSTRUMENT_PLATFORM = [(r'MiSeq|NovaSeq|HiSeq|NextSeq|iSeq|MiniSeq|Illumina', 'ILLUMINA'), (r'\bIon\b|PGM|Ion\s+S5', 'ION_TORRENT'),
                        (r'MinION|GridION|PromethION|Flongle|Nanopore', 'OXFORD_NANOPORE'), (r'PacBio|Sequel|Revio', 'PACBIO_SMRT'),
@@ -1313,6 +1346,16 @@ def tidy(proposals, terms, rel=None):
     values = {}
     for p in rows:
         values.setdefault(p.term, []).append(p.value)
+    # One sentence proposed for two descriptions most likely belongs to one of them
+    by_sentence = {}
+    for p in rows:
+        if p.term in DESCRIPTION_TERMS:
+            by_sentence.setdefault(p.sentence.index, []).append(p)
+    for group in by_sentence.values():
+        if len({p.term for p in group}) > 1:
+            for p in group:
+                others = ', '.join(sorted({q.term for q in group if q.term != p.term}))
+                p.note = (f'{p.note}. ' if p.note else '') + f'check: the same sentence is proposed for {others}; it most likely belongs to one'
     for affected, message in plausibility(values):
         for p in rows:
             if p.term in affected:

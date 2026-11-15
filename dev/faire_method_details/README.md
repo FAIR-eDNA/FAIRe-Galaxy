@@ -209,6 +209,31 @@ concentrations, and the identity threshold. The reviewer's notes add to the list
 - Chelex is a reagent, not a kit.
 - Programs should be named as the paper names them (SINTAX, BLAST+).
 
+### Changes made after the reviews
+
+Measured against the 901 values the reviewer judged (831 right, 36 partly right, 34 wrong), the changes below
+keep 822 of the right values, and drop 11 of the wrong and 7 of the partly right ones. Most of the 9 right
+values no longer proposed moved to a better term (a second PCR's programme to pcr2_cond) or were descriptions
+that now leave out a sentence from another step.
+
+- Sentences about reads and sequences ("quality filtered", ASVs, cutadapt, DADA2) no longer count as sample
+  filtration, and subsampling counts as rarefying only when reads or sequencing depth are subsampled.
+- Hygiene leaves out gels under UV light and the decontamination of a table of ASVs; library checks leave out
+  Sanger sequencing.
+- A syringe or filter unit used to filter the water is not the sampling device, unless the sentence says it
+  collected the water.
+- CTAB, Chelex and phenol-chloroform are methods, not kits: they give how the DNA was separated, not
+  nucl_acid_ext_kit.
+- samp_vol_we_dna_ext is always to check, as the volume filtered is the volume extracted only if the whole
+  filter was.
+- A sentence proposed for two descriptions is flagged.
+- "Trimmomatic" no longer counts as trimming by its name alone; BLAST+ is named as BLAST+.
+- A PCR programme written "with 35 subsequent cycles" is read, and the sentences after one about the second
+  PCR, in its paragraph, describe the second PCR until one mentions the first PCR or its primer pairs.
+- Page headers that give a journal's volume, pages, year and DOI are left out.
+
+These changes were made after the held-out papers were seen, so the next set of papers will test them.
+
 ## Files
 
 - `run.sh OUTDIR [WEST_2024_TEXT]`: runs the tool on the development texts and, if given, the held-out

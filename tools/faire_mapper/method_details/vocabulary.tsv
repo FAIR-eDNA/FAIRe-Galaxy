@@ -111,9 +111,9 @@ extraction_kit	Wizard Genomic DNA Purification Kit	Wizard Genomic		Promega	other
 extraction_kit	ZymoBIOMICS DNA Miniprep Kit	ZymoBIOMICS DNA Miniprep|ZymoBIOMICS DNA Microprep|ZymoBIOMICS		Zymo Research	column-based		Zymo product name
 extraction_kit	Quick-DNA Fecal/Soil Microbe Kit	Quick-DNA Fecal/Soil Microbe|Quick-DNA		Zymo Research	column-based		Zymo product name
 extraction_kit	E.Z.N.A. Soil DNA Kit	re:E\.Z\.N\.A\.?(?:\s?\w+){0,2}		Omega Bio-tek	column-based		Omega Bio-tek product name
-extraction_kit	Chelex 100	Chelex		Bio-Rad	other: Chelex		Bio-Rad product name
-extraction_kit	phenol-chloroform-isoamyl alcohol extraction	phenol-chloroform-isoamyl alcohol|phenol chloroform isoamyl|phenol-chloroform|phenol:chloroform			phenol chloroform		method name
-extraction_kit	CTAB extraction	CTAB			other: CTAB		method name
+extraction_method	Chelex 100	Chelex		Bio-Rad	other: Chelex		Bio-Rad product name
+extraction_method	phenol-chloroform-isoamyl alcohol extraction	phenol-chloroform-isoamyl alcohol|phenol chloroform isoamyl|phenol-chloroform|phenol:chloroform			phenol chloroform		method name
+extraction_method	CTAB extraction	CTAB			other: CTAB		method name
 cleanup_kit	OneStep PCR Inhibitor Removal Kit	OneStep PCR Inhibitor Removal|PCR Inhibitor Removal		Zymo Research			Zymo product name
 cleanup_kit	DNA Clean & Concentrator	DNA Clean & Concentrator|DNA Clean and Concentrator		Zymo Research			FAIRe checklist v1.0.2 example
 filter	Sterivex-HV	re:Sterivex[™®]?\s*[- ]?\s*HV		Merck Millipore	other: PVDF		product name
@@ -195,7 +195,8 @@ software	UNCROSS	UNCROSS|uncross2				curation	Galaxy eDNA tool evaluation
 software	decontam	decontam	exact			decontam	Galaxy eDNA tool evaluation
 software	microDecon	microDecon|MicroDecon				decontam	Galaxy eDNA tool evaluation
 software	SourceTracker	SourceTracker2|SourceTracker				decontam	Galaxy eDNA tool evaluation
-software	BLASTn	BLASTn|BLAST+|BLAST	 		sequence similarity	taxonomy	Galaxy eDNA tool evaluation
+software	BLASTn	BLASTn|BLAST	 		sequence similarity	taxonomy	Galaxy eDNA tool evaluation
+software	BLAST+	BLAST+	 		sequence similarity	taxonomy	Galaxy eDNA tool evaluation
 software	MEGAN	MEGAN-CE|MEGAN-LR|MEGAN	exact			collapse	Galaxy eDNA tool evaluation
 software	eDNAFlow LCA script	re:LCA\s+(?:Python\s+)?script|LCA_taxonomyAssignment			sequence similarity	collapse	Galaxy eDNA tool evaluation
 software	RDP Classifier	RDP Classifier|RDP naive Bayesian classifier|RDP naïve Bayesian classifier|re:RDP(?!\s+(?:database|reference|release|training))			sequence composition	taxonomy	Galaxy eDNA tool evaluation
