@@ -16,6 +16,8 @@ This version is a demonstration that runs on one computer. It is written so that
 hosted on a server (see *Hosting later*, below). It was first built in a private repository and moved
 here, beside the tools it runs, on 13 November 2026 (version 0.2.0). Version 0.3.0 has the changes
 from the FAIRe team's first trial of it, and version 0.4.0 those from the second (14 November 2026).
+Version 0.4.1 (15 November 2026) adds the choice of assay type to *Find method details* and shows the
+tool's warnings there.
 
 ## What it covers
 
@@ -60,7 +62,9 @@ A few things that help along the way:
   term's record in papers tested. Values for terms found reliably come first and the rest are listed as
   values to check; *Tick all reliable values* ticks only the first group, so each of the others takes its
   own tick. Tick the ones to keep (correcting any that are nearly right) and add them to the values for
-  the whole project. Its review sheet, which also
+  the whole project. Choose *Targeted (qPCR, ddPCR)* for methods of a targeted assay, so the values go to
+  the targeted terms; the choice follows the assay type given under *b. Propose a mapping*. If the
+  methods never mention DNA, PCR, primers or amplification, the step says so and proposes nothing. Its review sheet, which also
   lists the method terms not found, can be downloaded, filled in with Excel and loaded back on the right.
 - **Adding a value** offers the FAIRe terms for one part of the checklist at a time, PCR and primers
   first, then library preparation and sequencing, bioinformatics and so on, or all of them.

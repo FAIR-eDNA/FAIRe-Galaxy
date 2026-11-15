@@ -318,6 +318,8 @@ mapper_panel <- function() {
             tags$h6(term_label("Other method details", "method_details")),
             help_text("Reads the same methods for the filtration, extraction, PCR, sequencing and bioinformatics, and",
                       "proposes a FAIRe value for each term it recognises, with the sentence it came from."),
+            radioButtons("md_assay_type", term_label("Assay type", "assay_type"),
+                         c("Metabarcoding" = "metabarcoding", "Targeted (qPCR, ddPCR)" = "targeted"), inline = TRUE),
             run_button("run_details", "Find method details"),
             uiOutput("details_result")
           ),

@@ -16,7 +16,7 @@ for (f in c("runner.R", "tools.R", "helpers.R", "ui.R"))
 
 options(shiny.maxRequestSize = 500 * 1024^2, DT.fillContainer = FALSE)
 
-APP_VERSION <- "0.4.0"
+APP_VERSION <- "0.4.1"
 DEMO_DIR <- file.path(getOption("faire.app_dir"), "demo")
 
 theme <- bs_theme(version = 5, primary = "#1f6f78", secondary = "#5b6770", success = "#3c8d5a",
@@ -945,14 +945,24 @@ server <- function(input, output, session) {
     texts <- unname(unlist(lapply(input$pr_texts, fpath)))
     if (!length(texts)) return(showNotification("Choose your methods (under Look for primers in: My methods).", type = "error"))
     assays <- unique(rv$pv$assay[nzchar(rv$pv$assay)])
-    res <- with_run("Reading the methods", run_method_details(sd, texts, input$pr_texts, paste(assays, collapse = ",")))
+    res <- with_run("Reading the methods", run_method_details(sd, texts, input$pr_texts, paste(assays, collapse = ","),
+                                                              input$md_assay_type %||% "metabarcoding"))
     rv$res$details <- res
     rv$details <- if (res$ok) read_tsv(res$outputs$proposals) else NULL
   })
+  # The assay type chosen for the mapping (b. Propose a mapping) is the default here too
+  observeEvent(input$map_assay_type, {
+    if (input$map_assay_type %in% c("metabarcoding", "targeted"))
+      updateRadioButtons(session, "md_assay_type", selected = input$map_assay_type)
+  }, ignoreInit = TRUE)
   output$details_result <- renderUI({
     res <- rv$res$details
     if (is.null(res)) return(NULL)
     d <- rv$details
+    # the tool's warnings (methods that never mention eDNA, a PDF page it could not read) are shown, not
+    # left among its messages
+    warn <- sub("^WARNING:\\s*", "", grep("^WARNING:", strsplit(res$log, "\n")[[1]], value = TRUE))
+    warn_ui <- if (length(warn)) div(class = "res-warn", icon("triangle-exclamation"), paste(head(warn, 5), collapse = " "))
     tbl <- NULL
     if (!is.null(d) && nrow(d)) {
       ck <- checklist_terms()
@@ -1002,7 +1012,7 @@ server <- function(input, output, session) {
     } else if (res$ok) {
       tbl <- help_text("No method details found in these files.")
     }
-    tagList(result_ui(res), tbl)
+    tagList(result_ui(res, warn_ui), tbl)
   })
   observeEvent(input$md_all, session$sendCustomMessage("md_tick", "reliable"))
   observeEvent(input$md_none, session$sendCustomMessage("md_tick", FALSE))
