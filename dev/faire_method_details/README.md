@@ -156,8 +156,40 @@ as FAIRe asks for ASVs, where Copilot wrote "zOTUs".
 The per-term counts from both sets are in `tools/faire_mapper/method_details/reliability.tsv`, which the
 tool uses to sort its proposals into values for terms found reliably and values to check.
 
-These held-out figures are provisional until the held-out rows have been checked by a person. Of the
-tool's 91 held-out values that Copilot did not give, some are right and some are not.
+### The held-out papers checked by a person
+
+A person then checked every held-out value that Copilot or the tool gave against its paper: 373 pairs of
+paper and FAIRe term, each judged as Copilot right, tool right, both, neither, or another value. Judged
+this way (a value is right when it is what FAIRe asks for, as the paper gives it):
+
+| | Values given | Right | Partly right | Wrong |
+|---|---|---|---|---|
+| The tool (frozen rules) | 245 | 213 (87%) | 15 (6%) | 17 (7%) |
+| Copilot | 282 | 227 (80%) | 25 (9%) | 30 (11%) |
+
+Of the 351 values these papers give, the tool found 213 (61%) and Copilot 227 (65%): the tool proposes
+fewer values, and more of them are right. The values for terms the tool counted as found reliably were
+right 95% of the time (109 values), those to check 88% (102) and descriptions 56% (34). The 10 values
+of the Mandatory term pcr_0_1 were all right. The per-term counts in `reliability.tsv` now come from
+these judgments for the held-out papers (and from the Copilot comparison for the development papers),
+which moved amplificationReactionVolume and seq_kit to the reliable group and pcr_cond to the values to
+check.
+
+The reviewer's notes point to what to improve next:
+
+- Descriptions (samp_mat_process, lib_screen, bioinfo_method_additional, nucl_acid_ext_modify) are often
+  too long, or come from another step: bioinformatics under sample processing, steps after extraction
+  under changes to the extraction, the processing of tissue under the eDNA samples.
+- In one two-step library the second PCR was not separated into the pcr2 terms. A PCR programme has an
+  initial denaturation, then cycles of denaturation, annealing and extension, and sometimes a final
+  extension; in a two-step cycle annealing and extension share one temperature.
+- Where assays differ, values should follow FAIRe's way of giving values per assay.
+- A sentence proposed for two different terms is a sign that one of them is wrong.
+- pcr_dna_vol is a volume: a template given in nanograms is no value for it.
+- Copilot's values without an excerpt could not always be checked, and Copilot often joined the first
+  and second PCR into one value.
+
+These held-out papers have now been seen, so rules changed in response to them need new papers to test.
 
 ## Files
 

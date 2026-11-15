@@ -669,8 +669,10 @@ collected) are always to check. The review sheet and the Shiny app list the reli
 the others as values to check, Mandatory terms first within each; in the app, *Tick all* ticks only the
 reliable values. Apply mapping uses only accepted or given values, logs which values came from this
 tool and whether a person accepted or changed them, and runs the same plausibility checks on the values
-it writes. The counts in `reliability.tsv` are provisional until the trial's readings have been checked
-by people, and are meant to be updated as more papers are checked.
+it writes. The counts in `reliability.tsv` come from values checked by a person for the 10 held-out
+papers and from the comparison with Copilot for the 19 development papers, and are meant to be updated as
+more papers are checked. On the held-out papers, judged by a person, 87% of the tool's values were right,
+6% partly right and 7% wrong; the values for terms found reliably were right 95% of the time.
 
 On the held-out paper of the trial (West et al. 2024, read whole), the tool proposed 40 of the 52 values
 written by hand from the paper as the rules stood, and 44 after three general faults the run showed were

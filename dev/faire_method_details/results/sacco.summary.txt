@@ -1,7 +1,7 @@
 FAIRe mapper: find method details 0.9.0
 Read methods.txt: the Methods section (627 words): 22 sentences.
 29 values proposed for 27 FAIRe terms:
-  11 for terms found reliably in papers tested, 18 to check against their sentences
+  12 for terms found reliably in papers tested, 17 to check against their sentences
   PCR: amplificationReactionVolume, annealingTemp, custom_mm, inhibition_check, inhibition_check_0_1, pcr_0_1, pcr_cond, pcr_cycles, pcr_dna_vol, pcr_rep
   Filtration: filter_passive_active_0_1, prepped_samp_store_temp, samp_mat_process, size_frac
   Library preparation and sequencing: barcoding_pcr_appr, instrument, lib_screen, platform, seq_kit
