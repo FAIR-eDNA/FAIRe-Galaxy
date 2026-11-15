@@ -2,10 +2,10 @@
     "name": "FAIRe mapper: write and check a FAIRe workbook",
     "a_galaxy_workflow": "true",
     "format-version": "0.1",
-    "annotation": "The second step from a lab's own tables to FAIRe. Writes a FAIRe workbook, in the layout\nFAIRe-ator makes, from the sample table and its review sheet or reviewed crosswalk (from \"FAIRe\nmapper: propose a mapping\"), values for the whole project and an OTU or ASV table, then checks it with\nFAIRe-fier. For library tables, a raw and a final OTU table, or several assays, run the apply\nmapping tool on its own.\n",
+    "annotation": "The second step from a lab's own tables to FAIRe. Writes a FAIRe workbook, in the layout\nFAIRe-ator makes, from the sample table and its review sheet or reviewed crosswalk (from \"FAIRe\nmapper: propose a mapping\"), values for the whole project and an OTU or ASV table, then checks it with\nFAIRe-fier (a pass means the format and required fields are right, not that the values are: those\nrest on the review). For library tables, a raw and a final OTU table, or several assays, run the apply\nmapping tool on its own.\n",
     "tags": [],
     "license": "MIT",
-    "release": "0.2",
+    "release": "0.3",
     "uuid": "4b93d86b-5451-4866-9404-ff48d36b064c",
     "creator": [
         {

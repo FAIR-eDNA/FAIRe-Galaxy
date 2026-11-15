@@ -427,7 +427,8 @@ outcomes, shown in the *route* column of the mapping report:
   user-defined field, unless apply mapping is set to leave such columns out);
 - **confirmed**: a match set by a person in your answers file;
 - **model**: a match chosen by a language model in your answers file (answers marked
-  ``"by": "model:..."``). Check these, because only a person can confirm a match.
+  ``"by": "model:..."``). Check these, because only a person can confirm a match: like matches for
+  review, they go into the workbook only once a reviewer accepts them.
 
 Some columns fill more than one term, and each term then has its own row in the crosswalk. Examples
 are a number and its unit in one cell ("1 L"), latitude and longitude in one cell (MIxS lat_lon,

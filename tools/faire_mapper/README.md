@@ -26,7 +26,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
 
 ## Status
 
-- Version 0.9.0. `planemo lint`: passes with no warnings. `pyflakes`: clean.
+- Version 0.9.1. `planemo lint`: passes with no warnings. `pyflakes`: clean.
 - Goes to Galaxy Australia as an early version with the wrapped FAIRe tools (decided 6 November
   2026). Each tool's help starts with a note saying so, which asks users to check the results and
   send problems to the Galaxy Australia help desk (to confirm with Galaxy Australia, question 8).
@@ -43,6 +43,13 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   independent answer keys (`dev/faire_mapper_real_datasets/`, `dev/faire_mapper_australian_datasets/`,
   summarised below), and end to end on CSIRO's SEA-MES data (`dev/faire_mapper_seames/`). Not yet
   tried on datasets from Australian labs that already have a FAIRe version.
+- New in 0.9.1 (15 November 2026): checks against values going into the workbook without a proper
+  review (see "Keeping the review thorough" under "Writing the FAIRe workbook" below). A draft
+  written with the matches still for review leaves out the Mandatory and commonly confused terms and
+  says it is a draft; a language model's match waits for a reviewer; the README sheet and the log
+  record how the review was done, and warn when 10 or more matches or values to check were all
+  accepted as proposed. *Find method details* gives each value's tier in its review sheet
+  (*Reliable* or *Check*).
 - New in 0.9.0 (14 November 2026), from the FAIRe team's second review of the Shiny app, which asked
   whether more than primers could be found in the methods:
   - New tool **FAIRe mapper: find method details** (`faire_method_details.py`). It reads the methods
@@ -365,8 +372,8 @@ review.
   reformatting hints, the shortlist, and the `combine_order`, `unit_term` and `also_fills` of
   combined and split columns.
 - *Crosswalk*: in [SSSOM](https://mapping-commons.github.io/sssom/) TSV form, with a metadata block
-  (valid YAML); confirmed answers are marked `semapv:ManualMappingCuration`. Accepted, confirmed and
-  model matches are `skos:exactMatch`, matches for review `skos:closeMatch`.
+  (valid YAML); confirmed answers are marked `semapv:ManualMappingCuration`. Accepted and confirmed
+  matches are `skos:exactMatch`; matches for review and a language model's matches `skos:closeMatch`.
 - *Mandatory terms not covered*: what is left to find, in the methods text or from the data
   provider (the elicitation step). The assay type and checklist version are left out, since the
   tool settings supply them, as are terms only mandatory for the other assay type.
@@ -437,6 +444,25 @@ Values for the whole project (a TSV of term and value, such as the methods value
 table takes precedence. Unmapped columns are kept as user-defined fields. The log lists every column
 written with an example, what was left out, values that could not be converted, and the mandatory
 terms still empty.
+
+**Keeping the review thorough** (version 0.9.1). The tools propose and a person decides, so the tool
+guards against values going into the workbook unchecked, and records how the review was done:
+
+- *Also write the matches still for review* gives a first draft only. Matches for Mandatory terms and
+  for commonly confused terms (`confused_terms.tsv`, such as `samp_size` and `samp_vol_we_dna_ext`)
+  are still left out until a reviewer decides them, with any other match of the same column. The
+  README sheet and the log say the workbook is a draft and list the matches applied without a decision.
+- A match a language model chose waits for a reviewer, like a match for review: it is written only
+  once the reviewer accepts it in the review sheet (or changes it to `skos:exactMatch`).
+- The README sheet and the log have a *Review* section: the reviewer's decisions on the column
+  mapping, how many followed a language model's suggestion, and how many values from *find method
+  details* were accepted as proposed, changed or rejected, for terms found reliably and for values to
+  check. The log lists each value from *find method details* with what the tool proposed.
+- If 10 or more matches for review, or 10 or more values to check, were all accepted as proposed,
+  the tool warns. That is what a decision filled down a column looks like; if each was checked,
+  nothing more is needed.
+- The help says what a FAIRe-fier pass means: the format and the required fields are right. Whether
+  the values are right rests on the review.
 
 OTU or ASV tables (`faire_mapper_otu.py`) become *otuFinal* and *taxaFinal* sheets, or *otuRaw* and
 *taxaRaw*, as set for each table, named by assay when there are several, as in the FAIRe examples,
@@ -540,7 +566,9 @@ name, which it does not).
 ### Adding a language model
 
 The *columns to review* output is the request a model answers, and the *answers* input applies the
-replies, so the model sits between two runs of the mapper without changing it.
+replies, so the model sits between two runs of the mapper without changing it. A model's answer is
+a suggestion: its match waits in the review sheet, marked *review (chosen by a model)*, until a
+reviewer accepts it (since version 0.9.1; before that it was applied unless the reviewer rejected it).
 `faire_mapper_adjudicate.py` does that step: it sends each request to a model, checks that each
 answer is one of the column's candidates (anything else is discarded), and writes the answers file.
 It can also check answers from a person or another model (`--answers_from`), or write the prompts
@@ -1072,7 +1100,9 @@ tests. 0.7.3 checks the table's name in an existing propose mapping test. 0.9.0 
 find method details with 2 tests (the SEA-MES methods as text, and a short PDF with no Methods
 heading) and one apply mapping test (two tables of project values, one of them a reviewed sheet from
 find method details); the 2 find method details, all 37 apply mapping and 5 find primers tests pass in
-Galaxy `release_25.0` here, and so do both workflow tests.
+Galaxy `release_25.0` here, and so do both workflow tests. 0.9.1 (15 November) updates two apply mapping
+tests for the review summary and for a draft that leaves a commonly confused term to the reviewer; all 37
+apply mapping, 15 propose mapping and 2 find method details tests pass in Galaxy `release_25.0` here.
 
 | Tool | Test | Checks | Result |
 |---|---|---|---|
@@ -1134,8 +1164,8 @@ Galaxy `release_25.0` here, and so do both workflow tests.
 | map | 13 | Columns with no FAIRe term: MIxS phosphate (with the unit from the column name), silicate, pressure and ammonium (close) for review, with MIxS identifiers and the curie map; Voyage and Field bottle number get none; the report's other_standard column and the summary's count | passed |
 | map | 14 | The same table with *Suggest MIxS or Darwin Core terms* unticked: no MIxS rows | passed |
 | map | 15 | The review sheet: its five sheets (Choices hidden), the mapper's call, the decision and replacement drop-downs, a MIxS term as a proposal, and a MIxS term first in the replacement list of a FAIRe match for review; since 0.7.3, the table named as Galaxy shows it | passed |
-| apply mapping | 35 | The review sheet as the crosswalk, its rows sorted: Accept for a MIxS term, Change to the MIxS term offered for a wrong FAIRe match, Change to tot_depth_water_col, Reject keeping the column's own term, and the count of decisions in the log | passed |
-| apply mapping | 36 | The review sheet with four rows left with no decision and matches for review applied: the log says what happened to each kind of row | passed |
+| apply mapping | 35 | The review sheet as the crosswalk, its rows sorted: Accept for a MIxS term, Change to the MIxS term offered for a wrong FAIRe match, Change to tot_depth_water_col, Reject keeping the column's own term, and the count of decisions in the log and its review summary | passed |
+| apply mapping | 36 | The review sheet with four rows left with no decision and matches for review applied: the log says what happened to each kind of row, and the depth match, a commonly confused term, waits for a decision | passed |
 | apply mapping | 34 | Confirmed MIxS terms name the user-defined fields with unmatched columns left out: phosphate with the unit added to each value (0.21 uM), ammonium typed in by the reviewer; silicate, still for review, left out and listed | passed |
 | identify | 1 | Eight files: sample, OTU, taxonomy, library, dictionary, text, curated OTU table and crosswalk, each named with its reason | passed |
 | identify | 2 | Two Excel files: each sheet on its own (the SRA sheet's library sheet, a primer register); no sample table found | passed |

@@ -154,6 +154,10 @@ are filled in, that values have the right type and format (numbers, dates, ENVO 
 and that fields with a controlled vocabulary use allowed values. Where a value is close to an
 allowed one, it suggests the correct value.
 
+A workbook that passes has the right format and every required field filled in. FAIRe-fier cannot
+tell whether the values are right (whether a volume is the one filtered or the one extracted, say):
+that rests on the person who reviewed the metadata.
+
 These are the same checks as in the `FAIRe-fier web app <https://shiny.csiro.au/FAIRe-fier/>`_,
 taken from its public code on GitHub (`csiro/FAIRe-fier <https://github.com/csiro/FAIRe-fier>`_,
 version of 30 June 2026), and the tool writes the same output files. If the web app is updated

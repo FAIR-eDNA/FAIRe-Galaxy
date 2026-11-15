@@ -318,6 +318,8 @@ mapper_panel <- function() {
             tags$h6(term_label("Other method details", "method_details")),
             help_text("Reads the same methods for the filtration, extraction, PCR, sequencing and bioinformatics, and",
                       "proposes a FAIRe value for each term it recognises, with the sentence it came from."),
+            radioButtons("md_assay_type", term_label("Assay type", "assay_type"),
+                         c("Metabarcoding" = "metabarcoding", "Targeted (qPCR, ddPCR)" = "targeted"), inline = TRUE),
             run_button("run_details", "Find method details"),
             uiOutput("details_result")
           ),
@@ -374,6 +376,8 @@ mapper_panel <- function() {
               checkboxGroupInput("ap_req_lev", "Fields to include as well as the mandatory ones", REQ_LEVELS,
                                  selected = REQ_LEVELS, inline = TRUE),
               checkboxInput("ap_include_review", "Also write the matches still for review (rows with no decision)", FALSE),
+              help_text("For a first draft only. Matches for Mandatory and commonly confused terms are still left out",
+                        "until you decide them, and the workbook's README and log say it is a draft."),
               checkboxInput("ap_drop_unmapped", "Leave out columns not matched to a FAIRe term", FALSE)
             ),
             card(

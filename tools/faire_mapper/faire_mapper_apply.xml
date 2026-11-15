@@ -72,7 +72,7 @@ python '$__tool_directory__/faire_mapper_apply.py'
     <inputs>
         <expand macro="table_input"/>
         <param name="crosswalk" type="data" format="tabular,csv,xlsx,txt" label="Review sheet or crosswalk"
-            help="The review sheet (Excel) from FAIRe mapper: propose mapping, with your decisions: Accept, Reject or Change for each column. Or the crosswalk (SSSOM), after review; edited in a spreadsheet and saved as Excel, CSV or tab-separated text is fine. In the crosswalk, rows marked skos:exactMatch are applied: accepted, confirmed and model matches. To confirm a match for review, change its skos:closeMatch to skos:exactMatch. To stop a column being matched, delete its row; the column is then kept as a user-defined field unless you tick the option below to leave such columns out."/>
+            help="The review sheet (Excel) from FAIRe mapper: propose mapping, with your decisions: Accept, Reject or Change for each column. Or the crosswalk (SSSOM), after review; edited in a spreadsheet and saved as Excel, CSV or tab-separated text is fine. In the crosswalk, rows marked skos:exactMatch are applied: accepted and confirmed matches. A language model's match waits for review, like the matches for review. To confirm a match for review, change its skos:closeMatch to skos:exactMatch. To stop a column being matched, delete its row; the column is then kept as a user-defined field unless you tick the option below to leave such columns out."/>
         <param name="assay_type" type="select" label="Assay type">
             <option value="metabarcoding" selected="true">Metabarcoding</option>
             <option value="targeted">Targeted (qPCR or ddPCR)</option>
@@ -110,9 +110,9 @@ python '$__tool_directory__/faire_mapper_apply.py'
         </param>
         <param name="include_review" type="boolean" truevalue="--include_review" falsevalue="" checked="false"
             label="Also apply the matches for review (skos:closeMatch)"
-            help="Use this for a first draft. The log lists every match applied, so you can check them."/>
+            help="For a first draft only. Matches for Mandatory and commonly confused terms are still left out until you decide them, and the workbook's README and log say it is a draft and list the matches applied without a decision."/>
         <param name="project_values" type="data" format="tabular,csv,xlsx,txt" multiple="true" optional="true" label="Values for the whole project (optional)"
-            help="Things true of the whole study, such as the primers, extraction kit or sequencing platform. Give one or more tables (Excel, CSV or tab-separated) with the columns term (a FAIRe term name) and value, and optionally status and assay, and the review sheet from FAIRe mapper: find method details once you have filled it in. Rows whose status is not supported or confirmed are left out, as are the rows of the review sheet with no decision. A project-level term goes to projectMetadata; a sample-level term is written for every sample. With several assays, a row with an assay name goes to that assay's column of projectMetadata (primers or target gene, say). A column of your sample table takes precedence, and a term given in two tables keeps the value of the first."/>
+            help="Things true of the whole study, such as the primers, extraction kit or sequencing platform. Give one or more tables (Excel, CSV or tab-separated) with the columns term (a FAIRe term name) and value, and optionally status and assay (and source, proposed and tier for values taken from find method details, as the FAIRe tools app writes them), and the review sheet from FAIRe mapper: find method details once you have filled it in. Rows whose status is not supported or confirmed are left out, as are the rows of the review sheet with no decision. A project-level term goes to projectMetadata; a sample-level term is written for every sample. With several assays, a row with an assay name goes to that assay's column of projectMetadata (primers or target gene, say). A column of your sample table takes precedence, and a term given in two tables keeps the value of the first."/>
         <param name="req_lev" type="select" multiple="true" optional="true" display="checkboxes" label="Requirement levels to include"
             help="Mandatory fields are always included.">
             <option value="HR" selected="true">Highly recommended</option>
@@ -1232,6 +1232,7 @@ python '$__tool_directory__/faire_mapper_apply.py'
             <output name="log">
                 <assert_contents>
                     <has_text text="review sheet: 5 accepted, 1 rejected, 2 changed"/>
+                    <has_text text="column mapping: 5 accepted, 2 changed and 1 rejected by the reviewer"/>
                     <not_has_text text="with no decision"/>
                     <has_text text="'Depth (m)' to tot_depth_water_col (sampleMetadata)"/>
                     <has_text text="'Water phosphate' as phosphate (MIxS); 'Silicate' as silicate (MIxS)"/>
@@ -1240,7 +1241,8 @@ python '$__tool_directory__/faire_mapper_apply.py'
         </test>
         <!-- The same review sheet with four rows left with no decision, and matches for review applied:
              the log says what happened to each kind (no proposed term, a MIxS term for review, a FAIRe
-             term for review, the mapper's accepted match) -->
+             term for review, the mapper's accepted match). The FAIRe term for review, depth, is a commonly
+             confused term, so it waits for a decision, and the workbook's review summary says so -->
         <test expect_num_outputs="2">
             <param name="table" value="review_table.csv"/>
             <param name="crosswalk" value="apply_review_sheet_undecided.xlsx" ftype="xlsx"/>
@@ -1249,8 +1251,9 @@ python '$__tool_directory__/faire_mapper_apply.py'
             <param name="include_review" value="true"/>
             <output name="log">
                 <assert_contents>
-                    <has_text text="review sheet: 3 accepted, 0 rejected, 1 changed, 4 with no decision (1 with no proposed term and 1 match for review, kept as your own terms; 1 match for review, applied as you asked; 1 of the mapper's accepted matches, applied)"/>
-                    <has_text text="'Depth (m)' to minimumDepthInMeters (sampleMetadata)"/>
+                    <has_text text="review sheet: 3 accepted, 0 rejected, 1 changed, 4 with no decision (1 with no proposed term and 1 match for review, kept as your own terms; 1 match for review to a Mandatory or commonly confused term, kept as your own terms until you decide it; 1 of the mapper's accepted matches, applied)"/>
+                    <has_text text="'Depth (m)' to minimumDepthInMeters: a match for review, not applied with the others because minimumDepthInMeters is a commonly confused term"/>
+                    <has_text text="column mapping: 3 accepted, 1 changed and 0 rejected by the reviewer; 4 with no decision (1 strong match applied as proposed, 0 matches for review applied without a decision, 3 kept as the lab's own names)"/>
                     <has_text text="'Date' to eventDate (sampleMetadata)"/>
                     <has_text text="kept as user-defined fields in sampleMetadata: Silicate, Voyage"/>
                 </assert_contents>
@@ -1328,8 +1331,9 @@ log says so.
   carries what the tool needs to apply them, so keep it.
 
   Or the SSSOM crosswalk from *propose mapping*. The tool applies the rows marked
-  ``skos:exactMatch``, which are the accepted, confirmed and model matches. It leaves out the rows
-  marked for review (``skos:closeMatch``) unless you tick the option to apply them. You can edit the
+  ``skos:exactMatch``, which are the accepted and confirmed matches. It leaves out the rows marked
+  for review (``skos:closeMatch``), including a language model's matches, unless you tick the option
+  to apply them. You can edit the
   crosswalk to confirm a match (change ``skos:closeMatch`` to ``skos:exactMatch``), to change the
   term (``object_label``), or to stop a column being matched (delete its row).
 
@@ -1457,7 +1461,14 @@ log says so.
 
 **Check the workbook before you submit it anywhere.** The tool matched and converted the values, and
 some may need correcting. The log lists every change, and the workbook's README sheet says the same.
-Run FAIRe-fier on it too.
+Run FAIRe-fier on it too: a pass means the format and the required fields are right, not that the
+values are.
+
+The log and the README sheet also say how the values were reviewed: how many matches and values from
+find method details the reviewer accepted, changed or rejected, and how many were applied without a
+decision. When every match for review, or every value to check from find method details, was accepted
+as proposed (10 or more), the tool warns that they may not all have been checked, as when a decision
+is filled down a column.
 
 - **FAIRe workbook** (.xlsx). The OTU and taxonomy tables are added as *otuFinal* and *taxaFinal*,
   or as *otuRaw* and *taxaRaw*, as set for each table. When there are several assays, the assay name

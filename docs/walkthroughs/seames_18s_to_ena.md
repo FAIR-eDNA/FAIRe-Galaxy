@@ -106,8 +106,8 @@ The mapper takes the sample table from step 1. It compares each column's name an
 FAIRe checklist and proposes a FAIRe term, with its reasons and a score from 0 to 1. It accepts a
 match that scores well and is clearly ahead of the other candidates, and sends the rest to a person
 to review. It works by rules, so the same table always gives the same proposals. (A separate tool,
-*FAIRe mapper: ask a language model*, can give a second opinion on the columns for review. It was
-not used here.)
+*FAIRe mapper: ask a language model*, can give a second opinion on the columns for review. Its
+choices wait in the review sheet until the reviewer accepts them. It was not used here.)
 
 Of the 47 columns, the mapper accepted 22, sent 11 to review and found no term for 14. Some
 examples, as they appear in the review sheet (step 3):
@@ -199,6 +199,10 @@ before submitting it anywhere.
   output_read_count is left empty, as FAIRe asks for the reads that passed filtering, before
   rarefying; the log says so. output_otu_num and otu_num_tax_assigned are counted from the table.
   The six controls have no column in it, so their counts are empty, and the log lists them.
+- **Review:** since version 0.9.1 the README sheet and the log also say how the workbook was
+  reviewed: the reviewer's decisions on the columns, and how many values from *find method details*
+  were accepted as proposed or changed. They warn when 10 or more matches for review, or values to
+  check, were all accepted as proposed, as happens when a decision is filled down a column.
 - **Taxonomy:** PR2 lineages, with 1,057 sequences named to species and 1,894 to genus. PR2's levels
   are not Linnaean ranks, so names above genus go in scientificName with their PR2 level, and
   *edna2obis: match taxa* can fill kingdom to family from WoRMS. The SILVA lineages are kept in
@@ -208,7 +212,8 @@ before submitting it anywhere.
 
 *Galaxy tool: FAIRe-fier*
 
-FAIRe-fier, CSIRO's FAIRe validator, checks every value against the checklist.
+FAIRe-fier, CSIRO's FAIRe validator, checks every value against the checklist. A pass means the
+format and the required fields are right; whether the values are right rests on the review in step 3.
 
 - **projectMetadata passes**, with no warnings.
 - **sampleMetadata passes.** Its 228 warnings point out the 25 lab columns kept as user-defined

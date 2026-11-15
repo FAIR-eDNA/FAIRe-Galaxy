@@ -133,10 +133,11 @@ run_primers <- function(session_dir, mode = "text", texts = character(), names_t
 }
 
 # FAIRe mapper: find method details. texts are the methods files, labels the names the person knows them by.
-run_method_details <- function(session_dir, texts, labels = basename(texts), assay_names = "") {
+run_method_details <- function(session_dir, texts, labels = basename(texts), assay_names = "",
+                               assay_type = "metabarcoding") {
   d <- new_run_dir(session_dir, "method_details")
   args <- c(texts, as.vector(rbind("--label", gsub("[^A-Za-z0-9._ ()-]", "_", labels))),
-            "--checklist", checklist(), "--assay_type", "metabarcoding",
+            "--checklist", checklist(), "--assay_type", assay_type,
             if (!blank(assay_names)) c("--assay_names", assay_names),
             "--output", "method_details.tsv", "--review_sheet", "method_details_review_sheet.xlsx")
   s <- run_python(tool_path("faire_mapper", "faire_method_details.py"), args, d)

@@ -34,7 +34,7 @@ from pathlib import Path
 
 import pandas as pd
 
-__version__ = '0.9.0'
+__version__ = '0.9.1'
 
 # Excel saves a drop-down that lists cells of another sheet (the review sheet's replacement terms) in a
 # newer form that openpyxl does not read. Only the cell values are read here, so the warning says
@@ -1278,7 +1278,8 @@ def reader_comment(pr, p, c, t, ctx):
         why.append('set by a reviewer')
     elif pr.route == 'model':
         why.append(pr.evidence)
-        check.append('a language model chose this FAIRe term. Confirm it, change it, or delete this row')
+        check.append('a language model chose this FAIRe term, so it waits for a reviewer: accept it in the review sheet '
+                     '(or change skos:closeMatch to skos:exactMatch), change it, or delete this row')
     elif pr.column in ctx['flags']:
         was, kind, yes, no, n_yes, n_no, example = ctx['flags'][pr.column]
         why.append(f"{strength(pr.score)} match. The column holds {' and '.join(yes + no)}, and its name is "
@@ -1854,7 +1855,8 @@ def crosswalk_rows(proposals):
         row = {
             'subject_id': 'local:' + re.sub(r'[^A-Za-z0-9_.-]', '_', p.column),
             'subject_label': p.column,
-            'predicate_id': 'skos:exactMatch' if p.route in ('accept', 'confirmed', 'model') else 'skos:closeMatch',
+            # A model's choice waits for a reviewer, as a match for review does
+            'predicate_id': 'skos:exactMatch' if p.route in ('accept', 'confirmed') else 'skos:closeMatch',
             'object_id': f'FAIRe:{p.term}',
             'object_label': p.term,
             'mapping_justification': 'semapv:ManualMappingCuration' if p.route == 'confirmed' else 'semapv:CompositeMatching',
