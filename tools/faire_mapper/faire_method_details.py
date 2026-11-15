@@ -1340,11 +1340,11 @@ def load_terms(checklist, assay_type=None):
     return terms
 
 
-EDNA_TEXT = re.compile(r'\beDNA\b|environmental\s+DNA|metabarcod|amplicon|\bq?PCR\b|ddPCR|\bDNA\s+extract', re.I)
+EDNA_TEXT = re.compile(r'\be?DNA\b|metabarcod|amplicon|amplified\s+(?:with|using)|\bq?PCR\b|ddPCR|\bprimers?\b', re.I)
 
 
 def looks_like_edna(texts):
-    """False for a text with no word of eDNA, PCR or metabarcoding: not the methods of an eDNA study."""
+    """False for a text with no word of DNA, PCR, primers or amplification: not the methods of an eDNA study."""
     return any(EDNA_TEXT.search(text) for _, text in texts)
 
 
@@ -1786,7 +1786,7 @@ def main(argv=None):
     names = [a.strip() for a in args.assay_names.split(',') if a.strip()]
     proposals, read, sentences = find(texts, vocab, names, args.whole_text)
     if not looks_like_edna(texts):
-        print('WARNING: the methods do not mention eDNA, PCR or metabarcoding, so nothing was proposed. Check that this '
+        print('WARNING: the methods do not mention DNA, PCR, primers or amplification, so nothing was proposed. Check that this '
               'is the right file.', file=sys.stderr)
     rows = tidy(proposals, terms)
     write_tsv(rows, terms, args.output)

@@ -151,7 +151,7 @@ Primers are left to **FAIRe mapper: find primers**, which looks them up in a tab
   sentence, how it was found, a note, the status *review*, the term's FAIRe level, its confidence
   (*reliable* or *check*) and its record in papers tested.
 - **Summary**: what was read, and the terms found in each part of the methods. A text that never
-  mentions eDNA, PCR or metabarcoding gets no proposals and a warning: check that it is the right file.
+  mentions DNA, PCR, primers or amplification gets no proposals and a warning: check that it is the right file.
 
 **What it looks for**
 

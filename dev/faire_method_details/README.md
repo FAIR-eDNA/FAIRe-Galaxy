@@ -290,7 +290,7 @@ The reviewer also noted that some values repeat themselves, and that a syringe s
   minus, and the outputs never carry a control character (it once stopped the review sheet).
 - samp_vol_we_dna_ext is proposed only when the paper says the whole filter was extracted, or names the volume
   DNA was extracted from; otherwise a volume collected and filtered is proposed as samp_size.
-- A text that never mentions eDNA, PCR or metabarcoding gets no proposals, and a warning.
+- A text that never mentions DNA, PCR, primers or amplification gets no proposals, and a warning.
 - A size before tank, bucket, carboy, cooler or aquarium is a container's size, not a sample's.
 - Sentences about vouchered tissue, Sanger sequencing of references or blood are left out of the sample, PCR
   and bioinformatics rules (a sentence naming the DNeasy Blood & Tissue Kit is not).

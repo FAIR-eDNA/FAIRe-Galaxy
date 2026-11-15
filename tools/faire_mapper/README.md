@@ -675,8 +675,8 @@ held-out papers' values, the development papers' values that Copilot did not con
 person, 87% of the tool's values were right, 6% partly right and 7% wrong; on the 11 new papers, judged blind
 beside an independent reading, 90% were right, 4% partly right and 6% wrong, and the values for terms found
 reliably were right 93% of the time. The volume extracted (samp_vol_we_dna_ext) is proposed only when the
-paper says the whole filter was extracted or names the volume extracted, and a text that never mentions
-eDNA, PCR or metabarcoding gets no proposals and a warning.
+paper says the whole filter was extracted or names the volume extracted, and a text that never mentions DNA,
+PCR, primers or amplification gets no proposals and a warning.
 
 On the held-out paper of the trial (West et al. 2024, read whole), the tool proposed 40 of the 52 values
 written by hand from the paper as the rules stood, and 44 after three general faults the run showed were
