@@ -66,7 +66,7 @@ A few things that help along the way:
   The step says how to choose the pair you used for each assay, and which assay name to give it.
 - **Other method details**: in its own tab beside the primers, *Find method details* reads the
   same methods for the filters, extraction kit, PCR conditions, sequencing kit, software, settings
-  and reference databases, and lists each value it finds with the sentence it came from, its FAIRe
+  and reference databases, and lists each value it finds with a snippet of text from the source, its FAIRe
   requirement level and its term's record in papers tested. Values for terms found reliably come
   first and the rest are listed as values to check; *Tick all reliable values* ticks only the
   first group, so each of the others takes its own tick. Tick the ones to keep (correcting any

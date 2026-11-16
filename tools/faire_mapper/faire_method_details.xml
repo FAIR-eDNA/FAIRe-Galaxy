@@ -104,7 +104,7 @@ $whole_text
 Much of what FAIRe asks about a study is in its methods: how the water was filtered, the extraction
 kit, the PCR conditions, the sequencing instrument and kit, and the software, settings and reference
 databases of the bioinformatics. This tool reads the methods and proposes a value for each of these
-FAIRe terms it can recognise, with the sentence the value came from, so that you can check it. It
+FAIRe terms it can recognise, with a snippet of text from the source so that you can check it. It
 writes a review sheet: you accept, reject or change each value, fill in what the tool did not find,
 and give the sheet to **FAIRe mapper: apply mapping** with your other values for the whole project.
 

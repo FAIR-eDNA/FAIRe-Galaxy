@@ -345,7 +345,8 @@ mapper_panel <- function() {
               nav_panel(
                 "Other method details",
                 help_text("Reads your methods for the filtration, extraction, PCR, sequencing and bioinformatics, and",
-                          "proposes a FAIRe value for each term it recognises, with the sentence it came from."),
+                          "proposes a FAIRe value for each term it recognises, with a snippet of text from the source so",
+                          "that you can check it."),
                 radioButtons("md_assay_type", term_label("Assay type", "assay_type"),
                              c("Metabarcoding" = "metabarcoding", "Targeted (qPCR, ddPCR)" = "targeted"), inline = TRUE),
                 run_button("run_details", "Find method details"),
