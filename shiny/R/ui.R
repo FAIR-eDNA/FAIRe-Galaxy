@@ -154,7 +154,7 @@ start_page <- function() {
                   tags$br(), actionLink("start_faireator", "Open FAIRe-ator", icon = icon("arrow-right"))),
           tags$li(HTML("<b>If you have a sample table in your own format</b>, start with the <b>FAIRe mapper</b> under",
                        "<em>1. Make a workbook</em>. It builds the workbook from your table, your OTU and taxonomy",
-                       "tables and your methods text."),
+                       "tables and your methods text. <em>What you'll need</em>, below, lists the files to gather first."),
                   tags$br(), actionLink("start_mapper", "Start the FAIRe mapper", icon = icon("arrow-right"))),
           tags$li(HTML("<b>If you already have a FAIRe workbook</b>, add it to your files and go to <em>2. Check</em>."),
                   tags$br(), actionLink("start_check", "Go to 2. Check", icon = icon("arrow-right")))),
@@ -187,7 +187,107 @@ start_page <- function() {
         uiOutput("setup_table"),
         help_text("If something is missing, close the app, run setup.R and start it again.")
       )
-    )
+    ),
+    needs_card()
+  )
+}
+
+# FAIRe terms shown as code, side by side.
+terms <- function(...) HTML(paste0("<code>", c(...), "</code>", collapse = " "))
+
+# One item of what you'll need: a title, what it holds, the mandatory terms each part gives, and the
+# demonstration's file for it.
+need_item <- function(icon_name, title, intro, parts, note = NULL, demo = NULL) {
+  div(class = "need",
+      tags$h6(icon(icon_name), title),
+      tags$p(class = "need-intro", intro),
+      tags$ul(lapply(parts, function(x) tags$li(x[[1]], tags$span(class = "need-terms", terms(x[-1]))))),
+      if (!is.null(note)) tags$p(class = "need-note", note),
+      if (!is.null(demo)) tags$p(class = "need-demo", icon("flask"), "Demonstration: ",
+                                 HTML(paste0("<em>", demo, "</em>", collapse = " and "))))
+}
+
+# What a person needs to fill the mandatory terms of a FAIRe workbook (FAIRe checklist v1.0.2): 25 of
+# its 38 mandatory terms apply to metabarcoding, and the other 13 to targeted assays.
+needs_card <- function() {
+  card(
+    id = "needs",
+    card_header("What you'll need for a FAIRe dataset"),
+    tags$p("Gather these before you start. Together they fill the 25 mandatory terms of the FAIRe checklist",
+           "(v1.0.2) for a metabarcoding study. The terms each one gives are in grey, and the demonstration",
+           "data has an example of each. The FAIRe mapper reads them all and puts each value where FAIRe",
+           "expects it, in the form FAIRe asks for."),
+    div(class = "needs-grid",
+        need_item("vials", "A sample table",
+                  "One row per sample, including field blanks and other controls, with:",
+                  list(c("a name for each sample", "samp_name"),
+                       c("whether it is a sample or a control and, for a control, what kind",
+                         "samp_category", "neg_cont_type", "pos_cont_type"),
+                       c("the date of collection", "eventDate"),
+                       c("latitude and longitude, in decimal degrees", "decimalLatitude", "decimalLongitude"),
+                       c("where it was collected: the country, and the region or site", "geo_loc_name"),
+                       c("the environment, broad and local, and the material sampled (sea water, say)",
+                         "env_broad_scale", "env_local_scale", "env_medium")),
+                  note = paste("Controls need no coordinates or environment. A value that is the same for every",
+                               "sample, such as the country or the environment, can be given once in the app."),
+                  demo = "SEA-MES_10L_samples.csv"),
+        need_item("file-lines", "Your methods",
+                  "Text or a PDF, such as the methods of a paper or report, saying:",
+                  list(c("whether PCR was used", "pcr_0_1"),
+                       c("the forward and reverse primer sequences of each assay", "pcr_primer_forward",
+                         "pcr_primer_reverse"),
+                       c("what each assay targets (fish, say)", "targetTaxonomicAssay")),
+                  note = HTML(paste("The methods also give many of the 51 highly recommended terms, such as the",
+                                    "extraction kit, the PCR conditions and the sequencing platform.",
+                                    "<em>d. Methods and project values</em> finds them for you.")),
+                  demo = "methods.txt"),
+        need_item("table-cells", "OTU or ASV tables, with their taxonomy",
+                  "For each assay:",
+                  list(c("the final (curated) table of reads of each OTU or ASV in each sample", "otuFinal"),
+                       c("the taxon assigned to each OTU or ASV in it, with its ID and DNA sequence",
+                         "taxaFinal", "seq_id", "dna_sequence"),
+                       c("if you have them, the same tables from before curation", "otuRaw", "taxaRaw")),
+                  note = "The sequences can be in the table or in a FASTA file.",
+                  demo = c("5_SEA_MES_Fish16S_Tax_Feb_27_2025.csv", "4_SEA-MES_16S_ASV_level_output_with_seq.csv")),
+        need_item("list-check", "Library and sequencing run details",
+                  "For each assay, the library and sequencing run each sample's reads came from:",
+                  list(c("the library ID", "lib_id"),
+                       c("the sequencing run ID", "seq_run_id")),
+                  note = paste("A sample sheet from your sequencing facility will do, or the run report from ENA",
+                               "or the SRA if your reads are there already."),
+                  demo = "filereport_read_run_PRJNA1263580.tsv"),
+        need_item("circle-info", "About the project",
+                  "Details you type into the app, or add as a table of values for the whole project:",
+                  list(c("a short project ID, with no spaces", "project_id"),
+                       c("a short name for each assay (Fish16S, say)", "assay_name"),
+                       c("whether the study used metabarcoding or a targeted assay", "assay_type"),
+                       c("the people who collected and processed the data", "recordedBy"),
+                       c("a contact email", "project_contact")),
+                  note = HTML("The app fills in the checklist version, <code>checkls_ver</code>, itself."),
+                  demo = "SEA-MES_project_values_Fish16S.tsv")),
+    tags$p(class = "need-reads", icon("dna"),
+           HTML(paste("<b>To share the reads</b> with NCBI or ENA (under <em>3. Convert</em>), you will also need",
+                      "the raw sequence files: demultiplexed FASTQ files, one or a pair for each library, with the",
+                      "primers, adapters and index sequences removed. They sit outside the workbook."))),
+    tags$details(
+      class = "need-targeted",
+      tags$summary("For a targeted assay (qPCR or ddPCR)"),
+      tags$p("A targeted assay needs the sample table, methods, library details and project details above,",
+             "but no OTU or taxonomy tables, and has 13 mandatory terms of its own:"),
+      tags$ul(
+        tags$li("for each sample, whether the target was detected", tags$span(class = "need-terms", terms("detected_notDetected"))),
+        tags$li("for each PCR replicate, its ID, its plate and its Cq value",
+                tags$span(class = "need-terms", terms("technical_rep_id", "pcr_plate_id", "quantificationCycle"))),
+        tags$li("for each standard, its concentration and unit", tags$span(class = "need-terms", terms("std_conc", "std_conc_unit"))),
+        tags$li("from the methods: how amplification was detected and judged, the threshold, and the limits of",
+                "detection and quantification with their units",
+                tags$span(class = "need-terms", terms("amp_vis_method", "detection_criteria", "thresholdQuantificationCycle",
+                                                      "pcr_assay_lod", "pcr_assay_lod_unit", "pcr_assay_loq",
+                                                      "pcr_assay_loq_unit")))),
+      help_text("FAIRe-ator's template for a targeted assay has the sheets for these.")),
+    help_text(HTML(paste("The terms are those of the FAIRe checklist v1.0.2, built into this tool. The",
+                         "<a href='https://fair-edna.github.io/guidelines.html' target='_blank' rel='noopener'>FAIRe",
+                         "guidelines</a> describe each sheet of the workbook.")))
   )
 }
 

@@ -24,7 +24,7 @@ and project values*, from Oliver Berry's trial of 0.5.0, and takes its logo and 
 Oliver supplied (`www/logo.png`). Version 0.6.0 (16 November 2026) has the changes from a usability
 audit of 0.5.1, against 20 common principles of usable software: the app now keeps track of what has
 been done, asks before work could be lost, and explains errors in plain words (see *Going back,
-mistakes and warnings*, below).
+mistakes and warnings*, below). Its Start page also lists what you'll need for a FAIRe dataset.
 
 ## What it covers
 
@@ -46,6 +46,12 @@ input term. Either way, the mapper's conversions, such as reading Y and N as *ne
 
 A few things that help along the way:
 
+- **What you'll need**, on the Start page, lists the files and details to gather first: a sample
+  table, the methods, the OTU or ASV tables with their taxonomy, the library and sequencing run
+  details, and a few details about the project. Together they fill the 25 mandatory terms of the
+  FAIRe checklist (v1.0.2) for a metabarcoding study. Each item names the FAIRe terms it gives and
+  the demonstration file that shows it, and a folded note lists the 13 mandatory terms of a targeted
+  assay (qPCR or ddPCR).
 - **Your files** (on the left) lists every file you add, with what *a. Your files* found it to be.
   The eye beside a file shows what is in it: the first rows of a table as they are in the file, with
   their row numbers (so you can see which row holds the column names), the first rows of each sheet
