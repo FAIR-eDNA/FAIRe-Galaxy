@@ -159,3 +159,7 @@ ul.lib .look-file + .rm-file { margin-left: 0; }
 .card .nav-underline + .tab-content { padding-top: 0.9rem; }
 #pv_table table.dataTable { width: 100% !important; table-layout: fixed; }
 #pv_table td { overflow-wrap: anywhere; }
+
+/* a. Your files: the list of file kinds */
+ul.kind-help { padding-left: 1.2rem; margin-bottom: 0.6rem; }
+ul.kind-help li { margin-bottom: 0.2rem; }

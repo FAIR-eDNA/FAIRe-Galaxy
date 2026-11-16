@@ -95,10 +95,10 @@ KIND_PLACE <- c(
   "library table" = "e. Write the workbook: Library table",
   "crosswalk" = "c. Review: Add a review sheet you filled in, or Use a crosswalk you edited yourself",
   "data dictionary" = "b. Propose a mapping: Data dictionary",
-  "project values" = "d. Values for the whole project: Or load a table of values",
-  "primer table" = "d. Find primers: My own primer table",
+  "project values" = "d. Methods and project values: Or load a table of values",
+  "primer table" = "d. Methods and project values, Primers: My own primer table",
   "sequences (FASTA)" = "e. Write the workbook: Sequences of this table (under More for this table)",
-  "text" = "d. Find primers: Your methods (text or PDF)",
+  "text" = "d. Methods and project values: Your methods (text or PDF)",
   "not recognised" = "Check the file: its column names may be below a title (set the header row) or on another sheet.")
 
 # A label with a question mark beside it that explains the term on hover or focus.
@@ -200,15 +200,30 @@ mapper_panel <- function() {
       nav_panel(
         "a. Your files",
         card(
-          card_header("Say what each file is"),
+          card_header("Describe your files automatically, then check them"),
           step_intro("Add every file you have for the dataset to ", tags$em("Your files"), " (on the left):",
                      " the sample table, OTU or ASV tables, taxonomy tables, sequences (FASTA), run reports, and",
                      " your methods or ReadMe (text or PDF). This step looks at each one and says what it seems to",
                      " be and which step it goes to. If it gets one wrong, choose the right kind in the table."),
-          help_text("A sample table is the spreadsheet you keep for your samples, with one row per sample or filter",
-                    "and columns such as site, date, coordinates, depth, volume filtered and which samples are",
-                    "controls. Reads per ASV or taxon, and taxon assignments, go in separately as OTU and",
-                    "taxonomy tables, even if you keep them in the same spreadsheet."),
+          tags$h6("Unsure how your files should be described?"),
+          help_text("Once the files are identified, you check that each one has been described properly. Here is",
+                    "some help:"),
+          tags$ul(
+            class = "help-text kind-help",
+            tags$li(tags$b("Sample table:"), " the spreadsheet you keep for your samples, with one row per sample",
+                    " or filter and columns such as site, date, coordinates, depth, volume filtered and which",
+                    " samples are controls."),
+            tags$li(tags$b("OTU or ASV table:"), " the number of reads of each OTU, ASV or taxon in each sample. A",
+                    " table of reads summed per taxon is usually a final (curated) table."),
+            tags$li(tags$b("Taxonomy table:"), " the taxon assigned to each OTU or ASV, in rank columns (Kingdom,",
+                    " Phylum and so on) or as a lineage, with no read counts."),
+            tags$li(tags$b("Library table:"), " one row per sequencing library or run, such as a run report from",
+                    " ENA or the SRA, or a sheet naming each sample's sequence files."),
+            tags$li(tags$b("Sequences (FASTA):"), " the OTU or ASV sequences, each after a line starting with >."),
+            tags$li(tags$b("Methods or ReadMe:"), " text or a PDF describing how the samples were collected and",
+                    " processed. A PDF of scanned pages has no text the tools can read.")),
+          help_text("Reads per OTU, ASV or taxon, and taxon assignments, go in separately as OTU and taxonomy",
+                    "tables, even if you keep them in the same spreadsheet."),
           run_button("run_identify", "Identify my files"),
           uiOutput("identify_result")
         )
