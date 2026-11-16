@@ -20,7 +20,8 @@ Version 0.4.1 (15 November 2026) adds the choice of assay type to *Find method d
 tool's warnings there. Version 0.5.0 (15 November 2026) adds checks against values going into the
 workbook without a proper review (see *Keeping the review thorough*, below). Version 0.5.1 (16
 November 2026) puts the primers and the other method details side by side, as two tabs in *d. Methods
-and project values*, from Oliver Berry's trial of 0.5.0.
+and project values*, from Oliver Berry's trial of 0.5.0, and takes its logo and colours from the logo
+Oliver supplied (`www/logo.png`).
 
 ## What it covers
 

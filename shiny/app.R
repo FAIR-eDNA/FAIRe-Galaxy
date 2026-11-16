@@ -19,16 +19,20 @@ options(shiny.maxRequestSize = 500 * 1024^2, DT.fillContainer = FALSE)
 APP_VERSION <- "0.5.1"
 DEMO_DIR <- file.path(getOption("faire.app_dir"), "demo")
 
-theme <- bs_theme(version = 5, primary = "#1f6f78", secondary = "#5b6770", success = "#3c8d5a",
+# Colours from the logo: petrol, teal, navy, red, orange and yellow (darkened where white text sits
+# on them, to keep it readable).
+theme <- bs_theme(version = 5, primary = "#186c78", secondary = "#5b6770", success = "#1d7f74",
+                  danger = "#c81e36", warning = "#f0cc3c", info = "#0c2a6c",
                   "font-size-base" = "0.95rem", base_font = font_collection("Segoe UI", "Helvetica Neue", "Arial", "sans-serif"))
 
 ui <- page_navbar(
   id = "main",
   fillable = FALSE,
-  title = tags$span(icon("dna"), "FAIRe tools"),
+  title = tags$span(class = "brand", tags$img(src = "logo.png", alt = "", class = "brand-logo"), "FAIRe tools"),
   window_title = "FAIRe tools",
   theme = theme,
-  header = tags$head(tags$link(rel = "stylesheet", href = "styles.css"), tags$script(src = "app.js")),
+  header = tags$head(tags$link(rel = "icon", type = "image/png", href = "favicon.png"),
+                     tags$link(rel = "stylesheet", href = "styles.css"), tags$script(src = "app.js")),
   sidebar = sidebar(
     width = 300, open = "desktop",
     tags$h6("Workbook in use"),
