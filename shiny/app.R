@@ -872,19 +872,22 @@ server <- function(input, output, session) {
       result_ui(res, show_files = TRUE),
       if (!is.null(rv$primers) && nrow(rv$primers)) tagList(
         div(class = "how-to",
-            tags$b("Choose the primer pair you used"),
+            tags$b("Choose the primer pairs you used, one for each assay"),
             tags$ol(
-              tags$li("Each row is a published primer pair that matches your methods (or the names you typed), with",
-                      "the words it was found from. One primer name can match several published pairs, so there can be",
-                      "more rows than assays."),
-              tags$li("Click the row of the pair you used, and check it against the paper it cites. Choose one pair",
-                      "per assay."),
-              tags$li("Give the assay's name below, the same as for its OTU table in e. Write the workbook (for example",
-                      "Fish16S). Leave it empty if the project has one assay."),
+              tags$li("Each row is a published primer pair that matches your methods (or the names you typed).",
+                      "When your methods give the primer sequences, those pairs are marked likely and come first:",
+                      "usually they are the ones you used, one for each assay."),
+              tags$li("Pairs found only from a primer name, for a gene whose sequences your methods already give,",
+                      "are less likely (one name can belong to several published pairs), so they are hidden. Show",
+                      "them if a pair you used is missing."),
+              tags$li("Click the row of a pair you used, and check it against the paper it cites. Its assay name is",
+                      "filled in below from the reference table; change it if you call the assay something else."),
               tags$li("Press Add this pair to the project values. The pair's names, sequences, gene, target taxon and",
                       "references go into the table on the right: check them there, and change any that do not fit",
                       "your study."),
-              tags$li("For a second assay (say 18S as well as 16S), click its pair, give its name and add it too."))),
+              tags$li("Do the same for each of your other assays (say COI as well as 16S). The assay names you give",
+                      "here are filled in for you in e. Write the workbook, so they stay the same."))),
+        uiOutput("pr_show_all_ui"),
         DTOutput("primers_table"),
         uiOutput("pr_chosen"),
         layout_columns(col_widths = c(6, 6),
@@ -892,9 +895,34 @@ server <- function(input, output, session) {
                                  value = if (rv$demo) "Fish16S" else "", placeholder = "for example Fish16S"),
                        div(class = "pt-4", actionButton("pr_add", "Add this pair to the project values", icon = icon("arrow-right"))))))
   })
-  output$primers_table <- renderDT({
+  # Pairs from a methods text say how likely each is; the less likely ones are hidden unless asked for.
+  less_likely <- function(d) {
+    if (!"how_likely" %in% names(d)) return(rep(FALSE, nrow(d)))
+    startsWith(ifelse(is.na(d$how_likely), "", as.character(d$how_likely)), "less likely")
+  }
+  primers_shown <- reactive({
     d <- rv$primers; req(d)
-    cols <- c(query = "Found from", matched_by = "Found by", assay_name = "Assay", target_gene = "Gene",
+    if (isTRUE(input$pr_show_all)) d else d[!less_likely(d), , drop = FALSE]
+  })
+  output$pr_show_all_ui <- renderUI({
+    n <- sum(less_likely(rv$primers %||% data.frame()))
+    if (n) checkboxInput("pr_show_all", sprintf("Show the %d less likely %s", n, if (n == 1) "pair" else "pairs"),
+                         isTRUE(isolate(input$pr_show_all)))
+  })
+  # The assay name for a chosen pair: the reference table's name for it, as a FAIRe assay_name
+  # (letters, digits, dots, hyphens and underscores), or its gene when it has none.
+  default_assay <- function(r) {
+    a <- if ("assay_name" %in% names(r) && !is.na(r$assay_name)) trimws(r$assay_name) else ""
+    if (!nzchar(a) && "target_gene" %in% names(r) && !is.na(r$target_gene)) a <- sub("\\s.*", "", r$target_gene)
+    gsub("^_+|_+$", "", gsub("[^A-Za-z0-9_.-]+", "_", a))
+  }
+  observeEvent(input$primers_table_rows_selected, {
+    i <- input$primers_table_rows_selected
+    if (length(i)) updateTextInput(session, "pr_assay", value = default_assay(primers_shown()[i, , drop = FALSE]))
+  })
+  output$primers_table <- renderDT({
+    d <- primers_shown()
+    cols <- c(how_likely = "How likely", query = "Found from", matched_by = "Found by", assay_name = "Assay", target_gene = "Gene",
               pcr_primer_name_forward = "Forward primer", pcr_primer_forward = "Forward sequence",
               pcr_primer_name_reverse = "Reverse primer", pcr_primer_reverse = "Reverse sequence",
               pcr_primer_reference_forward = "Reference", notes = "Notes")
@@ -905,7 +933,7 @@ server <- function(input, output, session) {
   output$pr_chosen <- renderUI({
     i <- input$primers_table_rows_selected
     if (!length(i)) return(help_text("No pair chosen yet: click a row of the table."))
-    r <- rv$primers[i, ]
+    r <- primers_shown()[i, ]
     nm <- function(x) if (x %in% names(r) && !is.na(r[[x]])) r[[x]] else ""
     div(class = "res-ok", icon("circle-check"),
         sprintf(" Chosen: %s / %s (%s).", nm("pcr_primer_name_forward"), nm("pcr_primer_name_reverse"),
@@ -914,7 +942,7 @@ server <- function(input, output, session) {
   observeEvent(input$pr_add, {
     i <- input$primers_table_rows_selected
     if (!length(i)) return(showNotification("Choose a primer pair in the table first.", type = "error"))
-    r <- rv$primers[i, ]
+    r <- primers_shown()[i, ]
     f <- intersect(primer_fields, names(r))
     f <- f[nzchar(trimws(unlist(r[f])))]
     assay <- trimws(input$pr_assay)
@@ -1156,6 +1184,23 @@ server <- function(input, output, session) {
     demo_block(kind, i)[[field]] %||% default
   }
 
+  # The assay names given in d. Methods and project values, offered wherever e asks for an assay, so the
+  # names stay the same and the project values link to the right OTU tables and libraries.
+  pv_assays <- reactive({ a <- unique(trimws(rv$pv$assay)); a[!is.na(a) & nzchar(a)] })
+  assay_input <- function(id, label, value) {
+    ch <- unique(c(pv_assays(), if (nzchar(value)) value))
+    selectizeInput(id, label, c("", ch), selected = value,
+                   options = list(create = TRUE, placeholder = if (length(ch)) "choose or type" else "type a name"))
+  }
+  ap_assay_auto <- reactiveVal("")
+  observe({
+    a <- paste(pv_assays(), collapse = ", ")
+    now <- trimws(isolate(input$ap_assay_name) %||% "")
+    if (nzchar(a) && (!nzchar(now) || identical(now, ap_assay_auto()))) {
+      updateTextInput(session, "ap_assay_name", value = a)
+      ap_assay_auto(a)
+    }
+  })
   output$otu_blocks <- renderUI({
     n <- rv$otu_n
     if (!n) return(help_text("No OTU tables. The workbook will hold the sample and project metadata only."))
@@ -1167,7 +1212,8 @@ server <- function(input, output, session) {
           selectInput(b("file"), term_label("OTU or ASV table", "otu_table"), ch, selected = bval("otu", i, "file")),
           layout_columns(
             col_widths = c(4, 4, 4),
-            textInput(b("assay"), term_label("Assay", "assay"), bval("otu", i, "assay")),
+            assay_input(b("assay"), term_label("Assay", "assay"),
+                        bval("otu", i, "assay", if (length(pv_assays()) == 1) pv_assays() else "")),
             textInput(b("run"), term_label("Sequencing run ID", "run_id"), bval("otu", i, "run")),
             selectInput(b("stage"), term_label("Write as", "stage"), c("final (otuFinal, taxaFinal)" = "final", "raw (otuRaw, taxaRaw)" = "raw"),
                         selected = bval("otu", i, "stage", "final"))),
@@ -1208,7 +1254,7 @@ server <- function(input, output, session) {
           selectInput(b("file"), term_label("Library table", "library_table"), ch, selected = bval("lib", i, "file")),
           layout_columns(
             col_widths = c(4, 4, 4),
-            textInput(b("assay"), "Assays of these libraries", bval("lib", i, "assay")),
+            textInput(b("assay"), "Assays of these libraries", bval("lib", i, "assay", paste(pv_assays(), collapse = ", "))),
             textInput(b("filter"), "Only libraries whose name holds", bval("lib", i, "filter")),
             textInput(b("run"), "Sequencing run ID", bval("lib", i, "run"))),
           textInput(b("sheet"), "Excel sheet (optional)", bval("lib", i, "sheet")))
@@ -1237,6 +1283,16 @@ server <- function(input, output, session) {
       libs[[length(libs) + 1]] <- list(path = p, name = g("lib", i, "file"), sheet = g("lib", i, "sheet"),
                                        assay = g("lib", i, "assay"), filter = g("lib", i, "filter"), run = g("lib", i, "run"))
     }
+    # The assay names used here should be the ones the project values were given for in d.
+    used <- trimws(unlist(strsplit(c(input$ap_assay_name %||% "", vapply(otus, `[[`, "", "assay"),
+                                     vapply(libs, `[[`, "", "assay")), ",")))
+    odd <- setdiff(unique(used[nzchar(used)]), pv_assays())
+    if (length(pv_assays()) && length(odd))
+      return(showNotification(sprintf(paste(
+        "The assay name%s %s %s not among the assays in d. Methods and project values (%s). Use the same names,",
+        "so the project values go with the right OTU tables and libraries."),
+        if (length(odd) == 1) "" else "s", paste(odd, collapse = ", "), if (length(odd) == 1) "is" else "are",
+        paste(pv_assays(), collapse = ", ")), type = "error", duration = 15))
     pv_path <- NULL
     if (nrow(rv$pv)) {
       pv_path <- file.path(sd, "project_values.tsv")

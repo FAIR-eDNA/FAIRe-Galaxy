@@ -26,7 +26,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
 
 ## Status
 
-- Version 0.9.1. `planemo lint`: passes with no warnings. `pyflakes`: clean.
+- Version 0.9.2. `planemo lint`: passes with no warnings. `pyflakes`: clean.
 - Goes to Galaxy Australia as an early version with the wrapped FAIRe tools (decided 6 November
   2026). Each tool's help starts with a note saying so, which asks users to check the results and
   send problems to the Galaxy Australia help desk (to confirm with Galaxy Australia, question 8).
@@ -43,6 +43,14 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   independent answer keys (`dev/faire_mapper_real_datasets/`, `dev/faire_mapper_australian_datasets/`,
   summarised below), and end to end on CSIRO's SEA-MES data (`dev/faire_mapper_seames/`). Not yet
   tried on datasets from Australian labs that already have a FAIRe version.
+- New in 0.9.2 (16 November 2026), from Oliver's trial of the Shiny app: for a methods text, *find
+  primers* says how likely each pair is to be one the study used, in a new last column
+  (*how_likely*), and lists the most likely first. A pair is likely when the methods give its
+  sequences, and less likely when it was found only from a name but the methods give the sequences
+  of another pair for the same gene (one name, such as 16SF, can belong to several published pairs).
+  On the SEA-MES methods, 2 of the 8 pairs are likely: the 16S fish pair and the COI pair the
+  methods give. Help wording: the reference table "built into this tool", and method details come
+  "with a snippet of text from the source".
 - New in 0.9.1 (15 November 2026): checks against values going into the workbook without a proper
   review (see "Keeping the review thorough" under "Writing the FAIRe workbook" below). A draft
   written with the matches still for review leaves out the Mandatory and commonly confused terms and
@@ -1103,6 +1111,8 @@ find method details); the 2 find method details, all 37 apply mapping and 5 find
 Galaxy `release_25.0` here, and so do both workflow tests. 0.9.1 (15 November) updates two apply mapping
 tests for the review summary and for a draft that leaves a commonly confused term to the reviewer; all 37
 apply mapping, 15 propose mapping and 2 find method details tests pass in Galaxy `release_25.0` here.
+0.9.2 (16 November) checks the new *how_likely* column in a find primers test; all 5 find primers tests
+pass in Galaxy `release_25.0` here.
 
 | Tool | Test | Checks | Result |
 |---|---|---|---|
@@ -1119,7 +1129,7 @@ apply mapping, 15 propose mapping and 2 find method details tests pass in Galaxy
 | find primers | 2 | The same methods as a PDF: the same candidates | passed |
 | find primers | 3 | Names, with the user's table added: user's alias found, bad row left out, unknown names reported | passed |
 | find primers | 4 | User's table only, with a gene filter | passed |
-| find primers | 5 | Methods text with sequences: the TAReuk pair named from the table, a pair not in the table shown as written with its names and gene, an adapter ignored | passed |
+| find primers | 5 | Methods text with sequences: the TAReuk pair named from the table, a pair not in the table shown as written with its names and gene, an adapter ignored; pairs given as sequences marked likely | passed |
 | build primer table | 1 | User's rows added to the bundled table; bad row reported | passed |
 | build primer table | 2 | New table from a register spreadsheet and a TSV; reused primer names reported | passed |
 | build primer table | 3 | A correction row replaces the pair it corrects and records the change | passed |

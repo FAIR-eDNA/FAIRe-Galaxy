@@ -63,11 +63,16 @@ A few things that help along the way:
 - **Primers** are checked against a reference table of about 550 published primer pairs, most from
   Takahashi et al. (2023) and Wilderlab's assays. This keeps primer names as they are in the
   literature and catches typos in sequences. If your primers are not in it, add your own table.
-  The step says how to choose the pair you used for each assay, and which assay name to give it.
+  Pairs whose sequences your methods give are marked likely and come first. Pairs found only from
+  a primer name, for a gene whose sequences the methods already give, are less likely (one name can
+  belong to several published pairs) and are hidden unless you ask for them. Clicking a pair fills
+  in its assay name from the reference table, which you can change. *e. Write the workbook* then
+  offers the same assay names for the OTU tables and libraries, and stops with a message if a name
+  there differs from the ones given in *d*.
 - **Other method details**: in its own tab beside the primers, *Find method details* reads the
   same methods for the filters, extraction kit, PCR conditions, sequencing kit, software, settings
-  and reference databases, and lists each value it finds with a snippet of text from the source, its FAIRe
-  requirement level and its term's record in papers tested. Values for terms found reliably come
+  and reference databases, and lists each value it finds with a snippet of text from the source, its
+  FAIRe requirement level and its term's record in papers tested. Values for terms found reliably come
   first and the rest are listed as values to check; *Tick all reliable values* ticks only the
   first group, so each of the others takes its own tick. Tick the ones to keep (correcting any
   that are nearly right) and add them to the values for the whole project. If any ticked values

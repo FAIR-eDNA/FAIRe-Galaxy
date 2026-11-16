@@ -26,7 +26,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import faire_mapper_text as ft  # noqa: E402
 
-__version__ = '0.9.1'
+__version__ = '0.9.2'
 # FAIRe term names wherever FAIRe has a term; the rest describe the table itself.
 COLUMNS = ['primer_pair_id', 'assay_name', 'assay_type', 'targetTaxonomicAssay', 'targetTaxonomicScope',
            'target_gene', 'target_subfragment',
@@ -674,13 +674,45 @@ def text_candidates(t, text):
     return sorted(by_pair.values(), key=lambda e: (-len(e['evidence']), -e['rank'], e['assay_name']))
 
 
+LIKELY = 'likely: the methods give its sequences'
+POSSIBLE = 'possible: found from a primer name or citation; check it against the paper'
+LIKELY_ORDER = ('likely', 'possible', 'less likely')
+
+
+def how_likely(found):
+    """How likely each pair found in a methods text is to be one the study used. Sequences written in
+    the text are the strongest evidence. A pair found only from a name or citation is less likely when
+    the text gives the sequences of another pair for the same gene: one name (16SF, say) can belong to
+    several published pairs. Sets 'how_likely' on each entry and returns them, most likely first."""
+    by_gene = {}
+    for e in found:
+        if e['matched_by'].startswith('sequences in the text'):
+            e['how_likely'] = LIKELY
+            label = e['assay_name'] or f"{e['pcr_primer_name_forward']}/{e['pcr_primer_name_reverse']}"
+            by_gene.setdefault(e['target_gene'] or '', []).append(label)
+    for e in found:
+        if 'how_likely' in e:
+            continue
+        others = by_gene.get(e['target_gene'] or '') if e['target_gene'] else None
+        if others:
+            e['how_likely'] = (f"less likely: the methods give the sequences of {', '.join(others)}, another pair "
+                               f"for this gene")
+        elif e['matched_by'].startswith('a sequence in the text'):
+            e['how_likely'] = 'possible: the methods give one of its sequences; check the other against the paper'
+        else:
+            e['how_likely'] = POSSIBLE
+    return sorted(found, key=lambda e: LIKELY_ORDER.index(e['how_likely'].split(':')[0]))
+
+
 # ------------------------------------------------------------------ command line
 
 OUT_COLUMNS = ['query', 'matched_by', 'candidates_for_query'] + COLUMNS
 
 
 def write_candidates(path, rows):
-    pd.DataFrame(rows, columns=OUT_COLUMNS).to_csv(path, sep='\t', index=False)
+    # pairs found in a methods text also say how likely each is (the last column)
+    extra = ['how_likely'] if any('how_likely' in r for r in rows) else []
+    pd.DataFrame(rows, columns=OUT_COLUMNS + extra).to_csv(path, sep='\t', index=False)
 
 
 def main(argv=None):
@@ -746,13 +778,14 @@ def main(argv=None):
                       f'the methods as text and give that instead.')
             parts.append(part)
         text = '\n\n'.join(parts)
-        found = text_candidates(t, text)
+        found = how_likely(text_candidates(t, text))
         for e in found:
             # evidence as one line each, whatever line breaks the text (a PDF, say) had inside it
             e['evidence'] = [' '.join(str(x).split()) for x in e['evidence']]
             print(f"{e['assay_name'] or '-'} {e['pcr_primer_name_forward']}/{e['pcr_primer_name_reverse']} "
                   f"{e['pcr_primer_forward']} {e['pcr_primer_reverse']} [{e['target_gene']}] "
-                  f"({e['pcr_primer_reference_forward']}) <- {'; '.join(e['evidence'][:3])}")
+                  f"({e['pcr_primer_reference_forward']}) <- {'; '.join(e['evidence'][:3])} "
+                  f"[{e['how_likely'].split(':')[0]}]")
             out.append({**e, 'query': '; '.join(e['evidence'][:5]), 'matched_by': e['matched_by'],
                         'candidates_for_query': len(found)})
         print(f'INFO: {len(found)} candidate primer pairs')
