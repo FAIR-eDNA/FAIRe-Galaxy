@@ -21,7 +21,10 @@ tool's warnings there. Version 0.5.0 (15 November 2026) adds checks against valu
 workbook without a proper review (see *Keeping the review thorough*, below). Version 0.5.1 (16
 November 2026) puts the primers and the other method details side by side, as two tabs in *d. Methods
 and project values*, from Oliver Berry's trial of 0.5.0, and takes its logo and colours from the logo
-Oliver supplied (`www/logo.png`).
+Oliver supplied (`www/logo.png`). Version 0.6.0 (16 November 2026) has the changes from a usability
+audit of 0.5.1, against 20 common principles of usable software: the app now keeps track of what has
+been done, asks before work could be lost, and explains errors in plain words (see *Going back,
+mistakes and warnings*, below).
 
 ## What it covers
 
@@ -90,6 +93,42 @@ A few things that help along the way:
 - **A question mark** beside a label explains the term (*data dictionary*, *assay*, *raw* and
   *final* and so on) when the pointer rests on it, or when you move to it with the Tab key.
 - **Optional fields**, such as the data dictionary, can be set back to *None* after choosing a file.
+
+## Going back, mistakes and warnings
+
+Making a workbook takes several steps, and people go back to change one. The app keeps track:
+
+- **Each step says where it stands.** The tabs a to e show *✓ done*, *! not saved* (a review with
+  changes still to save) or *↻ redo* (an earlier step has changed since this one ran).
+- **Running the mapping again keeps your review.** If you have reviewed the mapping, *b. Propose a
+  mapping* asks first, and can carry your decisions over to the new mapping. A decision is kept for a
+  column whose proposed term is the same as before; the app says how many were kept and how many need
+  deciding again.
+- **Writing the workbook checks the review first.** If the review has changes not yet saved, or has
+  not been done, *e. Write the workbook* says so and offers to save it, or to go to the review, before
+  writing. The *Write the workbook* button is at the top of step e, with a second one at the end.
+- **A workbook that is out of date says so.** If the review or the project values change after the
+  workbook was written, the sidebar and the Check and Convert pages say the workbook in use is out of
+  date, with a link to write it again.
+- **Nothing is lost by accident.** Loading the demonstration, or *Remove all files*, asks first when
+  there is work in the session, and the browser asks before you leave or reload the page.
+- **Errors say what went wrong and what to do.** An error stays until you close it and is repeated
+  under the field it is about. When a tool stops, its result gives the reason in plain words for the
+  common cases (a file that is not an Excel workbook, a missing sheet, text that is not UTF-8, a
+  missing package and so on), with the tool's own message below.
+- **Warnings are listed where you see them.** Writing the workbook lists its warnings, and the
+  mandatory terms still with no value, in the result.
+- **Some values are checked as you type**: the project ID, the UTC offset, and the assay names
+  against the ones given in *d*.
+- **Dates that could be read two ways are caught early.** If a date column has values such as
+  06/09/2017 and none settles whether the day or the month comes first, *b. Propose a mapping* asks,
+  and your answer sets the date order in *e*.
+- **The Convert forms offer the workbook's own fields**, such as the field that marks replicates for
+  NCBI, in drop-downs you can also type into.
+
+The app also works from the keyboard, with a visible outline on the control in focus, and has labels
+for screen readers on its icons and the review's drop-downs. An automatic check (axe-core) finds no
+problems in the app's own pages; the few it reports come from the page framework (bslib).
 
 ## Keeping the review thorough
 

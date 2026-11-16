@@ -26,7 +26,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
 
 ## Status
 
-- Version 0.9.2. `planemo lint`: passes with no warnings. `pyflakes`: clean.
+- Version 0.9.3. `planemo lint`: passes with no warnings. `pyflakes`: clean.
 - Goes to Galaxy Australia as an early version with the wrapped FAIRe tools (decided 6 November
   2026). Each tool's help starts with a note saying so, which asks users to check the results and
   send problems to the Galaxy Australia help desk (to confirm with Galaxy Australia, question 8).
@@ -43,6 +43,11 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   independent answer keys (`dev/faire_mapper_real_datasets/`, `dev/faire_mapper_australian_datasets/`,
   summarised below), and end to end on CSIRO's SEA-MES data (`dev/faire_mapper_seames/`). Not yet
   tried on datasets from Australian labs that already have a FAIRe version.
+- New in 0.9.3 (16 November 2026), from a usability audit of the Shiny app: *propose mapping*
+  warns, and lists among its checks, when the dates in a column can be read day first or month first
+  and no value settles it, so the date order can be set before the workbook is written. *Apply
+  mapping* prints its warnings, and each mandatory term left with no value, as `WARNING:` lines in
+  the job's messages, so they show without opening the log.
 - New in 0.9.2 (16 November 2026), from Oliver's trial of the Shiny app: for a methods text, *find
   primers* says how likely each pair is to be one the study used, in a new last column
   (*how_likely*), and lists the most likely first: an exact match (both sequences in the methods
@@ -437,7 +442,8 @@ same choice of fields by assay type, sample types and requirement levels. It con
 FAIRe needs a set form:
 
 - dates to ISO 8601, reading day first or month first as the column's values show (13/09/2017), and
-  stopping when nothing settles it unless the form says which; Excel dates and serial numbers;
+  stopping when nothing settles it unless the form says which (since 0.9.3, propose mapping warns
+  about such a column first); Excel dates and serial numbers;
 - durations to ISO 8601 ("2 days", or 316 under a *Days frozen* header, become P2D and P316D);
 - "1 L" into samp_size and samp_size_unit; "0.2 micron" into 0.2 for size_frac, converting mm to µm;
 - MIxS lat_lon into signed decimalLatitude and decimalLongitude, keeping the digits given;
@@ -1113,7 +1119,9 @@ Galaxy `release_25.0` here, and so do both workflow tests. 0.9.1 (15 November) u
 tests for the review summary and for a draft that leaves a commonly confused term to the reviewer; all 37
 apply mapping, 15 propose mapping and 2 find method details tests pass in Galaxy `release_25.0` here.
 0.9.2 (16 November) checks the new *how_likely* column in a find primers test; all 5 find primers tests
-pass in Galaxy `release_25.0` here.
+pass in Galaxy `release_25.0` here. 0.9.3 (16 November) prints apply mapping's warnings as `WARNING:`
+lines and has propose mapping warn about dates that can be read two ways; all 15 propose mapping and
+37 apply mapping tests pass in Galaxy `release_25.0` here.
 
 | Tool | Test | Checks | Result |
 |---|---|---|---|

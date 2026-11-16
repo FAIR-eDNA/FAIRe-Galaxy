@@ -34,7 +34,7 @@ from pathlib import Path
 
 import pandas as pd
 
-__version__ = '0.9.2'
+__version__ = '0.9.3'
 
 # Excel saves a drop-down that lists cells of another sheet (the review sheet's replacement terms) in a
 # newer form that openpyxl does not read. Only the cell values are read here, so the warning says
@@ -2010,6 +2010,39 @@ def review_list(df, profiles, proposals, confused=None):
                        'Give their UTC offset on apply mapping\'s form (+11:00 for Australian Eastern Daylight '
                        'Time, for example)')
                     + ', so eventDate also gives the time zone. NCBI needs it, as it takes times in UTC only'])
+    for column, example in ambiguous_dates(df, mapped):
+        out.append(['dates day first or month first', column, f'such as {example}',
+                    f'Dates such as {example} can be read day first or month first, and no value in the column '
+                    f'settles it. Say which when you write the workbook (Dates such as 06/09/2017 on apply '
+                    f'mapping\'s form); otherwise it stops there to ask'])
+    return out
+
+
+SLASH_DATE_RE = re.compile(r'^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2}|\d{4})(?:[ T].*)?$')
+
+
+def ambiguous_dates(df, mapped):
+    """Date columns written day and month first in either order (06/09/2017), when no value settles which:
+    one value per column, as (column, example). Apply mapping stops on these unless told the order."""
+    out = []
+    for pr in mapped:
+        if pr.term not in ('eventDate', 'verbatimEventDate') or pr.column not in df.columns:
+            continue
+        dmy = mdy = False
+        either = ''
+        for v in df[pr.column].dropna().astype(str):
+            m = SLASH_DATE_RE.match(v.strip())
+            if not m:
+                continue
+            a, b = int(m.group(1)), int(m.group(2))
+            if a > 12 >= b:
+                dmy = True
+            elif b > 12 >= a:
+                mdy = True
+            elif a != b and not either:
+                either = v.strip()
+        if either and not (dmy or mdy):
+            out.append((pr.column, either))
     return out
 
 
@@ -2379,6 +2412,8 @@ def cmd_map(args):
                'missing_mandatory': int(len(missing_mandatory(terms, proposals, args.assay_type))),
                'to_decide': len(review),
                'read_notes': df.attrs.get('read_notes', []) + dict_notes,
+               'ambiguous_dates': [{'column': c, 'example': e}
+                                   for c, e in ambiguous_dates(df, [p for p in proposals if p.route != 'no match'])],
                'faire_mapper_version': __version__}
     if args.gold:
         gold_df = pd.read_csv(args.gold, sep='\t', dtype=str, keep_default_na=False)
@@ -2398,6 +2433,10 @@ def cmd_map(args):
               + ', '.join(f"{p.column} ({p.other.source} {p.other.name})" for p in proposals if p.other))
     for check, col, rows, _ in review:
         print(f'INFO: to decide: {check} ({col}: {rows})')
+    # ambiguous dates stop apply mapping unless the order is given, so they are a warning here
+    for column, example in ambiguous_dates(df, [p for p in proposals if p.route != 'no match']):
+        print(f"WARNING: '{column}' has dates such as {example} that can be read day first or month first. "
+              f"Say which when you write the workbook (Dates such as 06/09/2017)")
     if args.gold:
         print('INFO: evaluation ' + json.dumps(summary['evaluation']))
     return 0

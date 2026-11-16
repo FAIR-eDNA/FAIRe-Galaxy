@@ -46,10 +46,19 @@ ul.lib .kind { display: table; margin-top: 0.1rem; font-size: 0.72rem; backgroun
 .res-ok { background: #e8f4ec; color: #1f5a33; }
 .res-fail { background: #fdecea; color: #8a1f17; }
 .res-warn { padding: 0.45rem 0.7rem; border-radius: 4px; margin: 0.4rem 0; font-size: 0.92rem; background: #fff4d6; color: #6b4e00; }
+.res-warn ul { margin: 0.2rem 0 0.1rem; padding-left: 1.2rem; }
+.res-info { padding: 0.45rem 0.7rem; border-radius: 4px; margin: 0.4rem 0; font-size: 0.92rem; background: #e7f0f7; color: #1d4566; }
+.res-why { margin-top: 0.25rem; font-weight: normal; }
+/* an error or a check about a field, under the field */
+.field-error { color: #8a1f17; font-size: 0.85rem; margin-top: 0.25rem; }
+.has-field-error input, .has-field-error select, .has-field-error .selectize-input { border-color: #b3261e !important; }
+.field-check { color: #6b4e00; font-size: 0.85rem; margin-top: 0.25rem; }
+/* pop-up messages: the word and icon say the kind as well as the colour */
+.shiny-notification .fa, .shiny-notification svg { margin-right: 0.3rem; }
 .res-ok.big, .res-fail.big { font-size: 1.05rem; font-weight: 600; }
 ul.file-out { list-style: none; padding-left: 0; margin: 0.4rem 0; }
 ul.file-out li { padding: 0.15rem 0; }
-ul.file-out .size { color: #8a959b; font-size: 0.8rem; margin-left: 0.4rem; }
+ul.file-out .size { color: #5f6b72; font-size: 0.8rem; margin-left: 0.4rem; }
 pre.log { max-height: 320px; overflow: auto; font-size: 0.78rem; background: #fbfbfb; border: 1px solid #e3e6e8; padding: 0.5rem; white-space: pre-wrap; }
 details > summary { cursor: pointer; color: var(--faire-teal); font-size: 0.88rem; margin: 0.3rem 0; }
 
@@ -66,11 +75,11 @@ details > summary { cursor: pointer; color: var(--faire-teal); font-size: 0.88re
 /* rows for review are shaded across the whole row, as in the review sheet */
 .rv-row.call-review { background: #fff3d6; }
 .rv-row.call-no-match { background: #fafafa; }
-.rv-row .examples { color: #6b767c; font-size: 0.78rem; word-break: break-word; }
+.rv-row .examples { color: #525c62; font-size: 0.78rem; word-break: break-word; }
 .rv-row .rv-proposed { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.82rem; word-break: break-word; }
-.rv-row .score { color: #6b767c; font-family: inherit; }
-.rv-row .muted { color: #8a959b; font-family: inherit; }
-.rv-row .kept-as { display: block; color: #6b767c; font-size: 0.75rem; margin-top: 0.2rem; }
+.rv-row .score { color: #525c62; font-family: inherit; }
+.rv-row .muted { color: #5f6b72; font-family: inherit; }
+.rv-row .kept-as { display: block; color: #525c62; font-size: 0.75rem; margin-top: 0.2rem; }
 .rv-row .model-says { margin-top: 0.3rem; color: #4a3f8f; font-size: 0.8rem; }
 .rv-row .shiny-input-container { margin-bottom: 0; }
 .rv-row select { font-size: 0.84rem; }
@@ -109,7 +118,8 @@ table.setup td:first-child { width: 1.5rem; }
 
 /* remove one file */
 .rm-file { margin-left: auto; border: 0; background: transparent; color: #8a959b; padding: 0 0.25rem; line-height: 1; border-radius: 4px; }
-.rm-file:hover, .rm-file:focus-visible { color: #a03a3a; background: #f8e3e3; outline: none; }
+.rm-file:hover { color: #a03a3a; background: #f8e3e3; }
+.rm-file:focus-visible { color: #a03a3a; background: #f8e3e3; outline: 2px solid #a03a3a; outline-offset: 1px; }
 
 /* the question mark that explains a term */
 .term-help { color: #6b767c; cursor: help; font-size: 0.85em; }
@@ -118,7 +128,7 @@ table.setup td:first-child { width: 1.5rem; }
 /* identify: what each file is, which the person can correct */
 table.identify td { vertical-align: top; font-size: 0.86rem; }
 table.identify .kind-select { min-width: 11rem; }
-table.identify .examples { color: #6b767c; font-size: 0.78rem; }
+table.identify .examples { color: #525c62; font-size: 0.78rem; }
 
 /* step d: the mandatory project terms still to give */
 .missing-terms { background: #fff3d6; border-radius: 6px; padding: 0.5rem 0.7rem; margin-bottom: 0.6rem; font-size: 0.86rem; }
@@ -131,10 +141,11 @@ table.identify .examples { color: #6b767c; font-size: 0.78rem; }
 .how-to li { margin-bottom: 0.2rem; }
 
 /* a look inside a file */
-.look-file { border: 0; background: transparent; color: #5f7f84; padding: 0 0.25rem; line-height: 1; border-radius: 4px; }
+.look-file { border: 0; background: transparent; color: #426368; padding: 0 0.25rem; line-height: 1; border-radius: 4px; }
 ul.lib .look-file { margin-left: auto; }
 ul.lib .look-file + .rm-file { margin-left: 0; }
-.look-file:hover, .look-file:focus-visible { color: var(--faire-teal); background: #e6efef; outline: none; }
+.look-file:hover { color: var(--faire-teal); background: #e6efef; }
+.look-file:focus-visible { color: var(--faire-teal); background: #e6efef; outline: 2px solid var(--faire-teal); outline-offset: 1px; }
 .look-file.with-label { font-size: 0.78rem; padding: 0.1rem 0.35rem; margin-top: 0.2rem; }
 .preview-kind { font-size: 0.86rem; color: #4a5a60; margin-bottom: 0.4rem; }
 .preview-raw { max-height: 60vh; overflow: auto; }
@@ -181,3 +192,23 @@ ul.kind-help li { margin-bottom: 0.2rem; }
 .review-excel { border: 1px solid var(--bs-border-color); border-radius: 0.4rem; padding: 0.7rem 0.9rem 0.3rem;
   margin: 0.6rem 0 1rem; background: var(--bs-tertiary-bg, #f8f9fa); }
 .review-excel h6 { margin-bottom: 0.3rem; font-weight: 600; }
+
+/* FAIRe mapper: each step's status beside its name, and the out-of-date note for the workbook */
+#mapper_steps .step-status { display: block; font-size: 0.74rem; font-weight: 600; margin-top: 0.1rem; }
+#mapper_steps .st-done { color: #1d6b4f; }
+#mapper_steps .st-not-saved, #mapper_steps .st-redo { color: #8a4b00; }
+#mapper_steps .nav-link.active .step-status { color: #fff; }
+.stale-note { font-size: 0.85rem; margin-top: 0.5rem; }
+
+/* headings that group a card's fields: about the file, or about the study */
+h6.group-head { margin: 0.6rem 0 0.1rem; font-weight: 600; color: var(--faire-navy); border-bottom: 1px solid #e3e8ea; padding-bottom: 0.2rem; }
+.review-foot { display: flex; align-items: center; gap: 1rem; margin-top: 0.8rem; }
+.review-foot .help-text { margin: 0; }
+
+/* Convert tabs with one tool: the form, then its result under the button that made it */
+.convert-one { max-width: 980px; }
+
+/* keyboard focus is always visible on the app's own small controls */
+.term-help:focus-visible, .use-model:focus-visible, .preview-raw:focus-visible, .preview-text:focus-visible,
+.dataTables_scrollBody:focus-visible {
+  outline: 2px solid var(--faire-teal); outline-offset: 2px; }

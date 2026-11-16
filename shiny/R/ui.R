@@ -19,6 +19,9 @@ SRA_INSTRUMENTS <- c("Taken from the workbook" = "from_workbook", "Illumina MiSe
 stat_tile <- function(value, label, kind = "") div(class = paste("stat", kind), div(class = "stat-value", value),
                                                   div(class = "stat-label", label))
 help_text <- function(...) tags$p(class = "help-text", ...)
+# Text and tags run together with no space between them (htmltools puts a line break, read as a space,
+# between children), for a link or emphasis followed by punctuation.
+inline <- function(...) HTML(paste(vapply(list(...), function(x) as.character(x), ""), collapse = ""))
 step_intro <- function(...) div(class = "step-intro", ...)
 run_button <- function(id, label) actionButton(id, label, class = "btn-primary run-btn", icon = icon("play"))
 
@@ -86,7 +89,23 @@ GLOSSARY <- c(
   lineage = "The column of the lineage to use when the table has more than one (from SILVA and PR2, say).",
   layout = "How the read counts are laid out: samples as columns, samples as rows, or one row per sample and sequence.",
   file_kind = paste("What the file seems to be, from its layout, column names and values. If it is wrong, choose the",
-                    "right kind: the app then offers the file in the right places.")
+                    "right kind: the app then offers the file in the right places."),
+  req_levels = paste("FAIRe gives each term a requirement level: Mandatory (M), Highly recommended (HR), Recommended (R)",
+                     "or Optional (O). Mandatory terms are always written; tick the other levels to include their empty",
+                     "columns too, ready to fill in."),
+  biosample = paste("NCBI's record of one biological sample. Each sample gets a BioSample accession (SAMN...), which",
+                    "its sequencing runs in the SRA then refer to."),
+  webin_centre = paste("The centre name registered with your ENA Webin submission account, such as CSIRO. ENA checks",
+                       "it against the account, so give it exactly as registered."),
+  ipt = paste("The Integrated Publishing Toolkit: the software GBIF and OBIS nodes run to publish datasets. You upload",
+              "the Darwin Core archive to an IPT, which publishes it."),
+  emof = paste("Extended Measurement Or Fact: a Darwin Core extension that holds measurements and facts about each",
+               "occurrence or event, such as the sequencing details of each run."),
+  location_id = paste("The fields of sampleMetadata whose values, joined, name a sampling location, so that samples",
+                      "from the same place share a locationID."),
+  manifest = paste("A table that tells QIIME 2 where each sample's fastq files are, so it can import the reads."),
+  checklist_version = paste("The version of the FAIRe checklist the workbook follows. FAIRe-fier reads it from checkls_ver",
+                            "in projectMetadata unless you choose one.")
 )
 
 # Each kind of file identify reports, and where it goes in this app.
@@ -106,11 +125,11 @@ KIND_PLACE <- c(
 # A label with a question mark beside it that explains the term on hover or focus.
 term_label <- function(label, key) {
   tags$span(label, " ", bslib::tooltip(
-    tags$span(class = "term-help", tabindex = "0", `aria-label` = paste("What is", label), icon("circle-question")),
+    tags$span(class = "term-help", tabindex = "0", role = "button", `aria-label` = paste("What is", label), icon("circle-question")),
     GLOSSARY[[key]], placement = "right"))
 }
 
-workbook_picker <- function(id) uiOutput(paste0(id, "_ui"))
+workbook_picker <- function(id) tagList(uiOutput(paste0(id, "_ui")), uiOutput(paste0(id, "_stale")))
 
 start_page <- function() {
   nav_panel(
@@ -131,11 +150,14 @@ start_page <- function() {
         tags$h5("Where to start"),
         tags$ul(
           tags$li(HTML("<b>If you have no metadata yet</b>, or are planning a study, start with <b>FAIRe-ator</b> under",
-                       "<em>1. Make a workbook</em>. It makes a blank template for you to fill in.")),
+                       "<em>1. Make a workbook</em>. It makes a blank template for you to fill in."),
+                  tags$br(), actionLink("start_faireator", "Open FAIRe-ator", icon = icon("arrow-right"))),
           tags$li(HTML("<b>If you have a sample table in your own format</b>, start with the <b>FAIRe mapper</b> under",
                        "<em>1. Make a workbook</em>. It builds the workbook from your table, your OTU and taxonomy",
-                       "tables and your methods text.")),
-          tags$li(HTML("<b>If you already have a FAIRe workbook</b>, add it to your files and go to <em>2. Check</em>."))),
+                       "tables and your methods text."),
+                  tags$br(), actionLink("start_mapper", "Start the FAIRe mapper", icon = icon("arrow-right"))),
+          tags$li(HTML("<b>If you already have a FAIRe workbook</b>, add it to your files and go to <em>2. Check</em>."),
+                  tags$br(), actionLink("start_check", "Go to 2. Check", icon = icon("arrow-right")))),
         tags$h5("The steps"),
         div(class = "flow",
             div(class = "flow-step", tags$b("1. Make a workbook"), tags$span("FAIRe-ator or the FAIRe mapper")),
@@ -144,8 +166,10 @@ start_page <- function() {
             div(class = "flow-arrow", icon("arrow-right")),
             div(class = "flow-step", tags$b("3. Convert"),
                 tags$span("NCBI, ENA, GBIF, OBIS, QIIME 2"))),
-        help_text("The files you add stay on this computer. Each tool run gets its own folder, listed under",
-                  tags$em("Outputs"), ", and everything is deleted when you close the app.")
+        help_text(HTML(paste(
+          "The files you add stay on this computer. Each tool run gets its own folder, listed under <em>Outputs</em>.",
+          "Everything is deleted when you close the app, or reload or close this page, so download what you want to",
+          "keep from <em>Outputs</em> first. While you have files or results, the browser asks before leaving the page.")))
       ),
       card(
         card_header("Try it with the demonstration data"),
@@ -242,11 +266,14 @@ mapper_panel <- function() {
               "This step proposes a FAIRe term for each column of your sample table. You do it once, for the",
               "sample table only. Your other files need no mapping: the methods go in at <em>d. Methods and",
               "project values</em>, and the OTU, taxonomy and library tables at <em>e. Write the workbook</em>."))),
+            tags$h6(class = "group-head", "Your table"),
             uiOutput("map_table_ui"),
             uiOutput("map_sheet_ui"),
             numericInput("map_header_row", term_label("Row holding the column headers", "header_row"), 1, min = 1, max = 50),
             help_text("Change this when the sheet has a title or notes above the headers. Comment lines",
                       "starting with # (as in NCBI and ENA submission sheets) are skipped without it."),
+            tags$h6(class = "group-head", "Your study"),
+            help_text("These decide which FAIRe terms apply to your samples."),
             radioButtons("map_assay_type", term_label("Assay type", "assay_type"), c("Metabarcoding" = "metabarcoding",
                                                            "Targeted" = "targeted", "Either" = "any"), inline = TRUE),
             checkboxGroupInput("map_sample_types", term_label("Sample types", "sample_types"), SAMPLE_TYPES, selected = "Water", inline = TRUE),
@@ -367,7 +394,10 @@ mapper_panel <- function() {
             div(class = "btn-row",
                 actionButton("pv_delete", "Delete the selected rows", icon = icon("trash")),
                 downloadButton("pv_download", "Download as a table")),
-            tags$h6("Add a value"),
+            accordion(
+              open = FALSE, class = "pv-more",
+              accordion_panel(
+                "Add a value by hand", icon = icon("plus"),
             radioButtons("pv_section", "Offer the FAIRe terms for",
                          c("PCR and primers" = "PCR", "Library preparation and sequencing" = "Library preparation sequencing",
                            "Bioinformatics" = "Bioinformatics", "The project" = "Project", "Data management" = "Data management",
@@ -379,12 +409,13 @@ mapper_panel <- function() {
               col_widths = c(8, 4),
               textInput("pv_value", "Value", width = "100%"),
               textInput("pv_assay", "Assay (optional)", width = "100%")),
-            actionButton("pv_add", "Add", icon = icon("plus")),
-            tags$h6("Or load a table of values"),
+            actionButton("pv_add", "Add", icon = icon("plus"))),
+              accordion_panel(
+                "Load a table of values", icon = icon("file-import"),
             help_text("A table with the columns term, value and (optionally) assay, or a review sheet from find",
                       "method details that you filled in with Excel, from your files. Its values are added to these."),
             uiOutput("pv_file_ui"),
-            actionButton("pv_load", "Load these values", icon = icon("file-import"))
+            actionButton("pv_load", "Load these values", icon = icon("file-import"))))
           )
         )
       ),
@@ -394,8 +425,13 @@ mapper_panel <- function() {
           col_widths = c(5, 7),
           div(
             card(
-              card_header("Project"),
+              card_header("Write the workbook"),
               uiOutput("apply_inputs_summary"),
+              run_button("run_apply", "Write the FAIRe workbook"),
+              help_text("Check the details below first: about your samples, then the OTU and library tables.")
+            ),
+            card(
+              card_header("About your samples"),
               textInput("ap_project_id", "Project ID", placeholder = "for example SEA-MES_eDNA"),
               textInput("ap_assay_name", "Assay name(s)", placeholder = "for example Fish16S"),
               help_text("Separated by commas. Filled in from the assays named in d. Methods and project values: keep",
@@ -409,12 +445,16 @@ mapper_panel <- function() {
                         "local time with it."),
               selectInput("ap_date_order", "Dates such as 06/09/2017",
                           c("Stop and ask me" = "stop", "Day first (as in Australia)" = "dmy", "Month first" = "mdy")),
-              checkboxGroupInput("ap_req_lev", "Fields to include as well as the mandatory ones", REQ_LEVELS,
-                                 selected = REQ_LEVELS, inline = TRUE),
-              checkboxInput("ap_include_review", "Also write the matches still for review (rows with no decision)", FALSE),
-              help_text("For a first draft only. Matches for Mandatory and commonly confused terms are still left out",
-                        "until you decide them, and the workbook's README and log say it is a draft."),
-              checkboxInput("ap_drop_unmapped", "Leave out columns not matched to a FAIRe term", FALSE)
+              accordion(
+                open = FALSE,
+                accordion_panel(
+                  "What to write (optional settings)", icon = icon("sliders"),
+                  checkboxGroupInput("ap_req_lev", term_label("Fields to include as well as the mandatory ones", "req_levels"),
+                                     REQ_LEVELS, selected = REQ_LEVELS, inline = TRUE),
+                  checkboxInput("ap_include_review", "Also write the matches still for review (rows with no decision)", FALSE),
+                  help_text("For a first draft only. Matches for Mandatory and commonly confused terms are still left out",
+                            "until you decide them, and the workbook's README and log say it is a draft."),
+                  checkboxInput("ap_drop_unmapped", "Leave out columns not matched to a FAIRe term", FALSE)))
             ),
             card(
               card_header("OTU or ASV tables"),
@@ -435,7 +475,7 @@ mapper_panel <- function() {
                   actionButton("lib_add", "Add a library table", icon = icon("plus"), class = "btn-sm"),
                   actionButton("lib_remove", "Remove the last", icon = icon("minus"), class = "btn-sm"))
             ),
-            run_button("run_apply", "Write the FAIRe workbook")
+            run_button("run_apply_bottom", "Write the FAIRe workbook")
           ),
           card(card_header("The workbook"), uiOutput("apply_result"), wb_preview_ui("apply_preview"))
         )
@@ -456,7 +496,8 @@ check_page <- function() {
                    "warnings and a copy of each problem sheet, with those cells highlighted: red for errors and",
                    "yellow for warnings. Correct the workbook, add it to your files and check it again until it passes."),
         workbook_picker("ck_wb"),
-        selectInput("ck_version", "FAIRe checklist version", c("Read it from the workbook" = "auto", "v1.0.2", "v1.0")),
+        selectInput("ck_version", term_label("FAIRe checklist version", "checklist_version"),
+                    c("Read it from the workbook" = "auto", "v1.0.2", "v1.0")),
         run_button("run_fairefier", "Check the workbook")
       ),
       card(card_header("Result"), uiOutput("fairefier_result"))
@@ -483,7 +524,8 @@ convert_page <- function() {
           col_widths = c(6, 6),
           div(
             tags$h5("FAIRe2NCBI: BioSample"),
-            help_text("Writes the BioSample table for the NCBI Submission Portal. You need an NCBI account to upload it."),
+            help_text("Writes the", term_label("BioSample", "biosample"), "table for the NCBI Submission Portal. You need",
+                      "an NCBI account to upload it."),
             selectInput("nb_organism", "Organism for samples with none in the workbook", c(ORGANISMS, "Other" = "other")),
             conditionalPanel("input.nb_organism == 'other'", textInput("nb_organism_other", "Organism name")),
             textInput("nb_bioproject", "BioProject accession (optional)", placeholder = "PRJNA..."),
@@ -491,9 +533,13 @@ convert_page <- function() {
                         c("Stop and list them" = "stop", "Fill with 'not collected'" = "not collected",
                           "Fill with 'not provided'" = "not provided", "Fill with 'not applicable'" = "not applicable",
                           "Fill with 'missing'" = "missing", "Fill with 'missing: control sample'" = "missing: control sample")),
+            help_text("A fill value goes into every empty mandatory cell, for every sample, and tells NCBI why there is",
+                      "no value: 'not collected' (it was not measured), 'not provided' (it exists but is not given),",
+                      "'not applicable' (the field does not apply), 'missing: control sample' (a control) or 'missing'",
+                      "(no reason given). Stop and list them to fill them in yourself instead."),
             selectInput("nb_associated", "Samples to include",
                         c("All samples" = "all", "Only samples not yet submitted" = "blank_only")),
-            textInput("nb_duplicates", "Field that tells apart samples with identical attributes (optional)"),
+            selectizeInput("nb_duplicates", "Field that tells apart samples with identical attributes (optional)", choices = NULL, multiple = FALSE, options = list(create = TRUE, placeholder = "choose from the workbook, or type")),
             help_text("NCBI refuses samples whose attributes are all the same. Name a field, such as a replicate",
                       "label, that differs between them."),
             accordion(open = FALSE, accordion_panel(
@@ -505,7 +551,7 @@ convert_page <- function() {
               conditionalPanel("input.nb_title == 'custom'", textInput("nb_title_columns", "BioSample columns to join")),
               selectInput("nb_extra", "Other sampleMetadata fields", c("Add all" = "all", "Add all except some" = "except",
                                                                        "Add none" = "none")),
-              conditionalPanel("input.nb_extra == 'except'", textInput("nb_exclude", "Fields to leave out")))),
+              conditionalPanel("input.nb_extra == 'except'", selectizeInput("nb_exclude", "Fields to leave out", choices = NULL, multiple = TRUE, options = list(create = TRUE, placeholder = "choose from the workbook, or type"))))),
             run_button("run_ncbi_biosample", "Write the BioSample table"),
             uiOutput("ncbi_biosample_result")
           ),
@@ -515,7 +561,7 @@ convert_page <- function() {
                       "lib_id and the fastq file names. In the Submission Portal, upload the fastq files after the table."),
             selectInput("ns_runs_by", "Runs to include", c("All" = "all", "By assay" = "assay",
                                                            "By sequencing run" = "seq_run", "By library" = "lib_id")),
-            conditionalPanel("input.ns_runs_by != 'all'", textInput("ns_runs_values", "Values, separated by commas")),
+            conditionalPanel("input.ns_runs_by != 'all'", selectizeInput("ns_runs_values", "Which ones", choices = NULL, multiple = TRUE, options = list(create = TRUE, placeholder = "choose from the workbook, or type"))),
             selectInput("ns_associated", "Runs already submitted", c("Include them" = "all", "Only runs not yet submitted" = "blank_only")),
             selectInput("ns_instrument", "Sequencing instrument", SRA_INSTRUMENTS),
             radioButtons("ns_link", "Link runs to their BioSamples by",
@@ -534,7 +580,7 @@ convert_page <- function() {
             tags$h5("FAIRe2ENA: samples"),
             help_text("Writes the sample XML for ENA. You submit it to ENA's Webin service yourself, and ENA returns",
                       "a receipt with the sample accessions."),
-            textInput("es_center", "Centre name, as registered with your Webin account", placeholder = "for example CSIRO"),
+            textInput("es_center", term_label("Centre name, as registered with your Webin account", "webin_centre"), placeholder = "for example CSIRO"),
             selectInput("es_taxon", "Sample taxon", c("marine metagenome (408172)" = "408172",
                                                       "freshwater metagenome (449393)" = "449393",
                                                       "aquatic metagenome (1169740)" = "1169740", "Other" = "other")),
@@ -550,13 +596,13 @@ convert_page <- function() {
                       "upload area first."),
             uiOutput("er_receipt_ui"),
             textInput("er_study", "ENA study accession", placeholder = "PRJEB..."),
-            textInput("er_center", "Centre name"),
+            textInput("er_center", term_label("Centre name", "webin_centre")),
             selectInput("er_instrument", "Sequencing instrument", ENA_INSTRUMENTS, selected = "Illumina MiSeq"),
             radioButtons("er_assay", "Assays to include", c("All" = "all", "One" = "one"), inline = TRUE),
             conditionalPanel("input.er_assay == 'one'",
-                             textInput("er_assay_name", "assay_name"),
+                             selectizeInput("er_assay_name", term_label("Assay", "assay"), choices = NULL, multiple = FALSE, options = list(create = TRUE, placeholder = "choose from the workbook, or type")),
                              checkboxInput("er_assay_suffix", "Add the assay name to experiment and run aliases", TRUE)),
-            textInput("er_seq_runs", "Sequencing runs to include (optional)"),
+            selectizeInput("er_seq_runs", "Sequencing runs to include (optional: all when empty)", choices = NULL, multiple = TRUE, options = list(create = TRUE, placeholder = "choose from the workbook, or type")),
             textInput("er_ftp", "FTP sub-folder of the read files (optional)"),
             run_button("run_ena_run", "Write the experiment and run XML"),
             uiOutput("ena_run_result")
@@ -566,26 +612,28 @@ convert_page <- function() {
       nav_panel(
         "GBIF (MDT)",
         layout_columns(
-          col_widths = c(5, 7),
+          col_widths = 12,
           div(
+            class = "convert-one",
             tags$h5("FAIRe2MDT"),
             help_text("Writes a workbook for GBIF's Metabarcoding Data Toolkit (MDT), which turns it into Darwin",
                       "Core for GBIF. Run it once for each assay and sequencing run."),
             uiOutput("mdt_assay_ui"),
             uiOutput("mdt_tables_ui"),
             selectInput("mdt_controls", "Control samples", c("Leave them out, as GBIF asks" = "omit", "Keep them" = "keep")),
-            run_button("run_mdt", "Write the MDT workbook")
-          ),
-          div(uiOutput("mdt_result"))
+            run_button("run_mdt", "Write the MDT workbook"),
+            uiOutput("mdt_result")
+          )
         )
       ),
       nav_panel(
         "OBIS and GBIF (Darwin Core)",
         layout_columns(
-          col_widths = c(5, 7),
+          col_widths = 12,
           div(
+            class = "convert-one",
             tags$h5("edna2obis"),
-            help_text("Writes a Darwin Core archive for an IPT (Integrated Publishing Toolkit), which suits OBIS and",
+            help_text("Writes a Darwin Core archive for an", term_label("IPT", "ipt"), "(Integrated Publishing Toolkit), which suits OBIS and",
                       "GBIF. First it matches the names in your taxonomy tables to WoRMS or GBIF, which needs",
                       "internet access. You can check the matches, then build the archive."),
             uiOutput("eo_tables_ui"),
@@ -593,51 +641,58 @@ convert_page <- function() {
                                                         "GBIF Backbone Taxonomy, for GBIF" = "GBIF")),
             checkboxInput("eo_worms_all", "Include non-marine taxa (WoRMS)", FALSE),
             run_button("run_eo_match", "1. Match taxa"),
+            uiOutput("eo_match_result"),
             tags$hr(),
             radioButtons("eo_taxa_source", "Taxonomy for the Darwin Core tables",
                          c("The mapping table from step 1" = "mapping", "Look the names up again" = "api"), inline = TRUE),
             conditionalPanel("input.eo_taxa_source == 'mapping'", uiOutput("eo_mapping_ui")),
-            selectInput("eo_core", "Archive layout", c("Occurrence core" = "occurrence", "Event core" = "event")),
-            selectInput("eo_emof", "Extended Measurement Or Fact (eMoF) extension",
-                        c("The standard eMoF fields" = "default", "Leave the eMoF out" = "none")),
-            help_text("The eMoF joins runs by lib_id, so leave it out if a lib_id is used by more than one run."),
             selectInput("eo_text_dates", "Text dates such as 7/6/19", c("Stop and ask me" = "stop", "Day first" = "dmy",
                                                                         "Month first" = "mdy")),
-            textInput("eo_location", "sampleMetadata fields that make up locationID", "line_id, station_id"),
-            checkboxInput("eo_eml", "Write the dataset metadata (eml.xml) now", FALSE),
-            conditionalPanel("input.eo_eml",
-                             textInput("eo_title", "Dataset title (optional: project_name is used otherwise)"),
-                             textAreaInput("eo_abstract", "Abstract", rows = 3),
-                             layout_columns(textInput("eo_given", "Given name"), textInput("eo_surname", "Surname")),
-                             layout_columns(textInput("eo_org", "Organisation"), textInput("eo_email", "Email")),
-                             selectInput("eo_licence", "Licence", c("CC0", "CC-BY", "CC-BY-NC"), selected = "CC-BY")),
-            run_button("run_eo_build", "2. Build the Darwin Core archive")
-          ),
-          div(uiOutput("eo_match_result"), uiOutput("eo_build_result"))
+            accordion(open = FALSE, accordion_panel(
+              "Archive settings", icon = icon("sliders"),
+              selectInput("eo_core", "Archive layout", c("Occurrence core" = "occurrence", "Event core" = "event")),
+              selectInput("eo_emof", term_label("Extended Measurement Or Fact (eMoF) extension", "emof"),
+                          c("The standard eMoF fields" = "default", "Leave the eMoF out" = "none")),
+              help_text("The eMoF joins runs by lib_id, so leave it out if a lib_id is used by more than one run."),
+              selectizeInput("eo_location", term_label("sampleMetadata fields that make up locationID", "location_id"),
+                             choices = c("line_id", "station_id"), selected = c("line_id", "station_id"), multiple = TRUE,
+                             options = list(create = TRUE, placeholder = "choose from the workbook, or type")),
+              checkboxInput("eo_eml", "Write the dataset metadata (eml.xml) now", FALSE),
+              conditionalPanel("input.eo_eml",
+                               textInput("eo_title", "Dataset title (optional: project_name is used otherwise)"),
+                               textAreaInput("eo_abstract", "Abstract", rows = 3),
+                               layout_columns(textInput("eo_given", "Given name"), textInput("eo_surname", "Surname")),
+                               layout_columns(textInput("eo_org", "Organisation"), textInput("eo_email", "Email")),
+                               selectInput("eo_licence", "Licence", c("CC0", "CC-BY", "CC-BY-NC"), selected = "CC-BY")))),
+            run_button("run_eo_build", "2. Build the Darwin Core archive"),
+            uiOutput("eo_build_result")
+          )
         )
       ),
       nav_panel(
         "QIIME 2",
         layout_columns(
-          col_widths = c(5, 7),
+          col_widths = 12,
           div(
+            class = "convert-one",
             tags$h5("FAIRe2QIIME"),
             help_text("Writes QIIME 2 sample metadata and, if you want them, manifest files for importing the reads.",
                       "It needs target_gene for each assay in projectMetadata."),
             selectInput("qi_sample_col", "Column to use as the QIIME 2 sample ID", c("lib_id", "samp_name")),
-            radioButtons("qi_manifests", "Write manifest files?", c("Yes" = "yes", "No, metadata only" = "no"), inline = TRUE),
+            radioButtons("qi_manifests", term_label("Write manifest files?", "manifest"), c("Yes" = "yes", "No, metadata only" = "no"), inline = TRUE),
             conditionalPanel("input.qi_manifests == 'yes'",
                              textInput("qi_folder", "Folder that holds the sequencing run folders", "/path/to/sequences"),
                              help_text("On the computer where QIIME 2 runs. The manifests give each fastq file's full path.")),
             radioButtons("qi_suffix", "Make repeated sample IDs unique?", c("No" = "no", "Yes" = "yes"), inline = TRUE),
             conditionalPanel("input.qi_suffix == 'yes'",
-                             textInput("qi_suffix_col", "Column to take the suffix from", "seq_run_id"),
+                             selectizeInput("qi_suffix_col", "Column to take the suffix from", choices = "seq_run_id",
+                                            selected = "seq_run_id", options = list(create = TRUE)),
                              selectInput("qi_suffix_dir", "Take characters from the", c("start (left)" = "left", "end (right)" = "right")),
                              numericInput("qi_suffix_n", "Number of characters", 20, min = 1),
                              textInput("qi_suffix_delim", "Text to put before the suffix", "_")),
-            run_button("run_qiime", "Write the QIIME 2 files")
-          ),
-          div(uiOutput("qiime_result"))
+            run_button("run_qiime", "Write the QIIME 2 files"),
+            uiOutput("qiime_result")
+          )
         )
       )
     )
@@ -650,8 +705,8 @@ outputs_page <- function() {
     card(
       card_header("Everything the tools wrote in this session"),
       help_text("Each run has its own folder with its inputs, outputs and a log of the exact command, so any file",
-                "can be traced to the run that wrote it. The folder is deleted when you close the app, so download",
-                "what you want to keep."),
+                "can be traced to the run that wrote it. The folder is deleted when you close the app, or reload or",
+                "close this page, so download what you want to keep."),
       div(class = "btn-row",
           downloadButton("download_all", "Download everything (zip)"),
           actionButton("clear_session", "Start again", icon = icon("rotate-left"), class = "btn-outline-danger")),

@@ -208,3 +208,40 @@ short_log <- function(log, n = 40) {
   l <- l[!grepl("^\\$ |UserWarning: Data Validation|^\\s*warn\\(msg\\)$", l)]
   paste(utils::tail(l, n), collapse = "\n")
 }
+
+# A plain first line for the commonest ways a tool stops, from its log: what went wrong and what to do.
+# The tool's own message stays in the log. Our own scripts' "ERROR:" lines are plain already, so when no
+# pattern fits, the first of them is used.
+ERROR_HELP <- list(
+  c("Excel file format cannot be determined|BadZipFile|not a zip file|File is not a zip file",
+    "The file is not an Excel workbook (.xlsx), or it is damaged. Open it in Excel, save it as an Excel workbook (.xlsx) and add it again."),
+  c("Worksheet named .* not found|Worksheet .* does not exist|No sheet named|sheet .* not found",
+    "The workbook does not have a sheet the tool needs, such as projectMetadata or sampleMetadata. Check that it is a FAIRe workbook, or choose the right sheet."),
+  c("UnicodeDecodeError|codec can't decode",
+    "The file's text is not in UTF-8. Save it again as UTF-8 text (in Excel: CSV UTF-8) and add it again."),
+  c("EmptyDataError|No columns to parse",
+    "The file is empty, or has no rows the tool can read."),
+  c("ParserError|Error tokenizing data",
+    "The table could not be read: a row has more or fewer fields than the header. Look for stray commas or tabs in that row."),
+  c("ModuleNotFoundError|No module named",
+    "A Python package the tool needs is not installed. Close the app, run setup.R again and restart it."),
+  c("there is no package called",
+    "An R package the tool needs is not installed. Close the app, run setup.R again and restart it."),
+  c("ConnectionError|Max retries exceeded|NameResolutionError|timed out|Temporary failure in name resolution",
+    "The tool could not reach a web service it needs (such as WoRMS or GBIF). Check the internet connection and try again."),
+  c("PermissionError|Permission denied",
+    "The tool could not write its files. Close any file from this session that is open in Excel, then try again."),
+  c("KeyError: '([^']+)'",
+    "A column the tool needs, \\1, is missing from the file. Check the column names.")
+)
+explain_error <- function(log) {
+  log <- log %||% ""
+  for (h in ERROR_HELP) {
+    m <- regmatches(log, regexec(h[1], log, perl = TRUE))[[1]]
+    if (length(m)) return(if (length(m) > 1) sub("\\1", m[2], h[2], fixed = TRUE) else h[2])
+  }
+  e <- grep("^ERROR:", strsplit(log, "\n")[[1]], value = TRUE)
+  if (!length(e)) return("")
+  e <- sub("^ERROR:\\s*", "", e[1])
+  paste0(toupper(substr(e, 1, 1)), substring(e, 2))
+}

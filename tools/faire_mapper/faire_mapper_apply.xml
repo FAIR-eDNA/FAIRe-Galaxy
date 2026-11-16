@@ -1470,6 +1470,9 @@ decision. When every match for review, or every value to check from find method 
 as proposed (10 or more), the tool warns that they may not all have been checked, as when a decision
 is filled down a column.
 
+Every warning in the log, and each mandatory term left empty, is also given as a WARNING line in the
+job's messages (stderr), so you see them without opening the log.
+
 - **FAIRe workbook** (.xlsx). The OTU and taxonomy tables are added as *otuFinal* and *taxaFinal*,
   or as *otuRaw* and *taxaRaw*, as set for each table. When there are several assays, the assay name
   is added to the sheet names (*otuFinal_MiFish*), as in the FAIRe examples.
