@@ -1,10 +1,29 @@
 # FAIRe-Galaxy
 
-Integrates FAIRe eDNA tools into Galaxy via reusable tool wrappers and workflows. Built for the Galaxy eDNA Lab in collaboration with Galaxy Australia and Bioplatforms Australia.
+Environmental DNA (eDNA) data are most valuable when other people can find, understand and reuse
+them. The FAIR eDNA (FAIRe) metadata standard describes how to record an eDNA study so that its
+data are Findable, Accessible, Interoperable and Reusable, and the eDNA community has written a set
+of tools for creating FAIRe metadata and sharing it with the places where data are kept.
 
-Galaxy tool wrappers for scripts that convert FAIR eDNA (FAIRe) metadata into formats needed for
-analysis and for submission to global repositories, and a FAIRe mapper that turns a lab's own
-tables into a FAIRe workbook. The Galaxy eDNA Lab is at edna.dev.gvl.org.au.
+This project brings those tools into Galaxy, a free platform for data analysis that runs in a web
+browser, so researchers can use them without installing software or writing code. It is built for
+the Galaxy Australia eDNA Lab, in collaboration with Galaxy Australia and Bioplatforms Australia.
+
+With the tools you can:
+
+- **make** a FAIRe metadata workbook, from a blank template or from the sample table, OTU tables and
+  methods you already have;
+- **check** the workbook against the FAIRe checklist;
+- **convert** it for a sequence archive (NCBI or ENA), a biodiversity database (GBIF or OBIS), or an
+  analysis in QIIME 2.
+
+The same tools also run on your own computer in a small R Shiny app (`shiny/`), a good way to try
+them on your data before you submit anything.
+
+## The tools
+
+The Galaxy tools wrap the community's scripts, and add a FAIRe mapper that turns a lab's own tables
+into a FAIRe workbook. The Galaxy eDNA Lab is at edna.dev.gvl.org.au.
 
 | Directory | Tools | Upstream | Status |
 |---|---|---|---|
