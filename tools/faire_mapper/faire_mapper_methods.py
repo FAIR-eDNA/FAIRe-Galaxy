@@ -239,7 +239,7 @@ def main(argv=None):
     ap.add_argument('--levels', default='M,HR', help='requirement levels to ask about (default M,HR)')
     ap.add_argument('--primers', default='bundled',
                     help="suggest sequences for primers the text names or cites, from this primer table: "
-                         "'bundled' (the table that comes with the tools, the default), a TSV from "
+                         "'bundled' (the reference table built into the tools, the default), a TSV from "
                          "faire_primers.py build, or 'none'")
     ap.add_argument('--extra_terms', default=EXTRA_TERMS,
                     help=f'comma-separated terms to ask about whatever their level (default {EXTRA_TERMS})')
