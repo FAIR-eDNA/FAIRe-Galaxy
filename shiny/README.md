@@ -269,14 +269,15 @@ somewhere other than `../tools`, `FAIRE_PYTHON` to use a Python other than the o
 ## Trying it with the demonstration data
 
 The Start page has a button that loads a small cut of CSIRO's SEA-MES eDNA data record (Deagle et al.
-2025; see `demo/README.md`). It fills in the forms with the values the trial used, but each tool still
-has to be run by pressing its button, and the review is done by hand, as a person would do it. The
+2025; see `demo/README.md`). It adds the files to *Your files* and fills in the forms for them, so you
+can follow each step through to a demonstration FAIRe metadata workbook. Each tool still has to be run
+by pressing its button, and the review is done by hand, as a person would do it. The
 Start page lists the steps. edna2obis looks the names up in WoRMS or GBIF, so it needs internet
 access, and its two steps were not run on the demonstration in testing; the Darwin Core build was
 tested through the app's code on edna2obis's own test data, with its stand-in mapping table.
 
 What you should see: the mapping accepts 11 of the table's 23 columns, sends 6 for review and finds
-no term for 6. *Fill in the authors' answers* gives the decisions from the trial
+no term for 6. *Fill in the authors' answers* gives a reviewer's decisions for these rows
 (`dev/faire_mapper_seames/reviewer_decisions.tsv`). Once the review is saved, the workbook has 13
 samples and 58 FAIRe terms, plus 9 columns kept as their own terms, with the 16S ASV table as otuRaw
 and taxaRaw and the 48 curated fish taxa as otuFinal and taxaFinal. FAIRe-fier passes both sheets, with
