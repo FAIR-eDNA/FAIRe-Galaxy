@@ -190,8 +190,8 @@ names are in italics and leave off *FAIRe mapper:* at the front.
   empty. Add the PR2 version you used (for example PR2 v5.0.0) as otu_db in your values for the
   whole project.
 
-- **Your own primers** (for the *build primer table* tool), if they are not already in the primer
-  table that comes with the tools.
+- **Your own primers** (for the *build primer table* tool), if they are not already in the reference
+  table of primers built into the tools.
 
 *Reviewing the matches*
 

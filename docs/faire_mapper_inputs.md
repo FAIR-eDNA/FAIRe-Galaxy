@@ -155,8 +155,8 @@ Linnaean ranks. For other classifications, such as PR2, it keeps the genus and s
 each row that PR2 was used, keeps the full lineage, and leaves the higher rank terms empty. Add the
 PR2 version you used (for example PR2 v5.0.0) as otu_db in your values for the whole project.
 
-**Your own primers** (for the *build primer table* tool), if they are not already in the primer
-table that comes with the tools.
+**Your own primers** (for the *build primer table* tool), if they are not already in the reference
+table of primers built into the tools.
 
 ## Reviewing the matches
 
