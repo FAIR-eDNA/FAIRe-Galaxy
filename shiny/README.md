@@ -46,12 +46,11 @@ input term. Either way, the mapper's conversions, such as reading Y and N as *ne
 
 A few things that help along the way:
 
-- **What you'll need**, on the Start page, lists the files and details to gather first: a sample
-  table, the methods, the OTU or ASV tables with their taxonomy, the library and sequencing run
-  details, and a few details about the project. Together they fill the 25 mandatory terms of the
-  FAIRe checklist (v1.0.2) for a metabarcoding study. Each item names the FAIRe terms it gives and
-  the demonstration file that shows it, and a folded note lists the 13 mandatory terms of a targeted
-  assay (qPCR or ddPCR).
+- **What you'll need**, at the top of the Start page, lists the five kinds of information a FAIRe
+  dataset needs: sample details, methods, OTU or ASV tables and taxonomy, library and run details,
+  and a few details about the project. Each comes with the forms it can take, such as your own
+  spreadsheet in any layout, so no one feels they must format their data first. Together they fill
+  the mandatory terms of the FAIRe checklist for a metabarcoding study.
 - **Your files** (on the left) lists every file you add, with what *a. Your files* found it to be.
   The eye beside a file shows what is in it: the first rows of a table as they are in the file, with
   their row numbers (so you can see which row holds the column names), the first rows of each sheet

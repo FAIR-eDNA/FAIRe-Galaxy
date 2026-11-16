@@ -217,22 +217,14 @@ h6.group-head { margin: 0.6rem 0 0.1rem; font-weight: 600; color: var(--faire-na
 .likely-exact { color: #1d6b38; background: #e2f2e6; font-weight: 600; padding: 0.05rem 0.4rem;
   border-radius: 0.6rem; white-space: nowrap; }
 
-/* the start page's list of what you'll need */
-#needs { margin-top: 1rem; }
-.needs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 0.8rem; margin: 0.4rem 0 1rem; }
-.need { background: white; border: 1px solid #d5dede; border-radius: 6px; padding: 0.75rem 0.9rem; }
-.need h6 { color: var(--faire-teal); font-weight: 600; margin-bottom: 0.35rem; }
-.need h6 .fa, .need h6 .fas, .need h6 svg { margin-right: 0.4rem; }
-.need-intro { font-size: 0.88rem; margin-bottom: 0.3rem; }
-.need ul, .need-targeted ul { padding-left: 1.1rem; margin-bottom: 0.5rem; font-size: 0.88rem; }
-.need li, .need-targeted li { margin-bottom: 0.25rem; }
-.need-terms { display: flex; flex-wrap: wrap; gap: 0.2rem 0.3rem; margin-top: 0.1rem; }
-.need-terms code, .need-note code { color: #46525a; background: #eef3f3; font-size: 0.76rem; padding: 0 0.3rem;
-  border-radius: 3px; }
-.need-note { color: #525c62; font-size: 0.82rem; margin-bottom: 0.35rem; }
-.need-demo { color: #525c62; font-size: 0.8rem; margin: 0; word-break: break-word; }
-.need-demo .fa, .need-demo svg { color: var(--faire-green); margin-right: 0.3rem; }
-.need-reads { font-size: 0.9rem; }
-.need-reads .fa, .need-reads svg { color: var(--faire-teal); margin-right: 0.35rem; }
-.need-targeted { margin-bottom: 0.8rem; font-size: 0.9rem; }
-.need-targeted summary { color: var(--faire-teal); cursor: pointer; font-weight: 600; }
+/* the start page's five kinds of information */
+.needs { margin: 0 0 1rem; }
+.needs h5 { margin-bottom: 0.25rem; }
+.needs > p { margin-bottom: 0.45rem; }
+.needs-list { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.3rem; }
+.need { display: grid; grid-template-columns: 1.5rem 1fr; align-items: baseline; background: white;
+  border: 1px solid #d5dede; border-left: 3px solid var(--faire-teal); border-radius: 5px;
+  padding: 0.35rem 0.6rem; font-size: 0.88rem; line-height: 1.35; }
+.need-icon { color: var(--faire-teal); }
+.need b { color: var(--faire-teal); }
+.need-forms { color: #525c62; font-style: italic; margin-left: 0.3rem; }
