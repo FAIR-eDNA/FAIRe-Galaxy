@@ -250,7 +250,7 @@ mapper_panel <- function() {
             checkboxInput("map_other_terms", term_label("Suggest MIxS or Darwin Core terms for columns with no FAIRe term", "other_terms"), TRUE),
             help_text("The FAIRe guidelines ask for a MIxS or Darwin Core term, where one exists, before a name of",
                       "your own. These suggestions are always for review."),
-            run_button("run_map", "Propose a mapping")
+            run_button("run_map", "Propose a mapping for the information in your sample table")
           ),
           card(card_header("Proposed mapping"), uiOutput("map_result"))
         )
