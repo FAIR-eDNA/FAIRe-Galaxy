@@ -651,7 +651,7 @@ server <- function(input, output, session) {
         div(class = "rv-replace", rep_select))
     })
     div(id = "review-grid",
-        div(class = "rv-row rv-head", div(term_label("Input term", "input_term"), " and some values"),
+        div(class = "rv-row rv-head", div(term_label("Input term", "input_term"), " and some values (grey text)"),
             div("Proposed FAIRe term and score"), div(term_label("Mapper's call", "mappers_call")), div("Mapper's reasoning"),
             div(term_label("Reviewer's decision", "decision")), div("Replacement FAIRe term")),
         rows)
