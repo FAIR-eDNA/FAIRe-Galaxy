@@ -66,8 +66,8 @@ A few things that help along the way:
 - **Primers** are checked against a reference table of about 550 published primer pairs, most from
   Takahashi et al. (2023) and Wilderlab's assays. This keeps primer names as they are in the
   literature and catches typos in sequences. If your primers are not in it, add your own table.
-  Pairs whose two sequences in your methods match the reference table exactly come first, as exact
-  matches, and *Add the exact matches* adds them all with one click, each with its assay name, for
+  Pairs whose two sequences in your methods match the reference table exactly come first, marked
+  *exact match* in green, and *Add the exact matches* adds them all with one click, each with its assay name, for
   you to check in the project values. Pairs found only from a primer name, for a gene whose sequences
   the methods already give, are less likely (one name can belong to several published pairs) and
   are hidden unless you ask for them. Clicking a pair fills in its assay name from the reference

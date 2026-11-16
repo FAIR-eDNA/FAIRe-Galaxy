@@ -1135,8 +1135,13 @@ server <- function(input, output, session) {
               pcr_primer_name_reverse = "Reverse primer", pcr_primer_reverse = "Reverse sequence",
               pcr_primer_reference_forward = "Reference", notes = "Notes")
     keep <- intersect(names(cols), names(d))
+    # "exact match" stands out in green, so the pairs the study most likely used are easy to see
+    if ("how_likely" %in% keep) {
+      h <- htmltools::htmlEscape(ifelse(is.na(d$how_likely), "", as.character(d$how_likely)))
+      d$how_likely <- sub("^exact match:?\\s*", '<span class="likely-exact">exact match</span><br>', h)
+    }
     datatable(d[, keep], rownames = FALSE, selection = "single", class = "compact stripe", colnames = unname(cols[keep]),
-              options = list(scrollX = TRUE, pageLength = 5, dom = "tip"))
+              escape = which(keep != "how_likely"), options = list(scrollX = TRUE, pageLength = 5, dom = "tip"))
   })
   output$pr_chosen <- renderUI({
     i <- input$primers_table_rows_selected

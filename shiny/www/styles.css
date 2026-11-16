@@ -212,3 +212,7 @@ h6.group-head { margin: 0.6rem 0 0.1rem; font-weight: 600; color: var(--faire-na
 .term-help:focus-visible, .use-model:focus-visible, .preview-raw:focus-visible, .preview-text:focus-visible,
 .dataTables_scrollBody:focus-visible {
   outline: 2px solid var(--faire-teal); outline-offset: 2px; }
+
+/* in the primers table, an exact match stands out */
+.likely-exact { color: #1d6b38; background: #e2f2e6; font-weight: 600; padding: 0.05rem 0.4rem;
+  border-radius: 0.6rem; white-space: nowrap; }
