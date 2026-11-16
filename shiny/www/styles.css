@@ -153,3 +153,9 @@ ul.lib .look-file + .rm-file { margin-left: 0; }
 .md-confirm li { margin-bottom: 0.6rem; }
 .md-confirm-sentence { font-size: 0.85rem; color: #555; margin-top: 0.15rem; }
 .model-says .use-model { margin-left: 0.3rem; font-weight: 600; }
+
+/* d. Methods and project values: room under the Primers / Other method details tabs, and a project
+   values table that wraps long terms and values to fit its card */
+.card .nav-underline + .tab-content { padding-top: 0.9rem; }
+#pv_table table.dataTable { width: 100% !important; table-layout: fixed; }
+#pv_table td { overflow-wrap: anywhere; }

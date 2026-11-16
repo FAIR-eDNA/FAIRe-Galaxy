@@ -18,7 +18,9 @@ here, beside the tools it runs, on 13 November 2026 (version 0.2.0). Version 0.3
 from the FAIRe team's first trial of it, and version 0.4.0 those from the second (14 November 2026).
 Version 0.4.1 (15 November 2026) adds the choice of assay type to *Find method details* and shows the
 tool's warnings there. Version 0.5.0 (15 November 2026) adds checks against values going into the
-workbook without a proper review (see *Keeping the review thorough*, below).
+workbook without a proper review (see *Keeping the review thorough*, below). Version 0.5.1 (16
+November 2026) puts the primers and the other method details side by side, as two tabs in *d. Methods
+and project values*, from Oliver Berry's trial of 0.5.0.
 
 ## What it covers
 
@@ -49,26 +51,28 @@ A few things that help along the way:
   FASTA files and PDFs by their content, whatever they are called. If it gets one wrong, choose the
   right kind in its table: the app then offers the file in the right places. *Look inside* shows the
   file, to help you decide.
-- **Methods** can be text or a PDF. *d. Primers and project values* reads them for primers, and
-  lists the mandatory project terms still to give; the other values for the whole study, such as
-  PCR conditions and the sequencing platform, come from you, with the methods open beside you. A PDF
-  of scanned pages has no text to read: save it as text first.
+- **Methods** can be text or a PDF. *d. Methods and project values* reads them for primers (the
+  *Primers* tab) and for the other method details, such as PCR conditions and the sequencing platform
+  (the *Other method details* tab), and lists the mandatory project terms still to give. A PDF of
+  scanned pages has no text to read: save it as text first.
 - **Primers** are checked against a reference table of about 550 published primer pairs, most from
   Takahashi et al. (2023) and Wilderlab's assays. This keeps primer names as they are in the
   literature and catches typos in sequences. If your primers are not in it, add your own table.
   The step says how to choose the pair you used for each assay, and which assay name to give it.
-- **Other method details**: under the primers, *Find method details* reads the same methods for the
-  filters, extraction kit, PCR conditions, sequencing kit, software, settings and reference databases,
-  and lists each value it finds with the sentence it came from, its FAIRe requirement level and its
-  term's record in papers tested. Values for terms found reliably come first and the rest are listed as
-  values to check; *Tick all reliable values* ticks only the first group, so each of the others takes its
-  own tick. Tick the ones to keep (correcting any that are nearly right) and add them to the values for
-  the whole project. If any ticked values are values to check, the app lists them with their sentences
-  and asks you to confirm that you have checked them before it adds them. Keep one value per term: if
-  two are ticked for the same term (two sample volumes, say), the app asks you to choose one. Choose *Targeted (qPCR, ddPCR)* for methods of a targeted assay, so the values go to
-  the targeted terms; the choice follows the assay type given under *b. Propose a mapping*. If the
-  methods never mention DNA, PCR, primers or amplification, the step says so and proposes nothing. Its review sheet, which also
-  lists the method terms not found, can be downloaded, filled in with Excel and loaded back on the right.
+- **Other method details**: in its own tab beside the primers, *Find method details* reads the
+  same methods for the filters, extraction kit, PCR conditions, sequencing kit, software, settings
+  and reference databases, and lists each value it finds with the sentence it came from, its FAIRe
+  requirement level and its term's record in papers tested. Values for terms found reliably come
+  first and the rest are listed as values to check; *Tick all reliable values* ticks only the
+  first group, so each of the others takes its own tick. Tick the ones to keep (correcting any
+  that are nearly right) and add them to the values for the whole project. If any ticked values
+  are values to check, the app lists them with their sentences and asks you to confirm that you
+  have checked them before it adds them. Keep one value per term: if two are ticked for the same
+  term (two sample volumes, say), the app asks you to choose one. Choose *Targeted (qPCR, ddPCR)*
+  for methods of a targeted assay, so the values go to the targeted terms; the choice follows the
+  assay type given under *b. Propose a mapping*. If the methods never mention DNA, PCR, primers or
+  amplification, the step says so and proposes nothing. Its review sheet, which also lists the
+  method terms not found, can be downloaded, filled in with Excel and loaded back on the right.
 - **Adding a value** offers the FAIRe terms for one part of the checklist at a time, PCR and primers
   first, then library preparation and sequencing, bioinformatics and so on, or all of them.
 - **A question mark** beside a label explains the term (*data dictionary*, *assay*, *raw* and

@@ -16,7 +16,7 @@ for (f in c("runner.R", "tools.R", "helpers.R", "ui.R"))
 
 options(shiny.maxRequestSize = 500 * 1024^2, DT.fillContainer = FALSE)
 
-APP_VERSION <- "0.5.0"
+APP_VERSION <- "0.5.1"
 DEMO_DIR <- file.path(getOption("faire.app_dir"), "demo")
 
 theme <- bs_theme(version = 5, primary = "#1f6f78", secondary = "#5b6770", success = "#3c8d5a",
@@ -774,9 +774,9 @@ server <- function(input, output, session) {
                                       if (s$open == 1) "it is" else "they are", if (s$open == 1) "its" else "their",
                                       if (s$open == 1) "" else "s")),
         if (length(s$bad)) tags$span(class = "text-danger", sprintf(" Change with no replacement term for %s: these are kept as their own terms.", paste(s$bad, collapse = ", "))),
-        tags$br(), "Next, ", actionLink("goto_primers", "d. Primers and project values"), ".")
+        tags$br(), "Next, ", actionLink("goto_primers", "d. Methods and project values"), ".")
   })
-  observeEvent(input$goto_primers, nav_select("mapper_steps", "d. Primers and project values"))
+  observeEvent(input$goto_primers, nav_select("mapper_steps", "d. Methods and project values"))
 
   run_model_step <- function(preview) {
     req(rv$map)
@@ -813,7 +813,7 @@ server <- function(input, output, session) {
     showNotification("The workbook will be written with your crosswalk.", type = "message")
   })
 
-  # ------------------------------------------------------------ mapper d: primers and project values
+  # ------------------------------------------------------------ mapper d: methods and project values
   output$pr_texts_ui <- renderUI({
     ch <- file_names("\\.(txt|md|pdf)$", kinds = "text")
     sel <- isolate(input$pr_texts) %||% (if (rv$demo) intersect("methods.txt", ch) else ch[vapply(ch, function(f) identical(kind_of(f), "text"), logical(1))])
@@ -916,7 +916,9 @@ server <- function(input, output, session) {
   })
   output$pv_table <- renderDT({
     datatable(rv$pv, rownames = FALSE, editable = list(target = "cell"), class = "compact stripe",
-              options = list(pageLength = 8, dom = "tip", scrollX = TRUE),
+              options = list(pageLength = 8, dom = "tip", autoWidth = FALSE,
+                             columnDefs = list(list(width = "36%", targets = 0), list(width = "44%", targets = 1),
+                                               list(width = "20%", targets = 2))),
               colnames = c("FAIRe term", "Value", "Assay"))
   })
   observeEvent(input$pv_table_cell_edit, {
@@ -968,7 +970,7 @@ server <- function(input, output, session) {
   # ------------------------------------------------------------ mapper d: other method details
   observeEvent(input$run_details, {
     texts <- unname(unlist(lapply(input$pr_texts, fpath)))
-    if (!length(texts)) return(showNotification("Choose your methods (under Look for primers in: My methods).", type = "error"))
+    if (!length(texts)) return(showNotification("Choose your methods, above the tabs.", type = "error"))
     assays <- unique(rv$pv$assay[nzchar(rv$pv$assay)])
     res <- with_run("Reading the methods", run_method_details(sd, texts, input$pr_texts, paste(assays, collapse = ","),
                                                               input$md_assay_type %||% "metabarcoding"))
