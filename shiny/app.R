@@ -600,13 +600,16 @@ server <- function(input, output, session) {
           if (rv$demo && identical(rv$map_args$table_name, "SEA-MES_10L_samples.csv"))
             actionButton("demo_answers", "Fill in the authors' answers", icon = icon("flask"), class = "btn-sm"),
           actionButton("save_review", "Save the review", icon = icon("floppy-disk"), class = "btn-primary btn-sm")),
-      div(class = "review-files",
-          downloadButton("review_download", "Download the review sheet", class = "btn-sm"),
-          fileInput("review_upload", NULL, accept = ".xlsx", buttonLabel = "Add a review sheet you filled in",
-                    placeholder = "Excel (.xlsx)", width = "440px")),
-      help_text("The decisions in use: ", file_link(rv$crosswalk), paste0(" (", rv$crosswalk_from, ")."),
-                "You can also download the sheet, fill it in with Excel (sorting or filtering the rows is fine,",
-                "but keep every row) and add it back here."))
+      help_text("The decisions in use: ", file_link(rv$crosswalk), paste0(" (", rv$crosswalk_from, ").")),
+      div(class = "review-excel",
+          tags$h6("Or do the review in Excel"),
+          help_text("If you would rather do the review in Excel, download the review sheet, fill in the decisions",
+                    "(sorting or filtering the rows is fine, but keep every row), then add it back here when you",
+                    "have finished. Its decisions then show in the rows below, and are saved."),
+          div(class = "review-files",
+              downloadButton("review_download", "Download the review sheet", class = "btn-sm"),
+              fileInput("review_upload", NULL, accept = ".xlsx", buttonLabel = "Add the review sheet you filled in",
+                        placeholder = "Excel (.xlsx)", width = "440px"))))
   })
 
   output$review_table <- renderUI({

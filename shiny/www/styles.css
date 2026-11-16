@@ -163,3 +163,8 @@ ul.lib .look-file + .rm-file { margin-left: 0; }
 /* a. Your files: the list of file kinds */
 ul.kind-help { padding-left: 1.2rem; margin-bottom: 0.6rem; }
 ul.kind-help li { margin-bottom: 0.2rem; }
+
+/* c. Review the mapping: the other way, in Excel */
+.review-excel { border: 1px solid var(--bs-border-color); border-radius: 0.4rem; padding: 0.7rem 0.9rem 0.3rem;
+  margin: 0.6rem 0 1rem; background: var(--bs-tertiary-bg, #f8f9fa); }
+.review-excel h6 { margin-bottom: 0.3rem; font-weight: 600; }

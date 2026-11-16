@@ -265,7 +265,8 @@ mapper_panel <- function() {
                      "choose Accept to use the proposed term, Reject to keep the column as your own term, or Change",
                      "and pick a replacement: the best candidates for the column come first. A MIxS or Darwin Core",
                      "term is used by accepting it, or by choosing it as the replacement. Rows for review are",
-                     "shaded; a row for review with no decision is kept as your own term."),
+                     "shaded; a row for review with no decision is kept as your own term. Do the review here and",
+                     "save it, or, if you would rather, do it in Excel (see below)."),
           uiOutput("review_toolbar"),
           uiOutput("review_saved"),
           uiOutput("review_table")
