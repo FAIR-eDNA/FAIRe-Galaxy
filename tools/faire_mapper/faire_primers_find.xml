@@ -64,8 +64,8 @@ $search.names
         </conditional>
         <conditional name="table">
             <param name="source" type="select" label="Reference table of primers to check against"
-                help="Checking against a table of published primers keeps primer names as they are in the literature and catches typos in sequences. The reference table that comes with the tool holds about 550 published pairs, most from Takahashi et al. (2023) and Wilderlab's assays (see below). Add your own table if your primers are not in it.">
-                <option value="bundled" selected="true">The reference table that comes with the tool (about 550 published pairs)</option>
+                help="Checking against a table of published primers keeps primer names as they are in the literature and catches typos in sequences. The reference table built into this tool holds about 550 published pairs, most from Takahashi et al. (2023) and Wilderlab's assays (see below). Add your own table if your primers are not in it.">
+                <option value="bundled" selected="true">The reference table built into this tool (about 550 published pairs)</option>
                 <option value="both">The reference table and my own table</option>
                 <option value="own">My own table only</option>
             </param>
@@ -126,6 +126,8 @@ $search.names
                     <has_line_matching expression="^TAReuk454FWD1; CCAGCASCYGCGGTAATTCC / ACTTTCGTTCTTGATYRATGA\tsequences in the text\t\d+\t.*\t18S V4 \(Australian Microbiome\)\t.*"/>
                     <has_line_matching expression="^ACGTGGTCAGGATCCAAGTT / TTGCAGGATCCTTAGCACGA\tsequences in the text \(not in the primer table\)\t.*\t12S rRNA \(SSU mitochondria\)\t\tLab12S-F\tACGTGGTCAGGATCCAAGTT\t\tLab12S-R\t.*"/>
                     <not_has_text text="TCGTCGGCAGCGTCAGATGTGTATAAGAGACAG"/>
+                    <has_text text="exact match: both sequences in the methods match this pair in the reference table"/>
+                    <has_text text="as written: the methods give its sequences, but the pair is not in the reference table"/>
                 </assert_contents>
             </output>
         </test>
@@ -206,7 +208,7 @@ different sequences. Check each candidate against the original paper before you 
   pair that is not in the table is shown as written, with the name before each sequence and the
   gene named on the same line.
 - **Or a list** of primer names, assay names or citations, one per line.
-- **Reference table of primers to check against**: the reference table that comes with the tool
+- **Reference table of primers to check against**: the reference table built into this tool
   (described below), your own table, or both. Use your own when your primers are not in the reference
   table. You can make one with **FAIRe mapper: build primer table**.
 
@@ -215,13 +217,30 @@ different sequences. Check each candidate against the original paper before you 
 The output has one row for each candidate primer pair. It shows what matched (the words in the
 text, or the name you gave), how it matched (sequences in the text, name, part of a name, reference,
 or author and gene), the number of candidates, and the pair's names, sequences, references, target
-gene and source row. Pairs whose sequences are in the text come first.
+gene and source row.
+
+For a methods text, the last column, *how_likely*, says how likely each pair is to be one you used,
+and the most likely come first:
+
+- **exact match**: both sequences in the methods match this pair in the reference table.
+- **close match**: the methods give its sequences, with the reverse primer written first, or
+  matching only once IUPAC codes are allowed for.
+- **as written**: the methods give its sequences, but the pair is not in the reference table, so its
+  names and gene are taken from the text.
+- **possible**: it was found from a primer name or citation (or one of its sequences). Check it
+  against the paper.
+- **less likely**: it was found from a name, but the methods give the sequences of another pair for
+  the same gene. One primer name, such as 16SF, can belong to several published pairs.
+
+Choose one pair for each assay: usually the exact matches. Methods sometimes give the sequences of
+primers that were not used for these data (a pilot comparison, or blocking primers), so check them
+all the same.
 
 -----
 
 **The reference table of primers**
 
-The reference table that comes with the tool holds about 550 published primer pairs. Most come from
+The reference table built into this tool holds about 550 published primer pairs. Most come from
 the metabarcoding and species-specific primer tables (Tables S3 and S4) of Takahashi et al. 2023,
 *Aquatic environmental DNA: a review of the macro-organismal biomonitoring revolution*, Science of
 the Total Environment 873:162322 (CC BY-NC 4.0), through a metazoan primer register that puts those

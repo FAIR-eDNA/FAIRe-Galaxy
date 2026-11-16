@@ -38,7 +38,7 @@ python '$__tool_directory__/faire_primers.py' build
             help="Spreadsheets or TSVs with the columns of the bundled table; Tables S3 and S4 of Takahashi et al. 2023; or a sheet called 'Primer pairs' laid out as the bacteria and archaea register."/>
         <conditional name="start">
             <param name="kind" type="select" label="Add them to">
-                <option value="bundled" selected="true">The table that comes with the tool</option>
+                <option value="bundled" selected="true">The reference table built into the tools</option>
                 <option value="own">A primer table of my own</option>
                 <option value="none">Nothing: make a new table</option>
             </param>

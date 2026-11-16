@@ -2189,7 +2189,12 @@ def main(argv=None):
         log.add('Review', x)
     for w in warnings:
         log.add('Warnings', w)
+    # Every warning about the data, and each mandatory term left empty, goes to stderr too, so Galaxy shows
+    # them with the job's information and the app beside the result: they should not be found only in the log.
+    for w in log.sections['Warnings']:
         print(f'WARNING: {w}', file=sys.stderr)
+    for m in log.sections['Mandatory terms with no value']:
+        print(f'WARNING: mandatory term with no value: {m}', file=sys.stderr)
     log.write(args.log)
     print(f"INFO: wrote {counts['samples']} samples and {counts['terms']} FAIRe terms, plus {counts['user_fields']} "
           f"user-defined fields; see the log for conversions and the mandatory terms still empty. Check the "

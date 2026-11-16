@@ -21,8 +21,8 @@ It tells you what each file looks like and which field of which tool it goes in.
    gene and reference, so you can check them and copy the right ones into your values for the whole
    project.
 4. **FAIRe mapper: find method details** reads the same methods for the filtration, extraction, PCR,
-   sequencing and bioinformatics, and proposes a FAIRe value for each term it recognises, with the
-   sentence it came from. You accept, reject or change each one in its review sheet, and fill in what
+   sequencing and bioinformatics, and proposes a FAIRe value for each term it recognises, with a
+   snippet of text from the source so that you can check it. You accept, reject or change each one in its review sheet, and fill in what
    it did not find.
 5. **FAIRe mapper: apply mapping** writes the FAIRe workbook, based on your reviews.
 6. **FAIRe-fier** checks the workbook. You can then use the submission tools to submit it to your
@@ -84,7 +84,7 @@ check. You can also type primer names or citations into it, one per line.
 storage, the extraction kit, the PCR conditions, master mix and thermocycler, the sequencing
 instrument and kit, and the software, settings and reference databases of the bioinformatics. Given a
 whole paper, it reads only the Methods section and any supplementary methods. It proposes each value
-with the sentence it came from, in a review sheet. Choose Accept, Reject or Change for each, and write
+with a snippet of text from the source, in a review sheet. Choose Accept, Reject or Change for each, and write
 in *Your value* any of the terms it lists as not found that you know. Then give the sheet to *apply
 mapping* with your other values for the whole project. The tool works by rules, not a language model,
 so it can miss values written in unusual ways, and it can't tell which assay a value belongs to unless
@@ -155,8 +155,8 @@ Linnaean ranks. For other classifications, such as PR2, it keeps the genus and s
 each row that PR2 was used, keeps the full lineage, and leaves the higher rank terms empty. Add the
 PR2 version you used (for example PR2 v5.0.0) as otu_db in your values for the whole project.
 
-**Your own primers** (for the *build primer table* tool), if they are not already in the primer
-table that comes with the tools.
+**Your own primers** (for the *build primer table* tool), if they are not already in the reference
+table of primers built into the tools.
 
 ## Reviewing the matches
 

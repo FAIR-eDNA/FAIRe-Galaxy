@@ -26,7 +26,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import faire_mapper_text as ft  # noqa: E402
 
-__version__ = '0.9.1'
+__version__ = '0.9.3'
 # FAIRe term names wherever FAIRe has a term; the rest describe the table itself.
 COLUMNS = ['primer_pair_id', 'assay_name', 'assay_type', 'targetTaxonomicAssay', 'targetTaxonomicScope',
            'target_gene', 'target_subfragment',
@@ -674,13 +674,56 @@ def text_candidates(t, text):
     return sorted(by_pair.values(), key=lambda e: (-len(e['evidence']), -e['rank'], e['assay_name']))
 
 
+EXACT = 'exact match: both sequences in the methods match this pair in the reference table'
+LIKELY_ORDER = ('exact match', 'close match', 'as written', 'possible', 'less likely')
+
+
+def how_likely(found):
+    """How likely each pair found in a methods text is to be one the study used. Sequences written in
+    the text are the strongest evidence: an exact match to a pair in the reference table, a close one
+    (reverse primer first, or matching only once IUPAC codes are allowed for), or a pair not in the
+    table, as written. A pair found only from a name or citation is less likely when the text gives
+    the sequences of another pair for the same gene: one name (16SF, say) can belong to several
+    published pairs. Sets 'how_likely' on each entry and returns them, the most likely first."""
+    by_gene = {}
+    for e in found:
+        how = e['matched_by']
+        if how == 'sequences in the text':
+            e['how_likely'] = EXACT
+        elif how == 'sequences in the text (reverse written first)':
+            e['how_likely'] = 'close match: the methods give its sequences, with the reverse primer written first'
+        elif how == 'sequences in the text (matching allowing IUPAC codes)':
+            e['how_likely'] = ('close match: the methods give its sequences, which match once IUPAC codes are '
+                               'allowed for')
+        elif how == 'sequences in the text (not in the primer table)':
+            e['how_likely'] = 'as written: the methods give its sequences, but the pair is not in the reference table'
+        else:
+            continue
+        label = e['assay_name'] or f"{e['pcr_primer_name_forward']}/{e['pcr_primer_name_reverse']}"
+        by_gene.setdefault(e['target_gene'] or '', []).append(label)
+    for e in found:
+        if 'how_likely' in e:
+            continue
+        others = by_gene.get(e['target_gene'] or '') if e['target_gene'] else None
+        if others:
+            e['how_likely'] = (f"less likely: the methods give the sequences of {', '.join(others)}, another pair "
+                               f"for this gene")
+        elif e['matched_by'].startswith('a sequence in the text'):
+            e['how_likely'] = 'possible: the methods give one of its sequences; check the other against the paper'
+        else:
+            e['how_likely'] = 'possible: found from a primer name or citation; check it against the paper'
+    return sorted(found, key=lambda e: LIKELY_ORDER.index(e['how_likely'].split(':')[0]))
+
+
 # ------------------------------------------------------------------ command line
 
 OUT_COLUMNS = ['query', 'matched_by', 'candidates_for_query'] + COLUMNS
 
 
 def write_candidates(path, rows):
-    pd.DataFrame(rows, columns=OUT_COLUMNS).to_csv(path, sep='\t', index=False)
+    # pairs found in a methods text also say how likely each is (the last column)
+    extra = ['how_likely'] if any('how_likely' in r for r in rows) else []
+    pd.DataFrame(rows, columns=OUT_COLUMNS + extra).to_csv(path, sep='\t', index=False)
 
 
 def main(argv=None):
@@ -746,13 +789,14 @@ def main(argv=None):
                       f'the methods as text and give that instead.')
             parts.append(part)
         text = '\n\n'.join(parts)
-        found = text_candidates(t, text)
+        found = how_likely(text_candidates(t, text))
         for e in found:
             # evidence as one line each, whatever line breaks the text (a PDF, say) had inside it
             e['evidence'] = [' '.join(str(x).split()) for x in e['evidence']]
             print(f"{e['assay_name'] or '-'} {e['pcr_primer_name_forward']}/{e['pcr_primer_name_reverse']} "
                   f"{e['pcr_primer_forward']} {e['pcr_primer_reverse']} [{e['target_gene']}] "
-                  f"({e['pcr_primer_reference_forward']}) <- {'; '.join(e['evidence'][:3])}")
+                  f"({e['pcr_primer_reference_forward']}) <- {'; '.join(e['evidence'][:3])} "
+                  f"[{e['how_likely'].split(':')[0]}]")
             out.append({**e, 'query': '; '.join(e['evidence'][:5]), 'matched_by': e['matched_by'],
                         'candidates_for_query': len(found)})
         print(f'INFO: {len(found)} candidate primer pairs')

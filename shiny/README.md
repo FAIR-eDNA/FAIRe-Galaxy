@@ -18,7 +18,13 @@ here, beside the tools it runs, on 13 November 2026 (version 0.2.0). Version 0.3
 from the FAIRe team's first trial of it, and version 0.4.0 those from the second (14 November 2026).
 Version 0.4.1 (15 November 2026) adds the choice of assay type to *Find method details* and shows the
 tool's warnings there. Version 0.5.0 (15 November 2026) adds checks against values going into the
-workbook without a proper review (see *Keeping the review thorough*, below).
+workbook without a proper review (see *Keeping the review thorough*, below). Version 0.5.1 (16
+November 2026) puts the primers and the other method details side by side, as two tabs in *d. Methods
+and project values*, from Oliver Berry's trial of 0.5.0, and takes its logo and colours from the logo
+Oliver supplied (`www/logo.png`). Version 0.6.0 (16 November 2026) has the changes from a usability
+audit of 0.5.1, against 20 common principles of usable software: the app now keeps track of what has
+been done, asks before work could be lost, and explains errors in plain words (see *Going back,
+mistakes and warnings*, below). Its Start page also lists what you'll need for a FAIRe dataset.
 
 ## What it covers
 
@@ -40,6 +46,11 @@ input term. Either way, the mapper's conversions, such as reading Y and N as *ne
 
 A few things that help along the way:
 
+- **What you'll need**, at the top of the Start page, lists the five kinds of information a FAIRe
+  dataset needs: sample details, methods, OTU or ASV tables and taxonomy, library and run details,
+  and a few details about the project. Each comes with the forms it can take, such as your own
+  spreadsheet in any layout, so no one feels they must format their data first. Together they fill
+  the mandatory terms of the FAIRe checklist for a metabarcoding study.
 - **Your files** (on the left) lists every file you add, with what *a. Your files* found it to be.
   The eye beside a file shows what is in it: the first rows of a table as they are in the file, with
   their row numbers (so you can see which row holds the column names), the first rows of each sheet
@@ -49,31 +60,80 @@ A few things that help along the way:
   FASTA files and PDFs by their content, whatever they are called. If it gets one wrong, choose the
   right kind in its table: the app then offers the file in the right places. *Look inside* shows the
   file, to help you decide.
-- **Methods** can be text or a PDF. *d. Primers and project values* reads them for primers, and
-  lists the mandatory project terms still to give; the other values for the whole study, such as
-  PCR conditions and the sequencing platform, come from you, with the methods open beside you. A PDF
-  of scanned pages has no text to read: save it as text first.
+- **b. Propose a mapping** is done once, for the sample table only. Once *a. Your files* has run, it
+  offers only the files found to be sample tables. The other files need no mapping: the methods go in
+  at *d. Methods and project values*, and the OTU, taxonomy and library tables at *e. Write the
+  workbook*.
+- **Methods** can be text or a PDF. *d. Methods and project values* reads them for primers (the
+  *Primers* tab) and for the other method details, such as PCR conditions and the sequencing platform
+  (the *Other method details* tab), and lists the mandatory project terms still to give. A PDF of
+  scanned pages has no text to read: save it as text first.
 - **Primers** are checked against a reference table of about 550 published primer pairs, most from
   Takahashi et al. (2023) and Wilderlab's assays. This keeps primer names as they are in the
   literature and catches typos in sequences. If your primers are not in it, add your own table.
-  The step says how to choose the pair you used for each assay, and which assay name to give it.
-- **Other method details**: under the primers, *Find method details* reads the same methods for the
-  filters, extraction kit, PCR conditions, sequencing kit, software, settings and reference databases,
-  and lists each value it finds with the sentence it came from, its FAIRe requirement level and its
-  term's record in papers tested. Values for terms found reliably come first and the rest are listed as
-  values to check; *Tick all reliable values* ticks only the first group, so each of the others takes its
-  own tick. Tick the ones to keep (correcting any that are nearly right) and add them to the values for
-  the whole project. If any ticked values are values to check, the app lists them with their sentences
-  and asks you to confirm that you have checked them before it adds them. Keep one value per term: if
-  two are ticked for the same term (two sample volumes, say), the app asks you to choose one. Choose *Targeted (qPCR, ddPCR)* for methods of a targeted assay, so the values go to
-  the targeted terms; the choice follows the assay type given under *b. Propose a mapping*. If the
-  methods never mention DNA, PCR, primers or amplification, the step says so and proposes nothing. Its review sheet, which also
-  lists the method terms not found, can be downloaded, filled in with Excel and loaded back on the right.
+  Pairs whose two sequences in your methods match the reference table exactly come first, marked
+  *exact match* in green, and *Add the exact matches* adds them all with one click, each with its assay name, for
+  you to check in the project values. Pairs found only from a primer name, for a gene whose sequences
+  the methods already give, are less likely (one name can belong to several published pairs) and
+  are hidden unless you ask for them. Clicking a pair fills in its assay name from the reference
+  table, which you can change. *e. Write the workbook* then
+  offers the same assay names for the OTU tables and libraries, and stops with a message if a name
+  there differs from the ones given in *d*.
+- **Other method details**: in its own tab beside the primers, *Find method details* reads the
+  same methods for the filters, extraction kit, PCR conditions, sequencing kit, software, settings
+  and reference databases, and lists each value it finds with a snippet of text from the source, its
+  FAIRe requirement level and its term's record in papers tested. Values for terms found reliably come
+  first and the rest are listed as values to check; *Tick all reliable values* ticks only the
+  first group, so each of the others takes its own tick. Tick the ones to keep (correcting any
+  that are nearly right) and add them to the values for the whole project. If any ticked values
+  are values to check, the app lists them with their sentences and asks you to confirm that you
+  have checked them before it adds them. Keep one value per term: if two are ticked for the same
+  term (two sample volumes, say), the app asks you to choose one. Choose *Targeted (qPCR, ddPCR)*
+  for methods of a targeted assay, so the values go to the targeted terms; the choice follows the
+  assay type given under *b. Propose a mapping*. If the methods never mention DNA, PCR, primers or
+  amplification, the step says so and proposes nothing. Its review sheet, which also lists the
+  method terms not found, can be downloaded, filled in with Excel and loaded back on the right.
 - **Adding a value** offers the FAIRe terms for one part of the checklist at a time, PCR and primers
   first, then library preparation and sequencing, bioinformatics and so on, or all of them.
 - **A question mark** beside a label explains the term (*data dictionary*, *assay*, *raw* and
   *final* and so on) when the pointer rests on it, or when you move to it with the Tab key.
 - **Optional fields**, such as the data dictionary, can be set back to *None* after choosing a file.
+
+## Going back, mistakes and warnings
+
+Making a workbook takes several steps, and people go back to change one. The app keeps track:
+
+- **Each step says where it stands.** The tabs a to e show *✓ done*, *! not saved* (a review with
+  changes still to save) or *↻ redo* (an earlier step has changed since this one ran).
+- **Running the mapping again keeps your review.** If you have reviewed the mapping, *b. Propose a
+  mapping* asks first, and can carry your decisions over to the new mapping. A decision is kept for a
+  column whose proposed term is the same as before; the app says how many were kept and how many need
+  deciding again.
+- **Writing the workbook checks the review first.** If the review has changes not yet saved, or has
+  not been done, *e. Write the workbook* says so and offers to save it, or to go to the review, before
+  writing. The *Write the workbook* button is at the top of step e, with a second one at the end.
+- **A workbook that is out of date says so.** If the review or the project values change after the
+  workbook was written, the sidebar and the Check and Convert pages say the workbook in use is out of
+  date, with a link to write it again.
+- **Nothing is lost by accident.** Loading the demonstration, or *Remove all files*, asks first when
+  there is work in the session, and the browser asks before you leave or reload the page.
+- **Errors say what went wrong and what to do.** An error stays until you close it and is repeated
+  under the field it is about. When a tool stops, its result gives the reason in plain words for the
+  common cases (a file that is not an Excel workbook, a missing sheet, text that is not UTF-8, a
+  missing package and so on), with the tool's own message below.
+- **Warnings are listed where you see them.** Writing the workbook lists its warnings, and the
+  mandatory terms still with no value, in the result.
+- **Some values are checked as you type**: the project ID, the UTC offset, and the assay names
+  against the ones given in *d*.
+- **Dates that could be read two ways are caught early.** If a date column has values such as
+  06/09/2017 and none settles whether the day or the month comes first, *b. Propose a mapping* asks,
+  and your answer sets the date order in *e*.
+- **The Convert forms offer the workbook's own fields**, such as the field that marks replicates for
+  NCBI, in drop-downs you can also type into.
+
+The app also works from the keyboard, with a visible outline on the control in focus, and has labels
+for screen readers on its icons and the review's drop-downs. An automatic check (axe-core) finds no
+problems in the app's own pages; the few it reports come from the page framework (bslib).
 
 ## Keeping the review thorough
 
@@ -265,14 +325,15 @@ somewhere other than `../tools`, `FAIRE_PYTHON` to use a Python other than the o
 ## Trying it with the demonstration data
 
 The Start page has a button that loads a small cut of CSIRO's SEA-MES eDNA data record (Deagle et al.
-2025; see `demo/README.md`). It fills in the forms with the values the trial used, but each tool still
-has to be run by pressing its button, and the review is done by hand, as a person would do it. The
+2025; see `demo/README.md`). It adds the files to *Your files* and fills in the forms for them, so you
+can follow each step through to a demonstration FAIRe metadata workbook. Each tool still has to be run
+by pressing its button, and the review is done by hand, as a person would do it. The
 Start page lists the steps. edna2obis looks the names up in WoRMS or GBIF, so it needs internet
 access, and its two steps were not run on the demonstration in testing; the Darwin Core build was
 tested through the app's code on edna2obis's own test data, with its stand-in mapping table.
 
 What you should see: the mapping accepts 11 of the table's 23 columns, sends 6 for review and finds
-no term for 6. *Fill in the authors' answers* gives the decisions from the trial
+no term for 6. *Fill in the authors' answers* gives a reviewer's decisions for these rows
 (`dev/faire_mapper_seames/reviewer_decisions.tsv`). Once the review is saved, the workbook has 13
 samples and 58 FAIRe terms, plus 9 columns kept as their own terms, with the 16S ASV table as otuRaw
 and taxaRaw and the 48 curated fish taxa as otuFinal and taxaFinal. FAIRe-fier passes both sheets, with

@@ -16,19 +16,24 @@ for (f in c("runner.R", "tools.R", "helpers.R", "ui.R"))
 
 options(shiny.maxRequestSize = 500 * 1024^2, DT.fillContainer = FALSE)
 
-APP_VERSION <- "0.5.0"
+APP_VERSION <- "0.6.0"
 DEMO_DIR <- file.path(getOption("faire.app_dir"), "demo")
 
-theme <- bs_theme(version = 5, primary = "#1f6f78", secondary = "#5b6770", success = "#3c8d5a",
+# Colours from the logo: petrol, teal, navy, red, orange and yellow (darkened where white text sits
+# on them, to keep it readable).
+theme <- bs_theme(version = 5, primary = "#186c78", secondary = "#5b6770", success = "#1d7f74",
+                  danger = "#c81e36", warning = "#f0cc3c", info = "#0c2a6c",
                   "font-size-base" = "0.95rem", base_font = font_collection("Segoe UI", "Helvetica Neue", "Arial", "sans-serif"))
 
 ui <- page_navbar(
   id = "main",
+  lang = "en",
   fillable = FALSE,
-  title = tags$span(icon("dna"), "FAIRe tools"),
+  title = tags$span(class = "brand", tags$img(src = "logo.png", alt = "", class = "brand-logo"), "FAIRe tools"),
   window_title = "FAIRe tools",
   theme = theme,
-  header = tags$head(tags$link(rel = "stylesheet", href = "styles.css"), tags$script(src = "app.js")),
+  header = tags$head(tags$link(rel = "icon", type = "image/png", href = "favicon.png"),
+                     tags$link(rel = "stylesheet", href = "styles.css"), tags$script(src = "app.js")),
   sidebar = sidebar(
     width = 300, open = "desktop",
     tags$h6("Workbook in use"),
@@ -65,7 +70,8 @@ server <- function(input, output, session) {
 
   rv <- reactiveValues(files = character(), workbook = NULL, workbook_from = "", res = list(), runs = list(),
                        identify = NULL, map = NULL, map_args = NULL, profile = NULL, crosswalk = NULL,
-                       crosswalk_from = "", review_version = 0, review_saved = NULL, model = NULL, model_used = character(),
+                       crosswalk_from = "", review_version = 0, review_saved = NULL, review_saved_d = NULL, carry = NULL, changed = NULL, written = NULL,
+                       model = NULL, model_used = character(),
                        primers = NULL, details = NULL,
                        pv = data.frame(term = character(), value = character(), assay = character()),
                        md_prov = data.frame(term = character(), assay = character(), value = character(),
@@ -86,12 +92,24 @@ server <- function(input, output, session) {
     res
   }
 
+  # Messages in three kinds, each with its own icon and word. An error stays until it is closed and, when
+  # it is about a field, is repeated under that field, which is scrolled into view (app.js). Warnings and
+  # information close themselves.
+  notify_error <- function(msg, field = NULL) {
+    showNotification(tagList(icon("circle-xmark"), tags$b("Error: "), msg), type = "error", duration = NULL)
+    if (!is.null(field)) session$sendCustomMessage("field_error", list(id = field, msg = msg))
+    invisible(NULL)
+  }
+  notify_warning <- function(msg, duration = 10)
+    showNotification(tagList(icon("triangle-exclamation"), tags$b("Warning: "), msg), type = "warning", duration = duration)
+  notify_info <- function(msg, duration = 6)
+    showNotification(tagList(icon("circle-info"), msg), type = "message", duration = duration)
+
   # Run a tool with a progress message; record and return its result.
   with_run <- function(message, expr) {
     res <- withProgress(message = message, value = 0.3, expr)
     record(res)
-    if (!res$ok) showNotification(paste(res$label, "stopped with a message. See the result for why."),
-                                  type = "warning", duration = 6)
+    if (!res$ok) notify_error(paste(res$label, "stopped. The result says why and what to do."))
     res
   }
 
@@ -103,9 +121,19 @@ server <- function(input, output, session) {
   # The result of a run: whether it worked, its files, and the tool's own messages.
   result_ui <- function(res, extra = NULL, show_files = TRUE) {
     if (is.null(res)) return(NULL)
-    status <- if (res$ok) div(class = "res-ok", icon("circle-check"), paste(res$label, "finished at", res$time))
-              else div(class = "res-fail", icon("triangle-exclamation"),
-                       paste(res$label, "stopped at", res$time, "with the message below."))
+    # the tool's warnings are shown, not left among its messages
+    warn <- sub("^WARNING:\\s*", "", grep("^WARNING:", strsplit(res$log %||% "", "\n")[[1]], value = TRUE))
+    status <- if (res$ok) {
+      div(class = "res-ok", icon("circle-check"),
+          paste0(res$label, " finished at ", res$time,
+                 if (length(warn)) sprintf(", with %d %s (below)", length(warn), if (length(warn) == 1) "warning" else "warnings"), "."))
+    } else {
+      why <- explain_error(res$log)
+      div(class = "res-fail", icon("circle-xmark"), tags$b("Error: "),
+          paste0(res$label, " stopped at ", res$time, "."),
+          if (nzchar(why)) tags$div(class = "res-why", why),
+          tags$div(class = "res-why", HTML("The tool's own message is under <em>The tool's messages</em>, below.")))
+    }
     files <- NULL
     if (show_files && length(res$outputs)) {
       files <- tags$ul(class = "file-out", lapply(names(res$outputs), function(nm) {
@@ -113,10 +141,10 @@ server <- function(input, output, session) {
         tags$li(icon("file"), file_link(p), tags$span(class = "size", fmt_bytes(file.size(p))))
       }))
     }
-    # the tool's warnings are shown, not left among its messages
-    warn <- sub("^WARNING:\\s*", "", grep("^WARNING:", strsplit(res$log %||% "", "\n")[[1]], value = TRUE))
-    warn_ui <- if (length(warn)) div(class = "res-warn", icon("triangle-exclamation"), paste(head(warn, 5), collapse = " "),
-                                     if (length(warn) > 5) sprintf("(And %d more among the tool's messages.)", length(warn) - 5))
+    warn_ui <- if (length(warn)) div(class = "res-warn", icon("triangle-exclamation"),
+                                     tags$b(if (length(warn) == 1) "Warning:" else "Warnings:"),
+                                     tags$ul(lapply(head(warn, 8), tags$li)),
+                                     if (length(warn) > 8) sprintf("And %d more among the tool's messages.", length(warn) - 8))
     tagList(status, warn_ui, extra, files,
             tags$details(open = if (!res$ok) NA else NULL, tags$summary("The tool's messages"),
                          tags$pre(class = "log", short_log(res$log, 60))))
@@ -159,11 +187,28 @@ server <- function(input, output, session) {
   output$setup_table <- renderUI({
     s <- check_setup()
     tags$table(class = "table table-sm setup", tags$tbody(lapply(seq_len(nrow(s)), function(i) tags$tr(
-      tags$td(if (s$ok[i]) icon("circle-check", class = "text-success") else icon("circle-xmark", class = "text-danger")),
+      tags$td(if (s$ok[i]) icon("circle-check", class = "text-success", role = "img", `aria-label` = "ready")
+              else icon("circle-xmark", class = "text-danger", role = "img", `aria-label` = "missing")),
       tags$td(s$item[i]), tags$td(tags$small(s$detail[i]))))))
   })
 
+  has_work <- reactive(length(rv$files) > 0 || length(rv$runs) > 0 || nrow(rv$pv) > 0)
+  observe(session$sendCustomMessage("has_work", has_work()))
+  observeEvent(input$start_faireator, nav_select("main", "FAIRe-ator: a blank template"))
+  observeEvent(input$start_mapper, {
+    nav_select("main", "FAIRe mapper: from your own tables"); nav_select("mapper_steps", "a. Your files")
+  })
+  observeEvent(input$start_check, nav_select("main", "2. Check"))
   observeEvent(input$load_demo, {
+    if (!has_work()) return(load_demo())
+    showModal(modalDialog(
+      title = "Load the demonstration data?",
+      tags$p("It adds the demonstration's files to Your files (replacing any with the same names), replaces the",
+             "values for the whole project, and fills in the forms with the demonstration's settings."),
+      footer = tagList(modalButton("Cancel"), actionButton("load_demo_ok", "Load it", class = "btn-primary"))))
+  })
+  observeEvent(input$load_demo_ok, { removeModal(); load_demo() })
+  load_demo <- function() {
     for (f in list.files(DEMO_DIR, full.names = TRUE)) {
       if (basename(f) == "README.md") next
       rv$files <- c(rv$files[names(rv$files) != basename(f)], add_to_library(file.path(sd, "files"), basename(f), f))
@@ -181,7 +226,7 @@ server <- function(input, output, session) {
     updateTextInput(session, "ap_country", value = "Australia")
     updateTextInput(session, "nb_bioproject", value = "PRJNA1263580")
     updateSelectInput(session, "nb_mandatory_fill", selected = "not applicable")
-    updateTextInput(session, "nb_duplicates", value = "replicate")
+    updateSelectizeInput(session, "nb_duplicates", choices = "replicate", selected = "replicate")
     updateSelectInput(session, "ns_instrument", selected = "NextSeq 2000")
     updateRadioButtons(session, "ns_link", selected = "accessions")
     updateTextInput(session, "es_center", value = "CSIRO")
@@ -189,9 +234,9 @@ server <- function(input, output, session) {
     updateTextInput(session, "er_study", value = "PRJNA1263580")
     updateSelectInput(session, "er_instrument", selected = "NextSeq 2000")
     updateRadioButtons(session, "eo_taxa_source", selected = "mapping")
-    showNotification("The demonstration files are in Your files. Start with 1. Make a workbook, FAIRe mapper.",
-                     type = "message", duration = 6)
-  })
+    rv$changed <- Sys.time()
+    notify_info("The demonstration files are in Your files. Start with 1. Make a workbook, FAIRe mapper.", duration = 6)
+  }
 
   output$demo_status <- renderUI({
     if (!rv$demo) return(NULL)
@@ -239,7 +284,13 @@ server <- function(input, output, session) {
       })),
       actionLink("clear_files", "Remove all files", icon = icon("xmark")))
   })
-  observeEvent(input$clear_files, { rv$files <- character(); rv$identify <- NULL })
+  observeEvent(input$clear_files, {
+    showModal(modalDialog(
+      title = sprintf("Remove all %d files?", length(rv$files)),
+      tags$p("They are removed from Your files. Results already written keep their own copies."),
+      footer = tagList(modalButton("Cancel"), actionButton("clear_files_ok", "Remove them", class = "btn-danger"))))
+  })
+  observeEvent(input$clear_files_ok, { removeModal(); rv$files <- character(); rv$identify <- NULL })
   # One file at a time. The run folders keep their copies, so results already written are not affected.
   observeEvent(input$remove_file, {
     n <- input$remove_file
@@ -249,7 +300,7 @@ server <- function(input, output, session) {
       rv$identify <- rv$identify[rv$identify$file != n, , drop = FALSE]
       if (!nrow(rv$identify)) rv$identify <- NULL
     }
-    showNotification(paste("Removed", n), type = "message", duration = 3)
+    notify_info(paste("Removed", n), duration = 3)
   })
 
   # ------------------------------------------------------------ a look inside a file
@@ -270,7 +321,7 @@ server <- function(input, output, session) {
     d <- t$rows
     cut <- function(x) if (nchar(x) > 40) paste0(substr(x, 1, 39), "\u2026") else x
     tagList(
-      div(class = "table-responsive preview-raw",
+      div(class = "table-responsive preview-raw", tabindex = "0", `aria-label` = "The file's first rows",
           tags$table(class = "table table-sm table-bordered",
                      tags$thead(tags$tr(tags$th("Row"), lapply(seq_along(d), function(j)
                        tags$th(if (letters) col_letters(j) else j)))),
@@ -292,11 +343,12 @@ server <- function(input, output, session) {
         tagList(
           tags$p(tags$a(href = file_href(p), target = "_blank", icon("file-pdf"), "Open the PDF"),
                  if (!is.null(j$pages)) sprintf(" (%d pages)", j$pages)),
-          if (!is.null(j$error)) div(class = "res-fail", j$error)
-          else if (!nzchar(trimws(j$text))) div(class = "res-fail", "This PDF has no text to read: its pages are",
+          if (!is.null(j$error)) div(class = "res-fail", icon("circle-xmark"), tags$b("Error: "), j$error)
+          else if (!nzchar(trimws(j$text))) div(class = "res-warn", icon("triangle-exclamation"), tags$b("Warning: "),
+                                                "This PDF has no text to read: its pages are",
                                                 "pictures (a scan). Save it as text first, or type the primer names.")
           else tagList(help_text(paste0("Its text as the tools read it", if (isTRUE(j$cut)) " (the first part)", ".")),
-                       tags$pre(class = "preview-text", j$text)))
+                       tags$pre(class = "preview-text", tabindex = "0", j$text)))
       },
       workbook = {
         sh <- xlsx_sheets(p)
@@ -315,7 +367,7 @@ server <- function(input, output, session) {
         l <- preview_lines(p, 12)
         l <- ifelse(nchar(l) > 100, paste0(substr(l, 1, 99), "\u2026"), l)
         tagList(help_text("A FASTA file of sequences: each starts with a line beginning with >. Its first lines:"),
-                tags$pre(class = "preview-text", paste(l, collapse = "\n")))
+                tags$pre(class = "preview-text", tabindex = "0", paste(l, collapse = "\n")))
       },
       tab = , csv = tagList(
         help_text(if (kind == "tab") "A table with tabs between its columns." else "A table with commas between its columns."),
@@ -325,7 +377,7 @@ server <- function(input, output, session) {
         txt <- paste(l, collapse = "\n")
         cut <- nchar(txt) > 6000
         tagList(help_text("Text. Its first", if (cut || length(l) == 120) "part" else "lines", "as they are in the file:"),
-                tags$pre(class = "preview-text", if (cut) paste0(substr(txt, 1, 6000), "\u2026") else txt))
+                tags$pre(class = "preview-text", tabindex = "0", if (cut) paste0(substr(txt, 1, 6000), "\u2026") else txt))
       })
   }
   observeEvent(input$preview_file, {
@@ -344,9 +396,59 @@ server <- function(input, output, session) {
       tags$p(class = "preview-kind", fmt_bytes(file.size(p))), said, body))
   })
 
+  # The workbook the mapper wrote is out of date once the review or the project values change after it.
+  observeEvent(rv$pv, rv$changed <- Sys.time(), ignoreInit = TRUE)
+  wb_stale <- reactive(identical(rv$workbook_from, "written by the FAIRe mapper") && !is.null(rv$written) &&
+                         !is.null(rv$changed) && rv$changed > rv$written)
+  stale_note <- function(link_id) {
+    div(class = "res-warn stale-note", icon("triangle-exclamation"),
+        tags$b("Warning: "), "out of date. It was written before your latest changes to the review or the project values. ",
+        actionLink(link_id, "Write it again"))
+  }
+  goto_write <- function() {
+    nav_select("main", "FAIRe mapper: from your own tables")
+    nav_select("mapper_steps", "e. Write the workbook")
+  }
   output$current_workbook <- renderUI({
     if (is.null(rv$workbook)) return(help_text("None yet. Write one with the FAIRe mapper, or choose one of your files on the Check page."))
-    div(class = "wb-card", icon("file-excel"), file_link(rv$workbook), tags$br(), tags$small(rv$workbook_from))
+    tagList(div(class = "wb-card", icon("file-excel"), file_link(rv$workbook), tags$br(), tags$small(rv$workbook_from)),
+            if (wb_stale()) stale_note("goto_write_sidebar"))
+  })
+  observeEvent(input$goto_write_sidebar, goto_write())
+
+  # Checks made as you type: a note under the field, gone once the value is fine.
+  field_check <- function(id, msg) session$sendCustomMessage("field_check", list(id = id, msg = msg))
+  for (pid_field in c("ap_project_id", "fa_project_id")) local({
+    id <- pid_field
+    observeEvent(input[[id]], {
+      v <- trimws(input[[id]] %||% "")
+      field_check(id, if (nzchar(v) && !grepl("^[A-Za-z0-9_-]+$", v))
+        "Use letters, digits, hyphens and underscores only (no spaces)." else "")
+    }, ignoreInit = TRUE)
+  })
+  observeEvent(input$ap_utc_offset, {
+    v <- trimws(input$ap_utc_offset %||% "")
+    field_check("ap_utc_offset", if (nzchar(v) && !grepl("^(Z|[+-](0[0-9]|1[0-4]):[0-5][0-9])$", v))
+      "Give it as +10:00, -04:00 or Z (hours and minutes, with the sign)." else "")
+  }, ignoreInit = TRUE)
+  observe({
+    used <- trimws(strsplit(input$ap_assay_name %||% "", ",")[[1]])
+    odd <- setdiff(used[nzchar(used)], pv_assays())
+    field_check("ap_assay_name", if (length(pv_assays()) && length(odd))
+      sprintf("Not among the assays named in d: %s. The assays there: %s.", paste(odd, collapse = ", "),
+              paste(pv_assays(), collapse = ", ")) else "")
+  })
+
+  # The status of each mapper step, shown beside its name in the step list (app.js puts it there).
+  observe({
+    st <- list(
+      a = if (!is.null(rv$identify)) "done" else "",
+      b = if (!is.null(rv$map)) "done" else "",
+      c = if (is.null(rv$map)) "" else switch(review_status(), unsaved = "not saved",
+                                              unreviewed = "", if (!is.null(rv$review_saved)) "done" else ""),
+      d = if (nrow(rv$pv)) "done" else "",
+      e = if (wb_stale()) "redo" else if (!is.null(rv$written) && identical(rv$workbook_from, "written by the FAIRe mapper")) "done" else "")
+    session$sendCustomMessage("step_status", st)
   })
 
   # Workbook pickers on the Check and Convert pages: the workbook in use, or one of your files.
@@ -359,6 +461,9 @@ server <- function(input, output, session) {
   })
   for (pid in c("ck_wb", "cv_wb")) local({
     id <- pid
+    output[[paste0(id, "_stale")]] <- renderUI(if (wb_stale() && identical(input[[id]], "__current__"))
+      stale_note(paste0("goto_write_", id)))
+    observeEvent(input[[paste0("goto_write_", id)]], goto_write())
     output[[paste0(id, "_ui")]] <- renderUI({
       ch <- workbook_choices()
       if (!length(ch)) return(help_text("No workbook yet. Write one with the FAIRe mapper, or add a FAIRe workbook to your files."))
@@ -377,9 +482,9 @@ server <- function(input, output, session) {
   observeEvent(input$run_faireator, {
     pid <- trimws(input$fa_project_id)
     if (!nzchar(pid) || grepl("[^A-Za-z0-9_.-]", pid))
-      return(showNotification("Give a project ID with no spaces or special characters.", type = "error"))
-    if (blank(input$fa_assay_name)) return(showNotification("Give at least one assay name.", type = "error"))
-    if (!length(input$fa_sample_type)) return(showNotification("Choose at least one sample type.", type = "error"))
+      return(notify_error("Give a project ID with no spaces or special characters.", "fa_project_id"))
+    if (blank(input$fa_assay_name)) return(notify_error("Give at least one assay name.", "fa_assay_name"))
+    if (!length(input$fa_sample_type)) return(notify_error("Choose at least one sample type.", "fa_sample_type"))
     rv$res$faireator <- with_run("Making the template", run_faireator(
       sd, pid, input$fa_assay_type, input$fa_assay_name, input$fa_sample_type, input$fa_req_lev,
       input$fa_project_fields, input$fa_sample_fields))
@@ -395,7 +500,7 @@ server <- function(input, output, session) {
 
   # ------------------------------------------------------------ mapper a: identify
   observeEvent(input$run_identify, {
-    if (!length(rv$files)) return(showNotification("Add your files first.", type = "error"))
+    if (!length(rv$files)) return(notify_error("Add your files first."))
     res <- with_run("Looking at your files", run_identify(sd, as.list(rv$files)))
     rv$res$identify <- res
     if (res$ok) rv$identify <- read_tsv(res$outputs$report)
@@ -442,11 +547,27 @@ server <- function(input, output, session) {
   })
 
   # ------------------------------------------------------------ mapper b: propose
+  # The sample table: once a. Your files has run, only the files it found to be sample tables are
+  # offered, with a note saying where the choice came from.
   output$map_table_ui <- renderUI({
-    ch <- file_names("\\.(csv|tsv|txt|tab|xlsx)$", kinds = "sample table")
+    idf <- rv$identify
+    found <- if (is.null(idf)) character() else intersect(unique(idf$file[idf$kind == "sample table"]), names(rv$files))
+    ch <- if (length(found)) found else file_names("\\.(csv|tsv|txt|tab|xlsx)$", kinds = "sample table")
     default <- if (rv$demo && "SEA-MES_10L_samples.csv" %in% ch) "SEA-MES_10L_samples.csv" else guess_file("sample table")
-    selectInput("map_table", term_label("Sample table", "sample_table"), c("Choose a file" = "", ch),
-                selected = keep_or("map_table", default))
+    note <- if (length(found) == 1) {
+      help_text("This is the file ", tags$em("a. Your files"), " identified as your sample table. If that is wrong,",
+                "change its kind there.")
+    } else if (length(found) > 1) {
+      help_text(tags$em("a. Your files"), " found ", length(found), " files that look like sample tables. The mapping",
+                "is for one table: choose the one that holds your sample details. If they are parts of one",
+                "table, combine them into one file first.")
+    } else {
+      help_text("Choose the file that holds your sample details. Running ", tags$em("a. Your files"),
+                " first finds it for you.")
+    }
+    tagList(selectInput("map_table", term_label("Sample table", "sample_table"), c("Choose a file" = "", ch),
+                        selected = keep_or("map_table", default)),
+            note)
   })
   output$map_sheet_ui <- renderUI({
     p <- fpath(input$map_table)
@@ -461,9 +582,29 @@ server <- function(input, output, session) {
                 selected = keep_or("map_dictionary", ""), selectize = FALSE)
   })
 
+  # Running the mapping again replaces the review, so it asks first when there is one, and offers to keep
+  # the decisions for columns that are still there (an Accept only when the mapper still proposes the same term).
   observeEvent(input$run_map, {
+    if (is.null(fpath(input$map_table))) return(notify_error("Choose your sample table.", "map_table"))
+    if (!is.null(rv$map) && (!is.null(rv$review_saved_d) || review_status() == "unsaved")) {
+      d <- review_state(); base <- review_defaults()
+      n <- sum(paste(d$decision, d$replacement) != paste(base$decision, base$replacement))
+      showModal(modalDialog(
+        title = "Run the mapping again?",
+        tags$p(sprintf(paste("You have reviewed this mapping (%d %s from the mapper's proposals). Running it again",
+                             "replaces the proposals. You can keep your decisions for the columns that are still in the",
+                             "table, or start the review afresh."), n, if (n == 1) "decision differs" else "decisions differ")),
+        footer = tagList(modalButton("Cancel"), actionButton("map_fresh", "Start the review afresh"),
+                         actionButton("map_keep", "Run it again, keeping my decisions", class = "btn-primary"))))
+    } else do_map(FALSE)
+  })
+  observeEvent(input$map_keep, { removeModal(); do_map(TRUE) })
+  observeEvent(input$map_fresh, { removeModal(); do_map(FALSE) })
+
+  do_map <- function(keep) {
     tab <- fpath(input$map_table)
-    if (is.null(tab)) return(showNotification("Choose your sample table.", type = "error"))
+    if (is.null(tab)) return(notify_error("Choose your sample table.", "map_table"))
+    old <- if (keep && !is.null(rv$map)) { d <- review_state(); d$proposed <- review()$rows$proposed; d } else NULL
     sheet <- if (galaxy_ext(tab) == "xlsx") input$map_sheet %||% "" else ""
     args <- list(table = tab, table_name = input$map_table, sheet = sheet, header_row = input$map_header_row %||% 1,
                  assay_type = input$map_assay_type, sample_types = input$map_sample_types %||% character(),
@@ -479,9 +620,26 @@ server <- function(input, output, session) {
     if (res$ok) {
       rv$map <- res; rv$map_args <- args
       rv$crosswalk <- res$outputs$review_sheet; rv$crosswalk_from <- "proposed, not yet reviewed"
-      rv$review_version <- rv$review_version + 1; rv$review_saved <- NULL; rv$model <- NULL; rv$model_used <- character()
-    } else showNotification("Propose mapping stopped with a message.", type = "warning")
-  })
+      rv$review_version <- rv$review_version + 1; rv$review_saved <- NULL; rv$review_saved_d <- NULL
+      rv$model <- NULL; rv$model_used <- character(); rv$carry <- NULL
+      rv$changed <- Sys.time()
+      if (!is.null(old)) {
+        new <- review()$rows
+        k <- match(old$input, new$input)
+        decided <- nzchar(old$decision)
+        ok <- decided & !is.na(k) & (old$decision != "Accept" | old$proposed == new$proposed[pmax(k, 1)])
+        rv$carry <- old[ok, c("input", "decision", "replacement")]
+        save_review(review_state(), "carried over from your earlier review")
+        lost <- old$input[decided & !ok]
+        kept <- sprintf("%d %s kept and saved.", sum(ok), if (sum(ok) == 1) "decision" else "decisions")
+        if (length(lost))
+          notify_warning(paste(kept, sprintf(paste("%d could not be kept, because the column is gone or the mapper now",
+                                                   "proposes another term: %s. Check them in c. Review the mapping."),
+                                             length(lost), paste(lost, collapse = ", "))), duration = NULL)
+        else notify_info(kept, duration = 8)
+      }
+    }
+  }
 
   map_summary <- reactive({
     req(rv$map)
@@ -498,6 +656,13 @@ server <- function(input, output, session) {
           stat_tile(s$no_match, "no match", "no-match"),
           stat_tile(s$missing_mandatory, "mandatory terms not covered", "missing")),
       if (length(s$read_notes)) help_text(tags$b("How the table was read: "), paste(s$read_notes, collapse = "; ")),
+      if (length(s$ambiguous_dates)) div(
+        class = "res-warn date-order", icon("triangle-exclamation"), tags$b("Warning: "),
+        sprintf("dates such as %s in %s can be read day first or month first, and no value settles it. Which is it?",
+                s$ambiguous_dates$example[1], paste(unique(s$ambiguous_dates$column), collapse = ", ")),
+        radioButtons("map_date_order", NULL, inline = TRUE, selected = isolate(input$ap_date_order) %||% "stop",
+                     c("Day first (dd/mm/yyyy)" = "dmy", "Month first (mm/dd/yyyy)" = "mdy", "Not sure yet" = "stop")),
+        tags$small("This sets the date order in e. Write the workbook.")),
       tags$p("Next, go to ", actionLink("goto_review", "c. Review the mapping"), " to confirm or correct the matches."),
       navset_underline(
         nav_panel("Mapping report", DTOutput("map_report_table")),
@@ -512,6 +677,7 @@ server <- function(input, output, session) {
       result_ui(res))
   })
   observeEvent(input$goto_review, nav_select("mapper_steps", "c. Review the mapping"))
+  observeEvent(input$map_date_order, updateSelectInput(session, "ap_date_order", selected = input$map_date_order))
   output$map_report_table <- renderDT({
     d <- read_tsv(rv$map$outputs$report); req(d)
     table_dt(d[, intersect(c("column", "proposed_term", "route", "score", "evidence", "transform_hint", "shortlist"), names(d))])
@@ -549,14 +715,33 @@ server <- function(input, output, session) {
   dec_id <- function(i) paste0("rvd", rv$review_version, "_", i)
   rep_id <- function(i) paste0("rvr", rv$review_version, "_", i)
 
-  # The decisions as they stand on screen (the sheet's own values until a person changes them).
+  # A row's starting decision: one carried over from an earlier review of the same column, or the sheet's own.
+  init_choice <- function(r, i, field) {
+    cr <- rv$carry
+    if (!is.null(cr)) { k <- match(r$input[i], cr$input); if (!is.na(k)) return(cr[[field]][k]) }
+    r[[field]][i]
+  }
+  # The decisions as they stand on screen (the starting ones until a person changes them).
   review_state <- function() {
     r <- review()$rows
     n <- seq_len(nrow(r))
     data.frame(input = r$input,
-               decision = vapply(n, function(i) input[[dec_id(i)]] %||% r$decision[i], character(1)),
-               replacement = vapply(n, function(i) input[[rep_id(i)]] %||% r$replacement[i], character(1)),
+               decision = vapply(n, function(i) input[[dec_id(i)]] %||% init_choice(r, i, "decision"), character(1)),
+               replacement = vapply(n, function(i) input[[rep_id(i)]] %||% init_choice(r, i, "replacement"), character(1)),
                stringsAsFactors = FALSE)
+  }
+  review_defaults <- function() {
+    r <- review()$rows
+    data.frame(input = r$input, decision = r$decision, replacement = r$replacement, stringsAsFactors = FALSE)
+  }
+  same_decisions <- function(a, b) identical(paste(a$input, a$decision, a$replacement), paste(b$input, b$decision, b$replacement))
+  # "unsaved": decisions on screen that are not saved; "unreviewed": nothing changed or saved yet; "" otherwise
+  review_status <- function() {
+    if (is.null(rv$map)) return("")
+    cur <- review_state()
+    if (!is.null(rv$review_saved_d)) return(if (same_decisions(cur, rv$review_saved_d)) "" else "unsaved")
+    if (!identical(rv$crosswalk_from, "proposed, not yet reviewed")) return("")
+    if (same_decisions(cur, review_defaults())) "unreviewed" else "unsaved"
   }
 
   # Put decisions on screen: a data frame with input, decision and replacement.
@@ -584,13 +769,16 @@ server <- function(input, output, session) {
           if (rv$demo && identical(rv$map_args$table_name, "SEA-MES_10L_samples.csv"))
             actionButton("demo_answers", "Fill in the authors' answers", icon = icon("flask"), class = "btn-sm"),
           actionButton("save_review", "Save the review", icon = icon("floppy-disk"), class = "btn-primary btn-sm")),
-      div(class = "review-files",
-          downloadButton("review_download", "Download the review sheet", class = "btn-sm"),
-          fileInput("review_upload", NULL, accept = ".xlsx", buttonLabel = "Add a review sheet you filled in",
-                    placeholder = "Excel (.xlsx)", width = "440px")),
-      help_text("The decisions in use: ", file_link(rv$crosswalk), paste0(" (", rv$crosswalk_from, ")."),
-                "You can also download the sheet, fill it in with Excel (sorting or filtering the rows is fine,",
-                "but keep every row) and add it back here."))
+      help_text("The decisions in use: ", file_link(rv$crosswalk), paste0(" (", rv$crosswalk_from, ").")),
+      div(class = "review-excel",
+          tags$h6("Or do the review in Excel"),
+          help_text("If you would rather do the review in Excel, download the review sheet, fill in the decisions",
+                    "(sorting or filtering the rows is fine, but keep every row), then add it back here when you",
+                    "have finished. Its decisions then show in the rows below, and are saved."),
+          div(class = "review-files",
+              downloadButton("review_download", "Download the review sheet", class = "btn-sm"),
+              fileInput("review_upload", NULL, accept = ".xlsx", buttonLabel = "Add the review sheet you filled in",
+                        placeholder = "Excel (.xlsx)", width = "440px"))))
   })
 
   output$review_table <- renderUI({
@@ -602,13 +790,13 @@ server <- function(input, output, session) {
       x <- r[i, ]
       has_term <- nzchar(x$proposed)
       dec_choices <- c("No decision" = "", if (has_term) c("Accept" = "Accept"), "Reject" = "Reject", "Change" = "Change")
-      dsel <- isolate(input[[dec_id(i)]]) %||% x$decision
-      rsel <- isolate(input[[rep_id(i)]]) %||% x$replacement
+      dsel <- isolate(input[[dec_id(i)]]) %||% init_choice(r, i, "decision")
+      rsel <- isolate(input[[rep_id(i)]]) %||% init_choice(r, i, "replacement")
       lists <- s$choices[[x$input]] %||% list(best = character(), rest = character())
       other <- setdiff(rsel, c("", lists$best, lists$rest))
       opt <- function(v) lapply(v, function(t) tags$option(value = t, selected = if (identical(t, rsel)) NA, t))
       rep_select <- tags$select(
-        id = rep_id(i), class = "form-select form-select-sm",
+        id = rep_id(i), class = "form-select form-select-sm", `aria-label` = paste("Replacement FAIRe term for", x$input),
         # choosing a replacement sets the decision to Change
         onchange = sprintf("if (this.value) { var d = document.getElementById('%s'); d.value = 'Change'; $(d).trigger('change'); }", dec_id(i)),
         tags$option(value = "", selected = if (!nzchar(rsel)) NA, "No replacement"),
@@ -630,15 +818,20 @@ server <- function(input, output, session) {
                                                               onclick = sprintf("Shiny.setInputValue('use_model_row', {i: %d, n: Math.random()}); return false;", i),
                                                               "Use this suggestion"))),
         div(class = "rv-choice",
-            selectInput(dec_id(i), NULL, dec_choices, selected = dsel, selectize = FALSE, width = "100%"),
+            tagAppendAttributes(selectInput(dec_id(i), NULL, dec_choices, selected = dsel, selectize = FALSE, width = "100%"),
+                                `aria-label` = paste("Reviewer's decision for", x$input), .cssSelector = "select"),
             tags$small(class = "kept-as", "If rejected, kept as ", x$kept_as)),
         div(class = "rv-replace", rep_select))
     })
-    div(id = "review-grid",
-        div(class = "rv-row rv-head", div(term_label("Input term", "input_term"), " and some values"),
+    tagList(
+      div(id = "review-grid",
+        div(class = "rv-row rv-head", div(term_label("Input term", "input_term"), " and some values (grey text)"),
             div("Proposed FAIRe term and score"), div(term_label("Mapper's call", "mappers_call")), div("Mapper's reasoning"),
             div(term_label("Reviewer's decision", "decision")), div("Replacement FAIRe term")),
-        rows)
+        rows),
+      div(class = "review-foot",
+          actionButton("save_review_bottom", "Save the review", icon = icon("floppy-disk"), class = "btn-primary"),
+          help_text("Saves the decisions above. You can also save at the top of the review.")))
   })
 
   # Save decisions into a copy of the review sheet and use it for the workbook.
@@ -660,12 +853,13 @@ server <- function(input, output, session) {
     s <- write_review_decisions(rv$map$outputs$review_sheet, d, out, dir)
     res <- record(run_result("review", "FAIRe mapper: review the mapping", dir, list(s), list(review_sheet = out)))
     if (!res$ok || !file.exists(out)) {
-      showNotification("The review could not be saved. See the log of this step under Your session.", type = "error")
+      notify_error("The review could not be saved. See the log of this step under Outputs.")
       return(invisible(NULL))
     }
     r <- review()$rows
     k <- r$kind[match(d$input, r$input)]
     rv$crosswalk <- out; rv$crosswalk_from <- from
+    rv$review_saved_d <- d[, c("input", "decision", "replacement")]; rv$changed <- Sys.time()
     rv$review_saved <- list(accept = sum(d$decision == "Accept"), reject = sum(d$decision == "Reject"),
                             change = sum(d$decision == "Change"),
                             open = sum(d$decision == "" & k == "review", na.rm = TRUE),
@@ -677,6 +871,11 @@ server <- function(input, output, session) {
   observeEvent(input$save_review, {
     req(rv$map)
     save_review(review_state(), "reviewed here")
+  })
+  observeEvent(input$save_review_bottom, {
+    req(rv$map)
+    if (!is.null(save_review(review_state(), "reviewed here")))
+      notify_info(sprintf("Review saved at %s.", rv$review_saved$time), duration = 5)
   })
 
   output$review_download <- downloadHandler(
@@ -695,7 +894,7 @@ server <- function(input, output, session) {
     req(f, rv$map)
     up <- tryCatch(read_review_sheet(f$datapath), error = function(e) e)
     if (inherits(up, "error"))
-      return(showNotification(paste("That file could not be read:", conditionMessage(up)), type = "error", duration = 10))
+      return(notify_error(paste("That file could not be read:", conditionMessage(up))))
     d <- review_state()
     got <- up$rows[!duplicated(up$rows$input), , drop = FALSE]
     k <- match(d$input, got$input)
@@ -718,8 +917,8 @@ server <- function(input, output, session) {
                                  if (length(extra) == 1) "a column" else "columns",
                                  if (length(extra) == 1) "was" else "were", paste(extra, collapse = ", ")),
       if (any(duplicated(up$rows$input))) "Some input terms are in the sheet twice; their first rows were used.")
-    showNotification(paste(c(sprintf("The decisions in %s are on screen and saved.", f$name), notes), collapse = " "),
-                     type = if (length(notes)) "warning" else "message", duration = if (length(notes)) 15 else 6)
+    msg <- paste(c(sprintf("The decisions in %s are on screen and saved.", f$name), notes), collapse = " ")
+    if (length(notes)) notify_warning(msg, duration = 15) else notify_info(msg)
   })
 
   # The authors' answers for the demonstration's 10 L table (dev/faire_mapper_seames/reviewer_decisions.tsv).
@@ -731,7 +930,7 @@ server <- function(input, output, session) {
     d$decision[k] <- DEMO_DECISIONS[d$input[k]]
     d$replacement[k] <- ""
     show_decisions(d)
-    showNotification("Filled in. Look them over, then save the review.", type = "message")
+    notify_info("Filled in. Look them over, then save the review.")
   })
 
   # A model's answer for a column for review: its term is the proposed one (Accept), another one (Change)
@@ -774,9 +973,9 @@ server <- function(input, output, session) {
                                       if (s$open == 1) "it is" else "they are", if (s$open == 1) "its" else "their",
                                       if (s$open == 1) "" else "s")),
         if (length(s$bad)) tags$span(class = "text-danger", sprintf(" Change with no replacement term for %s: these are kept as their own terms.", paste(s$bad, collapse = ", "))),
-        tags$br(), "Next, ", actionLink("goto_primers", "d. Primers and project values"), ".")
+        tags$br(), inline("Next, ", actionLink("goto_primers", "d. Methods and project values"), "."))
   })
-  observeEvent(input$goto_primers, nav_select("mapper_steps", "d. Primers and project values"))
+  observeEvent(input$goto_primers, nav_select("mapper_steps", "d. Methods and project values"))
 
   run_model_step <- function(preview) {
     req(rv$map)
@@ -808,12 +1007,12 @@ server <- function(input, output, session) {
   })
   observeEvent(input$use_own_crosswalk, {
     p <- fpath(input$own_crosswalk)
-    if (is.null(p)) return(showNotification("Choose the crosswalk from your files.", type = "error"))
+    if (is.null(p)) return(notify_error("Choose the crosswalk from your files.", "own_crosswalk"))
     rv$crosswalk <- p; rv$crosswalk_from <- "your own crosswalk"
-    showNotification("The workbook will be written with your crosswalk.", type = "message")
+    notify_info("The workbook will be written with your crosswalk.")
   })
 
-  # ------------------------------------------------------------ mapper d: primers and project values
+  # ------------------------------------------------------------ mapper d: methods and project values
   output$pr_texts_ui <- renderUI({
     ch <- file_names("\\.(txt|md|pdf)$", kinds = "text")
     sel <- isolate(input$pr_texts) %||% (if (rv$demo) intersect("methods.txt", ch) else ch[vapply(ch, function(f) identical(kind_of(f), "text"), logical(1))])
@@ -831,8 +1030,8 @@ server <- function(input, output, session) {
                                            c("Choose a file" = "", file_names("\\.(tsv|tab|txt)$", kinds = "primer table"))))
   observeEvent(input$run_primers, {
     texts <- unname(unlist(lapply(input$pr_texts, fpath)))
-    if (input$pr_mode == "text" && !length(texts)) return(showNotification("Choose the methods text.", type = "error"))
-    if (input$pr_mode == "names" && blank(input$pr_names)) return(showNotification("Type at least one name.", type = "error"))
+    if (input$pr_mode == "text" && !length(texts)) return(notify_error("Choose your methods (text or PDF) at the top of this step.", "pr_texts"))
+    if (input$pr_mode == "names" && blank(input$pr_names)) return(notify_error("Type at least one name."))
     res <- with_run("Looking for primers", run_primers(sd, input$pr_mode, texts, input$pr_names, input$pr_gene,
                                                       input$pr_source, fpath(input$pr_own)))
     rv$res$primers <- res
@@ -849,19 +1048,26 @@ server <- function(input, output, session) {
       result_ui(res, show_files = TRUE),
       if (!is.null(rv$primers) && nrow(rv$primers)) tagList(
         div(class = "how-to",
-            tags$b("Choose the primer pair you used"),
+            tags$b("Choose the primer pairs you used, one for each assay"),
             tags$ol(
-              tags$li("Each row is a published primer pair that matches your methods (or the names you typed), with",
-                      "the words it was found from. One primer name can match several published pairs, so there can be",
-                      "more rows than assays."),
-              tags$li("Click the row of the pair you used, and check it against the paper it cites. Choose one pair",
-                      "per assay."),
-              tags$li("Give the assay's name below, the same as for its OTU table in e. Write the workbook (for example",
-                      "Fish16S). Leave it empty if the project has one assay."),
+              tags$li("Each row is a published primer pair that matches your methods (or the names you typed).",
+                      "When both sequences in your methods match a pair in the reference table, it is an exact",
+                      "match and comes first: usually these are the pairs you used, one for each assay.",
+                      "Add the exact matches adds them all at once, each with its assay name; check them in the",
+                      "table on the right, and delete any that were not used for these data (methods sometimes",
+                      "give the sequences of primers from a pilot comparison, or of blocking primers)."),
+              tags$li("Pairs found only from a primer name, for a gene whose sequences your methods already give,",
+                      "are less likely (one name can belong to several published pairs), so they are hidden. Show",
+                      "them if a pair you used is missing."),
+              tags$li("Click the row of a pair you used, and check it against the paper it cites. Its assay name is",
+                      "filled in below from the reference table; change it if you call the assay something else."),
               tags$li("Press Add this pair to the project values. The pair's names, sequences, gene, target taxon and",
                       "references go into the table on the right: check them there, and change any that do not fit",
                       "your study."),
-              tags$li("For a second assay (say 18S as well as 16S), click its pair, give its name and add it too."))),
+              tags$li("Do the same for each of your other assays (say COI as well as 16S). The assay names you give",
+                      "here are filled in for you in e. Write the workbook, so they stay the same."))),
+        uiOutput("pr_exact_ui"),
+        uiOutput("pr_show_all_ui"),
         DTOutput("primers_table"),
         uiOutput("pr_chosen"),
         layout_columns(col_widths = c(6, 6),
@@ -869,20 +1075,78 @@ server <- function(input, output, session) {
                                  value = if (rv$demo) "Fish16S" else "", placeholder = "for example Fish16S"),
                        div(class = "pt-4", actionButton("pr_add", "Add this pair to the project values", icon = icon("arrow-right"))))))
   })
-  output$primers_table <- renderDT({
+  # Pairs from a methods text say how likely each is; the less likely ones are hidden unless asked for.
+  less_likely <- function(d) {
+    if (!"how_likely" %in% names(d)) return(rep(FALSE, nrow(d)))
+    startsWith(ifelse(is.na(d$how_likely), "", as.character(d$how_likely)), "less likely")
+  }
+  primers_shown <- reactive({
     d <- rv$primers; req(d)
-    cols <- c(query = "Found from", matched_by = "Found by", assay_name = "Assay", target_gene = "Gene",
+    if (isTRUE(input$pr_show_all)) d else d[!less_likely(d), , drop = FALSE]
+  })
+  output$pr_show_all_ui <- renderUI({
+    n <- sum(less_likely(rv$primers %||% data.frame()))
+    if (n) checkboxInput("pr_show_all", sprintf("Show the %d less likely %s", n, if (n == 1) "pair" else "pairs"),
+                         isTRUE(isolate(input$pr_show_all)))
+  })
+  exact_rows <- function(d) {
+    if (is.null(d) || !"how_likely" %in% names(d)) return(integer())
+    which(startsWith(ifelse(is.na(d$how_likely), "", as.character(d$how_likely)), "exact match"))
+  }
+  output$pr_exact_ui <- renderUI({
+    n <- length(exact_rows(rv$primers))
+    if (n) actionButton("pr_add_exact", sprintf("Add the exact %s (%d) to the project values",
+                                                if (n == 1) "match" else "matches", n),
+                        icon = icon("check-double"), class = "btn-primary btn-sm mb-2")
+  })
+  # Puts a pair's values into the project values for an assay, replacing what that assay had.
+  add_pair <- function(r, assay) {
+    f <- intersect(primer_fields, names(r))
+    f <- f[nzchar(trimws(ifelse(is.na(unlist(r[f])), "", unlist(r[f]))))]
+    pv <- rv$pv
+    pv <- pv[!(pv$term %in% f & pv$assay == assay), , drop = FALSE]
+    rv$pv <- rbind(pv, data.frame(term = f, value = unname(unlist(r[f])), assay = assay))
+    length(f)
+  }
+  observeEvent(input$pr_add_exact, {
+    d <- rv$primers
+    k <- exact_rows(d)
+    if (!length(k)) return()
+    names <- make.unique(vapply(k, function(i) default_assay(d[i, , drop = FALSE]), ""), sep = "_")
+    for (j in seq_along(k)) add_pair(d[k[j], , drop = FALSE], names[j])
+    notify_info(sprintf("%d %s added, for %s. Check them in the table on the right.", length(k),
+                             if (length(k) == 1) "pair" else "pairs", paste(names, collapse = " and ")), duration = 8)
+  })
+  # The assay name for a chosen pair: the reference table's name for it, as a FAIRe assay_name
+  # (letters, digits, dots, hyphens and underscores), or its gene when it has none.
+  default_assay <- function(r) {
+    a <- if ("assay_name" %in% names(r) && !is.na(r$assay_name)) trimws(r$assay_name) else ""
+    if (!nzchar(a) && "target_gene" %in% names(r) && !is.na(r$target_gene)) a <- sub("\\s.*", "", r$target_gene)
+    gsub("^_+|_+$", "", gsub("[^A-Za-z0-9_.-]+", "_", a))
+  }
+  observeEvent(input$primers_table_rows_selected, {
+    i <- input$primers_table_rows_selected
+    if (length(i)) updateTextInput(session, "pr_assay", value = default_assay(primers_shown()[i, , drop = FALSE]))
+  })
+  output$primers_table <- renderDT({
+    d <- primers_shown()
+    cols <- c(how_likely = "How likely", query = "Found from", matched_by = "Found by", assay_name = "Assay", target_gene = "Gene",
               pcr_primer_name_forward = "Forward primer", pcr_primer_forward = "Forward sequence",
               pcr_primer_name_reverse = "Reverse primer", pcr_primer_reverse = "Reverse sequence",
               pcr_primer_reference_forward = "Reference", notes = "Notes")
     keep <- intersect(names(cols), names(d))
+    # "exact match" stands out in green, so the pairs the study most likely used are easy to see
+    if ("how_likely" %in% keep) {
+      h <- htmltools::htmlEscape(ifelse(is.na(d$how_likely), "", as.character(d$how_likely)))
+      d$how_likely <- sub("^exact match:?\\s*", '<span class="likely-exact">exact match</span><br>', h)
+    }
     datatable(d[, keep], rownames = FALSE, selection = "single", class = "compact stripe", colnames = unname(cols[keep]),
-              options = list(scrollX = TRUE, pageLength = 5, dom = "tip"))
+              escape = which(keep != "how_likely"), options = list(scrollX = TRUE, pageLength = 5, dom = "tip"))
   })
   output$pr_chosen <- renderUI({
     i <- input$primers_table_rows_selected
     if (!length(i)) return(help_text("No pair chosen yet: click a row of the table."))
-    r <- rv$primers[i, ]
+    r <- primers_shown()[i, ]
     nm <- function(x) if (x %in% names(r) && !is.na(r[[x]])) r[[x]] else ""
     div(class = "res-ok", icon("circle-check"),
         sprintf(" Chosen: %s / %s (%s).", nm("pcr_primer_name_forward"), nm("pcr_primer_name_reverse"),
@@ -890,15 +1154,11 @@ server <- function(input, output, session) {
   })
   observeEvent(input$pr_add, {
     i <- input$primers_table_rows_selected
-    if (!length(i)) return(showNotification("Choose a primer pair in the table first.", type = "error"))
-    r <- rv$primers[i, ]
-    f <- intersect(primer_fields, names(r))
-    f <- f[nzchar(trimws(unlist(r[f])))]
+    if (!length(i)) return(notify_error("Choose a primer pair in the table first."))
+    r <- primers_shown()[i, ]
     assay <- trimws(input$pr_assay)
-    pv <- rv$pv
-    pv <- pv[!(pv$term %in% f & pv$assay == assay), , drop = FALSE]
-    rv$pv <- rbind(pv, data.frame(term = f, value = unname(unlist(r[f])), assay = assay))
-    showNotification(sprintf("%d values added for %s.", length(f), if (nzchar(assay)) assay else "every assay"), type = "message")
+    n <- add_pair(r, assay)
+    notify_info(sprintf("%d values added for %s.", n, if (nzchar(assay)) assay else "every assay"))
   })
 
   # The project terms of the chosen section of the checklist (PCR and primers first), or all of them
@@ -916,7 +1176,9 @@ server <- function(input, output, session) {
   })
   output$pv_table <- renderDT({
     datatable(rv$pv, rownames = FALSE, editable = list(target = "cell"), class = "compact stripe",
-              options = list(pageLength = 8, dom = "tip", scrollX = TRUE),
+              options = list(pageLength = 8, dom = "tip", autoWidth = FALSE,
+                             columnDefs = list(list(width = "36%", targets = 0), list(width = "44%", targets = 1),
+                                               list(width = "20%", targets = 2))),
               colnames = c("FAIRe term", "Value", "Assay"))
   })
   observeEvent(input$pv_table_cell_edit, {
@@ -934,7 +1196,7 @@ server <- function(input, output, session) {
     }
   })
   observeEvent(input$pv_add, {
-    if (blank(input$pv_term) || blank(input$pv_value)) return(showNotification("Choose a term and give a value.", type = "error"))
+    if (blank(input$pv_term) || blank(input$pv_value)) return(notify_error("Choose a term and give a value.", "pv_term"))
     rv$pv <- rbind(rv$pv, data.frame(term = input$pv_term, value = input$pv_value, assay = trimws(input$pv_assay)))
     updateTextInput(session, "pv_value", value = "")
   })
@@ -943,12 +1205,12 @@ server <- function(input, output, session) {
     p <- fpath(input$pv_file); req(p)
     if (galaxy_ext(p) == "xlsx") {
       if (!"Method details" %in% xlsx_sheets(p))
-        return(showNotification("This workbook is not a review sheet from find method details.", type = "error"))
+        return(notify_error("This workbook is not a review sheet from find method details."))
       d <- read_method_review(p)
     } else {
       d <- if (galaxy_ext(p) == "csv") utils::read.csv(p, colClasses = "character", check.names = FALSE) else read_tsv(p)
       if (is.null(d) || !all(c("term", "value") %in% names(d)))
-        return(showNotification("The table needs columns named term and value.", type = "error"))
+        return(notify_error("The table needs columns named term and value."))
       if (!"assay" %in% names(d)) d$assay <- ""
     }
     add_values(d[, c("term", "value", "assay")])
@@ -960,15 +1222,14 @@ server <- function(input, output, session) {
     have <- paste(rv$pv$term, rv$pv$assay)
     dup <- paste(d$term, d$assay) %in% have
     rv$pv <- rbind(rv$pv, d[!dup, , drop = FALSE])
-    showNotification(paste0(sum(!dup), " values added", if (any(dup)) paste0("; ", sum(dup), " left out, as their terms ",
-                            "already have a value (delete it first to replace it)") else "", "."),
-                     type = "message", duration = 6)
+    notify_info(paste0(sum(!dup), " values added", if (any(dup)) paste0("; ", sum(dup), " left out, as their terms ",
+                            "already have a value (delete it first to replace it)") else "", "."), duration = 6)
   }
 
   # ------------------------------------------------------------ mapper d: other method details
   observeEvent(input$run_details, {
     texts <- unname(unlist(lapply(input$pr_texts, fpath)))
-    if (!length(texts)) return(showNotification("Choose your methods (under Look for primers in: My methods).", type = "error"))
+    if (!length(texts)) return(notify_error("Choose your methods (text or PDF) at the top of this step.", "pr_texts"))
     assays <- unique(rv$pv$assay[nzchar(rv$pv$assay)])
     res <- with_run("Reading the methods", run_method_details(sd, texts, input$pr_texts, paste(assays, collapse = ","),
                                                               input$md_assay_type %||% "metabarcoding"))
@@ -1000,11 +1261,13 @@ server <- function(input, output, session) {
                             d$level[i]),
                 tags$span(class = "md-section", d$section[i]),
                 if (!is.na(desc) && nzchar(desc)) bslib::tooltip(
-                  tags$span(class = "term-help", tabindex = "0", `aria-label` = paste("What is", d$term[i]),
+                  tags$span(class = "term-help", tabindex = "0", role = "button", `aria-label` = paste("What is", d$term[i]),
                             icon("circle-question")), desc)),
             div(class = "md-fields",
-                textAreaInput(paste0("md_val_", i), NULL, d$value[i], rows = if (nchar(d$value[i]) > 70) 3 else 1),
-                textInput(paste0("md_assay_", i), NULL, d$assay[i], placeholder = "assay (all)")),
+                tagAppendAttributes(textAreaInput(paste0("md_val_", i), NULL, d$value[i], rows = if (nchar(d$value[i]) > 70) 3 else 1),
+                                    `aria-label` = paste("Value for", d$term[i]), .cssSelector = "textarea"),
+                tagAppendAttributes(textInput(paste0("md_assay_", i), NULL, d$assay[i], placeholder = "assay (all)"),
+                                    `aria-label` = paste("Assay for", d$term[i]), .cssSelector = "input")),
             if ("tested" %in% names(d) && nzchar(d$tested[i])) div(class = "md-tested", "Record: ", d$tested[i]),
             if (nzchar(d$note[i])) div(class = "md-note", d$note[i]),
             tags$details(class = "md-evidence", tags$summary(substr(d$evidence[i], 1, 140),
@@ -1052,13 +1315,13 @@ server <- function(input, output, session) {
     d <- rv$details; req(d)
     keep <- as.integer(input$md_kept %||% integer())
     keep <- keep[keep >= 1 & keep <= nrow(d)]
-    if (!length(keep)) return(showNotification("Tick the values to keep first.", type = "error"))
+    if (!length(keep)) return(notify_error("Tick the values to keep first."))
     tier <- if ("confidence" %in% names(d)) d$confidence else rep("check", nrow(d))
     assay <- vapply(keep, function(i) trimws(input[[paste0("md_assay_", i)]] %||% ""), character(1))
     twice <- unique(d$term[keep][duplicated(paste(d$term[keep], assay))])
     if (length(twice))
-      return(showNotification(paste0("More than one value is ticked for ", paste(twice, collapse = ", "),
-                                     ". Keep one value per term (or give each its assay)."), type = "error", duration = 10))
+      return(notify_error(paste0("More than one value is ticked for ", paste(twice, collapse = ", "),
+                                     ". Keep one value per term (or give each its assay).")))
     vals <- data.frame(term = d$term[keep],
                        value = vapply(keep, function(i) input[[paste0("md_val_", i)]] %||% d$value[i], character(1)),
                        assay = vapply(keep, function(i) input[[paste0("md_assay_", i)]] %||% "", character(1)),
@@ -1104,7 +1367,7 @@ server <- function(input, output, session) {
 
   # ------------------------------------------------------------ mapper e: write the workbook
   output$apply_inputs_summary <- renderUI({
-    if (is.null(rv$map_args)) return(div(class = "res-fail", icon("circle-info"), "Propose a mapping first (step b)."))
+    if (is.null(rv$map_args)) return(div(class = "res-info", icon("circle-info"), "Propose a mapping first (step b)."))
     help_text(tags$b("Sample table: "), rv$map_args$table_name, tags$br(), tags$b("Crosswalk: "),
               basename(rv$crosswalk %||% ""), paste0(" (", rv$crosswalk_from, ")"), tags$br(),
               tags$b("Project values: "), nrow(rv$pv), " (step d)")
@@ -1131,6 +1394,23 @@ server <- function(input, output, session) {
     demo_block(kind, i)[[field]] %||% default
   }
 
+  # The assay names given in d. Methods and project values, offered wherever e asks for an assay, so the
+  # names stay the same and the project values link to the right OTU tables and libraries.
+  pv_assays <- reactive({ a <- unique(trimws(rv$pv$assay)); a[!is.na(a) & nzchar(a)] })
+  assay_input <- function(id, label, value) {
+    ch <- unique(c(pv_assays(), if (nzchar(value)) value))
+    selectizeInput(id, label, c("", ch), selected = value,
+                   options = list(create = TRUE, placeholder = if (length(ch)) "choose or type" else "type a name"))
+  }
+  ap_assay_auto <- reactiveVal("")
+  observe({
+    a <- paste(pv_assays(), collapse = ", ")
+    now <- trimws(isolate(input$ap_assay_name) %||% "")
+    if (nzchar(a) && (!nzchar(now) || identical(now, ap_assay_auto()))) {
+      updateTextInput(session, "ap_assay_name", value = a)
+      ap_assay_auto(a)
+    }
+  })
   output$otu_blocks <- renderUI({
     n <- rv$otu_n
     if (!n) return(help_text("No OTU tables. The workbook will hold the sample and project metadata only."))
@@ -1142,7 +1422,8 @@ server <- function(input, output, session) {
           selectInput(b("file"), term_label("OTU or ASV table", "otu_table"), ch, selected = bval("otu", i, "file")),
           layout_columns(
             col_widths = c(4, 4, 4),
-            textInput(b("assay"), term_label("Assay", "assay"), bval("otu", i, "assay")),
+            assay_input(b("assay"), term_label("Assay", "assay"),
+                        bval("otu", i, "assay", if (length(pv_assays()) == 1) pv_assays() else "")),
             textInput(b("run"), term_label("Sequencing run ID", "run_id"), bval("otu", i, "run")),
             selectInput(b("stage"), term_label("Write as", "stage"), c("final (otuFinal, taxaFinal)" = "final", "raw (otuRaw, taxaRaw)" = "raw"),
                         selected = bval("otu", i, "stage", "final"))),
@@ -1183,18 +1464,18 @@ server <- function(input, output, session) {
           selectInput(b("file"), term_label("Library table", "library_table"), ch, selected = bval("lib", i, "file")),
           layout_columns(
             col_widths = c(4, 4, 4),
-            textInput(b("assay"), "Assays of these libraries", bval("lib", i, "assay")),
+            textInput(b("assay"), "Assays of these libraries", bval("lib", i, "assay", paste(pv_assays(), collapse = ", "))),
             textInput(b("filter"), "Only libraries whose name holds", bval("lib", i, "filter")),
             textInput(b("run"), "Sequencing run ID", bval("lib", i, "run"))),
           textInput(b("sheet"), "Excel sheet (optional)", bval("lib", i, "sheet")))
     })
   })
 
-  observeEvent(input$run_apply, {
+  do_apply <- function() {
     a <- rv$map_args
-    if (is.null(a)) return(showNotification("Propose a mapping first (step b).", type = "error"))
+    if (is.null(a)) return(notify_error("Propose a mapping first (step b)."))
     pid <- trimws(input$ap_project_id)
-    if (!nzchar(pid)) return(showNotification("Give a project ID.", type = "error"))
+    if (!nzchar(pid)) return(notify_error("Give a project ID.", "ap_project_id"))
     g <- function(kind, i, field) { v <- input[[bid(kind, i, field)]]; if (is.null(v)) "" else trimws(v) }
     otus <- list()
     for (i in seq_len(rv$otu_n)) {
@@ -1212,6 +1493,16 @@ server <- function(input, output, session) {
       libs[[length(libs) + 1]] <- list(path = p, name = g("lib", i, "file"), sheet = g("lib", i, "sheet"),
                                        assay = g("lib", i, "assay"), filter = g("lib", i, "filter"), run = g("lib", i, "run"))
     }
+    # The assay names used here should be the ones the project values were given for in d.
+    used <- trimws(unlist(strsplit(c(input$ap_assay_name %||% "", vapply(otus, `[[`, "", "assay"),
+                                     vapply(libs, `[[`, "", "assay")), ",")))
+    odd <- setdiff(unique(used[nzchar(used)]), pv_assays())
+    if (length(pv_assays()) && length(odd))
+      return(notify_error(sprintf(paste(
+        "The assay name%s %s %s not among the assays in d. Methods and project values (%s). Use the same names,",
+        "so the project values go with the right OTU tables and libraries."),
+        if (length(odd) == 1) "" else "s", paste(odd, collapse = ", "), if (length(odd) == 1) "is" else "are",
+        paste(pv_assays(), collapse = ", ")), "ap_assay_name"))
     pv_path <- NULL
     if (nrow(rv$pv)) {
       pv_path <- file.path(sd, "project_values.tsv")
@@ -1222,11 +1513,9 @@ server <- function(input, output, session) {
       pv$tier <- ifelse(is.na(k), "", rv$md_prov$tier[k])
       write_tsv(pv, pv_path)
     }
-    if (rv$crosswalk_from == "proposed, not yet reviewed")
-      showNotification("The review has not been saved: only the mapper's accepted matches are written.", type = "warning")
     utc <- trimws(input$ap_utc_offset %||% "")
     if (nzchar(utc) && !grepl("^(Z|[+-](0[0-9]|1[0-4]):[0-5][0-9])$", utc))
-      return(showNotification("Give the UTC offset as +10:00, -04:00 or Z, or leave it empty.", type = "error"))
+      return(notify_error("Give the UTC offset as +10:00, -04:00 or Z, or leave it empty.", "ap_utc_offset"))
     at <- if (a$assay_type == "any") "metabarcoding" else a$assay_type
     res <- with_run("Writing the FAIRe workbook", run_apply(
       sd, a$table, a$sheet, a$header_row, rv$crosswalk, at, a$sample_types, pid,
@@ -1235,8 +1524,34 @@ server <- function(input, output, session) {
       drop_unmapped = input$ap_drop_unmapped, otu_tables = otus, library_tables = libs, table_name = a$table_name))
     if (!is.null(pv_path)) file.copy(pv_path, res$dir)
     rv$res$apply <- res
-    if (res$ok && file.exists(res$outputs$workbook)) set_workbook(res$outputs$workbook, "written by the FAIRe mapper")
-  })
+    if (res$ok && file.exists(res$outputs$workbook)) {
+      set_workbook(res$outputs$workbook, "written by the FAIRe mapper")
+      rv$written <- Sys.time()
+    }
+  }
+  observeEvent(input$run_apply, apply_clicked())
+  observeEvent(input$run_apply_bottom, apply_clicked())
+  apply_clicked <- function() {
+    st <- review_status()
+    if (st == "unsaved") {
+      showModal(modalDialog(
+        title = "Your review has changes that are not saved",
+        tags$p("The workbook is written from the saved review. Save your changes first, or write it without them."),
+        footer = tagList(modalButton("Cancel"), actionButton("apply_without", "Write without these changes"),
+                         actionButton("apply_save_first", "Save the review, then write", class = "btn-primary"))))
+    } else if (st == "unreviewed") {
+      n <- sum(review()$rows$kind == "review")
+      showModal(modalDialog(
+        title = "The mapping has not been reviewed",
+        tags$p(sprintf(paste("Only the mapper's accepted matches will be written. The %d %s for review will be kept as",
+                             "your own terms, so their values will not be under FAIRe terms."), n, if (n == 1) "row" else "rows")),
+        footer = tagList(modalButton("Cancel"), actionButton("apply_without", "Write it anyway"),
+                         actionButton("apply_goto_review", "Go to the review", class = "btn-primary"))))
+    } else do_apply()
+  }
+  observeEvent(input$apply_save_first, { removeModal(); save_review(review_state(), "reviewed here"); do_apply() })
+  observeEvent(input$apply_without, { removeModal(); do_apply() })
+  observeEvent(input$apply_goto_review, { removeModal(); nav_select("mapper_steps", "c. Review the mapping") })
   apply_log <- reactive({
     res <- rv$res$apply
     if (is.null(res) || is.null(res$outputs$log)) return(NULL)
@@ -1248,7 +1563,7 @@ server <- function(input, output, session) {
     tagList(
       result_ui(res),
       if (res$ok) tagList(
-        tags$p("This is now the workbook in use. Next, ", actionLink("goto_check", "check it with FAIRe-fier"), "."),
+        tags$p(inline("This is now the workbook in use. Next, ", actionLink("goto_check", "check it with FAIRe-fier"), ".")),
         tags$details(tags$summary("What the mapper wrote, and what is still empty"), tags$pre(class = "log", apply_log()))))
   })
   observeEvent(input$goto_check, nav_select("main", "2. Check"))
@@ -1257,7 +1572,7 @@ server <- function(input, output, session) {
   # ------------------------------------------------------------ check
   observeEvent(input$run_fairefier, {
     wb <- picked_workbook("ck_wb")
-    if (is.null(wb)) return(showNotification("Choose a workbook.", type = "error"))
+    if (is.null(wb)) return(notify_error("Choose a workbook.", "ck_wb"))
     rv$res$fairefier <- with_run("Checking the workbook", run_fairefier(sd, wb, input$ck_version))
   })
   output$fairefier_result <- renderUI({
@@ -1268,8 +1583,8 @@ server <- function(input, output, session) {
     tagList(
       if (!is.null(s)) tagList(
         div(class = if (isTRUE(s$valid)) "res-ok big" else "res-fail big",
-            icon(if (isTRUE(s$valid)) "circle-check" else "triangle-exclamation"),
-            if (isTRUE(s$valid)) "The workbook passes." else "The workbook does not pass yet."),
+            icon(if (isTRUE(s$valid)) "circle-check" else "circle-xmark"),
+            if (isTRUE(s$valid)) "The workbook passes." else tagList(tags$b("Error: "), "the workbook does not pass yet.")),
         if (isTRUE(s$valid)) help_text("A pass means the format and the required fields are right, not that the values",
                                        "are: those rest on your review of the mapping and the method details."),
         div(class = "stats", lapply(sheets, function(sh) {
@@ -1298,7 +1613,7 @@ server <- function(input, output, session) {
   cv_wb <- reactive(picked_workbook("cv_wb"))
   need_wb <- function() {
     wb <- cv_wb()
-    if (is.null(wb)) showNotification("Choose the workbook to convert, at the top of the page.", type = "error")
+    if (is.null(wb)) notify_error("Choose the workbook to convert, at the top of the page.", "cv_wb")
     wb
   }
   wb_info <- reactive({
@@ -1317,8 +1632,29 @@ server <- function(input, output, session) {
     }
     erm <- if ("experimentRunMetadata" %in% sheets) read_faire_sheet(wb, "experimentRunMetadata") else NULL
     runs <- if (!is.null(erm) && "seq_run_id" %in% names(erm)) unique(erm$seq_run_id[nzchar(erm$seq_run_id)]) else character()
-    list(assays = assays[nzchar(assays)], runs = runs, sheets = sheets)
+    libs <- if (!is.null(erm) && "lib_id" %in% names(erm)) unique(erm$lib_id[nzchar(erm$lib_id)]) else character()
+    smd <- if ("sampleMetadata" %in% sheets) read_faire_sheet(wb, "sampleMetadata") else NULL
+    list(assays = assays[nzchar(assays)], runs = runs, libs = libs, sheets = sheets,
+         sample_fields = if (is.null(smd)) character() else names(smd),
+         run_fields = if (is.null(erm)) character() else names(erm))
   })
+  # The Convert fields that name the workbook's fields, assays or runs offer them, and still take typing.
+  offer <- function(id, choices) {
+    cur <- isolate(input[[id]])
+    updateSelectizeInput(session, id, choices = unique(c(cur, choices)), selected = cur)
+  }
+  observe({
+    w <- wb_info()
+    offer("nb_duplicates", w$sample_fields)
+    offer("nb_exclude", w$sample_fields)
+    offer("eo_location", w$sample_fields)
+    offer("er_assay_name", w$assays)
+    offer("er_seq_runs", w$runs)
+    offer("qi_suffix_col", w$run_fields)
+    offer("ns_runs_values", switch(input$ns_runs_by %||% "all", assay = w$assays, seq_run = w$runs, lib_id = w$libs,
+                                   character()))
+  })
+  joined <- function(x) paste(x %||% character(), collapse = ", ")
 
   output$ns_accessions_ui <- renderUI({
     ch <- file_names("\\.(tsv|tab|txt|csv)$")
@@ -1353,30 +1689,30 @@ server <- function(input, output, session) {
     org <- if (input$nb_organism == "other") input$nb_organism_other else input$nb_organism
     rv$res$ncbi_biosample <- with_run("Writing the BioSample table", run_ncbi_biosample(
       sd, wb, org, input$nb_bioproject, input$nb_mandatory_fill, input$nb_associated, input$nb_duplicates,
-      input$nb_convert_dates, input$nb_mixs_units, input$nb_title, input$nb_title_columns, input$nb_extra, input$nb_exclude))
+      input$nb_convert_dates, input$nb_mixs_units, input$nb_title, input$nb_title_columns, input$nb_extra, joined(input$nb_exclude)))
   })
   observeEvent(input$run_ncbi_sra, {
     wb <- need_wb(); req(wb)
     acc <- if (input$ns_link == "accessions") fpath(input$ns_accessions) else NULL
-    if (input$ns_link == "accessions" && is.null(acc)) return(showNotification("Choose the BioSample accession table.", type = "error"))
+    if (input$ns_link == "accessions" && is.null(acc)) return(notify_error("Choose the BioSample accession table.", "ns_accessions"))
     org <- if (input$nb_organism == "other") input$nb_organism_other else input$nb_organism
     rv$res$ncbi_sra <- with_run("Writing the SRA table", run_ncbi_sra(
-      sd, wb, input$ns_runs_by, input$ns_runs_values, input$ns_associated, input$ns_instrument, acc, org))
+      sd, wb, input$ns_runs_by, joined(input$ns_runs_values), input$ns_associated, input$ns_instrument, acc, org))
   })
   observeEvent(input$run_ena_sample, {
     wb <- need_wb(); req(wb)
-    if (blank(input$es_center)) return(showNotification("Give your centre name.", type = "error"))
+    if (blank(input$es_center)) return(notify_error("Give your centre name.", "es_center"))
     taxon <- if (input$es_taxon == "other") input$es_taxon_id else input$es_taxon
     rv$res$ena_sample <- with_run("Writing the sample XML", run_ena_sample(sd, wb, trimws(input$es_center), taxon, input$es_convert_dates))
   })
   observeEvent(input$run_ena_run, {
     wb <- need_wb(); req(wb)
     rec <- fpath(input$er_receipt)
-    if (is.null(rec)) return(showNotification("Choose ENA's sample receipt from your files.", type = "error"))
-    if (blank(input$er_study) || blank(input$er_center)) return(showNotification("Give the study accession and centre name.", type = "error"))
+    if (is.null(rec)) return(notify_error("Choose ENA's sample receipt from your files.", "er_receipt"))
+    if (blank(input$er_study) || blank(input$er_center)) return(notify_error("Give the study accession and centre name.", if (blank(input$er_study)) "er_study" else "er_center"))
     rv$res$ena_run <- with_run("Writing the experiment and run XML", run_ena_run(
       sd, wb, rec, trimws(input$er_study), trimws(input$er_center), input$er_instrument,
-      if (input$er_assay == "one") input$er_assay_name else "", input$er_assay_suffix, input$er_seq_runs, input$er_ftp))
+      if (input$er_assay == "one") input$er_assay_name %||% "" else "", input$er_assay_suffix, joined(input$er_seq_runs), input$er_ftp))
   })
   output$ena_sample_result <- renderUI(result_ui(rv$res$ena_sample))
   output$ena_run_result <- renderUI(result_ui(rv$res$ena_run))
@@ -1409,9 +1745,9 @@ server <- function(input, output, session) {
   }
   observeEvent(input$run_mdt, {
     wb <- need_wb(); req(wb)
-    if (blank(input$mdt_assay) || blank(input$mdt_run)) return(showNotification("Give the assay and sequencing run.", type = "error"))
+    if (blank(input$mdt_assay) || blank(input$mdt_run)) return(notify_error("Give the assay and sequencing run.", if (blank(input$mdt_assay)) "mdt_assay" else "mdt_run"))
     o <- source_of(input$mdt_otu, wb); t <- source_of(input$mdt_taxa, wb)
-    if (is.null(o) || is.null(t)) return(showNotification("Choose the OTU and taxonomy tables.", type = "error"))
+    if (is.null(o) || is.null(t)) return(notify_error("Choose the OTU and taxonomy tables.", if (is.null(o)) "mdt_otu" else "mdt_taxa"))
     sheet_or <- function(x, default) if (nzchar(x$sheet)) x$sheet else default
     rv$res$mdt <- with_run("Writing the MDT workbook", run_mdt(sd, wb, input$mdt_assay, input$mdt_run, o$path,
                                                               sheet_or(o, "otuFinal"), t$path, sheet_or(t, "taxaFinal"),
@@ -1466,7 +1802,7 @@ server <- function(input, output, session) {
   observeEvent(input$run_eo_match, {
     wb <- need_wb(); req(wb)
     an <- eo_analyses(wb, FALSE)
-    if (!length(an)) return(showNotification("Choose a taxonomy table for at least one assay.", type = "error"))
+    if (!length(an)) return(notify_error("Choose a taxonomy table for at least one assay."))
     res <- with_run("Matching names (this needs internet access)", run_edna2obis_match(sd, an, input$eo_api, input$eo_worms_all))
     rv$res$eo_match <- res
     if (res$ok) rv$eo_mapping <- res$outputs$mapping
@@ -1479,11 +1815,11 @@ server <- function(input, output, session) {
   observeEvent(input$run_eo_build, {
     wb <- need_wb(); req(wb)
     an <- eo_analyses(wb, TRUE)
-    if (!length(an)) return(showNotification("Choose the taxonomy and abundance tables.", type = "error"))
+    if (!length(an)) return(notify_error("Choose the taxonomy and abundance tables."))
     mapping <- NULL
     if (input$eo_taxa_source == "mapping") {
       mapping <- if (identical(input$eo_mapping, "__last__")) rv$eo_mapping else fpath(sub("^file:", "", input$eo_mapping %||% ""))
-      if (is.null(mapping)) return(showNotification("Choose the mapping table, or match the taxa first.", type = "error"))
+      if (is.null(mapping)) return(notify_error("Choose the mapping table, or match the taxa first."))
     }
     eml <- if (isTRUE(input$eo_eml)) list(select = "form", title = input$eo_title, abstract = input$eo_abstract,
                                           given_name = input$eo_given, surname = input$eo_surname,
@@ -1491,7 +1827,7 @@ server <- function(input, output, session) {
                                           keywords = "eDNA, metabarcoding")
            else list(select = "none")
     rv$res$eo_build <- with_run("Building the Darwin Core archive", run_edna2obis_build(
-      sd, wb, an, mapping, input$eo_api, text_dates = input$eo_text_dates, location_fields = input$eo_location,
+      sd, wb, an, mapping, input$eo_api, text_dates = input$eo_text_dates, location_fields = joined(input$eo_location),
       core_type = input$eo_core, emof = input$eo_emof, eml = eml))
   })
   output$eo_match_result <- renderUI({
@@ -1554,6 +1890,7 @@ server <- function(input, output, session) {
     unlink(file.path(sd, c("runs", "files", "edna2obis_tables", "project_values.tsv")), recursive = TRUE)
     rv$files <- character(); rv$workbook <- NULL; rv$res <- list(); rv$runs <- list(); rv$identify <- NULL
     rv$map <- NULL; rv$map_args <- NULL; rv$profile <- NULL; rv$crosswalk <- NULL; rv$review_saved <- NULL
+    rv$review_saved_d <- NULL; rv$carry <- NULL; rv$changed <- NULL; rv$written <- NULL
     rv$model <- NULL; rv$model_used <- character(); rv$primers <- NULL; rv$demo <- FALSE; rv$eo_mapping <- NULL
     rv$pv <- data.frame(term = character(), value = character(), assay = character())
     rv$md_prov <- rv$md_prov[0, , drop = FALSE]

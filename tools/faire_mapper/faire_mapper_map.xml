@@ -409,6 +409,10 @@ and the FAIRe term it matches, saved in SSSOM, a standard format for such tables
 correct the crosswalk, most easily in the **review sheet** it also writes, and **FAIRe mapper: apply
 mapping** then uses it to write your FAIRe workbook.
 
+Give it your sample table. You run it once, for the sample table only: your other files need no
+mapping. The OTU, taxonomy and library tables, and the values for the whole project, go straight to
+*apply mapping*.
+
 For every column, the tool scores each FAIRe term on three kinds of evidence:
 
 - **the header**, which it compares with the term's name and its common alternative names (for
@@ -509,8 +513,10 @@ value. Untick *Suggest MIxS or Darwin Core terms* to leave them out.
   only (daily cycles follow local time); and columns matched to FAIRe terms that people often
   confuse (the sampling depth and the depth of the water column, the volume collected and the
   volume extracted, the taxa the primers amplify and the taxa the study set out to detect), with how
-  to tell them apart. The tool lists these and changes nothing. The list has only its header row when there is nothing to
-  decide.
+  to tell them apart; and dates that can be read day first or month first (06/09/2017) when no
+  value settles which, which apply mapping stops on unless told the order (this one is also given as
+  a warning). The tool lists these and changes nothing. The list has only its header row when there is
+  nothing to decide.
 - **summary**: the number of columns in each route, and the number with a MIxS or Darwin Core term
   (*other_standard*).
 

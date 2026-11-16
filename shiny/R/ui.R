@@ -19,6 +19,9 @@ SRA_INSTRUMENTS <- c("Taken from the workbook" = "from_workbook", "Illumina MiSe
 stat_tile <- function(value, label, kind = "") div(class = paste("stat", kind), div(class = "stat-value", value),
                                                   div(class = "stat-label", label))
 help_text <- function(...) tags$p(class = "help-text", ...)
+# Text and tags run together with no space between them (htmltools puts a line break, read as a space,
+# between children), for a link or emphasis followed by punctuation.
+inline <- function(...) HTML(paste(vapply(list(...), function(x) as.character(x), ""), collapse = ""))
 step_intro <- function(...) div(class = "step-intro", ...)
 run_button <- function(id, label) actionButton(id, label, class = "btn-primary run-btn", icon = icon("play"))
 
@@ -47,7 +50,7 @@ GLOSSARY <- c(
                   "for primer names, citations and sequences. A PDF of scanned pages has no text to read."),
   primer_table = paste("The published primers that the names, citations and sequences in your methods are checked against,",
                        "so that primer names are written as in the literature and typos in sequences are caught. The one",
-                       "that comes with the tools holds about 550 pairs: most from Takahashi et al. (2023, Science of the",
+                       "built into this tool holds about 550 pairs: most from Takahashi et al. (2023, Science of the",
                        "Total Environment), plus Wilderlab's assays, the 18S V4 pairs and broad bacteria and archaea 16S",
                        "pairs. Your own table needs primer names and sequences."),
   method_details = paste("FAIRe mapper: find method details reads the methods by rules: it knows the instruments,",
@@ -58,8 +61,10 @@ GLOSSARY <- c(
   own_primer_table = paste("Your own table of primers, for primers not in the reference table: a TSV made by FAIRe mapper:",
                            "build primer table in Galaxy, or one with the same columns (pcr_primer_name_forward,",
                            "pcr_primer_forward, pcr_primer_name_reverse, pcr_primer_reverse and so on)."),
-  primer_assay = paste("The name of the assay this primer pair was used for, such as Fish16S or Euk18S: the same name",
-                       "you give its OTU table in e. Write the workbook. Leave it empty if the project has one assay."),
+  primer_assay = paste("The name of the assay this primer pair was used for, such as Fish16S or Euk18S. It is filled in",
+                       "from the reference table when you click a pair; change it if you call the assay something else.",
+                       "e. Write the workbook offers the same names for the OTU tables and libraries. Leave it empty if",
+                       "the project has one assay."),
   project_values = paste("FAIRe terms with one value for the whole project, or for each assay: the primers, target gene,",
                          "extraction kit, sequencing platform, reference database and so on. They go in projectMetadata."),
   assay = paste("A name for one PCR assay, such as Fish16S or Euk18S. It links the project values, OTU tables and",
@@ -84,7 +89,23 @@ GLOSSARY <- c(
   lineage = "The column of the lineage to use when the table has more than one (from SILVA and PR2, say).",
   layout = "How the read counts are laid out: samples as columns, samples as rows, or one row per sample and sequence.",
   file_kind = paste("What the file seems to be, from its layout, column names and values. If it is wrong, choose the",
-                    "right kind: the app then offers the file in the right places.")
+                    "right kind: the app then offers the file in the right places."),
+  req_levels = paste("FAIRe gives each term a requirement level: Mandatory (M), Highly recommended (HR), Recommended (R)",
+                     "or Optional (O). Mandatory terms are always written; tick the other levels to include their empty",
+                     "columns too, ready to fill in."),
+  biosample = paste("NCBI's record of one biological sample. Each sample gets a BioSample accession (SAMN...), which",
+                    "its sequencing runs in the SRA then refer to."),
+  webin_centre = paste("The centre name registered with your ENA Webin submission account, such as CSIRO. ENA checks",
+                       "it against the account, so give it exactly as registered."),
+  ipt = paste("The Integrated Publishing Toolkit: the software GBIF and OBIS nodes run to publish datasets. You upload",
+              "the Darwin Core archive to an IPT, which publishes it."),
+  emof = paste("Extended Measurement Or Fact: a Darwin Core extension that holds measurements and facts about each",
+               "occurrence or event, such as the sequencing details of each run."),
+  location_id = paste("The fields of sampleMetadata whose values, joined, name a sampling location, so that samples",
+                      "from the same place share a locationID."),
+  manifest = paste("A table that tells QIIME 2 where each sample's fastq files are, so it can import the reads."),
+  checklist_version = paste("The version of the FAIRe checklist the workbook follows. FAIRe-fier reads it from checkls_ver",
+                            "in projectMetadata unless you choose one.")
 )
 
 # Each kind of file identify reports, and where it goes in this app.
@@ -95,20 +116,46 @@ KIND_PLACE <- c(
   "library table" = "e. Write the workbook: Library table",
   "crosswalk" = "c. Review: Add a review sheet you filled in, or Use a crosswalk you edited yourself",
   "data dictionary" = "b. Propose a mapping: Data dictionary",
-  "project values" = "d. Values for the whole project: Or load a table of values",
-  "primer table" = "d. Find primers: My own primer table",
+  "project values" = "d. Methods and project values: Or load a table of values",
+  "primer table" = "d. Methods and project values, Primers: My own primer table",
   "sequences (FASTA)" = "e. Write the workbook: Sequences of this table (under More for this table)",
-  "text" = "d. Find primers: Your methods (text or PDF)",
+  "text" = "d. Methods and project values: Your methods (text or PDF)",
   "not recognised" = "Check the file: its column names may be below a title (set the header row) or on another sheet.")
 
 # A label with a question mark beside it that explains the term on hover or focus.
 term_label <- function(label, key) {
   tags$span(label, " ", bslib::tooltip(
-    tags$span(class = "term-help", tabindex = "0", `aria-label` = paste("What is", label), icon("circle-question")),
+    tags$span(class = "term-help", tabindex = "0", role = "button", `aria-label` = paste("What is", label), icon("circle-question")),
     GLOSSARY[[key]], placement = "right"))
 }
 
-workbook_picker <- function(id) uiOutput(paste0(id, "_ui"))
+workbook_picker <- function(id) tagList(uiOutput(paste0(id, "_ui")), uiOutput(paste0(id, "_stale")))
+
+# The five kinds of information a FAIRe dataset needs, each with the forms it can come in.
+need_item <- function(icon_name, title, what, forms) {
+  div(class = "need", tags$span(class = "need-icon", icon(icon_name)),
+      tags$div(tags$b(paste0(title, ":")), what, tags$span(class = "need-forms", forms)))
+}
+needs_block <- function() {
+  div(class = "needs",
+      tags$h5("What you'll need"),
+      tags$p("Five kinds of information, in whatever form you already have them. The tools read your files as",
+             "they are and put each value into FAIRe's format."),
+      div(class = "needs-list",
+          need_item("vials", "Sample details", "where and when each sample was collected, and which are controls.",
+                    "Your own spreadsheet, in any layout."),
+          need_item("file-lines", "Methods", "how the samples were processed, including the primers.",
+                    "A paper's methods, a report or a ReadMe, as text or PDF."),
+          need_item("table-cells", "OTU or ASV tables and taxonomy",
+                    "the reads of each OTU or ASV in each sample, and the taxon assigned to each.",
+                    "As your pipeline wrote them."),
+          need_item("list-check", "Library and run details",
+                    "which library and sequencing run each sample's reads came from.",
+                    "A sample sheet from your sequencing facility, or an ENA or SRA run report."),
+          need_item("circle-info", "About the project", "a project ID, the people involved and a contact email.",
+                    "Typed into the app, or a small table.")),
+      help_text("The demonstration data has an example of each."))
+}
 
 start_page <- function() {
   nav_panel(
@@ -117,21 +164,27 @@ start_page <- function() {
       col_widths = c(7, 5),
       card(
         card_header("The FAIRe tools"),
-        tags$p("This app brings together the tools for making environmental DNA (eDNA) data FAIR: Findable,",
-               "Accessible, Interoperable and Reusable. It runs the same scripts as the FAIRe tools in the",
-               "Galaxy Australia eDNA Lab, on your own computer, so you can try them on your data before",
-               "you submit anything."),
+        div(class = "start-hero",
+            tags$img(src = "logo_large.png", alt = "", class = "start-logo"),
+            tags$p("This app brings together the tools for making environmental DNA (eDNA) data FAIR: Findable,",
+                   "Accessible, Interoperable and Reusable. It runs the same scripts as the FAIRe tools in the",
+                   "Galaxy Australia eDNA Lab, on your own computer, so you can try them on your data before",
+                   "you submit anything.")),
+        needs_block(),
         tags$p("Each tool does one step of the job. You make a metadata workbook in the FAIRe format, check",
                "it, and then convert it for the place where your data are going: a sequence archive (NCBI",
                "or ENA), a biodiversity database (GBIF or OBIS), or an analysis in QIIME 2."),
         tags$h5("Where to start"),
         tags$ul(
           tags$li(HTML("<b>If you have no metadata yet</b>, or are planning a study, start with <b>FAIRe-ator</b> under",
-                       "<em>1. Make a workbook</em>. It makes a blank template for you to fill in.")),
+                       "<em>1. Make a workbook</em>. It makes a blank template for you to fill in."),
+                  tags$br(), actionLink("start_faireator", "Open FAIRe-ator", icon = icon("arrow-right"))),
           tags$li(HTML("<b>If you have a sample table in your own format</b>, start with the <b>FAIRe mapper</b> under",
                        "<em>1. Make a workbook</em>. It builds the workbook from your table, your OTU and taxonomy",
-                       "tables and your methods text.")),
-          tags$li(HTML("<b>If you already have a FAIRe workbook</b>, add it to your files and go to <em>2. Check</em>."))),
+                       "tables and your methods text."),
+                  tags$br(), actionLink("start_mapper", "Start the FAIRe mapper", icon = icon("arrow-right"))),
+          tags$li(HTML("<b>If you already have a FAIRe workbook</b>, add it to your files and go to <em>2. Check</em>."),
+                  tags$br(), actionLink("start_check", "Go to 2. Check", icon = icon("arrow-right")))),
         tags$h5("The steps"),
         div(class = "flow",
             div(class = "flow-step", tags$b("1. Make a workbook"), tags$span("FAIRe-ator or the FAIRe mapper")),
@@ -140,8 +193,10 @@ start_page <- function() {
             div(class = "flow-arrow", icon("arrow-right")),
             div(class = "flow-step", tags$b("3. Convert"),
                 tags$span("NCBI, ENA, GBIF, OBIS, QIIME 2"))),
-        help_text("The files you add stay on this computer. Each tool run gets its own folder, listed under",
-                  tags$em("Outputs"), ", and everything is deleted when you close the app.")
+        help_text(HTML(paste(
+          "The files you add stay on this computer. Each tool run gets its own folder, listed under <em>Outputs</em>.",
+          "Everything is deleted when you close the app, or reload or close this page, so download what you want to",
+          "keep from <em>Outputs</em> first. While you have files or results, the browser asks before leaving the page.")))
       ),
       card(
         card_header("Try it with the demonstration data"),
@@ -150,8 +205,9 @@ start_page <- function() {
                "fish taxa, ENA's run report and the methods text. It is for trying the tools, not for",
                "ecological analysis."),
         actionButton("load_demo", "Load the demonstration data", icon = icon("flask"), class = "btn-success"),
-        help_text("Loading the demonstration fills in the forms with the values the trial used. You still",
-                  "press each tool's button yourself, in order, and you do the review of the mapping."),
+        help_text("Loading the demonstration adds these files to Your files and fills in the forms for them, so",
+                  "you can follow each step through to a demonstration FAIRe metadata workbook. You still press",
+                  "each tool's button yourself, in order, and you do the review of the mapping."),
         uiOutput("demo_status"),
         tags$hr(),
         tags$h6("Set-up check"),
@@ -199,15 +255,30 @@ mapper_panel <- function() {
       nav_panel(
         "a. Your files",
         card(
-          card_header("Say what each file is"),
+          card_header("Describe your files automatically, then check them"),
           step_intro("Add every file you have for the dataset to ", tags$em("Your files"), " (on the left):",
                      " the sample table, OTU or ASV tables, taxonomy tables, sequences (FASTA), run reports, and",
                      " your methods or ReadMe (text or PDF). This step looks at each one and says what it seems to",
                      " be and which step it goes to. If it gets one wrong, choose the right kind in the table."),
-          help_text("A sample table is the spreadsheet you keep for your samples, with one row per sample or filter",
-                    "and columns such as site, date, coordinates, depth, volume filtered and which samples are",
-                    "controls. Reads per ASV or taxon, and taxon assignments, go in separately as OTU and",
-                    "taxonomy tables, even if you keep them in the same spreadsheet."),
+          tags$h6("Unsure how your files should be described?"),
+          help_text("Once the files are identified, you check that each one has been described properly. Here is",
+                    "some help:"),
+          tags$ul(
+            class = "help-text kind-help",
+            tags$li(tags$b("Sample table:"), " the spreadsheet you keep for your samples, with one row per sample",
+                    " or filter and columns such as site, date, coordinates, depth, volume filtered and which",
+                    " samples are controls."),
+            tags$li(tags$b("OTU or ASV table:"), " the number of reads of each OTU, ASV or taxon in each sample. A",
+                    " table of reads summed per taxon is usually a final (curated) table."),
+            tags$li(tags$b("Taxonomy table:"), " the taxon assigned to each OTU or ASV, in rank columns (Kingdom,",
+                    " Phylum and so on) or as a lineage, with no read counts."),
+            tags$li(tags$b("Library table:"), " one row per sequencing library or run, such as a run report from",
+                    " ENA or the SRA, or a sheet naming each sample's sequence files."),
+            tags$li(tags$b("Sequences (FASTA):"), " the OTU or ASV sequences, each after a line starting with >."),
+            tags$li(tags$b("Methods or ReadMe:"), " text or a PDF describing how the samples were collected and",
+                    " processed. A PDF of scanned pages has no text the tools can read.")),
+          help_text("Reads per OTU, ASV or taxon, and taxon assignments, go in separately as OTU and taxonomy",
+                    "tables, even if you keep them in the same spreadsheet."),
           run_button("run_identify", "Identify my files"),
           uiOutput("identify_result")
         )
@@ -218,11 +289,18 @@ mapper_panel <- function() {
           col_widths = c(4, 8),
           card(
             card_header("Your sample table"),
+            step_intro(HTML(paste(
+              "This step proposes a FAIRe term for each column of your sample table. You do it once, for the",
+              "sample table only. Your other files need no mapping: the methods go in at <em>d. Methods and",
+              "project values</em>, and the OTU, taxonomy and library tables at <em>e. Write the workbook</em>."))),
+            tags$h6(class = "group-head", "Your table"),
             uiOutput("map_table_ui"),
             uiOutput("map_sheet_ui"),
             numericInput("map_header_row", term_label("Row holding the column headers", "header_row"), 1, min = 1, max = 50),
             help_text("Change this when the sheet has a title or notes above the headers. Comment lines",
                       "starting with # (as in NCBI and ENA submission sheets) are skipped without it."),
+            tags$h6(class = "group-head", "Your study"),
+            help_text("These decide which FAIRe terms apply to your samples."),
             radioButtons("map_assay_type", term_label("Assay type", "assay_type"), c("Metabarcoding" = "metabarcoding",
                                                            "Targeted" = "targeted", "Either" = "any"), inline = TRUE),
             checkboxGroupInput("map_sample_types", term_label("Sample types", "sample_types"), SAMPLE_TYPES, selected = "Water", inline = TRUE),
@@ -230,7 +308,7 @@ mapper_panel <- function() {
             checkboxInput("map_other_terms", term_label("Suggest MIxS or Darwin Core terms for columns with no FAIRe term", "other_terms"), TRUE),
             help_text("The FAIRe guidelines ask for a MIxS or Darwin Core term, where one exists, before a name of",
                       "your own. These suggestions are always for review."),
-            run_button("run_map", "Propose a mapping")
+            run_button("run_map", "Propose a mapping for the information in your sample table")
           ),
           card(card_header("Proposed mapping"), uiOutput("map_result"))
         )
@@ -245,7 +323,8 @@ mapper_panel <- function() {
                      "choose Accept to use the proposed term, Reject to keep the column as your own term, or Change",
                      "and pick a replacement: the best candidates for the column come first. A MIxS or Darwin Core",
                      "term is used by accepting it, or by choosing it as the replacement. Rows for review are",
-                     "shaded; a row for review with no decision is kept as your own term."),
+                     "shaded; a row for review with no decision is kept as your own term. Do the review here and",
+                     "save it, or, if you would rather, do it in Excel (see below)."),
           uiOutput("review_toolbar"),
           uiOutput("review_saved"),
           uiOutput("review_table")
@@ -285,43 +364,51 @@ mapper_panel <- function() {
         )
       ),
       nav_panel(
-        "d. Primers and project values",
+        "d. Methods and project values",
         layout_columns(
-          col_widths = c(5, 7),
+          col_widths = c(6, 6),
           card(
-            card_header("Your methods and the primers"),
-            step_intro("Your methods (text or PDF) are where the values for the whole project come from. The app",
-                       "reads them twice: for primers, which it checks against a reference table of published",
-                       "primers, and for the other method details, such as the filters, extraction kit, PCR",
-                       "conditions, sequencing kit, software and reference databases. Both give proposals for you",
-                       "to check; what you keep goes into the values for the whole project, on the right."),
-            radioButtons("pr_mode", "Look for primers in", c("My methods" = "text", "Names or citations I type" = "names"),
-                         inline = TRUE),
-            conditionalPanel("input.pr_mode == 'text'", uiOutput("pr_texts_ui")),
+            card_header("Your methods"),
+            step_intro("Your methods (text or PDF) are where most values for the whole project come from. The app",
+                       "reads them for the primers, which it checks against a reference table of published primers,",
+                       "and for the other method details, such as the filters, extraction kit, PCR conditions,",
+                       "sequencing kit, software and reference databases. Both give proposals for you to check;",
+                       "what you keep goes into the values for the whole project, on the right."),
+            conditionalPanel("input.methods_tabs != 'Primers' || input.pr_mode == 'text'", uiOutput("pr_texts_ui")),
             uiOutput("pr_texts_open"),
-            conditionalPanel("input.pr_mode == 'names'",
-                             textAreaInput("pr_names", "Names or citations, one per line", rows = 4,
-                                           placeholder = "MiFish-U\nLeray et al. 2013"),
-                             textInput("pr_gene", "Only primers for this gene (optional)", placeholder = "for example 12S")),
-            radioButtons("pr_source", term_label("Reference table of primers to check against", "primer_table"),
-                         c("The reference table that comes with the tools" = "bundled",
-                           "The reference table and my own" = "both",
-                           "My own table only" = "own")),
-            help_text("Checking against a reference table keeps primer names the same as in the literature and",
-                      "catches typos in sequences. The one that comes with the tools holds about 550 published primer",
-                      "pairs, most from Takahashi et al. (2023) and Wilderlab's assays. Add your own table if your",
-                      "primers are not in it."),
-            conditionalPanel("input.pr_source != 'bundled'", uiOutput("pr_own_ui")),
-            run_button("run_primers", "Find primers"),
-            uiOutput("primers_result"),
-            tags$hr(),
-            tags$h6(term_label("Other method details", "method_details")),
-            help_text("Reads the same methods for the filtration, extraction, PCR, sequencing and bioinformatics, and",
-                      "proposes a FAIRe value for each term it recognises, with the sentence it came from."),
-            radioButtons("md_assay_type", term_label("Assay type", "assay_type"),
-                         c("Metabarcoding" = "metabarcoding", "Targeted (qPCR, ddPCR)" = "targeted"), inline = TRUE),
-            run_button("run_details", "Find method details"),
-            uiOutput("details_result")
+            navset_underline(
+              id = "methods_tabs",
+              nav_panel(
+                "Primers",
+                radioButtons("pr_mode", "Look for primers in", c("My methods" = "text", "Names or citations I type" = "names"),
+                             inline = TRUE),
+                conditionalPanel("input.pr_mode == 'names'",
+                                 textAreaInput("pr_names", "Names or citations, one per line", rows = 4,
+                                               placeholder = "MiFish-U\nLeray et al. 2013"),
+                                 textInput("pr_gene", "Only primers for this gene (optional)", placeholder = "for example 12S")),
+                radioButtons("pr_source", term_label("Reference table of primers to check against", "primer_table"),
+                             c("The reference table built into this tool" = "bundled",
+                               "The reference table and my own" = "both",
+                               "My own table only" = "own")),
+                help_text("Checking against a reference table keeps primer names the same as in the literature and",
+                          "catches typos in sequences. The one built into this tool holds about 550 published primer",
+                          "pairs, most from Takahashi et al. (2023) and Wilderlab's assays. Add your own table if your",
+                          "primers are not in it."),
+                conditionalPanel("input.pr_source != 'bundled'", uiOutput("pr_own_ui")),
+                run_button("run_primers", "Find primers"),
+                uiOutput("primers_result")
+              ),
+              nav_panel(
+                "Other method details",
+                help_text("Reads your methods for the filtration, extraction, PCR, sequencing and bioinformatics, and",
+                          "proposes a FAIRe value for each term it recognises, with a snippet of text from the source so",
+                          "that you can check it."),
+                radioButtons("md_assay_type", term_label("Assay type", "assay_type"),
+                             c("Metabarcoding" = "metabarcoding", "Targeted (qPCR, ddPCR)" = "targeted"), inline = TRUE),
+                run_button("run_details", "Find method details"),
+                uiOutput("details_result")
+              )
+            )
           ),
           card(
             card_header(term_label("Values for the whole project", "project_values")),
@@ -330,27 +417,32 @@ mapper_panel <- function() {
                        "your methods. List them here and they are written to projectMetadata. Leave the assay empty",
                        "for a value that applies to every assay."),
             uiOutput("pv_missing"),
-            DTOutput("pv_table"),
+            DTOutput("pv_table", fill = FALSE),
             div(class = "btn-row",
                 actionButton("pv_delete", "Delete the selected rows", icon = icon("trash")),
                 downloadButton("pv_download", "Download as a table")),
-            tags$h6("Add a value"),
+            accordion(
+              open = FALSE, class = "pv-more",
+              accordion_panel(
+                "Add a value by hand", icon = icon("plus"),
             radioButtons("pv_section", "Offer the FAIRe terms for",
                          c("PCR and primers" = "PCR", "Library preparation and sequencing" = "Library preparation sequencing",
                            "Bioinformatics" = "Bioinformatics", "The project" = "Project", "Data management" = "Data management",
                            "Targeted assays (qPCR, ddPCR)" = "Targeted assay detection", "All" = "all"),
                          inline = TRUE),
+            selectizeInput("pv_term", "FAIRe term", choices = NULL, width = "100%",
+                           options = list(placeholder = "type to search")),
             layout_columns(
-              col_widths = c(4, 5, 3),
-              selectizeInput("pv_term", "FAIRe term", choices = NULL, options = list(placeholder = "type to search")),
-              textInput("pv_value", "Value"),
-              textInput("pv_assay", "Assay (optional)")),
-            actionButton("pv_add", "Add", icon = icon("plus")),
-            tags$h6("Or load a table of values"),
+              col_widths = c(8, 4),
+              textInput("pv_value", "Value", width = "100%"),
+              textInput("pv_assay", "Assay (optional)", width = "100%")),
+            actionButton("pv_add", "Add", icon = icon("plus"))),
+              accordion_panel(
+                "Load a table of values", icon = icon("file-import"),
             help_text("A table with the columns term, value and (optionally) assay, or a review sheet from find",
                       "method details that you filled in with Excel, from your files. Its values are added to these."),
             uiOutput("pv_file_ui"),
-            actionButton("pv_load", "Load these values", icon = icon("file-import"))
+            actionButton("pv_load", "Load these values", icon = icon("file-import"))))
           )
         )
       ),
@@ -360,11 +452,18 @@ mapper_panel <- function() {
           col_widths = c(5, 7),
           div(
             card(
-              card_header("Project"),
+              card_header("Write the workbook"),
               uiOutput("apply_inputs_summary"),
+              run_button("run_apply", "Write the FAIRe workbook"),
+              help_text("Check the details below first: about your samples, then the OTU and library tables.")
+            ),
+            card(
+              card_header("About your samples"),
               textInput("ap_project_id", "Project ID", placeholder = "for example SEA-MES_eDNA"),
               textInput("ap_assay_name", "Assay name(s)", placeholder = "for example Fish16S"),
-              help_text("Separated by commas. Leave empty when an OTU table names its assays in a column."),
+              help_text("Separated by commas. Filled in from the assays named in d. Methods and project values: keep",
+                        "the same names, so the project values go with the right OTU tables. Leave empty when an OTU",
+                        "table names its assays in a column."),
               textInput("ap_country", "Country or sea for geo_loc_name (optional)", placeholder = "for example Australia"),
               textInput("ap_utc_offset", term_label("UTC offset of the times of collection (optional)", "utc_offset"), placeholder = "for example +10:00"),
               help_text("When the table gives the time of collection in its own column, the time is joined to its",
@@ -373,12 +472,16 @@ mapper_panel <- function() {
                         "local time with it."),
               selectInput("ap_date_order", "Dates such as 06/09/2017",
                           c("Stop and ask me" = "stop", "Day first (as in Australia)" = "dmy", "Month first" = "mdy")),
-              checkboxGroupInput("ap_req_lev", "Fields to include as well as the mandatory ones", REQ_LEVELS,
-                                 selected = REQ_LEVELS, inline = TRUE),
-              checkboxInput("ap_include_review", "Also write the matches still for review (rows with no decision)", FALSE),
-              help_text("For a first draft only. Matches for Mandatory and commonly confused terms are still left out",
-                        "until you decide them, and the workbook's README and log say it is a draft."),
-              checkboxInput("ap_drop_unmapped", "Leave out columns not matched to a FAIRe term", FALSE)
+              accordion(
+                open = FALSE,
+                accordion_panel(
+                  "What to write (optional settings)", icon = icon("sliders"),
+                  checkboxGroupInput("ap_req_lev", term_label("Fields to include as well as the mandatory ones", "req_levels"),
+                                     REQ_LEVELS, selected = REQ_LEVELS, inline = TRUE),
+                  checkboxInput("ap_include_review", "Also write the matches still for review (rows with no decision)", FALSE),
+                  help_text("For a first draft only. Matches for Mandatory and commonly confused terms are still left out",
+                            "until you decide them, and the workbook's README and log say it is a draft."),
+                  checkboxInput("ap_drop_unmapped", "Leave out columns not matched to a FAIRe term", FALSE)))
             ),
             card(
               card_header("OTU or ASV tables"),
@@ -399,7 +502,7 @@ mapper_panel <- function() {
                   actionButton("lib_add", "Add a library table", icon = icon("plus"), class = "btn-sm"),
                   actionButton("lib_remove", "Remove the last", icon = icon("minus"), class = "btn-sm"))
             ),
-            run_button("run_apply", "Write the FAIRe workbook")
+            run_button("run_apply_bottom", "Write the FAIRe workbook")
           ),
           card(card_header("The workbook"), uiOutput("apply_result"), wb_preview_ui("apply_preview"))
         )
@@ -420,7 +523,8 @@ check_page <- function() {
                    "warnings and a copy of each problem sheet, with those cells highlighted: red for errors and",
                    "yellow for warnings. Correct the workbook, add it to your files and check it again until it passes."),
         workbook_picker("ck_wb"),
-        selectInput("ck_version", "FAIRe checklist version", c("Read it from the workbook" = "auto", "v1.0.2", "v1.0")),
+        selectInput("ck_version", term_label("FAIRe checklist version", "checklist_version"),
+                    c("Read it from the workbook" = "auto", "v1.0.2", "v1.0")),
         run_button("run_fairefier", "Check the workbook")
       ),
       card(card_header("Result"), uiOutput("fairefier_result"))
@@ -447,7 +551,8 @@ convert_page <- function() {
           col_widths = c(6, 6),
           div(
             tags$h5("FAIRe2NCBI: BioSample"),
-            help_text("Writes the BioSample table for the NCBI Submission Portal. You need an NCBI account to upload it."),
+            help_text("Writes the", term_label("BioSample", "biosample"), "table for the NCBI Submission Portal. You need",
+                      "an NCBI account to upload it."),
             selectInput("nb_organism", "Organism for samples with none in the workbook", c(ORGANISMS, "Other" = "other")),
             conditionalPanel("input.nb_organism == 'other'", textInput("nb_organism_other", "Organism name")),
             textInput("nb_bioproject", "BioProject accession (optional)", placeholder = "PRJNA..."),
@@ -455,9 +560,13 @@ convert_page <- function() {
                         c("Stop and list them" = "stop", "Fill with 'not collected'" = "not collected",
                           "Fill with 'not provided'" = "not provided", "Fill with 'not applicable'" = "not applicable",
                           "Fill with 'missing'" = "missing", "Fill with 'missing: control sample'" = "missing: control sample")),
+            help_text("A fill value goes into every empty mandatory cell, for every sample, and tells NCBI why there is",
+                      "no value: 'not collected' (it was not measured), 'not provided' (it exists but is not given),",
+                      "'not applicable' (the field does not apply), 'missing: control sample' (a control) or 'missing'",
+                      "(no reason given). Stop and list them to fill them in yourself instead."),
             selectInput("nb_associated", "Samples to include",
                         c("All samples" = "all", "Only samples not yet submitted" = "blank_only")),
-            textInput("nb_duplicates", "Field that tells apart samples with identical attributes (optional)"),
+            selectizeInput("nb_duplicates", "Field that tells apart samples with identical attributes (optional)", choices = NULL, multiple = FALSE, options = list(create = TRUE, placeholder = "choose from the workbook, or type")),
             help_text("NCBI refuses samples whose attributes are all the same. Name a field, such as a replicate",
                       "label, that differs between them."),
             accordion(open = FALSE, accordion_panel(
@@ -469,7 +578,7 @@ convert_page <- function() {
               conditionalPanel("input.nb_title == 'custom'", textInput("nb_title_columns", "BioSample columns to join")),
               selectInput("nb_extra", "Other sampleMetadata fields", c("Add all" = "all", "Add all except some" = "except",
                                                                        "Add none" = "none")),
-              conditionalPanel("input.nb_extra == 'except'", textInput("nb_exclude", "Fields to leave out")))),
+              conditionalPanel("input.nb_extra == 'except'", selectizeInput("nb_exclude", "Fields to leave out", choices = NULL, multiple = TRUE, options = list(create = TRUE, placeholder = "choose from the workbook, or type"))))),
             run_button("run_ncbi_biosample", "Write the BioSample table"),
             uiOutput("ncbi_biosample_result")
           ),
@@ -479,7 +588,7 @@ convert_page <- function() {
                       "lib_id and the fastq file names. In the Submission Portal, upload the fastq files after the table."),
             selectInput("ns_runs_by", "Runs to include", c("All" = "all", "By assay" = "assay",
                                                            "By sequencing run" = "seq_run", "By library" = "lib_id")),
-            conditionalPanel("input.ns_runs_by != 'all'", textInput("ns_runs_values", "Values, separated by commas")),
+            conditionalPanel("input.ns_runs_by != 'all'", selectizeInput("ns_runs_values", "Which ones", choices = NULL, multiple = TRUE, options = list(create = TRUE, placeholder = "choose from the workbook, or type"))),
             selectInput("ns_associated", "Runs already submitted", c("Include them" = "all", "Only runs not yet submitted" = "blank_only")),
             selectInput("ns_instrument", "Sequencing instrument", SRA_INSTRUMENTS),
             radioButtons("ns_link", "Link runs to their BioSamples by",
@@ -498,7 +607,7 @@ convert_page <- function() {
             tags$h5("FAIRe2ENA: samples"),
             help_text("Writes the sample XML for ENA. You submit it to ENA's Webin service yourself, and ENA returns",
                       "a receipt with the sample accessions."),
-            textInput("es_center", "Centre name, as registered with your Webin account", placeholder = "for example CSIRO"),
+            textInput("es_center", term_label("Centre name, as registered with your Webin account", "webin_centre"), placeholder = "for example CSIRO"),
             selectInput("es_taxon", "Sample taxon", c("marine metagenome (408172)" = "408172",
                                                       "freshwater metagenome (449393)" = "449393",
                                                       "aquatic metagenome (1169740)" = "1169740", "Other" = "other")),
@@ -514,13 +623,13 @@ convert_page <- function() {
                       "upload area first."),
             uiOutput("er_receipt_ui"),
             textInput("er_study", "ENA study accession", placeholder = "PRJEB..."),
-            textInput("er_center", "Centre name"),
+            textInput("er_center", term_label("Centre name", "webin_centre")),
             selectInput("er_instrument", "Sequencing instrument", ENA_INSTRUMENTS, selected = "Illumina MiSeq"),
             radioButtons("er_assay", "Assays to include", c("All" = "all", "One" = "one"), inline = TRUE),
             conditionalPanel("input.er_assay == 'one'",
-                             textInput("er_assay_name", "assay_name"),
+                             selectizeInput("er_assay_name", term_label("Assay", "assay"), choices = NULL, multiple = FALSE, options = list(create = TRUE, placeholder = "choose from the workbook, or type")),
                              checkboxInput("er_assay_suffix", "Add the assay name to experiment and run aliases", TRUE)),
-            textInput("er_seq_runs", "Sequencing runs to include (optional)"),
+            selectizeInput("er_seq_runs", "Sequencing runs to include (optional: all when empty)", choices = NULL, multiple = TRUE, options = list(create = TRUE, placeholder = "choose from the workbook, or type")),
             textInput("er_ftp", "FTP sub-folder of the read files (optional)"),
             run_button("run_ena_run", "Write the experiment and run XML"),
             uiOutput("ena_run_result")
@@ -530,26 +639,28 @@ convert_page <- function() {
       nav_panel(
         "GBIF (MDT)",
         layout_columns(
-          col_widths = c(5, 7),
+          col_widths = 12,
           div(
+            class = "convert-one",
             tags$h5("FAIRe2MDT"),
             help_text("Writes a workbook for GBIF's Metabarcoding Data Toolkit (MDT), which turns it into Darwin",
                       "Core for GBIF. Run it once for each assay and sequencing run."),
             uiOutput("mdt_assay_ui"),
             uiOutput("mdt_tables_ui"),
             selectInput("mdt_controls", "Control samples", c("Leave them out, as GBIF asks" = "omit", "Keep them" = "keep")),
-            run_button("run_mdt", "Write the MDT workbook")
-          ),
-          div(uiOutput("mdt_result"))
+            run_button("run_mdt", "Write the MDT workbook"),
+            uiOutput("mdt_result")
+          )
         )
       ),
       nav_panel(
         "OBIS and GBIF (Darwin Core)",
         layout_columns(
-          col_widths = c(5, 7),
+          col_widths = 12,
           div(
+            class = "convert-one",
             tags$h5("edna2obis"),
-            help_text("Writes a Darwin Core archive for an IPT (Integrated Publishing Toolkit), which suits OBIS and",
+            help_text("Writes a Darwin Core archive for an", term_label("IPT", "ipt"), "(Integrated Publishing Toolkit), which suits OBIS and",
                       "GBIF. First it matches the names in your taxonomy tables to WoRMS or GBIF, which needs",
                       "internet access. You can check the matches, then build the archive."),
             uiOutput("eo_tables_ui"),
@@ -557,51 +668,58 @@ convert_page <- function() {
                                                         "GBIF Backbone Taxonomy, for GBIF" = "GBIF")),
             checkboxInput("eo_worms_all", "Include non-marine taxa (WoRMS)", FALSE),
             run_button("run_eo_match", "1. Match taxa"),
+            uiOutput("eo_match_result"),
             tags$hr(),
             radioButtons("eo_taxa_source", "Taxonomy for the Darwin Core tables",
                          c("The mapping table from step 1" = "mapping", "Look the names up again" = "api"), inline = TRUE),
             conditionalPanel("input.eo_taxa_source == 'mapping'", uiOutput("eo_mapping_ui")),
-            selectInput("eo_core", "Archive layout", c("Occurrence core" = "occurrence", "Event core" = "event")),
-            selectInput("eo_emof", "Extended Measurement Or Fact (eMoF) extension",
-                        c("The standard eMoF fields" = "default", "Leave the eMoF out" = "none")),
-            help_text("The eMoF joins runs by lib_id, so leave it out if a lib_id is used by more than one run."),
             selectInput("eo_text_dates", "Text dates such as 7/6/19", c("Stop and ask me" = "stop", "Day first" = "dmy",
                                                                         "Month first" = "mdy")),
-            textInput("eo_location", "sampleMetadata fields that make up locationID", "line_id, station_id"),
-            checkboxInput("eo_eml", "Write the dataset metadata (eml.xml) now", FALSE),
-            conditionalPanel("input.eo_eml",
-                             textInput("eo_title", "Dataset title (optional: project_name is used otherwise)"),
-                             textAreaInput("eo_abstract", "Abstract", rows = 3),
-                             layout_columns(textInput("eo_given", "Given name"), textInput("eo_surname", "Surname")),
-                             layout_columns(textInput("eo_org", "Organisation"), textInput("eo_email", "Email")),
-                             selectInput("eo_licence", "Licence", c("CC0", "CC-BY", "CC-BY-NC"), selected = "CC-BY")),
-            run_button("run_eo_build", "2. Build the Darwin Core archive")
-          ),
-          div(uiOutput("eo_match_result"), uiOutput("eo_build_result"))
+            accordion(open = FALSE, accordion_panel(
+              "Archive settings", icon = icon("sliders"),
+              selectInput("eo_core", "Archive layout", c("Occurrence core" = "occurrence", "Event core" = "event")),
+              selectInput("eo_emof", term_label("Extended Measurement Or Fact (eMoF) extension", "emof"),
+                          c("The standard eMoF fields" = "default", "Leave the eMoF out" = "none")),
+              help_text("The eMoF joins runs by lib_id, so leave it out if a lib_id is used by more than one run."),
+              selectizeInput("eo_location", term_label("sampleMetadata fields that make up locationID", "location_id"),
+                             choices = c("line_id", "station_id"), selected = c("line_id", "station_id"), multiple = TRUE,
+                             options = list(create = TRUE, placeholder = "choose from the workbook, or type")),
+              checkboxInput("eo_eml", "Write the dataset metadata (eml.xml) now", FALSE),
+              conditionalPanel("input.eo_eml",
+                               textInput("eo_title", "Dataset title (optional: project_name is used otherwise)"),
+                               textAreaInput("eo_abstract", "Abstract", rows = 3),
+                               layout_columns(textInput("eo_given", "Given name"), textInput("eo_surname", "Surname")),
+                               layout_columns(textInput("eo_org", "Organisation"), textInput("eo_email", "Email")),
+                               selectInput("eo_licence", "Licence", c("CC0", "CC-BY", "CC-BY-NC"), selected = "CC-BY")))),
+            run_button("run_eo_build", "2. Build the Darwin Core archive"),
+            uiOutput("eo_build_result")
+          )
         )
       ),
       nav_panel(
         "QIIME 2",
         layout_columns(
-          col_widths = c(5, 7),
+          col_widths = 12,
           div(
+            class = "convert-one",
             tags$h5("FAIRe2QIIME"),
             help_text("Writes QIIME 2 sample metadata and, if you want them, manifest files for importing the reads.",
                       "It needs target_gene for each assay in projectMetadata."),
             selectInput("qi_sample_col", "Column to use as the QIIME 2 sample ID", c("lib_id", "samp_name")),
-            radioButtons("qi_manifests", "Write manifest files?", c("Yes" = "yes", "No, metadata only" = "no"), inline = TRUE),
+            radioButtons("qi_manifests", term_label("Write manifest files?", "manifest"), c("Yes" = "yes", "No, metadata only" = "no"), inline = TRUE),
             conditionalPanel("input.qi_manifests == 'yes'",
                              textInput("qi_folder", "Folder that holds the sequencing run folders", "/path/to/sequences"),
                              help_text("On the computer where QIIME 2 runs. The manifests give each fastq file's full path.")),
             radioButtons("qi_suffix", "Make repeated sample IDs unique?", c("No" = "no", "Yes" = "yes"), inline = TRUE),
             conditionalPanel("input.qi_suffix == 'yes'",
-                             textInput("qi_suffix_col", "Column to take the suffix from", "seq_run_id"),
+                             selectizeInput("qi_suffix_col", "Column to take the suffix from", choices = "seq_run_id",
+                                            selected = "seq_run_id", options = list(create = TRUE)),
                              selectInput("qi_suffix_dir", "Take characters from the", c("start (left)" = "left", "end (right)" = "right")),
                              numericInput("qi_suffix_n", "Number of characters", 20, min = 1),
                              textInput("qi_suffix_delim", "Text to put before the suffix", "_")),
-            run_button("run_qiime", "Write the QIIME 2 files")
-          ),
-          div(uiOutput("qiime_result"))
+            run_button("run_qiime", "Write the QIIME 2 files"),
+            uiOutput("qiime_result")
+          )
         )
       )
     )
@@ -614,8 +732,8 @@ outputs_page <- function() {
     card(
       card_header("Everything the tools wrote in this session"),
       help_text("Each run has its own folder with its inputs, outputs and a log of the exact command, so any file",
-                "can be traced to the run that wrote it. The folder is deleted when you close the app, so download",
-                "what you want to keep."),
+                "can be traced to the run that wrote it. The folder is deleted when you close the app, or reload or",
+                "close this page, so download what you want to keep."),
       div(class = "btn-row",
           downloadButton("download_all", "Download everything (zip)"),
           actionButton("clear_session", "Start again", icon = icon("rotate-left"), class = "btn-outline-danger")),
