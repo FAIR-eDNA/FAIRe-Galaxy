@@ -409,6 +409,10 @@ and the FAIRe term it matches, saved in SSSOM, a standard format for such tables
 correct the crosswalk, most easily in the **review sheet** it also writes, and **FAIRe mapper: apply
 mapping** then uses it to write your FAIRe workbook.
 
+Give it your sample table. You run it once, for the sample table only: your other files need no
+mapping. The OTU, taxonomy and library tables, and the values for the whole project, go straight to
+*apply mapping*.
+
 For every column, the tool scores each FAIRe term on three kinds of evidence:
 
 - **the header**, which it compares with the term's name and its common alternative names (for

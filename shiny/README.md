@@ -51,6 +51,10 @@ A few things that help along the way:
   FASTA files and PDFs by their content, whatever they are called. If it gets one wrong, choose the
   right kind in its table: the app then offers the file in the right places. *Look inside* shows the
   file, to help you decide.
+- **b. Propose a mapping** is done once, for the sample table only. Once *a. Your files* has run, it
+  offers only the files found to be sample tables. The other files need no mapping: the methods go in
+  at *d. Methods and project values*, and the OTU, taxonomy and library tables at *e. Write the
+  workbook*.
 - **Methods** can be text or a PDF. *d. Methods and project values* reads them for primers (the
   *Primers* tab) and for the other method details, such as PCR conditions and the sequencing platform
   (the *Other method details* tab), and lists the mandatory project terms still to give. A PDF of

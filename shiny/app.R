@@ -442,11 +442,27 @@ server <- function(input, output, session) {
   })
 
   # ------------------------------------------------------------ mapper b: propose
+  # The sample table: once a. Your files has run, only the files it found to be sample tables are
+  # offered, with a note saying where the choice came from.
   output$map_table_ui <- renderUI({
-    ch <- file_names("\\.(csv|tsv|txt|tab|xlsx)$", kinds = "sample table")
+    idf <- rv$identify
+    found <- if (is.null(idf)) character() else intersect(unique(idf$file[idf$kind == "sample table"]), names(rv$files))
+    ch <- if (length(found)) found else file_names("\\.(csv|tsv|txt|tab|xlsx)$", kinds = "sample table")
     default <- if (rv$demo && "SEA-MES_10L_samples.csv" %in% ch) "SEA-MES_10L_samples.csv" else guess_file("sample table")
-    selectInput("map_table", term_label("Sample table", "sample_table"), c("Choose a file" = "", ch),
-                selected = keep_or("map_table", default))
+    note <- if (length(found) == 1) {
+      help_text("This is the file ", tags$em("a. Your files"), " identified as your sample table. If that is wrong,",
+                "change its kind there.")
+    } else if (length(found) > 1) {
+      help_text(tags$em("a. Your files"), " found ", length(found), " files that look like sample tables. The mapping",
+                "is for one table: choose the one that holds your sample details. If they are parts of one",
+                "table, combine them into one file first.")
+    } else {
+      help_text("Choose the file that holds your sample details. Running ", tags$em("a. Your files"),
+                " first finds it for you.")
+    }
+    tagList(selectInput("map_table", term_label("Sample table", "sample_table"), c("Choose a file" = "", ch),
+                        selected = keep_or("map_table", default)),
+            note)
   })
   output$map_sheet_ui <- renderUI({
     p <- fpath(input$map_table)

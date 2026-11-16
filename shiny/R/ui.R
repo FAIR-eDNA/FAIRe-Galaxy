@@ -234,6 +234,10 @@ mapper_panel <- function() {
           col_widths = c(4, 8),
           card(
             card_header("Your sample table"),
+            step_intro(HTML(paste(
+              "This step proposes a FAIRe term for each column of your sample table. You do it once, for the",
+              "sample table only. Your other files need no mapping: the methods go in at <em>d. Methods and",
+              "project values</em>, and the OTU, taxonomy and library tables at <em>e. Write the workbook</em>."))),
             uiOutput("map_table_ui"),
             uiOutput("map_sheet_ui"),
             numericInput("map_header_row", term_label("Row holding the column headers", "header_row"), 1, min = 1, max = 50),
