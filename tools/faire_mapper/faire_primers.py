@@ -674,22 +674,33 @@ def text_candidates(t, text):
     return sorted(by_pair.values(), key=lambda e: (-len(e['evidence']), -e['rank'], e['assay_name']))
 
 
-LIKELY = 'likely: the methods give its sequences'
-POSSIBLE = 'possible: found from a primer name or citation; check it against the paper'
-LIKELY_ORDER = ('likely', 'possible', 'less likely')
+EXACT = 'exact match: both sequences in the methods match this pair in the reference table'
+LIKELY_ORDER = ('exact match', 'close match', 'as written', 'possible', 'less likely')
 
 
 def how_likely(found):
     """How likely each pair found in a methods text is to be one the study used. Sequences written in
-    the text are the strongest evidence. A pair found only from a name or citation is less likely when
-    the text gives the sequences of another pair for the same gene: one name (16SF, say) can belong to
-    several published pairs. Sets 'how_likely' on each entry and returns them, most likely first."""
+    the text are the strongest evidence: an exact match to a pair in the reference table, a close one
+    (reverse primer first, or matching only once IUPAC codes are allowed for), or a pair not in the
+    table, as written. A pair found only from a name or citation is less likely when the text gives
+    the sequences of another pair for the same gene: one name (16SF, say) can belong to several
+    published pairs. Sets 'how_likely' on each entry and returns them, the most likely first."""
     by_gene = {}
     for e in found:
-        if e['matched_by'].startswith('sequences in the text'):
-            e['how_likely'] = LIKELY
-            label = e['assay_name'] or f"{e['pcr_primer_name_forward']}/{e['pcr_primer_name_reverse']}"
-            by_gene.setdefault(e['target_gene'] or '', []).append(label)
+        how = e['matched_by']
+        if how == 'sequences in the text':
+            e['how_likely'] = EXACT
+        elif how == 'sequences in the text (reverse written first)':
+            e['how_likely'] = 'close match: the methods give its sequences, with the reverse primer written first'
+        elif how == 'sequences in the text (matching allowing IUPAC codes)':
+            e['how_likely'] = ('close match: the methods give its sequences, which match once IUPAC codes are '
+                               'allowed for')
+        elif how == 'sequences in the text (not in the primer table)':
+            e['how_likely'] = 'as written: the methods give its sequences, but the pair is not in the reference table'
+        else:
+            continue
+        label = e['assay_name'] or f"{e['pcr_primer_name_forward']}/{e['pcr_primer_name_reverse']}"
+        by_gene.setdefault(e['target_gene'] or '', []).append(label)
     for e in found:
         if 'how_likely' in e:
             continue
@@ -700,7 +711,7 @@ def how_likely(found):
         elif e['matched_by'].startswith('a sequence in the text'):
             e['how_likely'] = 'possible: the methods give one of its sequences; check the other against the paper'
         else:
-            e['how_likely'] = POSSIBLE
+            e['how_likely'] = 'possible: found from a primer name or citation; check it against the paper'
     return sorted(found, key=lambda e: LIKELY_ORDER.index(e['how_likely'].split(':')[0]))
 
 

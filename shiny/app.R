@@ -875,8 +875,11 @@ server <- function(input, output, session) {
             tags$b("Choose the primer pairs you used, one for each assay"),
             tags$ol(
               tags$li("Each row is a published primer pair that matches your methods (or the names you typed).",
-                      "When your methods give the primer sequences, those pairs are marked likely and come first:",
-                      "usually they are the ones you used, one for each assay."),
+                      "When both sequences in your methods match a pair in the reference table, it is an exact",
+                      "match and comes first: usually these are the pairs you used, one for each assay.",
+                      "Add the exact matches adds them all at once, each with its assay name; check them in the",
+                      "table on the right, and delete any that were not used for these data (methods sometimes",
+                      "give the sequences of primers from a pilot comparison, or of blocking primers)."),
               tags$li("Pairs found only from a primer name, for a gene whose sequences your methods already give,",
                       "are less likely (one name can belong to several published pairs), so they are hidden. Show",
                       "them if a pair you used is missing."),
@@ -887,6 +890,7 @@ server <- function(input, output, session) {
                       "your study."),
               tags$li("Do the same for each of your other assays (say COI as well as 16S). The assay names you give",
                       "here are filled in for you in e. Write the workbook, so they stay the same."))),
+        uiOutput("pr_exact_ui"),
         uiOutput("pr_show_all_ui"),
         DTOutput("primers_table"),
         uiOutput("pr_chosen"),
@@ -908,6 +912,35 @@ server <- function(input, output, session) {
     n <- sum(less_likely(rv$primers %||% data.frame()))
     if (n) checkboxInput("pr_show_all", sprintf("Show the %d less likely %s", n, if (n == 1) "pair" else "pairs"),
                          isTRUE(isolate(input$pr_show_all)))
+  })
+  exact_rows <- function(d) {
+    if (is.null(d) || !"how_likely" %in% names(d)) return(integer())
+    which(startsWith(ifelse(is.na(d$how_likely), "", as.character(d$how_likely)), "exact match"))
+  }
+  output$pr_exact_ui <- renderUI({
+    n <- length(exact_rows(rv$primers))
+    if (n) actionButton("pr_add_exact", sprintf("Add the exact %s (%d) to the project values",
+                                                if (n == 1) "match" else "matches", n),
+                        icon = icon("check-double"), class = "btn-primary btn-sm mb-2")
+  })
+  # Puts a pair's values into the project values for an assay, replacing what that assay had.
+  add_pair <- function(r, assay) {
+    f <- intersect(primer_fields, names(r))
+    f <- f[nzchar(trimws(ifelse(is.na(unlist(r[f])), "", unlist(r[f]))))]
+    pv <- rv$pv
+    pv <- pv[!(pv$term %in% f & pv$assay == assay), , drop = FALSE]
+    rv$pv <- rbind(pv, data.frame(term = f, value = unname(unlist(r[f])), assay = assay))
+    length(f)
+  }
+  observeEvent(input$pr_add_exact, {
+    d <- rv$primers
+    k <- exact_rows(d)
+    if (!length(k)) return()
+    names <- make.unique(vapply(k, function(i) default_assay(d[i, , drop = FALSE]), ""), sep = "_")
+    for (j in seq_along(k)) add_pair(d[k[j], , drop = FALSE], names[j])
+    showNotification(sprintf("%d %s added, for %s. Check them in the table on the right.", length(k),
+                             if (length(k) == 1) "pair" else "pairs", paste(names, collapse = " and ")),
+                     type = "message", duration = 8)
   })
   # The assay name for a chosen pair: the reference table's name for it, as a FAIRe assay_name
   # (letters, digits, dots, hyphens and underscores), or its gene when it has none.
@@ -943,13 +976,9 @@ server <- function(input, output, session) {
     i <- input$primers_table_rows_selected
     if (!length(i)) return(showNotification("Choose a primer pair in the table first.", type = "error"))
     r <- primers_shown()[i, ]
-    f <- intersect(primer_fields, names(r))
-    f <- f[nzchar(trimws(unlist(r[f])))]
     assay <- trimws(input$pr_assay)
-    pv <- rv$pv
-    pv <- pv[!(pv$term %in% f & pv$assay == assay), , drop = FALSE]
-    rv$pv <- rbind(pv, data.frame(term = f, value = unname(unlist(r[f])), assay = assay))
-    showNotification(sprintf("%d values added for %s.", length(f), if (nzchar(assay)) assay else "every assay"), type = "message")
+    n <- add_pair(r, assay)
+    showNotification(sprintf("%d values added for %s.", n, if (nzchar(assay)) assay else "every assay"), type = "message")
   })
 
   # The project terms of the chosen section of the checklist (PCR and primers first), or all of them

@@ -63,10 +63,12 @@ A few things that help along the way:
 - **Primers** are checked against a reference table of about 550 published primer pairs, most from
   Takahashi et al. (2023) and Wilderlab's assays. This keeps primer names as they are in the
   literature and catches typos in sequences. If your primers are not in it, add your own table.
-  Pairs whose sequences your methods give are marked likely and come first. Pairs found only from
-  a primer name, for a gene whose sequences the methods already give, are less likely (one name can
-  belong to several published pairs) and are hidden unless you ask for them. Clicking a pair fills
-  in its assay name from the reference table, which you can change. *e. Write the workbook* then
+  Pairs whose two sequences in your methods match the reference table exactly come first, as exact
+  matches, and *Add the exact matches* adds them all with one click, each with its assay name, for
+  you to check in the project values. Pairs found only from a primer name, for a gene whose sequences
+  the methods already give, are less likely (one name can belong to several published pairs) and
+  are hidden unless you ask for them. Clicking a pair fills in its assay name from the reference
+  table, which you can change. *e. Write the workbook* then
   offers the same assay names for the OTU tables and libraries, and stops with a message if a name
   there differs from the ones given in *d*.
 - **Other method details**: in its own tab beside the primers, *Find method details* reads the

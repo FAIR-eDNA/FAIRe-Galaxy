@@ -45,11 +45,12 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   tried on datasets from Australian labs that already have a FAIRe version.
 - New in 0.9.2 (16 November 2026), from Oliver's trial of the Shiny app: for a methods text, *find
   primers* says how likely each pair is to be one the study used, in a new last column
-  (*how_likely*), and lists the most likely first. A pair is likely when the methods give its
-  sequences, and less likely when it was found only from a name but the methods give the sequences
-  of another pair for the same gene (one name, such as 16SF, can belong to several published pairs).
-  On the SEA-MES methods, 2 of the 8 pairs are likely: the 16S fish pair and the COI pair the
-  methods give. Help wording: the reference table "built into this tool", and method details come
+  (*how_likely*), and lists the most likely first: an exact match (both sequences in the methods
+  match a pair in the reference table), a close match (reverse primer first, or matching with IUPAC
+  codes), as written (sequences not in the table), possible, and less likely (found only from a
+  name, when the methods give the sequences of another pair for the same gene: one name, such as
+  16SF, can belong to several published pairs). On the SEA-MES methods, 2 of the 8 pairs are exact
+  matches: the 16S fish pair and the COI pair the methods give. Help wording: the reference table "built into this tool", and method details come
   "with a snippet of text from the source".
 - New in 0.9.1 (15 November 2026): checks against values going into the workbook without a proper
   review (see "Keeping the review thorough" under "Writing the FAIRe workbook" below). A draft
@@ -1129,7 +1130,7 @@ pass in Galaxy `release_25.0` here.
 | find primers | 2 | The same methods as a PDF: the same candidates | passed |
 | find primers | 3 | Names, with the user's table added: user's alias found, bad row left out, unknown names reported | passed |
 | find primers | 4 | User's table only, with a gene filter | passed |
-| find primers | 5 | Methods text with sequences: the TAReuk pair named from the table, a pair not in the table shown as written with its names and gene, an adapter ignored; pairs given as sequences marked likely | passed |
+| find primers | 5 | Methods text with sequences: the TAReuk pair named from the table, a pair not in the table shown as written with its names and gene, an adapter ignored; the pairs marked exact match and as written | passed |
 | build primer table | 1 | User's rows added to the bundled table; bad row reported | passed |
 | build primer table | 2 | New table from a register spreadsheet and a TSV; reused primer names reported | passed |
 | build primer table | 3 | A correction row replaces the pair it corrects and records the change | passed |
