@@ -197,9 +197,15 @@ Python warnings: Galaxy sets `PYTHONWARNINGS=ignore`. edna2obis reports through 
   whose `name_backbone` takes the arguments upstream passes (issues below); the only change to
   pygbif's species functions in 0.6.6 is that one.
 
-## Upstream issues to report
+## Upstream issues
 
 Evidence is in the test data, the local checks or the upstream code at the pinned commit.
+
+We emailed the upstream authors (NOAA 'Omics, AOML) about these on 9 November 2026, and they invited
+GitHub issues. Before posting, we checked each point against edna2obis 4.0.0 (16 November 2026),
+which had already fixed three of them. Two issues were posted on 17 November 2026
+([our issues in aomlomics/edna2obis](https://github.com/aomlomics/edna2obis/issues?q=is%3Aissue%20author%3Aollybolly)). Each point that was reported or fixed says so at its
+end. The others are not yet reported: they are to be checked against 4.0.0 first.
 
 - **GBIF matching needs pygbif 0.6.5 or earlier.** `GBIF_matching.py` calls
   `species.name_backbone(name=..., rank=..., strict=True)` and reads the v1 answer (`usageKey`,
@@ -207,15 +213,17 @@ Evidence is in the test data, the local checks or the upstream code at the pinne
   with new argument names (`scientificName`, `taxonRank`) and a different answer. With 0.6.6 every
   call fails ("Session.request() got an unexpected keyword argument 'name'"), and upstream logs a
   warning and goes on without the backbone matches and their confidence values. Found in the first
-  run with internet access (GitHub, 6 November 2026). Upstream does not pin pygbif.
+  run with internet access (GitHub, 6 November 2026). Upstream does not pin pygbif. *Reported 17
+  November 2026; still the case in 4.0.0.*
 
 - **Failed API requests become *incertae sedis* silently.** `get_worms_batch_worker` catches every
   exception and returns no matches; the GBIF worker logs a warning and moves on; higherClassification
-  lookups return nothing. The run is reported as a success.
+  lookups return nothing. The run is reported as a success. *Reported 17 November 2026, together
+  with the cache below; still the case in 4.0.0.*
 - **GBIF cache keeps failures.** Empty results, including those from failed requests, are saved in
   `gbif_matches_cache_v3.pkl` in the output folder and reused, so later runs in that folder never
   retry those names. (The cache is a pickle loaded from the output folder; safe only if nobody else
-  can write there.)
+  can write there.) *Reported 17 November 2026, with the item above.*
 - **WoRMS matcher keeps SILVA rank prefixes**: `d__Bacteria; p__Cyanobacteria` is looked up as
   "d Bacteria", "p Cyanobacteria" and so on, so these strings never match. The README says prefixes
   are removed; only the GBIF matcher removes them. The WoRMS matcher also deletes digits ("SAR11
@@ -223,7 +231,7 @@ Evidence is in the test data, the local checks or the upstream code at the pinne
 - **Controls stay in when abundance columns are sample names**, as in the GOMECC-4 example's otuRaw
   files: controls are removed by `lib_id` before `samp_name` columns are mapped to `lib_id`. With the
   test tables, the negative control's 13 occurrences stayed in (35 records instead of 22, with the
-  warning "lib_id(s) in abundance table not in ERM").
+  warning "lib_id(s) in abundance table not in ERM"). *Fixed in 4.0.0.*
 - **Single-assay FAIRe workbooks fail** (assay values in `project_level`): "Failed to create
   occurrence core: No data to combine".
 - **eMoF fails when one `lib_id` is used in two assays** (as in the GOMECC-4 example): the join to
@@ -251,7 +259,8 @@ Evidence is in the test data, the local checks or the upstream code at the pinne
   defaults and, when a column is empty, drops it and writes the table again, emptying NA-like text:
   `N/A` in env_medium reached the DNA-derived extension and was then removed. The taxonomy step
   also reads the occurrence table back with pandas' defaults. Found 9 November; the wrapper works
-  around all three reads (item 15).
+  around all three reads (item 15). *4.0.0 keeps IDs written as text and no longer changes text in
+  the final file check; the taxonomy step's read is not yet checked.*
 - **Byte order marks.** Tables from which empty columns are dropped are rewritten as UTF-8 with a
   byte order mark; others are not.
 - **HTML report**: workbook values are inserted without HTML escaping (`to_html(escape=False)`,
@@ -266,7 +275,8 @@ Evidence is in the test data, the local checks or the upstream code at the pinne
   (GU190706-CTD11-220: 244495, the MiFish library; its Riaz library is left out).
 - A tagged release for the current code and a conda package would help, as for the other FAIRe
   tools. pyworms (a separate project) has WoRMS's address as plain HTTP (the driver changes it to
-  HTTPS) and retries each failed request 10 times, 5 seconds apart.
+  HTTPS) and retries each failed request 10 times, 5 seconds apart. *4.0.0 is a tagged release
+  (16 November 2026); a conda package is still to come.*
 
 ## Before deployment on Galaxy Australia
 
@@ -283,9 +293,11 @@ Evidence is in the test data, the local checks or the upstream code at the pinne
    HTTP): the record for Animalia, AphiaID 2, which is the record the driver's check asks for.
 3. **Trial a publication**: load the zip into a test IPT (OBIS or GBIF), and run it through the GBIF
    data validator. Check the byte order marks, eventDate values and the eMoF units.
-4. **Talk to the upstream authors (NOAA 'Omics, AOML).** Tell them about the wrapper and the issues
-   above, offer the `normalise_faire.py` layout fix and the `samp_name` to `lib_id` renaming, and ask
-   for a tagged release. The tool version is the commit date (`2026.10.26`).
+4. **Talk to the upstream authors (NOAA 'Omics, AOML).** Partly done: emailed 9 November 2026, and
+   two issues posted 17 November 2026 (see *Upstream issues*). edna2obis now has tagged releases
+   (4.0.0, 16 November 2026). Still to do: move the wrapper to 4.0.0 and drop the workarounds it no
+   longer needs, check the points not yet reported against it, and offer the `normalise_faire.py`
+   layout fix as a pull request. The tool version is the commit date (`2026.10.26`).
 5. ~~**Check the citation.**~~ Done 7 November: the Zenodo DOI `10.5281/zenodo.23667395`, upstream's
    own citation in the README of the pinned commit, resolves to *aomlomics/edna2obis: v3.2.0* (Willms
    B and Silliman K, published 26 October 2026, MIT licence), the release the wrapper uses.

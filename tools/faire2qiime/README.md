@@ -78,7 +78,13 @@ Upstream: [aomlomics/faire2qiime](https://github.com/aomlomics/faire2qiime) at c
    empties FAIRe's missing-value terms in those two rows of projectMetadata, so the files are named
    by the gene alone (`16S_metadata.tsv`), and says so in the log.
 
-## Upstream issues to report
+## Upstream issues
+
+We emailed the upstream authors (NOAA 'Omics, AOML) about these on 9 November 2026, and they invited
+GitHub issues. All of them were posted on 17 November 2026, after checking them against the latest
+commit (`13e87de`, unchanged since July): one issue for the `#` problem, one for assays that
+overwrite each other's files, and one checklist of the smaller points
+([our issues in aomlomics/faire2qiime](https://github.com/aomlomics/faire2qiime/issues?q=is%3Aissue%20author%3Aollybolly)).
 
 - Generic FAIRe and FAIRe-ator layouts are not read (item 1 above). This matters most for
   Australian users, who are likely to make templates with FAIRe-ator.
@@ -107,9 +113,10 @@ Upstream: [aomlomics/faire2qiime](https://github.com/aomlomics/faire2qiime) at c
 
 ### Must do
 
-1. **Talk to the upstream authors (NOAA 'Omics, AOML).** Tell them about the wrapper, offer the
-   layout fix in `normalise_faire.py` as a pull request, and ask for a tagged release. The tool
-   version is currently the commit date (`2026.07.23`).
+1. **Talk to the upstream authors (NOAA 'Omics, AOML).** Partly done: emailed 9 November 2026, and
+   three issues posted 17 November 2026 (see *Upstream issues*), which offer the layout fix in
+   `normalise_faire.py` as a pull request and ask for a tagged release. Still to do: send the pull
+   request if they would like it. The tool version is currently the commit date (`2026.07.23`).
 2. **Test with an Australian workbook made by FAIRe-ator**, for example a filled-in MiFish or COI
    template. The test data here comes from the NOAA GOMECC-4 example, restructured to mimic the
    FAIRe-ator layout.
