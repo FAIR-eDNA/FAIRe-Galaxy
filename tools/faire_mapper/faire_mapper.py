@@ -34,7 +34,7 @@ from pathlib import Path
 
 import pandas as pd
 
-__version__ = '0.9.3'
+__version__ = '0.10.0'
 
 # Excel saves a drop-down that lists cells of another sheet (the review sheet's replacement terms) in a
 # newer form that openpyxl does not read. Only the cell values are read here, so the warning says
@@ -1796,7 +1796,9 @@ def missing_mandatory(terms, proposals, assay_type=None):
 
 # ------------------------------------------------------------------ outputs
 
-def write_sssom(proposals, path, source_name, checklist_name):
+def write_sssom(proposals, path, source_name, checklist_name, rows=None, carried_from=''):
+    """Write the crosswalk. rows: the rows to write in place of the proposals' own (with decisions
+    carried over from an earlier review, named in carried_from)."""
     header = [
         '# curie_map:',
         '#   FAIRe: https://github.com/FAIR-eDNA/FAIRe_checklist#',
@@ -1806,7 +1808,8 @@ def write_sssom(proposals, path, source_name, checklist_name):
         '#   MIXS: https://w3id.org/mixs/',
         '#   dwc: http://rs.tdwg.org/dwc/terms/',
         f'# mapping_set_id: urn:faire-mapper:{re.sub(r"[^A-Za-z0-9_.-]", "_", source_name)}',
-        f'# mapping_set_description: Proposed mapping of the columns of {source_name} to FAIRe terms ({checklist_name})',
+        f'# mapping_set_description: Proposed mapping of the columns of {source_name} to FAIRe terms ({checklist_name})'
+        + (f', with the decisions of the earlier review {carried_from} carried over' if carried_from else ''),
         '# license: https://creativecommons.org/publicdomain/zero/1.0/',
         f'# mapping_tool: faire_mapper {__version__}',
         f'# mapping_date: {dt.date.today().isoformat()}',
@@ -1828,7 +1831,7 @@ def write_sssom(proposals, path, source_name, checklist_name):
         '#   mapping tool is set to leave such columns out. Rows with a MIxS or Darwin Core term (MIXS: or',
         '#   dwc:) are for columns with no FAIRe term: confirmed, they name the user-defined field.',
     ]
-    rows = crosswalk_rows(proposals)
+    rows = crosswalk_rows(proposals) if rows is None else rows
     cols = ['subject_id', 'subject_label', 'predicate_id', 'object_id', 'object_label',
             'mapping_justification', 'confidence', 'comment', 'combine_order', 'value_part']
     with open(path, 'w', encoding='utf-8') as f:
@@ -2379,6 +2382,17 @@ def cmd_map(args):
     profiles, proposals = propose(df, terms, k=args.shortlist, k_close=args.shortlist_close, overrides=overrides,
                                   answered_by=answered_by,
                                   descriptions=descriptions, confused=confused, other_terms=other_terms)
+    import faire_mapper_review   # here, as it imports this module
+    carry, gone, earlier_name, earlier_kind = None, [], '', ''
+    if args.earlier_review:
+        earlier_name = args.earlier_review_name or Path(args.earlier_review).name
+        try:
+            earlier, earlier_kind = faire_mapper_review.read_earlier_review(args.earlier_review)
+        except Exception as e:   # not a review sheet nor a crosswalk
+            raise SystemExit(f'ERROR: the earlier review {earlier_name} could not be read as a review sheet or a '
+                             f'crosswalk: {e}')
+        by_term = {t.name: t for t in terms}
+        carry, gone = faire_mapper_review.carry_over(proposals, profiles, earlier, by_term, other_terms, earlier_kind)
     out = Path(args.outdir)
     out.mkdir(parents=True, exist_ok=True)
     rep = pd.DataFrame([{'column': p.column, 'proposed_term': p.term, 'faire_sheet': p.sheet,
@@ -2390,7 +2404,10 @@ def cmd_map(args):
                          'other_standard': f'{p.other.source}: {p.other.name} ({p.other_score:.2f})' if p.other else ''}
                         for p in proposals])
     rep.to_csv(out / 'mapping_report.tsv', sep='\t', index=False)
-    write_sssom(proposals, out / 'crosswalk.sssom.tsv', table_name, Path(args.checklist).name)
+    write_sssom(proposals, out / 'crosswalk.sssom.tsv', table_name, Path(args.checklist).name,
+                rows=faire_mapper_review.carried_crosswalk_rows(proposals, carry, {t.name: t for t in terms},
+                                                                other_terms) if carry else None,
+                carried_from=earlier_name if carry else '')
     pd.DataFrame(missing_mandatory(terms, proposals, args.assay_type),
                  columns=['term', 'sheet', 'condition', 'description', 'example', 'note']).to_csv(
         out / 'missing_mandatory.tsv', sep='\t', index=False)
@@ -2399,9 +2416,8 @@ def cmd_map(args):
         json.dump(reqs, f, indent=1)
     review = review_list(df, profiles, proposals, confused)
     pd.DataFrame(review, columns=REVIEW_COLUMNS).to_csv(out / 'review_list.tsv', sep='\t', index=False)
-    import faire_mapper_review   # here, as it imports this module
     faire_mapper_review.write_review_sheet(out / 'review_sheet.xlsx', proposals, profiles, terms, review,
-                                           table_name, k=args.shortlist)
+                                           table_name, k=args.shortlist, carry=carry, earlier_name=earlier_name)
     counts = rep.route.value_counts().to_dict()
     summary = {'table': table_name, 'checklist': Path(args.checklist).name, 'columns': len(proposals),
                'accept': counts.get('accept', 0), 'review': counts.get('review', 0),
@@ -2415,6 +2431,19 @@ def cmd_map(args):
                'ambiguous_dates': [{'column': c, 'example': e}
                                    for c, e in ambiguous_dates(df, [p for p in proposals if p.route != 'no match'])],
                'faire_mapper_version': __version__}
+    if carry is not None:
+        by_status = {s: [c for c, x in carry.items() if x['status'] == s and x['note']]
+                     for s in ('carried', 'changed', 'open', 'new')}
+        decided = [carry[c]['decision'] for c in by_status['carried']]
+        call = {p.column: p.route for p in proposals}
+        summary['earlier_review'] = {
+            'file': earlier_name, 'kind': earlier_kind, 'carried': len(by_status['carried']),
+            'accepted': decided.count('Accept'), 'rejected': decided.count('Reject'), 'changed': decided.count('Change'),
+            'check_again': by_status['changed'], 'new': by_status['new'], 'no_decision': by_status['open'],
+            # what is left to look at: new or undecided columns the mapper wants reviewed, and changed proposals
+            'to_review': by_status['changed'] + [c for c in by_status['new'] + by_status['open']
+                                                 if call[c] in ('review', 'model')],
+            'not_in_table': gone}
     if args.gold:
         gold_df = pd.read_csv(args.gold, sep='\t', dtype=str, keep_default_na=False)
         gold = {r['column']: (r['term'] or None) for r in gold_df.to_dict('records')}
@@ -2433,6 +2462,23 @@ def cmd_map(args):
               + ', '.join(f"{p.column} ({p.other.source} {p.other.name})" for p in proposals if p.other))
     for check, col, rows, _ in review:
         print(f'INFO: to decide: {check} ({col}: {rows})')
+    if carry is not None:
+        e = summary['earlier_review']
+        print(f"INFO: earlier review {e['file']} ({e['kind']}): {e['carried']} decisions carried over "
+              f"({e['accepted']} accepted, {e['rejected']} rejected, {e['changed']} changed)")
+        if not e['carried'] and not e['check_again'] and len(e['new']) == len(carry):
+            print(f"WARNING: none of the columns of this table is in the earlier review {e['file']}. "
+                  f"Is it the review of another table?")
+        if e['new']:
+            print('INFO: new since the earlier review: ' + _first(e['new']))
+        for c in e['check_again']:
+            print(f"WARNING: check again: {c}: {carry[c]['note'][len('check again: '):]}")
+        if e['no_decision']:
+            print('INFO: no decision in the earlier review: ' + _first(e['no_decision']))
+        if e['not_in_table']:
+            print('INFO: in the earlier review but not in this table: ' + _first(e['not_in_table']))
+        print(f"INFO: to review: {len(e['to_review'])} column{'' if len(e['to_review']) == 1 else 's'}"
+              + (': ' + _first(e['to_review']) if e['to_review'] else ''))
     # ambiguous dates stop apply mapping unless the order is given, so they are a warning here
     for column, example in ambiguous_dates(df, [p for p in proposals if p.route != 'no match']):
         print(f"WARNING: '{column}' has dates such as {example} that can be read day first or month first. "
@@ -2471,6 +2517,11 @@ def main(argv=None):
     m.add_argument('--dictionary', help='data dictionary: a table of column, description (and units), or a README '
                                         'with "column: description" lines')
     m.add_argument('--dictionary_sheet', help='Excel sheet of the data dictionary (default: first sheet)')
+    m.add_argument('--earlier_review', help='review sheet (or crosswalk) from an earlier round of mapping this table: '
+                                            'its decisions are carried over, so only new columns and changed '
+                                            'proposals are left to review')
+    m.add_argument('--earlier_review_name', default='', help='name of the earlier review for the outputs (default: '
+                                                             'its file name)')
     m.add_argument('--gold', help='TSV with columns column, term: known answers, to measure accuracy')
     m.add_argument('--table_name', default='',
                    help='the name of the table to show in the outputs (Galaxy gives its files other names); '

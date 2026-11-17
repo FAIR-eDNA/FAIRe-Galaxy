@@ -16,7 +16,7 @@ for (f in c("runner.R", "tools.R", "helpers.R", "ui.R"))
 
 options(shiny.maxRequestSize = 500 * 1024^2, DT.fillContainer = FALSE)
 
-APP_VERSION <- "0.6.0"
+APP_VERSION <- "0.7.0"
 DEMO_DIR <- file.path(getOption("faire.app_dir"), "demo")
 
 # Colours from the logo: petrol, teal, navy, red, orange and yellow (darkened where white text sits
@@ -70,7 +70,7 @@ server <- function(input, output, session) {
 
   rv <- reactiveValues(files = character(), workbook = NULL, workbook_from = "", res = list(), runs = list(),
                        identify = NULL, map = NULL, map_args = NULL, profile = NULL, crosswalk = NULL,
-                       crosswalk_from = "", review_version = 0, review_saved = NULL, review_saved_d = NULL, carry = NULL, changed = NULL, written = NULL,
+                       crosswalk_from = "", review_version = 0, review_saved = NULL, review_saved_d = NULL, changed = NULL, written = NULL,
                        model = NULL, model_used = character(),
                        primers = NULL, details = NULL,
                        pv = data.frame(term = character(), value = character(), assay = character()),
@@ -582,6 +582,23 @@ server <- function(input, output, session) {
                 selected = keep_or("map_dictionary", ""), selectize = FALSE)
   })
 
+  # An earlier review sheet (or crosswalk) of this table, to carry its decisions over. None by default: it
+  # is used only when chosen. a. Your files finds review sheets and crosswalks (kind "crosswalk").
+  output$map_earlier_ui <- renderUI({
+    idf <- rv$identify
+    found <- if (is.null(idf)) character() else intersect(unique(idf$file[idf$kind == "crosswalk"]), names(rv$files))
+    # before a. Your files has run, any workbook or tab-separated file; after, only those it found
+    ch <- if (!is.null(idf)) found else file_names("\\.(xlsx|tsv)$")
+    tagList(
+      selectInput("map_earlier", term_label("Earlier review (optional)", "earlier_review"), c("None" = "", ch),
+                  selected = keep_or("map_earlier", ""), selectize = FALSE),
+      help_text(if (length(found)) tagList(tags$em("a. Your files"),
+                                           sprintf("found %d %s.", length(found),
+                                                   if (length(found) == 1) "review sheet or crosswalk" else "review sheets or crosswalks")),
+                "If you mapped this table before and kept the review sheet, choose it here. Your decisions are",
+                "carried over, so you review only the new columns and any whose proposed term has changed."))
+  })
+
   # Running the mapping again replaces the review, so it asks first when there is one, and offers to keep
   # the decisions for columns that are still there (an Accept only when the mapper still proposes the same term).
   observeEvent(input$run_map, {
@@ -604,7 +621,17 @@ server <- function(input, output, session) {
   do_map <- function(keep) {
     tab <- fpath(input$map_table)
     if (is.null(tab)) return(notify_error("Choose your sample table.", "map_table"))
-    old <- if (keep && !is.null(rv$map)) { d <- review_state(); d$proposed <- review()$rows$proposed; d } else NULL
+    # The decisions to carry over: this session's review (saved as a review sheet first, with any changes
+    # on screen), or a review sheet chosen at "Mapping this table again?"
+    earlier <- NULL; earlier_name <- ""
+    if (keep && !is.null(rv$map)) {
+      dir <- new_run_dir(sd, "review")
+      out <- file.path(dir, "review_in_this_session.xlsx")
+      write_review_decisions(rv$map$outputs$review_sheet, mark_model(review_state()), out, dir)
+      if (file.exists(out)) { earlier <- out; earlier_name <- "your review in this session" }
+    } else if (!is.null(fpath(input$map_earlier))) {
+      earlier <- fpath(input$map_earlier); earlier_name <- input$map_earlier
+    }
     sheet <- if (galaxy_ext(tab) == "xlsx") input$map_sheet %||% "" else ""
     args <- list(table = tab, table_name = input$map_table, sheet = sheet, header_row = input$map_header_row %||% 1,
                  assay_type = input$map_assay_type, sample_types = input$map_sample_types %||% character(),
@@ -613,7 +640,7 @@ server <- function(input, output, session) {
       prof <- record(run_profile(sd, tab, sheet, args$header_row))
       res <- record(run_map(sd, tab, sheet, args$header_row, args$assay_type, args$sample_types,
                             dictionary = args$dictionary, other_terms = isTRUE(input$map_other_terms),
-                            table_name = args$table_name))
+                            table_name = args$table_name, earlier_review = earlier, earlier_review_name = earlier_name))
     })
     rv$res$map <- res
     rv$profile <- if (prof$ok) read_tsv(prof$outputs$profile) else NULL
@@ -621,22 +648,26 @@ server <- function(input, output, session) {
       rv$map <- res; rv$map_args <- args
       rv$crosswalk <- res$outputs$review_sheet; rv$crosswalk_from <- "proposed, not yet reviewed"
       rv$review_version <- rv$review_version + 1; rv$review_saved <- NULL; rv$review_saved_d <- NULL
-      rv$model <- NULL; rv$model_used <- character(); rv$carry <- NULL
+      rv$model <- NULL; rv$model_used <- character()
       rv$changed <- Sys.time()
-      if (!is.null(old)) {
-        new <- review()$rows
-        k <- match(old$input, new$input)
-        decided <- nzchar(old$decision)
-        ok <- decided & !is.na(k) & (old$decision != "Accept" | old$proposed == new$proposed[pmax(k, 1)])
-        rv$carry <- old[ok, c("input", "decision", "replacement")]
-        save_review(review_state(), "carried over from your earlier review")
-        lost <- old$input[decided & !ok]
-        kept <- sprintf("%d %s kept and saved.", sum(ok), if (sum(ok) == 1) "decision" else "decisions")
-        if (length(lost))
-          notify_warning(paste(kept, sprintf(paste("%d could not be kept, because the column is gone or the mapper now",
-                                                   "proposes another term: %s. Check them in c. Review the mapping."),
-                                             length(lost), paste(lost, collapse = ", "))), duration = NULL)
-        else notify_info(kept, duration = 8)
+      if (!is.null(earlier)) {
+        # The tool filled in the decisions it carried over; saving them makes them the review in use
+        e <- jsonlite::fromJSON(res$outputs$summary)$earlier_review
+        save_review(review_state(), paste("carried over from", earlier_name))
+        listed <- function(x) paste(unlist(x), collapse = ", ")
+        kept <- sprintf("%d %s carried over from %s and saved.", e$carried,
+                        if (e$carried == 1) "decision" else "decisions", earlier_name)
+        todo <- unlist(e$to_review)
+        msg <- c(kept,
+                 if (!e$carried && length(unlist(e$new)) == nrow(review()$rows))
+                   sprintf("None of the columns of this table is in %s: is it the review of another table?", earlier_name),
+                 if (length(todo)) sprintf("%d %s to review in c. Review the mapping: %s.", length(todo),
+                                           if (length(todo) == 1) "column" else "columns", listed(todo))
+                 else "Nothing new needs reviewing.",
+                 if (length(unlist(e$not_in_table)))
+                   sprintf("In the earlier review but not in this table: %s.", listed(e$not_in_table)))
+        if (length(todo) || !e$carried) notify_warning(paste(msg, collapse = " "), duration = NULL)
+        else notify_info(paste(msg, collapse = " "), duration = 10)
       }
     }
   }
@@ -709,18 +740,19 @@ server <- function(input, output, session) {
     }, character(1), USE.NAMES = FALSE)
     s$rows$kind <- ifelse(grepl("^review", s$rows$call), "review",
                           ifelse(s$rows$call == "no match", "no-match", "accept"))
+    # From an earlier review: carried (its decision is filled in), check (accepted before, but the proposed
+    # term has changed), new, or none
+    e <- s$rows$earlier
+    s$rows$earlier_kind <- ifelse(startsWith(e, "carried over"), "carried", ifelse(startsWith(e, "check again"), "check",
+                                  ifelse(nzchar(e), "new", "")))
     s
   })
 
   dec_id <- function(i) paste0("rvd", rv$review_version, "_", i)
   rep_id <- function(i) paste0("rvr", rv$review_version, "_", i)
 
-  # A row's starting decision: one carried over from an earlier review of the same column, or the sheet's own.
-  init_choice <- function(r, i, field) {
-    cr <- rv$carry
-    if (!is.null(cr)) { k <- match(r$input[i], cr$input); if (!is.na(k)) return(cr[[field]][k]) }
-    r[[field]][i]
-  }
+  # A row's starting decision: the sheet's own (with any carried over from an earlier review filled in).
+  init_choice <- function(r, i, field) r[[field]][i]
   # The decisions as they stand on screen (the starting ones until a person changes them).
   review_state <- function() {
     r <- review()$rows
@@ -763,9 +795,18 @@ server <- function(input, output, session) {
           tags$span(class = "badge text-bg-warning", sum(r$kind == "review"), "for review"),
           tags$span(class = "badge text-bg-secondary", sum(r$kind == "no-match"), "no match"),
           tags$span(class = "badge text-bg-success", sum(r$kind == "accept"), "accepted by the mapper"),
+          if (any(r$earlier_kind == "carried"))
+            tags$span(class = "badge text-bg-info", sum(r$earlier_kind == "carried"), "carried over from your earlier review"),
+          if (any(r$earlier_kind == "check" | (r$earlier_kind == "new" & r$kind == "review")))
+            tags$span(class = "badge text-bg-warning", sum(r$earlier_kind == "check" | (r$earlier_kind == "new" & r$kind == "review")),
+                      "new or changed to review"),
           tags$label(class = "toggle", tags$input(type = "checkbox", checked = NA,
                                                   onchange = "document.getElementById('review-grid').classList.toggle('hide-accepted', !this.checked)"),
                      " Show the mapper's accepted matches"),
+          if (any(r$earlier_kind == "carried"))
+            tags$label(class = "toggle", tags$input(type = "checkbox", checked = NA,
+                                                    onchange = "document.getElementById('review-grid').classList.toggle('hide-carried', !this.checked)"),
+                       " Show the decisions carried over"),
           if (rv$demo && identical(rv$map_args$table_name, "SEA-MES_10L_samples.csv"))
             actionButton("demo_answers", "Fill in the authors' answers", icon = icon("flask"), class = "btn-sm"),
           actionButton("save_review", "Save the review", icon = icon("floppy-disk"), class = "btn-primary btn-sm")),
@@ -785,7 +826,8 @@ server <- function(input, output, session) {
     s <- review()
     r <- s$rows
     model <- rv$model
-    show <- order(match(r$kind, c("review", "no-match", "accept")), seq_len(nrow(r)))
+    show <- order(r$earlier_kind == "carried", r$earlier_kind != "check",
+                  match(r$kind, c("review", "no-match", "accept")), seq_len(nrow(r)))
     rows <- lapply(show, function(i) {
       x <- r[i, ]
       has_term <- nzchar(x$proposed)
@@ -805,11 +847,15 @@ server <- function(input, output, session) {
         if (length(lists$rest)) tags$optgroup(label = "Every other term", opt(lists$rest)))
       m <- if (!is.null(model)) model[model$column == x$input, , drop = FALSE] else NULL
       tags$div(
-        class = paste("rv-row", paste0("call-", x$kind)),
+        class = paste("rv-row", paste0("call-", x$kind), if (nzchar(x$earlier_kind)) paste0("earlier-", x$earlier_kind)),
         div(class = "rv-col", tags$b(x$input), tags$div(class = "examples", x$examples)),
         div(class = "rv-proposed", if (has_term) x$proposed else tags$span(class = "muted", "none"),
             if (nzchar(x$score)) tags$small(class = "score", paste0(" ", x$score))),
-        div(class = "rv-status", tags$span(class = paste("pill", x$kind), x$call)),
+        div(class = "rv-status", tags$span(class = paste("pill", x$kind), x$call),
+            if (nzchar(x$earlier_kind)) tags$span(
+              class = paste("earlier", x$earlier_kind), title = x$earlier,
+              switch(x$earlier_kind, carried = "carried over", check = "check again",
+                     new = if (startsWith(x$earlier, "no decision")) "no decision before" else "new"))),
         div(class = "rv-evidence", x$reasoning,
             if (!is.null(m) && nrow(m)) tags$div(class = "model-says", icon("robot"),
                                                   paste0(" Model suggests ", if (is.na(m$term[1]) || !nzchar(m$term[1])) "no term" else m$term[1],
@@ -896,27 +942,35 @@ server <- function(input, output, session) {
     if (inherits(up, "error"))
       return(notify_error(paste("That file could not be read:", conditionMessage(up))))
     d <- review_state()
+    now <- review()$rows
     got <- up$rows[!duplicated(up$rows$input), , drop = FALSE]
     k <- match(d$input, got$input)
-    d$decision[!is.na(k)] <- got$decision[k[!is.na(k)]]
-    d$replacement[!is.na(k)] <- got$replacement[k[!is.na(k)]]
-    d$decision[is.na(k)] <- "Reject"
-    d$replacement[is.na(k)] <- ""
+    # an Accept of a term the mapper no longer proposes (a sheet from an earlier mapping) is not taken
+    stale <- !is.na(k) & got$decision[pmax(k, 1)] == "Accept" &
+      nzchar(got$proposed[pmax(k, 1)]) & got$proposed[pmax(k, 1)] != now$proposed[match(d$input, now$input)]
+    use <- !is.na(k) & !stale
+    d$decision[use] <- got$decision[k[use]]
+    d$replacement[use] <- got$replacement[k[use]]
     show_decisions(d)
     save_review(d, paste("from", f$name))
     gone <- d$input[is.na(k)]
     extra <- setdiff(got$input, d$input)
     notes <- c(
-      if (length(gone)) sprintf("%s no row in the sheet, so %s kept as %s own term%s: %s.",
+      if (length(gone)) sprintf("%s no row in the sheet, so %s unchanged: %s.",
                                 if (length(gone) == 1) "1 column has" else paste(length(gone), "columns have"),
-                                if (length(gone) == 1) "it is" else "they are",
-                                if (length(gone) == 1) "its" else "their", if (length(gone) == 1) "" else "s",
+                                if (length(gone) == 1) "its decision is" else "their decisions are",
                                 paste(gone, collapse = ", ")),
+      if (any(stale)) sprintf("%s accepted a term the mapper no longer proposes, so %s: %s.",
+                              if (sum(stale) == 1) "1 row of the sheet" else paste(sum(stale), "rows of the sheet"),
+                              if (sum(stale) == 1) "it is left for you to decide" else "they are left for you to decide",
+                              paste(d$input[stale], collapse = ", ")),
       if (length(extra)) sprintf("%s not %s of this table and %s left out: %s.",
                                  if (length(extra) == 1) "1 row is" else paste(length(extra), "rows are"),
                                  if (length(extra) == 1) "a column" else "columns",
                                  if (length(extra) == 1) "was" else "were", paste(extra, collapse = ", ")),
-      if (any(duplicated(up$rows$input))) "Some input terms are in the sheet twice; their first rows were used.")
+      if (any(duplicated(up$rows$input))) "Some input terms are in the sheet twice; their first rows were used.",
+      if (length(gone) || length(extra) || any(stale))
+        "If it is from an earlier mapping, choose it at b. Propose a mapping, under Mapping this table again?, instead.")
     msg <- paste(c(sprintf("The decisions in %s are on screen and saved.", f$name), notes), collapse = " ")
     if (length(notes)) notify_warning(msg, duration = 15) else notify_info(msg)
   })
@@ -1890,7 +1944,7 @@ server <- function(input, output, session) {
     unlink(file.path(sd, c("runs", "files", "edna2obis_tables", "project_values.tsv")), recursive = TRUE)
     rv$files <- character(); rv$workbook <- NULL; rv$res <- list(); rv$runs <- list(); rv$identify <- NULL
     rv$map <- NULL; rv$map_args <- NULL; rv$profile <- NULL; rv$crosswalk <- NULL; rv$review_saved <- NULL
-    rv$review_saved_d <- NULL; rv$carry <- NULL; rv$changed <- NULL; rv$written <- NULL
+    rv$review_saved_d <- NULL; rv$changed <- NULL; rv$written <- NULL
     rv$model <- NULL; rv$model_used <- character(); rv$primers <- NULL; rv$demo <- FALSE; rv$eo_mapping <- NULL
     rv$pv <- data.frame(term = character(), value = character(), assay = character())
     rv$md_prov <- rv$md_prov[0, , drop = FALSE]

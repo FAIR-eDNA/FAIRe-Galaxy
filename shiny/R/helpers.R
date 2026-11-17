@@ -39,7 +39,8 @@ checklist_terms <- local({
 # and one filled in with Excel go to apply mapping in the same way.
 REVIEW_COLS <- c(input = "Input term", proposed = "Proposed FAIRe term", score = "Score", call = "Mapper's call",
                  reasoning = "Mapper's reasoning", decision = "Reviewer's decision",
-                 replacement = "Replacement FAIRe term", kept_as = "If rejected, kept as")
+                 replacement = "Replacement FAIRe term", kept_as = "If rejected, kept as",
+                 earlier = "Earlier review")
 DECISIONS <- c("Accept", "Reject", "Change")
 
 # rows: one per input term, with the REVIEW_COLS fields. choices: for each input term, its replacement

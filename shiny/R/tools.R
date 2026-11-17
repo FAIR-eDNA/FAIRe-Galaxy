@@ -77,7 +77,7 @@ run_profile <- function(session_dir, table, sheet = "", header_row = 1) {
 run_map <- function(session_dir, table, sheet = "", header_row = 1, assay_type = "metabarcoding",
                     sample_types = character(), responses = NULL, dictionary = NULL, dictionary_sheet = "",
                     shortlist = 5, shortlist_close = 10, other_terms = TRUE, table_name = basename(table),
-                    label = "FAIRe mapper: propose mapping") {
+                    earlier_review = NULL, earlier_review_name = "", label = "FAIRe mapper: propose mapping") {
   d <- new_run_dir(session_dir, if (is.null(responses)) "propose_mapping" else "reviewed_mapping")
   args <- c("map", table_args(table, sheet, header_row), "--checklist", checklist(),
             if (assay_type != "any") c("--assay_type", assay_type),
@@ -86,6 +86,8 @@ run_map <- function(session_dir, table, sheet = "", header_row = 1, assay_type =
             if (!is.null(dictionary)) c("--dictionary", dictionary,
                                         if (!blank(dictionary_sheet)) c("--dictionary_sheet", dictionary_sheet)),
             "--shortlist", shortlist, "--shortlist_close", shortlist_close,
+            if (!is.null(earlier_review)) c("--earlier_review", earlier_review,
+                                            if (nzchar(earlier_review_name)) c("--earlier_review_name", earlier_review_name)),
             if (!other_terms) "--no_other_terms", "--table_name", table_name, "--outdir", "out")
   s <- run_python(tool_path("faire_mapper", "faire_mapper.py"), args, d)
   o <- function(f) file.path(d, "out", f)

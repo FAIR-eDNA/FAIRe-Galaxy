@@ -26,7 +26,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
 
 ## Status
 
-- Version 0.9.3. `planemo lint`: passes with no warnings. `pyflakes`: clean.
+- Version 0.10.0. `planemo lint`: passes with no warnings. `pyflakes`: clean.
 - Goes to Galaxy Australia as an early version with the wrapped FAIRe tools (decided 6 November
   2026). Each tool's help starts with a note saying so, which asks users to check the results and
   send problems to the Galaxy Australia help desk (to confirm with Galaxy Australia, question 8).
@@ -43,6 +43,10 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   independent answer keys (`dev/faire_mapper_real_datasets/`, `dev/faire_mapper_australian_datasets/`,
   summarised below), and end to end on CSIRO's SEA-MES data (`dev/faire_mapper_seames/`). Not yet
   tried on datasets from Australian labs that already have a FAIRe version.
+- New in 0.10.0 (17 November 2026), from Oliver's question about adding data later: mapping in
+  rounds. *Propose mapping* takes an *earlier review* (a review sheet, or a crosswalk) and carries its
+  decisions over, so a table that has gained columns or samples needs reviewing only where something
+  is new ("Mapping again" below). Apply mapping records how many decisions were carried over.
 - New in 0.9.3 (16 November 2026), from a usability audit of the Shiny app: *propose mapping*
   warns, and lists among its checks, when the dates in a column can be read day first or month first
   and no value settles it, so the date order can be set before the workbook is written. *Apply
@@ -394,6 +398,39 @@ review.
 - *Columns to review*: model-agnostic requests, each with the column's values, profile and candidate
   terms (with descriptions, types and allowed values), and an instruction for the answer format.
 - *Summary*: counts by route.
+
+### Mapping again
+
+Data often arrive in rounds: a second set of samples, or new measurements such as nutrients or
+water clarity for samples already mapped. Run *propose mapping* on the new table and give it the
+review sheet from the earlier round as the *earlier review* (`--earlier_review`). Its decisions are
+carried over, column by column (`faire_mapper_review.carry_over`):
+
+- a **rejection** or a **change** is kept, whatever the mapper proposes now, as both are the
+  reviewer's own choice;
+- an **acceptance** is kept when the mapper still proposes the same term (the same terms, and the
+  same part of a combined value). When it proposes another term, the row is left without a decision
+  and shaded, marked *check again*, as the reviewer accepted something else;
+- a column that is **new**, or had no decision before, gets the mapper's call as usual.
+
+The new review sheet has the carried decisions filled in, and a last column, *Earlier review*, that
+says what happened to each row. Carried rows are not shaded, so the shaded rows are what is left to
+look at. The crosswalk has the carried decisions applied (rejected columns left out, accepted ones
+as `skos:exactMatch`, changed ones as one `semapv:ManualMappingCuration` row), and its description
+names the earlier review. The log and the summary (`earlier_review`) list the decisions carried
+over, the new columns, those to check again, those left to review and any columns of the earlier
+review that the table no longer has. When no column of the table is in the earlier review, it warns
+that the review may be of another table. Apply mapping counts the decisions still as carried over
+(the decision matches the *Earlier review* note) and records the number in the workbook's README.
+
+A crosswalk can be given in place of the review sheet, but it holds only the confirmed matches
+(`skos:exactMatch`): the mapper's own count as accepted and a reviewer's own term
+(`semapv:ManualMappingCuration`) as a change, unless the mapper now proposes it, when it counts as
+accepted. A crosswalk cannot show which columns were rejected, so those come back as *not in the
+earlier crosswalk*.
+
+In the Shiny app, running the mapping again in the same session uses the same code: the review on
+screen is saved as a review sheet and given to *propose mapping* as the earlier review.
 
 ### Recognising the input files
 
@@ -1121,7 +1158,11 @@ apply mapping, 15 propose mapping and 2 find method details tests pass in Galaxy
 0.9.2 (16 November) checks the new *how_likely* column in a find primers test; all 5 find primers tests
 pass in Galaxy `release_25.0` here. 0.9.3 (16 November) prints apply mapping's warnings as `WARNING:`
 lines and has propose mapping warn about dates that can be read two ways; all 15 propose mapping and
-37 apply mapping tests pass in Galaxy `release_25.0` here.
+37 apply mapping tests pass in Galaxy `release_25.0` here. 0.10.0 (17 November) carries an earlier
+review over when mapping again (three new propose mapping tests: a review sheet, a crosswalk and a file
+that is neither; one apply mapping test), and has identify your files read a review sheet as one
+file (one new test); all 18 propose mapping, 38 apply mapping and 5 identify tests pass in Galaxy
+`release_25.0` here.
 
 | Tool | Test | Checks | Result |
 |---|---|---|---|

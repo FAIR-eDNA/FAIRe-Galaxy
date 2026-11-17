@@ -77,6 +77,19 @@ python '$__tool_directory__/faire_mapper_identify.py'
                 </assert_contents>
             </output>
         </test>
+        <!-- A review sheet is one file (its Choices and checks sheets are not tables of their own), and
+             a second version of the sample table, for mapping again, is a sample table too -->
+        <test expect_num_outputs="1">
+            <param name="files" value="apply_reef.csv,map_round2.csv,map_round1_review.xlsx"/>
+            <output name="report">
+                <assert_contents>
+                    <has_n_lines n="4"/>
+                    <has_line_matching expression="^apply_reef\.csv\t\tsample table\t.*"/>
+                    <has_line_matching expression="^map_round2\.csv\t\tsample table\t.*"/>
+                    <has_line_matching expression="^map_round1_review\.xlsx\tReview\tcrosswalk\t.*its other sheets are part of it.*Earlier review.*"/>
+                </assert_contents>
+            </output>
+        </test>
     </tests>
     <help><![CDATA[
 @EARLY_VERSION@

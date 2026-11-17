@@ -9,6 +9,11 @@ first, a blank line, then every FAIRe term) and what the column is kept as if th
 (its own term). The other sheets give the additional checks to make, how to review, the full
 crosswalk (Crosswalk (details)), which apply mapping uses to apply the decisions, and the drop-down
 lists (Choices, hidden).
+
+When propose mapping is given an earlier review of the same table, its decisions are carried over
+(carry_over) and the Review sheet gains a last column, Earlier review, which says for each row
+whether its decision was carried over, the column is new, or the proposed term has changed since it
+was accepted (check again).
 """
 import io
 import re
@@ -32,6 +37,8 @@ INPUT, PROPOSED, SCORE, CALL_HEAD, REASON, DECISION, REPLACEMENT, KEPT = (
     'Input term', 'Proposed FAIRe term', 'Score', "Mapper's call", "Mapper's reasoning", "Reviewer's decision",
     'Replacement FAIRe term', 'If rejected, kept as')
 HEADERS = [INPUT, PROPOSED, SCORE, CALL_HEAD, REASON, DECISION, REPLACEMENT, KEPT]
+EARLIER = 'Earlier review'
+CARRIED = 'carried over: '
 DECISIONS = ('Accept', 'Reject', 'Change')
 # The mapper's call, as the walkthrough shows it
 CALL = {'accept': 'accept', 'review': 'review', 'confirmed': 'set by a reviewer', 'model': 'review (chosen by a model)',
@@ -107,31 +114,187 @@ def _gloss(pr, by_name):
     return (f'{t.source} term {t.name}: ' if t.source != 'FAIRe' else f'{t.name}: ') + fm.term_gloss(t)
 
 
-def write_review_sheet(path, proposals, profiles, terms, review_rows, table_name, k=5):
-    """Write the review sheet for propose mapping's proposals (see the module's docstring)."""
+def proposed_label(pr):
+    """The proposed term as the Review sheet shows it: temp + temp_unit (part 1), or phosphate (MIxS term)."""
+    if pr.term:
+        return ' + '.join([pr.term] + pr.also_terms()) + (f' (part {pr.part})' if pr.part else '')
+    if pr.other is not None:
+        return _label(pr.other)
+    return ''
+
+
+def _norm(text):
+    return re.sub(r'\s+', ' ', str(text or '')).strip().lower()
+
+
+def _bare(label):
+    """The terms of a proposed label, without the part of a combined value: a crosswalk names the part
+    in its own column, which may be empty when the crosswalk was made by hand."""
+    return _norm(re.sub(r'\s*\(part \d+\)\s*$', '', str(label or '')))
+
+
+def _term_of(replacement):
+    """The term of a replacement as the sheet shows it: 'phosphate (MIxS term)' is phosphate."""
+    term = re.sub(r'\s*\(.*\)\s*$', '', str(replacement or '')).strip()
+    return term[6:] if term.startswith('FAIRe:') else term
+
+
+def read_earlier_review(path):
+    """The decisions of an earlier review, by input term, as ({column: {decision, replacement, proposed}}, kind).
+    A review sheet holds every decision (Accept, Reject or Change). A crosswalk holds only the matches
+    that were confirmed (skos:exactMatch): the mapper's own count as accepted, a reviewer's own term
+    (semapv:ManualMappingCuration) as changed to that term; it cannot show which columns were rejected."""
+    if is_review_sheet(path):
+        with open(path, 'rb') as f:   # a file object, as Galaxy's file names end in .dat
+            wb = load_workbook(io.BytesIO(f.read()), data_only=True, read_only=True)
+        rows = wb[REVIEW].iter_rows(values_only=True)
+        head = [str(c or '').strip() for c in next(rows, ())]
+        if not {INPUT, DECISION} <= set(head):
+            raise ValueError(f"its Review sheet needs the columns {INPUT} and {DECISION}; found {', '.join(head)}")
+        at = {h: i for i, h in enumerate(head)}
+
+        def cell(r, h):
+            return str(r[at[h]] or '').strip() if h in at and at[h] < len(r) else ''
+        out = {}
+        for r in rows:
+            column = cell(r, INPUT)
+            if not column or column in out:
+                continue
+            d = cell(r, DECISION).capitalize()
+            out[column] = {'decision': d if d in DECISIONS else '', 'replacement': cell(r, REPLACEMENT),
+                           'proposed': cell(r, PROPOSED)}
+        return out, 'review sheet'
+    import faire_mapper_apply as fa   # here, as it imports this module
+    cw = fa.read_crosswalk(path)
+    out = {}
+    for column, g in cw.groupby(cw['subject_label'].astype(str).str.strip(), sort=False):
+        ex = g[g['predicate_id'].astype(str).str.strip() == 'skos:exactMatch']
+        if not column:
+            continue
+        if ex.empty:   # proposed, never confirmed
+            out[column] = {'decision': '', 'replacement': '', 'proposed': ''}
+            continue
+        labels = []
+        for r in ex.to_dict('records'):
+            oid, name = str(r.get('object_id', '')).strip().lower(), str(r['object_label']).strip()
+            labels.append(f'{name} (MIxS term)' if oid.startswith('mixs:') else
+                          f'{name} (Darwin Core term)' if oid.startswith('dwc:') else name)
+        part = str(ex['combine_order'].iloc[0]).strip()
+        proposed = ' + '.join(labels) + (f' (part {part})' if part else '')
+        manual = 'ManualMappingCuration' in ' '.join(ex.get('mapping_justification', pd.Series(dtype=str)).astype(str))
+        out[column] = ({'decision': 'Change', 'replacement': labels[0], 'proposed': '', 'own': proposed} if manual else
+                       {'decision': 'Accept', 'replacement': '', 'proposed': proposed})
+    return out, 'crosswalk'
+
+
+def carry_over(proposals, profiles, earlier, by_name, other_terms, kind='review sheet'):
+    """Carry an earlier review's decisions over to these proposals, column by column: a rejection or a
+    change always (they are the reviewer's own choice), and an acceptance only when the mapper still
+    proposes the same term. Returns ({column: {status, decision, replacement, note}}, gone): status is
+    carried, changed (accepted before, but the proposed term is now different: check again), open (no
+    usable decision before) or new (not in the earlier review); gone lists the earlier review's columns
+    that are not in this table."""
+    prof = {p.column: p for p in profiles}
+    others = {t.name for t in other_terms}
+    carry, shown = {}, set()
+    for pr in proposals:
+        if not prof[pr.column].n_values:
+            continue
+        shown.add(pr.column)
+        e, now = earlier.get(pr.column), proposed_label(pr)
+        if e is None:
+            # a crosswalk leaves out rejected columns as well as new ones
+            carry[pr.column] = {'status': 'new', 'note': 'new column' if kind != 'crosswalk' else
+                                'not in the earlier crosswalk'}
+            continue
+        d = e['decision']
+        if d == 'Change' and e.get('own') and now and _bare(e['own']) == _bare(now):
+            # a reviewer's own terms (from a crosswalk) that the mapper now proposes itself
+            d, e = 'Accept', {**e, 'proposed': now}
+        if d == 'Reject':
+            carry[pr.column] = {'status': 'carried', 'decision': 'Reject', 'replacement': '',
+                                'note': CARRIED + 'Reject'}
+        elif d == 'Change':
+            term = _term_of(e['replacement'])
+            if term and (term in by_name or term in others):
+                carry[pr.column] = {'status': 'carried', 'decision': 'Change', 'replacement': e['replacement'],
+                                    'note': f"{CARRIED}Change to {e['replacement']}"}
+            else:
+                carry[pr.column] = {'status': 'open', 'note': f"check again: the earlier replacement "
+                                    f"{e['replacement'] or '(none)'} is not a term for this assay and sample type"}
+        elif d == 'Accept':
+            if now and _norm(e['proposed']) == _norm(now):
+                carry[pr.column] = {'status': 'carried', 'decision': 'Accept', 'replacement': '',
+                                    'note': CARRIED + 'Accept'}
+            else:
+                carry[pr.column] = {'status': 'changed', 'note': f"check again: accepted {e['proposed'] or 'no term'} "
+                                    f"before; now {now or 'no term'} is proposed"}
+        else:
+            # nothing to note for a column with no match then or now
+            carry[pr.column] = {'status': 'open', 'note': 'no decision in the earlier review' if now or e['proposed'] else ''}
+    return carry, [c for c in earlier if c not in shown]
+
+
+def carried_crosswalk_rows(proposals, carry, by_name, other_terms):
+    """The crosswalk's rows with the carried-over decisions applied, as apply mapping applies a review
+    sheet's: Accept confirms the proposed rows (skos:exactMatch), Reject leaves the column out (kept as
+    its own term), Change gives one row for the replacement term. Other columns keep their proposed rows."""
+    others = {t.name: t for t in other_terms}
+    rows = fm.crosswalk_rows(proposals)
+    by_col = {}
+    for r in rows:
+        by_col.setdefault(r['subject_label'], []).append(r)
+    out = []
+    for pr in proposals:
+        mine, c = by_col.get(pr.column, []), carry.get(pr.column)
+        if not c or c['status'] != 'carried':
+            out += mine
+        elif c['decision'] == 'Accept':
+            out += [{**r, 'predicate_id': 'skos:exactMatch'} for r in mine]
+        elif c['decision'] == 'Change':
+            term = _term_of(c['replacement'])
+            oid = f'FAIRe:{term}' if term in by_name else others[term].term_id
+            out.append({'subject_id': 'local:' + re.sub(r'[^A-Za-z0-9_.-]', '_', pr.column), 'subject_label': pr.column,
+                        'predicate_id': 'skos:exactMatch', 'object_id': oid, 'object_label': term,
+                        'mapping_justification': 'semapv:ManualMappingCuration', 'confidence': '',
+                        'comment': 'changed by the reviewer (carried over from an earlier review)',
+                        'combine_order': '', 'value_part': ''})
+    return out
+
+
+def write_review_sheet(path, proposals, profiles, terms, review_rows, table_name, k=5, carry=None, earlier_name=''):
+    """Write the review sheet for propose mapping's proposals (see the module's docstring). With carry
+    (from carry_over), the carried-over decisions are filled in and the Earlier review column says what
+    happened to each row."""
     by_name = {t.name: t for t in terms}
     prof = {p.column: p for p in profiles}
     all_terms = sorted(by_name, key=str.lower)
     wb = Workbook()
     ws = wb.active
     ws.title = REVIEW
-    ws.append(HEADERS)
+    headers = HEADERS + ([EARLIER] if carry is not None else [])
+    ws.append(headers)
     choices = wb.create_sheet(CHOICES)
     shown = [pr for pr in proposals if prof[pr.column].n_values]
     at = {h: j for j, h in enumerate(HEADERS, 1)}
     lists = []
     for i, pr in enumerate(shown, 2):
         p = prof[pr.column]
+        proposed = proposed_label(pr)
         if pr.term:
-            proposed = ' + '.join([pr.term] + pr.also_terms()) + (f' (part {pr.part})' if pr.part else '')
             score, call = round(pr.score, 2), CALL.get(pr.route, pr.route)
         elif pr.other is not None:
-            proposed, score, call = _label(pr.other), round(pr.other_score, 2), 'review'
+            score, call = round(pr.other_score, 2), 'review'
         else:
-            proposed, score, call = '', None, 'no match'
+            score, call = None, 'no match'
         decision = 'Accept' if pr.route in ('accept', 'confirmed') else None
-        ws.append([pr.column, proposed, score, call, reasoning(pr, p), decision, None,
-                   f'{pr.column} (your own term)'])
+        replacement, c = None, (carry or {}).get(pr.column)
+        if c and c['status'] == 'carried':
+            decision, replacement = c['decision'], c['replacement'] or None
+        elif c and c['status'] == 'changed':
+            decision = None   # accepted before, but the proposal is new: the reviewer decides again
+        ws.append([pr.column, proposed, score, call, reasoning(pr, p), decision, replacement,
+                   f'{pr.column} (your own term)'] + ([c['note'] if c else ''] if carry is not None else []))
         # The replacement drop-down: the column's best candidates (a MIxS or Darwin Core term the mapper
         # found first), a blank line, then every FAIRe term
         best = [c.rsplit(' (', 1)[0] for c in pr.candidates]
@@ -142,8 +305,9 @@ def write_review_sheet(path, proposals, profiles, terms, review_rows, table_name
         gloss = _gloss(pr, by_name)
         if gloss:
             ws.cell(i, at[PROPOSED]).comment = Comment(gloss, 'FAIRe mapper', width=320, height=160)
-        if call not in ('accept', 'set by a reviewer', 'no match'):
-            for j in range(1, len(HEADERS) + 1):
+        status = c['status'] if c else ''
+        if (call not in ('accept', 'set by a reviewer', 'no match') and status != 'carried') or status == 'changed':
+            for j in range(1, len(headers) + 1):
                 ws.cell(i, j).fill = TO_DECIDE
     # Each column of Choices holds one input term's list, under the term itself in row 1. The replacement
     # drop-down finds its list by the input term in column A of its own row, not by its position, so it
@@ -168,13 +332,13 @@ def write_review_sheet(path, proposals, profiles, terms, review_rows, table_name
         c.font = Font(bold=True)
         c.fill = HEAD
         c.alignment = Alignment(wrap_text=True, vertical='top')
-    for j, w in enumerate((26, 30, 7, 12, 80, 14, 30, 28), 1):
+    for j, w in enumerate((26, 30, 7, 12, 80, 14, 30, 28, 40), 1):
         ws.column_dimensions[get_column_letter(j)].width = w
     for row in ws.iter_rows(min_row=2):
         for c in row:
             c.alignment = Alignment(wrap_text=True, vertical='top')
     ws.freeze_panes = 'B2'
-    ws.auto_filter.ref = f'A1:{get_column_letter(len(HEADERS))}{len(shown) + 1}'
+    ws.auto_filter.ref = f'A1:{get_column_letter(len(headers))}{len(shown) + 1}'
 
     d = wb.create_sheet(DECIDE)
     d.append(['What to check', 'Columns', 'Rows', 'What to do'])
@@ -190,7 +354,7 @@ def write_review_sheet(path, proposals, profiles, terms, review_rows, table_name
 
     h = wb.create_sheet(HOW)
     h.column_dimensions['A'].width = 110
-    for line in how_to_review(table_name):
+    for line in how_to_review(table_name, earlier_name if carry is not None else None):
         h.append([line])
         h.cell(h.max_row, 1).alignment = Alignment(wrap_text=True, vertical='top')
     h['A1'].font = Font(bold=True, size=12)
@@ -206,8 +370,8 @@ def write_review_sheet(path, proposals, profiles, terms, review_rows, table_name
     return len(shown)
 
 
-def how_to_review(table_name):
-    return [
+def how_to_review(table_name, earlier_name=None):
+    lines = [
         f'How to review the terms proposed for {table_name}',
         '',
         f'The rows come from the files you provided. Each row of the Review sheet is one column heading (an input '
@@ -246,6 +410,15 @@ def how_to_review(table_name):
         'Save the workbook (as .xlsx) and give it as the review sheet when you write the FAIRe workbook. Keep the '
         'Crosswalk (details) sheet: it is used to apply your decisions.',
     ]
+    if earlier_name is not None:
+        lines[2:2] = [
+            f'The decisions of your earlier review ({earlier_name or "an earlier review sheet"}) are carried over and '
+            'filled in: each rejection and change, and each acceptance where the mapper still proposes the same term. '
+            'The Earlier review column says what happened to each row. Look at the rows marked new column, and at '
+            'those marked check again: you accepted their match before, but the mapper now proposes another term. '
+            'The rows carried over need no more work, though you can still change them.',
+            '']
+    return lines
 
 
 def is_review_sheet(path):
@@ -281,6 +454,7 @@ def read_review_sheet(path, by_name, other_terms, log, include_review=False, hol
     undecided = {'none': 0, 'review': 0, 'held': 0, 'applied': 0, 'accept': 0}   # rows with no decision, by the mapper's call
     for_review = {'Accept': 0, 'Reject': 0, 'Change': 0, '': 0}         # decisions on the matches for review
     by_model = 0                                                        # decisions that follow a model
+    carried = 0                                                         # decisions kept from an earlier review
     # Rows are read by their input term, so they can be sorted or filtered in any order.
     for r in ws.iter_rows(min_row=2, values_only=True):
         column = str(r[at[INPUT]] or '').strip()
@@ -293,6 +467,8 @@ def read_review_sheet(path, by_name, other_terms, log, include_review=False, hol
         decision = str(r[at[DECISION]] or '').strip().capitalize()
         decision = decision if decision in DECISIONS else ''
         counts[decision] += 1
+        note = str(r[at[EARLIER]] or '').strip() if EARLIER in at and at[EARLIER] < len(r) else ''
+        carried += bool(decision) and note.startswith(CARRIED) and note[len(CARRIED):].split(' to ')[0] == decision
         call = str(r[at[CALL_HEAD]] or '').strip().lower() if CALL_HEAD in at else ''
         if call.startswith('review'):
             for_review[decision] += 1
@@ -350,5 +526,6 @@ def read_review_sheet(path, by_name, other_terms, log, include_review=False, hol
         + (f", {counts['']} with no decision ({detail})" if counts[''] else ''))
     cw = pd.DataFrame(rows, columns=fm.CROSSWALK_COLUMNS).fillna('')
     # What the reviewer did, for apply mapping's review summary
-    cw.attrs['review'] = {'decisions': counts, 'undecided': undecided, 'for_review': for_review, 'by_model': by_model}
+    cw.attrs['review'] = {'decisions': counts, 'undecided': undecided, 'for_review': for_review, 'by_model': by_model,
+                          'carried': carried}
     return cw, problems

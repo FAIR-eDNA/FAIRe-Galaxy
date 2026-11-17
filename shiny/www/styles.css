@@ -228,3 +228,12 @@ h6.group-head { margin: 0.6rem 0 0.1rem; font-weight: 600; color: var(--faire-na
 .need-icon { color: var(--faire-teal); }
 .need b { color: var(--faire-teal); }
 .need-forms { color: #525c62; font-style: italic; margin-left: 0.3rem; }
+
+/* rows of the review from an earlier review: carried over, to check again, or new */
+#review-grid.hide-carried .rv-row.earlier-carried { display: none; }
+.earlier { display: inline-block; margin-top: 0.25rem; border-radius: 10px; padding: 0 0.5rem; font-size: 0.72rem;
+  border: 1px solid #c9d3d6; color: #3f4a50; background: #ffffff; }
+.earlier.carried { border-color: #9cc7cd; color: #155f69; background: #eaf5f6; }
+.earlier.check { border-color: #e2b65a; color: #7a5600; background: #fff7e4; font-weight: 600; }
+.earlier.new { border-color: #c9d3d6; color: #3f4a50; }
+.rv-status { display: flex; flex-direction: column; align-items: flex-start; }

@@ -296,6 +296,21 @@ python '$__tool_directory__/faire_mapper_apply.py'
                 </assert_contents>
             </output>
         </test>
+        <!-- A review sheet from mapping again: the decisions carried over from the earlier review are recorded -->
+        <test expect_num_outputs="2">
+            <param name="table" value="map_round2.csv"/>
+            <param name="crosswalk" value="apply_round2_review_sheet.xlsx" ftype="xlsx"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="reef_round2"/>
+            <param name="date_order" value="dmy"/>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="column mapping: 10 accepted, 1 changed and 2 rejected by the reviewer"/>
+                    <has_text text="11 decisions were carried over from an earlier review of the mapping"/>
+                    <has_text text="'Volume filtered' to samp_vol_we_dna_ext"/>
+                </assert_contents>
+            </output>
+        </test>
         <!-- A crosswalk edited in a spreadsheet and saved as Excel -->
         <test expect_num_outputs="2">
             <param name="table" value="apply_reef.csv"/>
