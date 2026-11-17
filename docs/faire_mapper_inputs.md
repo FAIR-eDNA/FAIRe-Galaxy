@@ -190,6 +190,14 @@ match, change the term in `object_label`. To stop a column being matched, delete
 the crosswalk as Excel, CSV or tab-separated text, and upload it as the input for the
 *apply mapping* tool.
 
+**Keep your review sheet.** If you add columns or samples to your table later, run *propose
+mapping* on the new table and give it the review sheet from the earlier round as the *Earlier
+review*. Your decisions are carried over: every rejection and change, and every acceptance where the
+mapper still proposes the same term. The new review sheet has them filled in, and a last column,
+*Earlier review*, says for each row whether its decision was carried over, the column is new, or you
+should check it again because the mapper now proposes another term. Only the shaded rows need your
+attention.
+
 Any column without a `skos:exactMatch` row is kept as a user-defined field at the end of
 sampleMetadata, unless you tick *Leave out columns that are not matched to a FAIRe term* in the
 *apply mapping* tool. The *mapping report* output shows the evidence and the other candidates for

@@ -25,6 +25,9 @@ Oliver supplied (`www/logo.png`). Version 0.6.0 (16 November 2026) has the chang
 audit of 0.5.1, against 20 common principles of usable software: the app now keeps track of what has
 been done, asks before work could be lost, and explains errors in plain words (see *Going back,
 mistakes and warnings*, below). Its Start page also lists what you'll need for a FAIRe dataset.
+Version 0.7.0 (17 November 2026) maps in rounds: when your table gains columns or samples, the
+mapping can be run again with your earlier review, and only what is new needs reviewing (see
+*Mapping in rounds*, below).
 
 ## What it covers
 
@@ -106,9 +109,8 @@ Making a workbook takes several steps, and people go back to change one. The app
 - **Each step says where it stands.** The tabs a to e show *✓ done*, *! not saved* (a review with
   changes still to save) or *↻ redo* (an earlier step has changed since this one ran).
 - **Running the mapping again keeps your review.** If you have reviewed the mapping, *b. Propose a
-  mapping* asks first, and can carry your decisions over to the new mapping. A decision is kept for a
-  column whose proposed term is the same as before; the app says how many were kept and how many need
-  deciding again.
+  mapping* asks first, and can carry your decisions over to the new mapping (see *Mapping in rounds*,
+  below).
 - **Writing the workbook checks the review first.** If the review has changes not yet saved, or has
   not been done, *e. Write the workbook* says so and offers to save it, or to go to the review, before
   writing. The *Write the workbook* button is at the top of step e, with a second one at the end.
@@ -134,6 +136,30 @@ Making a workbook takes several steps, and people go back to change one. The app
 The app also works from the keyboard, with a visible outline on the control in focus, and has labels
 for screen readers on its icons and the review's drop-downs. An automatic check (axe-core) finds no
 problems in the app's own pages; the few it reports come from the page framework (bslib).
+
+## Mapping in rounds
+
+Data often arrive in rounds: more samples, or new measurements for samples already mapped. You need
+not review the whole table again.
+
+- **In the same session**, change the table (add it again under the same name, or choose the new
+  version) and run *b. Propose a mapping* again: it asks whether to keep your decisions.
+- **In a later session**, add the new table and the review sheet you downloaded at *c. Review the
+  mapping* last time. At *b. Propose a mapping*, under *Mapping this table again?*, choose the review
+  sheet as the *Earlier review*. *a. Your files* recognises review sheets, so only they are offered.
+
+Either way, the decisions are carried over: every rejection and change, and every acceptance where
+the mapper still proposes the same term. They are saved as the review in use, and a message says
+how many were carried over and which columns are left to review. In *c. Review the mapping*, those
+come first: columns marked *check again* (you accepted another term before) and new columns for
+review. The carried-over decisions follow, marked *carried over*; *Show the decisions carried over*
+hides them. Propose mapping does the carrying over, so Galaxy users get the same result from its
+*Earlier review* input.
+
+A review sheet added at *c. Review the mapping* (the Excel route) is for this mapping. If it lacks a
+row for a column, that column's decision is left as it is, and an Accept of a term the mapper no
+longer proposes is left for you to decide; the message suggests choosing the sheet at step b
+instead.
 
 ## Keeping the review thorough
 

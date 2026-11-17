@@ -21,6 +21,10 @@ python '$__tool_directory__/faire_mapper.py' map
     #if $responses:
         --responses '$responses'
     #end if
+    #if $earlier_review:
+        --earlier_review '$earlier_review'
+        --earlier_review_name '${str($earlier_review.element_identifier).replace("'", "")}'
+    #end if
     #if $dictionary:
         --dictionary '$dictionary'
         #if str($dictionary_sheet).strip():
@@ -53,6 +57,8 @@ python '$__tool_directory__/faire_mapper.py' map
         </param>
         <param name="responses" type="data" format="json" optional="true" label="Answers for columns to review (optional)"
             help="A JSON list of decisions from a reviewer or a language model, for example [{&quot;column&quot;: &quot;habitat&quot;, &quot;term&quot;: &quot;env_broad_scale&quot;}, {&quot;column&quot;: &quot;notes&quot;, &quot;term&quot;: null}]. These columns are fixed first and the rest are matched around them."/>
+        <param name="earlier_review" type="data" format="xlsx,tabular,csv,txt" optional="true" label="Earlier review (optional)"
+            help="The review sheet (or crosswalk) from an earlier round of mapping this table, for example before you added columns or samples. Its decisions are carried over: every rejection and change, and every acceptance where the mapper still proposes the same term. Only new columns, and columns whose proposed term has changed since you accepted it, are left for you to review."/>
         <param name="dictionary" type="data" format="csv,tabular,xlsx,txt" optional="true" label="Data dictionary (optional)"
             help="What each column holds: a table with a column name, a description and units (for example columns headed Variable, Description, Units), or a README with one line per column, such as 'Days frozen: number of days the water was frozen before filtering'. Lines and rows that name no column of the table are ignored."/>
         <param name="dictionary_sheet" type="text" value="" optional="true" label="Excel sheet of the data dictionary"
@@ -398,6 +404,63 @@ python '$__tool_directory__/faire_mapper.py' map
                 </assert_contents>
             </output>
         </test>
+        <!-- Mapping again: the decisions of an earlier review sheet are carried over. A rejection and a change
+             are kept whatever is proposed now; an acceptance only when the proposed term is the same (Latitude
+             was accepted as lat_lon, so it is to check again); new columns are marked; Notes has left the table -->
+        <test expect_num_outputs="7">
+            <param name="table" value="map_round2.csv"/>
+            <param name="sample_types" value="Water"/>
+            <param name="earlier_review" value="map_round1_review.xlsx" ftype="xlsx"/>
+            <assert_stdout>
+                <has_text text="INFO: earlier review map_round1_review.xlsx (review sheet): 11 decisions carried over (8 accepted, 2 rejected, 1 changed)"/>
+                <has_text text="INFO: new since the earlier review: Nitrate (umol/L), Water temperature (C)"/>
+                <has_text text="WARNING: check again: Latitude: accepted lat_lon before; now decimalLatitude is proposed"/>
+                <has_text text="INFO: in the earlier review but not in this table: Notes"/>
+                <has_text text="INFO: to review: 1 column: Latitude"/>
+            </assert_stdout>
+            <output name="crosswalk">
+                <assert_contents>
+                    <has_text text="with the decisions of the earlier review map_round1_review.xlsx carried over"/>
+                    <has_line_matching expression="^local:Volume_filtered\tVolume filtered\tskos:exactMatch\tFAIRe:samp_vol_we_dna_ext\tsamp_vol_we_dna_ext\tsemapv:ManualMappingCuration\t.*carried over from an earlier review.*"/>
+                    <has_line_matching expression="^local:Control\tControl\tskos:exactMatch\tFAIRe:samp_category\t.*"/>
+                    <not_has_text text="local:Pore_size"/>
+                </assert_contents>
+            </output>
+            <output name="summary">
+                <assert_contents>
+                    <has_text text="&quot;earlier_review&quot;"/>
+                    <has_text text="&quot;carried&quot;: 11"/>
+                </assert_contents>
+            </output>
+            <output name="review_sheet" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet1.xml">
+                        <has_text text="Earlier review"/>
+                        <has_text text="carried over: Change to samp_vol_we_dna_ext"/>
+                        <has_text text="new column"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- An earlier crosswalk holds only the confirmed matches: a reviewer's own term that the mapper now
+             proposes counts as accepted, and Control (proposed, never confirmed) has no decision -->
+        <test expect_num_outputs="7">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="sample_types" value="Water"/>
+            <param name="earlier_review" value="apply_reef.sssom.tsv" ftype="tabular"/>
+            <assert_stdout>
+                <has_text text="(crosswalk): 11 decisions carried over (9 accepted, 0 rejected, 2 changed)"/>
+                <has_text text="INFO: no decision in the earlier review: Control"/>
+            </assert_stdout>
+        </test>
+        <!-- A file that is neither a review sheet nor a crosswalk stops the tool -->
+        <test expect_exit_code="1" expect_failure="true">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="earlier_review" value="messy_edna.csv" ftype="csv"/>
+            <assert_stderr>
+                <has_text text="could not be read as a review sheet or a crosswalk"/>
+            </assert_stderr>
+        </test>
     </tests>
     <help><![CDATA[
 @EARLY_VERSION@
@@ -412,6 +475,15 @@ mapping** then uses it to write your FAIRe workbook.
 Give it your sample table. You run it once, for the sample table only: your other files need no
 mapping. The OTU, taxonomy and library tables, and the values for the whole project, go straight to
 *apply mapping*.
+
+**Mapping again.** If you add columns or samples to your table later, run the tool again on the new
+table and give it your review sheet from the earlier round as the *earlier review*. Your decisions
+are carried over: every rejection and change, and every acceptance where the mapper still proposes
+the same term. The new review sheet has them filled in, with a last column, *Earlier review*, that
+says for each row whether its decision was carried over, the column is new, or you should check it
+again (you accepted its match before, but the mapper now proposes another term). The log lists the
+columns left to review. A crosswalk can be given in place of the review sheet, but it records only
+the matches that were confirmed, not the columns that were rejected.
 
 For every column, the tool scores each FAIRe term on three kinds of evidence:
 
@@ -465,6 +537,8 @@ value. Untick *Suggest MIxS or Darwin Core terms* to leave them out.
   submission sheets, are skipped. The tool reads text in Latin-1 or Windows encodings and decimal
   commas (0,45) correctly, and the *summary* output records how it read the file.
 - **The assay type and sample types**, so the tool can leave out FAIRe terms that do not apply.
+- **Earlier review** (optional): your review sheet, or crosswalk, from an earlier round of mapping
+  this table. See *Mapping again*, above.
 - **Answers for the columns to review** (optional), as a JSON list such as
   ``[{"column": "habitat", "term": "env_broad_scale"}, {"column": "notes", "term": null}]``. The
   answers can come from a person, or from **FAIRe mapper: ask a language model** given the *columns
@@ -518,7 +592,8 @@ value. Untick *Suggest MIxS or Darwin Core terms* to leave them out.
   a warning). The tool lists these and changes nothing. The list has only its header row when there is
   nothing to decide.
 - **summary**: the number of columns in each route, and the number with a MIxS or Darwin Core term
-  (*other_standard*).
+  (*other_standard*). With an earlier review, it also lists the decisions carried over, the new
+  columns, those to check again and those left to review (*earlier_review*).
 
 -----
 

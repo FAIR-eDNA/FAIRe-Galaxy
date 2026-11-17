@@ -35,6 +35,10 @@ GLOSSARY <- c(
                           "units) or a ReadMe with one line per column. It helps the mapper with unclear column names.",
                           "Leave it as None if you don't have one."),
   header_row = "The row of your table that holds the column names. Use it when a title or notes sit above them.",
+  earlier_review = paste("The review sheet you saved from an earlier round of mapping this table, for example before you",
+                         "added columns or samples. Your decisions are carried over: every rejection and change, and",
+                         "every acceptance where the mapper still proposes the same term. You then review only the new",
+                         "columns, and any whose proposed term has changed."),
   assay_type = paste("Metabarcoding: sequencing a marker gene (12S, 16S, 18S, COI ...) to see which taxa are present.",
                      "Targeted: a qPCR or ddPCR test for one species."),
   sample_types = "What was sampled (water, sediment, soil ...). It decides which FAIRe terms apply.",
@@ -308,6 +312,8 @@ mapper_panel <- function() {
             checkboxInput("map_other_terms", term_label("Suggest MIxS or Darwin Core terms for columns with no FAIRe term", "other_terms"), TRUE),
             help_text("The FAIRe guidelines ask for a MIxS or Darwin Core term, where one exists, before a name of",
                       "your own. These suggestions are always for review."),
+            tags$h6(class = "group-head", "Mapping this table again?"),
+            uiOutput("map_earlier_ui"),
             run_button("run_map", "Propose a mapping for the information in your sample table")
           ),
           card(card_header("Proposed mapping"), uiOutput("map_result"))

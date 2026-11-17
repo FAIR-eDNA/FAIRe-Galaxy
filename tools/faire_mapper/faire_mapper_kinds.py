@@ -41,7 +41,7 @@ WHERE = {
     'otu': "'OTU or ASV table' in FAIRe mapper: apply mapping",
     'taxonomy': "'Taxonomy table', beside its OTU table, in FAIRe mapper: apply mapping",
     'library': "'Library table' in FAIRe mapper: apply mapping",
-    'crosswalk': "'Crosswalk' in FAIRe mapper: apply mapping",
+    'crosswalk': "'Crosswalk' in FAIRe mapper: apply mapping, or 'Earlier review' in propose mapping",
     'dictionary': "'Data dictionary' in FAIRe mapper: propose mapping",
     'project_values': "'Values for the whole project' in FAIRe mapper: apply mapping",
     'primers': "'My primer table' in FAIRe mapper: find primers, or 'Primer sources' in build primer table",

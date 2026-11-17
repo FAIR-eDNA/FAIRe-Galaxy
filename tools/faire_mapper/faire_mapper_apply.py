@@ -125,6 +125,9 @@ def review_lines(log):
                      f"{_n(u['applied'], 'match', 'matches')} for review applied without a decision, "
                      f"{u['review'] + u['none'] + u.get('held', 0)} kept as the lab's own names)")
         lines.append(line)
+        if r.get('carried'):
+            lines.append(f"{_n(r['carried'], 'decision was', 'decisions were')} carried over from an earlier review "
+                         f"of the mapping")
         if r['by_model']:
             lines.append(f"{_n(r['by_model'], 'decision on a match for review', 'decisions on matches for review')} "
                          f"followed a language model's suggestion")

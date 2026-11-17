@@ -22,6 +22,7 @@ import faire_mapper as fm
 import faire_mapper_kinds as fk
 import faire_mapper_library as fl
 import faire_mapper_otu as fo
+import faire_mapper_review as fr
 
 # What to check or do next, for each kind
 NEXT = {
@@ -30,7 +31,8 @@ NEXT = {
            "filtering and curation), or to otuRaw and taxaRaw if this is the table before that.",
     'taxonomy': 'Give it beside the OTU table whose sequence IDs it lists.',
     'library': 'Each row should be one library: one amplicon of one sample.',
-    'crosswalk': 'Check it before apply mapping uses it.',
+    'crosswalk': ('Check it before apply mapping uses it. To map an updated sample table again, give it to propose '
+                  'mapping as the earlier review, so its decisions are carried over.'),
     'dictionary': 'Its descriptions help propose mapping match columns whose headers are unclear.',
     'project_values': "Two columns: the FAIRe term and its value (or one column per assay).",
     'primers': 'Find primers and build primer table can use it.',
@@ -77,6 +79,10 @@ def main(argv=None):
         if known_kind:
             items.append({'name': name, 'sheet': '', 'df': None, 'error': '', 'fmt': fmt, 'path': path,
                           'kind': known_kind})
+            continue
+        if fr.is_review_sheet(path):   # one file: its other sheets (Choices, checks, how to review) belong to it
+            items.append({'name': name, 'sheet': fr.REVIEW, 'df': None, 'error': '', 'fmt': fmt, 'path': path,
+                          'kind': ('crosswalk', ["a review sheet from propose mapping (its other sheets are part of it)"])})
             continue
         files, form = fl.read_file_list(path)
         if files is not None:   # md5sum's output or a list of file names: no header, so not a table otherwise
