@@ -157,9 +157,15 @@ Python warnings: Galaxy sets `PYTHONWARNINGS=ignore`. FAIRe2NCBI reports everyth
   `project_level` with columns already named A and B). It now passes these through. The fix is
   also in `faire2qiime/normalise_faire.py`, so the two copies stay identical.
 
-## Upstream issues to report
+## Upstream issues
 
 Evidence for each is in the wrapper's test data or the upstream code at the pinned commit.
+
+We emailed the upstream authors (NOAA 'Omics, AOML) about these on 9 November 2026, and they invited
+GitHub issues. All of them were posted on 17 November 2026, after checking them against the latest
+commit (`ef62f3d`, unchanged since July): one issue for the endless loops (with the prompts at end
+of input), and one checklist of the other points
+([our issues in aomlomics/FAIRe2NCBI](https://github.com/aomlomics/FAIRe2NCBI/issues?q=is%3Aissue%20author%3Aollybolly)).
 
 - **Prompts at end of input** raise `EOFError` with a traceback. A `--no-input` or batch mode
   that fails with the question text would help pipelines.
@@ -204,9 +210,10 @@ Evidence for each is in the wrapper's test data or the upstream code at the pinn
 
 ### Must do
 
-1. **Talk to the upstream authors (NOAA 'Omics, AOML).** Tell them about the wrapper and the issues
-   above, offer the `normalise_faire.py` layout fix, and ask for a tagged release. The tool
-   version is currently the commit date (`2026.07.23`).
+1. **Talk to the upstream authors (NOAA 'Omics, AOML).** Partly done: emailed 9 November 2026, and
+   two issues posted 17 November 2026 (see *Upstream issues*), which offer the `normalise_faire.py`
+   layout fix as a pull request and ask for a tagged release. Still to do: send the pull request if
+   they would like it. The tool version is currently the commit date (`2026.07.23`).
 2. **Trial a submission in the NCBI Submission Portal** with an Australian FAIRe-ator workbook:
    upload the BioSample table, then the SRA table linked by sample_name, and check that NCBI
    accepts the attribute values, units, `missing: control sample` style terms and the
