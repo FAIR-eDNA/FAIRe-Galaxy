@@ -92,8 +92,9 @@ commit messages and pull request descriptions.
   the file-size check must pass.
 - Run flake8 from the `tools/` folder so it picks up the repository's `.flake8`.
 - Keep each folder's test data small (well under 1 MB in total).
-- For the app, run it (`Rscript -e 'shiny::runApp("shiny", port = 7788, launch.browser = FALSE)'`)
-  and try the change in a browser; Playwright with headless Chromium works for scripted checks.
+- For the app, run it from the `shiny` folder
+  (`Rscript -e 'shiny::runApp(".", port = 7788, launch.browser = FALSE)'`) and try the change in a
+  browser; Playwright with headless Chromium works for scripted checks.
 - After changing how the mapper matches columns, rerun `dev/faire_mapper_benchmark/`.
 - After changing FAIRe-fier's wrapper, rerun `dev/fairefier_equivalence/`.
 

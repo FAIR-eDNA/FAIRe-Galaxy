@@ -134,7 +134,7 @@ mapper on tables with known answers; `faire_mapper_real_datasets/` and
 Australian studies; `faire_mapper_seames/` runs every tool it can on CSIRO's SEA-MES eDNA data
 (Deagle et al. 2025), from the published sample sheets to the NCBI and ENA run tables (its four
 largest files are downloaded from the record, not stored here), and
-`demo/seames` holds a demonstration set cut from it (23 samples, 0.5 MB, same files and layouts); `faire2mdt/` compares the FAIRe2MDT wrapper with the script run by hand on
+`demo/seames` holds a demonstration set cut from it (25 samples, 0.5 MB, same files and layouts); `faire2mdt/` compares the FAIRe2MDT wrapper with the script run by hand on
 the FAIRe examples; `faire_guide/` holds the shared help guide (below).
 
 Every tool's help ends with the same guide, **Using the FAIRe tools in Galaxy**: where to start,
