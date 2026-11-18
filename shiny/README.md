@@ -198,7 +198,32 @@ The app needs R and Python on your computer, and a copy of this whole repository
 Setting it up takes about 15 minutes the first time, most of it downloading packages. After that, it
 starts in a few seconds.
 
-The steps below are written for Windows, with the differences for a Mac in brackets.
+### The quick way: one line in R
+
+With R (4.1 or later) and Python (3.10 to 3.13) on your computer, paste this line into the R console
+(in RStudio, the *Console* tab) and press Enter:
+
+```r
+source("https://raw.githubusercontent.com/FAIR-eDNA/FAIRe-Galaxy/main/shiny/start.R")
+```
+
+The first time, it downloads this repository into a folder called `FAIRe-Galaxy` in your user folder
+(`C:\Users\you\FAIRe-Galaxy` on Windows, outside OneDrive; `~/FAIRe-Galaxy` on a Mac), runs setup.R,
+and opens the app in your web browser. Afterwards,
+the same line checks for a newer version, downloads it if there is one, and starts the app. To stop
+the app, press Esc in the R console, or *Stop* in RStudio.
+
+- To keep the app in another folder, run `Sys.setenv(FAIRE_HOME = "C:/Users/you/R_projects/FAIRe-Galaxy")`
+  (with forward slashes) before the line, in the same R session.
+- The folder is replaced whenever a newer version arrives, keeping only the Python environment in
+  `shiny/.venv`, so keep your own files somewhere else.
+- If you already have a copy you downloaded or cloned yourself, set `FAIRE_HOME` to its folder. The
+  line then sets that copy up if it needs it and starts it, and leaves updating it to you.
+- If setup stops because it found no suitable Python, install Python as step 1 below describes,
+  restart RStudio, and run the line again.
+
+To do the same by hand, follow the steps below. They are written for Windows, with the differences
+for a Mac in brackets.
 
 ### Where to type the commands
 
@@ -338,7 +363,8 @@ the *Outputs* page first. To use it again later, repeat step 4 only.
 
 ### Getting a newer version
 
-Download the repository again (step 2) and run setup.R again (step 3), which only installs what has
+If you start the app with the one line above, it updates itself: run the same line again. Otherwise,
+download the repository again (step 2) and run setup.R again (step 3), which only installs what has
 changed. With git, `git pull` in the repository folder does the same as downloading.
 
 ### Settings
@@ -346,7 +372,9 @@ changed. With git, `git pull` in the repository folder does the same as download
 Three settings can be given as environment variables: `FAIRE_TOOLS_DIR` to use a copy of the tools
 somewhere other than `../tools`, `FAIRE_PYTHON` to use a Python other than the one in `.venv`, and
 `FAIRE_PORT` for another port than 7788 (useful if something else on your computer uses it).
-`FAIRE_PYTHON_BASE` tells setup.R which Python to make `.venv` from.
+`FAIRE_PYTHON_BASE` tells setup.R which Python to make `.venv` from. For the one-line start
+(`start.R`), `FAIRE_HOME` sets the folder the app is kept in, and setting `FAIRE_SETUP` to any value
+(`Sys.setenv(FAIRE_SETUP = "yes")`) runs setup.R again before the app starts.
 
 ## Trying it with the demonstration data
 
@@ -376,6 +404,10 @@ workbook for Fish16S, and FAIRe2QIIME, which writes a metadata file and a manife
   command; `R/helpers.R` reads the review sheet and the other files the tools exchange; and
   `python/fill_review_sheet.py` writes the decisions from the review screen into a copy of the review
   sheet, leaving the rest of it (the drop-downs, the shading and the other sheets) as it was.
+- `setup.R` installs what the app needs, `run_app.R` starts it, and `start.R` is the one-line start:
+  it downloads the repository (or a newer version of it) into one folder, runs setup.R when needed,
+  then runs run_app.R. It checks for a newer version by reading the commit at the tip of `main` from
+  GitHub, and records the commit it installed in `.faire_app_version`.
 - The files a person adds, and everything the tools write, go into a folder for the session in R's
   temporary folder. Each run has its own folder, with its inputs, outputs and a log of the exact
   command (`run_log.txt`), so any file can be traced to the run that wrote it. The *Outputs* page

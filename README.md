@@ -18,7 +18,12 @@ With the tools you can:
   analysis in QIIME 2.
 
 The same tools also run on your own computer in a small R Shiny app (`shiny/`), a good way to try
-them on your data before you submit anything.
+them on your data before you submit anything. With R and Python installed, this line in R downloads
+the app, sets it up and starts it (`shiny/README.md` has the details):
+
+```r
+source("https://raw.githubusercontent.com/FAIR-eDNA/FAIRe-Galaxy/main/shiny/start.R")
+```
 
 ## The tools
 
