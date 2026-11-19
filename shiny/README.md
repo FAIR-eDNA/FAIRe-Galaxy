@@ -213,27 +213,35 @@ app. To stop the app, press Esc in the R console, or *Stop* in RStudio.
 
 #### Where the app is kept
 
-Unless you choose a folder, the app goes in a folder called `FAIRe-Galaxy` in your user folder:
+You can let the app choose its folder, or choose one yourself.
+
+**Let the app choose (the simplest).** Run only the line above. The app goes in a folder called
+`FAIRe-Galaxy` in your user folder:
 
 - on Windows, `C:\Users\<your name>\FAIRe-Galaxy`;
 - on a Mac, `/Users/<your name>/FAIRe-Galaxy`.
 
 On Windows this is one level above your Documents folder, which RStudio's *Files* pane calls *Home*,
 so the app does not show there. It is kept out of Documents because OneDrive often syncs that folder,
-and syncing does not suit the thousands of small files in the app's Python environment. Each run
-prints the folder in the R console ("The FAIRe tools app is in ..."). Set up, it takes about 250 MB.
+and syncing does not suit the thousands of small files in the app's Python environment.
 
-To keep the app somewhere else, such as the folder that holds your R projects, run this once before
-the line, changing the path to suit (`~` is your RStudio *Home*):
+**Choose your own folder.** The first time only, run this line before the one above:
 
 ```r
 Sys.setenv(FAIRE_HOME = path.expand("~/R Projects/FAIRe-Galaxy"))
-source("https://raw.githubusercontent.com/FAIR-eDNA/FAIRe-Galaxy/main/shiny/start.R")
 ```
 
-The script remembers the folder (in R's settings folder for FAIRe-Galaxy), so from then on the one
-line is enough. A copy in the old folder is left as it was; delete that folder to free the space. If
-your R projects folder is synced by OneDrive, the default folder is the better choice.
+Replace `R Projects/FAIRe-Galaxy` with the folder you want. `~` stands for your RStudio *Home*, so
+`~/R Projects/FAIRe-Galaxy` is a folder called FAIRe-Galaxy inside the *R Projects* folder you see
+there. A full path also works, written with forward slashes, such as `"D:/Work/FAIRe-Galaxy"`. Give
+a new folder or an empty one, and the app is set up there. The script remembers the folder (in R's
+settings folder for FAIRe-Galaxy), so from then on the one line is enough. If you choose a folder
+after the app is already set up elsewhere, the old copy is left as it was; delete that folder to free
+the space. If your R projects are in a folder that OneDrive syncs, letting the app choose is the
+better option.
+
+Either way, each run prints the folder in the R console ("The FAIRe tools app is in ..."). Set up,
+the app takes about 250 MB.
 
 A few more things to know:
 

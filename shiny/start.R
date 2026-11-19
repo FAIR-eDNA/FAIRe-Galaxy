@@ -9,7 +9,9 @@
 # for a newer version, downloads it if there is one, and starts the app in a few seconds.
 #
 # It needs R 4.1 or later and Python 3.10 to 3.13 (see shiny/README.md if you don't have Python).
-# To keep the app in another folder, run this first, once (here, a folder in your R projects folder):
+# To let the app choose its folder, run only the line above. To choose your own folder, run this
+# first, once, replacing "R Projects/FAIRe-Galaxy" with the folder you want ("~" is RStudio's Home;
+# a full path such as "D:/Work/FAIRe-Galaxy" also works):
 #   Sys.setenv(FAIRE_HOME = path.expand("~/R Projects/FAIRe-Galaxy"))
 # The script remembers that folder, so later the one line is enough. Each run prints the folder.
 # The folder is replaced when a newer version arrives, so keep your own files somewhere else.
