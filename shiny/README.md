@@ -207,14 +207,44 @@ With R (4.1 or later) and Python (3.10 to 3.13) on your computer, paste this lin
 source("https://raw.githubusercontent.com/FAIR-eDNA/FAIRe-Galaxy/main/shiny/start.R")
 ```
 
-The first time, it downloads this repository into a folder called `FAIRe-Galaxy` in your user folder
-(`C:\Users\you\FAIRe-Galaxy` on Windows, outside OneDrive; `~/FAIRe-Galaxy` on a Mac), runs setup.R,
-and opens the app in your web browser. Afterwards,
-the same line checks for a newer version, downloads it if there is one, and starts the app. To stop
-the app, press Esc in the R console, or *Stop* in RStudio.
+The first time, it downloads this repository, runs setup.R, and opens the app in your web browser.
+Afterwards, the same line checks for a newer version, downloads it if there is one, and starts the
+app. To stop the app, press Esc in the R console, or *Stop* in RStudio.
 
-- To keep the app in another folder, run `Sys.setenv(FAIRE_HOME = "C:/Users/you/R_projects/FAIRe-Galaxy")`
-  (with forward slashes) before the line, in the same R session.
+#### Where the app is kept
+
+You can let the app choose its folder, or choose one yourself.
+
+**Let the app choose (the simplest).** Run only the line above. The app goes in a folder called
+`FAIRe-Galaxy` in your user folder:
+
+- on Windows, `C:\Users\<your name>\FAIRe-Galaxy`;
+- on a Mac, `/Users/<your name>/FAIRe-Galaxy`.
+
+On Windows this is one level above your Documents folder, which RStudio's *Files* pane calls *Home*,
+so the app does not show there. It is kept out of Documents because OneDrive often syncs that folder,
+and syncing does not suit the thousands of small files in the app's Python environment.
+
+**Choose your own folder.** The first time only, run this line before the one above:
+
+```r
+Sys.setenv(FAIRE_HOME = path.expand("~/R Projects/FAIRe-Galaxy"))
+```
+
+Replace `R Projects/FAIRe-Galaxy` with the folder you want. `~` stands for your RStudio *Home*, so
+`~/R Projects/FAIRe-Galaxy` is a folder called FAIRe-Galaxy inside the *R Projects* folder you see
+there. A full path also works, written with forward slashes, such as `"D:/Work/FAIRe-Galaxy"`. Give
+a new folder or an empty one, and the app is set up there. The script remembers the folder (in R's
+settings folder for FAIRe-Galaxy), so from then on the one line is enough. If you choose a folder
+after the app is already set up elsewhere, the old copy is left as it was; delete that folder to free
+the space. If your R projects are in a folder that OneDrive syncs, letting the app choose is the
+better option.
+
+Either way, each run prints the folder in the R console ("The FAIRe tools app is in ..."). Set up,
+the app takes about 250 MB.
+
+A few more things to know:
+
 - The folder is replaced whenever a newer version arrives, keeping only the Python environment in
   `shiny/.venv`, so keep your own files somewhere else.
 - If you already have a copy you downloaded or cloned yourself, set `FAIRE_HOME` to its folder. The
@@ -373,7 +403,7 @@ Three settings can be given as environment variables: `FAIRE_TOOLS_DIR` to use a
 somewhere other than `../tools`, `FAIRE_PYTHON` to use a Python other than the one in `.venv`, and
 `FAIRE_PORT` for another port than 7788 (useful if something else on your computer uses it).
 `FAIRE_PYTHON_BASE` tells setup.R which Python to make `.venv` from. For the one-line start
-(`start.R`), `FAIRE_HOME` sets the folder the app is kept in, and setting `FAIRE_SETUP` to any value
+(`start.R`), `FAIRE_HOME` sets the folder the app is kept in (and the script remembers it), and setting `FAIRE_SETUP` to any value
 (`Sys.setenv(FAIRE_SETUP = "yes")`) runs setup.R again before the app starts.
 
 ## Trying it with the demonstration data
@@ -407,7 +437,8 @@ workbook for Fish16S, and FAIRe2QIIME, which writes a metadata file and a manife
 - `setup.R` installs what the app needs, `run_app.R` starts it, and `start.R` is the one-line start:
   it downloads the repository (or a newer version of it) into one folder, runs setup.R when needed,
   then runs run_app.R. It checks for a newer version by reading the commit at the tip of `main` from
-  GitHub, and records the commit it installed in `.faire_app_version`.
+  GitHub, and records the commit it installed in `.faire_app_version`. A folder chosen with
+  `FAIRE_HOME` is remembered in `app_folder.txt` in `tools::R_user_dir("FAIRe-Galaxy", "config")`.
 - The files a person adds, and everything the tools write, go into a folder for the session in R's
   temporary folder. Each run has its own folder, with its inputs, outputs and a log of the exact
   command (`run_log.txt`), so any file can be traced to the run that wrote it. The *Outputs* page

@@ -9,8 +9,11 @@
 # for a newer version, downloads it if there is one, and starts the app in a few seconds.
 #
 # It needs R 4.1 or later and Python 3.10 to 3.13 (see shiny/README.md if you don't have Python).
-# To use another folder, first run, for example,
-#   Sys.setenv(FAIRE_HOME = "C:/Users/you/R_projects/FAIRe-Galaxy")
+# To let the app choose its folder, run only the line above. To choose your own folder, run this
+# first, once, replacing "R Projects/FAIRe-Galaxy" with the folder you want ("~" is RStudio's Home;
+# a full path such as "D:/Work/FAIRe-Galaxy" also works):
+#   Sys.setenv(FAIRE_HOME = path.expand("~/R Projects/FAIRe-Galaxy"))
+# The script remembers that folder, so later the one line is enough. Each run prints the folder.
 # The folder is replaced when a newer version arrives, so keep your own files somewhere else.
 
 local({
@@ -23,8 +26,13 @@ local({
   } else {
     path.expand("~")
   }
-  home <- normalizePath(Sys.getenv("FAIRE_HOME", file.path(user_dir, "FAIRe-Galaxy")),
-                        winslash = "/", mustWork = FALSE)
+  # A folder chosen with FAIRE_HOME is remembered in R's settings folder for this package, so the
+  # next run finds it without FAIRE_HOME being set again.
+  remember <- file.path(tools::R_user_dir("FAIRe-Galaxy", "config"), "app_folder.txt")
+  remembered <- if (file.exists(remember)) readLines(remember, warn = FALSE)[1] else ""
+  chosen <- Sys.getenv("FAIRE_HOME")
+  home <- if (nzchar(chosen)) chosen else if (nzchar(remembered)) remembered else file.path(user_dir, "FAIRe-Galaxy")
+  home <- normalizePath(home, winslash = "/", mustWork = FALSE)
   marker <- file.path(home, ".faire_app_version")
   app <- file.path(home, "shiny")
   say <- function(...) cat(..., "\n", sep = "")
@@ -110,7 +118,7 @@ local({
     installed <- if (ours) readLines(marker, warn = FALSE)[1] else NA_character_
     latest <- latest_commit()
     if (empty) {
-      say("Installing the FAIRe tools app in ", home)
+      say("Installing the FAIRe tools app in ", home, " (about 250 MB once set up)")
       install_copy(download_repo(latest), latest)
       fresh <- TRUE
     } else if (is.na(latest)) {
@@ -137,7 +145,15 @@ local({
     })
   }
 
-  say("\nStarting the FAIRe tools app. It opens in your web browser; to stop it, press Esc in the ",
-      "R console (or Stop in RStudio).")
+  same_as_remembered <- nzchar(remembered) &&
+    identical(normalizePath(remembered, winslash = "/", mustWork = FALSE), home)
+  if (nzchar(chosen) && !same_as_remembered) {
+    dir.create(dirname(remember), recursive = TRUE, showWarnings = FALSE)
+    writeLines(home, remember)
+    say("\nThis folder is remembered, so next time the one line is enough.")
+  }
+  say("\nThe FAIRe tools app is in ", home)
+  say("Starting it. It opens in your web browser; to stop it, press Esc in the R console ",
+      "(or Stop in RStudio).")
   run_script("run_app.R")
 })
