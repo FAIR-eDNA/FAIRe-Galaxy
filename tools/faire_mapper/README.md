@@ -26,7 +26,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
 
 ## Status
 
-- Version 0.10.0. `planemo lint`: passes with no warnings. `pyflakes`: clean.
+- Version 0.11.0. `planemo lint`: passes with no warnings. `pyflakes`: clean.
 - Goes to Galaxy Australia as an early version with the wrapped FAIRe tools (decided 6 November
   2026). Each tool's help starts with a note saying so, which asks users to check the results and
   send problems to the Galaxy Australia help desk (to confirm with Galaxy Australia, question 8).
@@ -43,6 +43,20 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   independent answer keys (`dev/faire_mapper_real_datasets/`, `dev/faire_mapper_australian_datasets/`,
   summarised below), and end to end on CSIRO's SEA-MES data (`dev/faire_mapper_seames/`). Not yet
   tried on datasets from Australian labs that already have a FAIRe version.
+- New in 0.11.0 (23 November 2026), for the khapra beetle demonstration (`dev/faire_mapper_khapra/`):
+  apply mapping takes **qPCR or ddPCR results** for targeted assays ("qPCR and ddPCR results" below).
+  *Identify your files* recognises such a table. Apply mapping writes it to ampData, works out
+  detected_notDetected for each sample and assay, lists a targeted project's assays in project_level
+  (as FAIRe-fier reads them), and warns about Cq values above the assay's pcr_cycles. From the Nova
+  Scotia eelgrass demonstration (`dev/faire_mapper_eelgrass/`), four fixes:
+  - dates given as ISO 8601 intervals (2019-07/2019-09), which FAIRe's eventDate allows, are read
+    as dates and written as they are;
+  - a capitalised word spelt only with IUPAC letters (Canada) is no longer taken for a DNA sequence;
+  - a table of reads summed per taxon whose first column repeats (Phylum, Class, Species, then the
+    samples) takes the taxon names as seq_id, and as taxonomy;
+  - a species column value such as *Clitellio sp. BOLD:AAG8543* or *Boonea cf. bisuturalis* is
+    named to the genus, and kept as written in verbatimIdentification; a *Probability* column (the
+    RDP classifier's) is written as confidence_score.
 - New in 0.10.0 (17 November 2026), from Oliver's question about adding data later: mapping in
   rounds. *Propose mapping* takes an *earlier review* (a review sheet, or a crosswalk) and carries its
   decisions over, so a table that has gained columns or samples needs reviewing only where something
@@ -284,6 +298,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
 | `faire_mapper_methods.py` | Finds values for the uncovered FAIRe terms in methods text with a model, and checks them (not yet a Galaxy tool) |
 | `faire_mapper_apply.py` | Writes a FAIRe workbook from a table and its reviewed crosswalk (`faire_mapper_apply.xml`) |
 | `faire_mapper_otu.py` | Reads OTU or ASV tables and taxonomy tables for apply mapping |
+| `faire_mapper_amp.py` | Reads qPCR and ddPCR results for apply mapping: ampData and detected_notDetected |
 | `faire_mapper_kinds.py` | Says what kind of input a table looks like (sample, OTU, taxonomy, library table and others) and where it goes |
 | `faire_mapper_identify.py` | Reports on every uploaded file (`faire_mapper_identify.xml`) |
 | `faire_mapper_text.py` | Reads methods given as text or PDF, and recognises FASTA files by their content |
@@ -437,7 +452,8 @@ screen is saved as a review sheet and given to *propose mapping* as the earlier 
 `faire_mapper_kinds.describe` says what a table looks like, from its shape, headers and values, in
 this order: a crosswalk (subject_id and object_id); text read as a table (the header is a sentence);
 a sheet whose header is on a later row (most columns unnamed); a run report (SRR, ERR or DRR
-accessions); an OTU table in long form; a library table (library names with sequence files, and
+accessions); qPCR or ddPCR results (a Cq column of numbers or *Undetermined*, or copies beside an
+assay column, with sample names that repeat; since 0.11.0); an OTU table in long form; a library table (library names with sequence files, and
 few sample details); a sample table (four or more columns of sample details, a column with a
 different value on nearly every row, and not mostly counts); a primer table (a forward primer
 column, primer sequences under a primer header, or two columns of primer-length sequences that
@@ -608,6 +624,31 @@ lib_layout and checksum_method go to projectMetadata when the libraries agree; t
 reported for the user to add with its OBI ID. The library tables take the place of run columns in
 the sample table, whose values fill what they do not give. ENA's fastq_ftp files are ENA's copies
 (SRR33695780_1.fastq.gz), with their own checksums; the log says so.
+
+**qPCR and ddPCR results** (`faire_mapper_amp.py`, since 0.11.0). For a targeted assay, a results table
+with one row per reaction goes to ampData. Its columns are found by name: the sample (samp_name,
+Sample, Sample ID), the assay (assay_name, Assay, Target, or a column the form names), the Cq
+(quantificationCycle, Cq, Ct), and when given the technical replicate, the plate, the RFU and the
+copies (estimatedNumberOfCopies, Copies, Quantity). Assay values must be the assay names on the form,
+compared without case, spaces or punctuation; the tool stops and lists any that are not. Then:
+
+- technical_rep_id is numbered 1, 2, 3 in table order for each sample, assay and plate when there is
+  no replicate column;
+- a reaction with no Cq (Undetermined, empty, or 0) gets *not applicable* as its quantificationCycle,
+  and a Cq of 0 or text other than the usual no-amplification words is reported;
+- detected_notDetected (one column per assay when there are several) is filled where the sample table
+  leaves it empty: 1 when at least one reaction amplified, 0 when none did, and *not applicable* for a
+  sample with no reactions for an assay that others were tested with. The log asks the user to check
+  this against the study's detection criteria, which may need more than one positive replicate;
+- a targeted project's assays are written to project_level as *A | B*, as FAIRe-fier reads them from
+  there to check sampleMetadata (FAIRe-ator leaves it empty);
+- a Cq above the assay's pcr_cycles (from the project values) is reported, as no run can give one;
+- pcr_plate_id, mandatory in ampData for targeted assays, is listed among the mandatory terms with no
+  value when the results have no plate column.
+
+FAIRe-fier takes an assay's name to be the part of detected_notDetected_<assay_name> after the last
+underscore, so names with an underscore (Olson_ViiA7) fail its check; the khapra demonstration uses
+names without one (OlsonViiA7). The stdData and eLowQuantData sheets are still left empty.
 
 Round trip: the CPR_2015 FAIRe example's otuFinal and taxaFinal, read back through the tool, give the
 same counts and taxonomy (stray spaces trimmed; scientificName and taxonRank added where empty). Not
@@ -966,6 +1007,12 @@ test.
   2026). The checklist and full template are bundled here, as they are with FAIRe-ator, and the
   licence is copied in as `checklist/LICENSE`.
 - The mapper code is MIT, the usual licence for Galaxy tools (as in the IUC's tools-iuc).
+- FAIRe-fier (upstream `create_validator.py`, `check_assayname`) takes an assay's name to be the
+  text after the last underscore of `detected_notDetected_<assay_name>`, so a targeted project whose
+  assay names contain an underscore fails its check ("... is specified but not listed in
+  projectMetadata assay_name"). Found on 23 November 2026 with the khapra beetle data; to raise
+  upstream. FAIRe-fier also reads a targeted project's assays from project_level, which FAIRe-ator
+  leaves empty when there are several.
 
 ## Before deployment on Galaxy Australia
 
@@ -1026,6 +1073,15 @@ test.
   reviewed crosswalk, with country, reef and site columns for geo_loc_name, "1 L" and "500 mL"
   volumes, pore sizes in microns, dd/mm/yyyy dates, days frozen, a field blank and a notes column.
 - `apply_project_values.tsv`: values for the whole project, one of them for review.
+- `otu_species_summed.csv`: reads summed per species for the four Lizard Island samples, with
+  phylum, class, species (one *sp.* with a BOLD BIN, one *cf.*) and the RDP probability first.
+- `map_date_intervals.csv`: four made-up samples at two Nova Scotia sites, with dates as ISO 8601
+  intervals and Canada as the country.
+- `apply_qpcr_samples.csv`, `apply_qpcr_samples.sssom.tsv`, `apply_qpcr_results.csv` and
+  `apply_qpcr_values.tsv`: three made-up water samples and a field blank, their crosswalk from propose
+  mapping, 18 qPCR reactions for two assays (Sample, Target and Ct columns, Undetermined and empty Cq
+  values, one sample and the blank tested with one assay only, a Cq above the assay's 40 cycles), and
+  the assays' targets and cycle numbers.
 - `apply_dates_ambiguous.csv` and its crosswalk: two dates that fit day first and month first.
 - `apply_reef_crosswalk_edited.xlsx`: apply_reef.sssom.tsv as a spreadsheet saves it (metadata lines
   in the first column, 1.0 as 1).
@@ -1162,7 +1218,11 @@ lines and has propose mapping warn about dates that can be read two ways; all 15
 review over when mapping again (three new propose mapping tests: a review sheet, a crosswalk and a file
 that is neither; one apply mapping test), and has identify your files read a review sheet as one
 file (one new test); all 18 propose mapping, 38 apply mapping and 5 identify tests pass in Galaxy
-`release_25.0` here.
+`release_25.0` here. 0.11.0 (23 November) adds two apply mapping tests for qPCR results (ampData,
+detected_notDetected and the cycle check; an assay not among the assay names), one apply mapping test
+for reads summed per species, one propose mapping test for date intervals and one identify test for
+qPCR results; all 19 propose mapping, 41 apply mapping and 6 identify tests pass in Galaxy
+`release_26.1` here.
 
 | Tool | Test | Checks | Result |
 |---|---|---|---|

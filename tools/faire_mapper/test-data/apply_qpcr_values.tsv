@@ -1,0 +1,6 @@
+term	value	assay
+targetTaxonomicAssay	Carcinus maenas	CmaeCOI
+targetTaxonomicAssay	Carcinus maenas	CmaeND2
+pcr_cycles	40	CmaeCOI
+pcr_cycles	45	CmaeND2
+amp_vis_method	qPCR	

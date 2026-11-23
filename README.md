@@ -34,13 +34,14 @@ order you would use them: make a workbook, check it, then convert it for where y
 | Directory | Tools | What it does | Upstream | Status |
 |---|---|---|---|---|
 | `tools/faireator` | FAIRe-ator | **Make.** Makes a blank FAIRe metadata workbook, an Excel template set up for your study's assays and sample types, ready to fill in. | [FAIR-eDNA/FAIRe-ator](https://github.com/FAIR-eDNA/FAIRe-ator) | Lint clean; 3/3 tests pass; CC BY 4.0 licence copied in (`LICENSE.upstream`); templates open cleanly in Excel, LibreOffice and Google Sheets |
-| `tools/faire_mapper` | FAIRe mapper: identify your files; profile columns; propose mapping; find primers; find method details; build primer table; apply mapping; ask a language model (optional) | **Make.** Builds a FAIRe workbook from the tables you already have. It works out what each file is, proposes which FAIRe term each column of your sample table matches (for you to review), finds the primers and other method details in your methods text, and writes the workbook. | New code, from the project's `faire_mapper` prototype; bundled primer table from Takahashi et al. 2023 and a bacteria and archaea register | Lint clean; 78/78 tests pass (Galaxy 26.1); benchmarked, tried on four Dryad datasets, two Australian datasets, the SEA-MES record (16S, COI, 18S and Wilderlab), the day-night study of West et al. 2024 (16S and COI, `dev/faire_mapper_daynight/`) and nine FAIRe examples; model step not yet run against the API |
+| `tools/faire_mapper` | FAIRe mapper: identify your files; profile columns; propose mapping; find primers; find method details; build primer table; apply mapping; ask a language model (optional) | **Make.** Builds a FAIRe workbook from the tables you already have. It works out what each file is, proposes which FAIRe term each column of your sample table matches (for you to review), finds the primers and other method details in your methods text, and writes the workbook. | New code, from the project's `faire_mapper` prototype; bundled primer table from Takahashi et al. 2023 and a bacteria and archaea register | Lint clean; 83/83 tests pass (Galaxy 26.1); benchmarked, tried on four Dryad datasets, two Australian datasets, the SEA-MES record (16S, COI, 18S and Wilderlab), the day-night study of West et al. 2024 (16S and COI, `dev/faire_mapper_daynight/`) and nine FAIRe examples; model step not yet run against the API |
 | `tools/fairefier` | FAIRe-fier (with a new command-line version) | **Check.** Checks a FAIRe workbook against the FAIRe checklist and reports values that are missing or not in the expected form, so you can fix them before sharing. | [csiro/FAIRe-fier](https://github.com/csiro/FAIRe-fier) | Lint clean; 6/6 tests pass; outputs identical to the web app; offer the command line upstream |
 | `tools/faire2ena` | FAIRe2ENA: samples; FAIRe2ENA: experiments and runs | **Convert.** Turns the workbook into the files the European Nucleotide Archive (ENA) needs to register your samples, study, experiments and sequencing runs. | [FAIR-eDNA/FAIRe2ENA](https://github.com/FAIR-eDNA/FAIRe2ENA) | Lint clean; 13/13 tests pass; runs can be chosen by assay or sequencing run, and a library holding several assays gets one run; adds the units ENA's checklist asks for, and the size-fraction fields the right way round; paired-end and single-end runs; ENA's test server accepted samples, study, experiments and runs for three SEA-MES 18S samples |
 | `tools/faire2ncbi` | FAIRe2NCBI: BioSample; FAIRe2NCBI: SRA | **Convert.** Turns the workbook into the tables the NCBI Submission Portal needs to register your samples (BioSample) and sequence reads (SRA). | [aomlomics/FAIRe2NCBI](https://github.com/aomlomics/FAIRe2NCBI) | Lint clean; 20/20 tests pass; a library holding several assays gets one SRA row; needs a trial in the NCBI Submission Portal |
 | `tools/faire2qiime` | FAIRe2QIIME | **Convert.** Turns the workbook into QIIME 2 sample metadata and, if you like, manifests for importing your reads, ready for analysis in QIIME 2. | [aomlomics/faire2qiime](https://github.com/aomlomics/faire2qiime) | Lint clean; 8/8 tests pass; needs a trial importing its files into QIIME 2 |
 | `tools/faire2mdt` | FAIRe2MDT | **Convert.** Turns the workbook and an OTU table into the spreadsheet taken by GBIF's Metabarcoding Data Toolkit, which publishes eDNA records to GBIF. | [FAIR-eDNA/FAIRe2MDT](https://github.com/FAIR-eDNA/FAIRe2MDT) | Lint clean; 6/6 tests pass; leaves out control samples, as GBIF asks; ran on 11 assay and run combinations of the FAIRe examples; MDT trial reached an archive GBIF can index; CC BY 4.0 licence copied in (`LICENSE.upstream`) |
 | `tools/edna2obis` | edna2obis: match taxa; edna2obis: build Darwin Core tables | **Convert.** Matches your taxa to accepted names in WoRMS and GBIF, then builds the Darwin Core tables OBIS and GBIF use to publish species occurrence records. | [aomlomics/edna2obis](https://github.com/aomlomics/edna2obis) | Lint clean; 14/14 tests pass (Galaxy 26.1, with internet access); one request at a time to WoRMS and GBIF by default, at most 4; needs a trial on Galaxy Australia and an IPT |
+| `tools/faire2dwc` | FAIRe to Darwin Core | **Convert.** Turns the workbook into a Darwin Core archive of presence and absence records for GBIF and OBIS: qPCR and ddPCR results, or metabarcoding data published as presence. | New code (no upstream tool publishes qPCR results) | Lint clean; 4/4 tests pass (Galaxy 26.1); 162 records from the khapra beetle data (`demo/khapra`); needs a trial in an IPT |
 
 Each tool directory has its own README with what the wrapper adds, upstream issues found, and the
 steps still needed before deployment.
@@ -55,7 +56,7 @@ Notes for Galaxy Australia and other evaluators.
   which repository.
 - **Installing.** Each folder under `tools/` is one ToolShed repository with its own tests
   (`planemo test tools/FOLDER`). The tools are not on the ToolShed yet, as the owner account is still
-  to be chosen. Dependencies come from conda (conda-forge and bioconda) or containers. All 148 tool
+  to be chosen. Dependencies come from conda (conda-forge and bioconda) or containers. All 157 tool
   tests pass on Galaxy release_26.1 in this repository's checks; the tools were also tested on
   release_25.0. Tools use profile 23.0, except *FAIRe mapper: ask a language model* (25.1, for
   Galaxy's credentials).
@@ -70,14 +71,26 @@ Notes for Galaxy Australia and other evaluators.
   authors' own formats: an eDNAFlow LCA output and a FASTA file per assay, a sample sheet with the
   time in its own column, and the portal's list of the fastq files. `DATA=demo/daynight dev/faire_mapper_daynight/run.sh OUTDIR` runs the FAIRe
   mapper, FAIRe-fier, FAIRe2ENA, FAIRe2NCBI and FAIRe2QIIME on it.
+- **A targeted (qPCR) dataset.** `demo/khapra` holds the published files of a khapra beetle eDNA
+  study (Trujillo-González et al. 2022, CC0): a sample table, 766 qPCR reactions and the Dryad
+  README. `dev/faire_mapper_khapra/run.sh OUTDIR` runs the FAIRe mapper (with the qPCR results as
+  ampData), FAIRe-fier and FAIRe to Darwin Core, to an archive of 162 presence and absence records
+  for GBIF.
+- **A minimal metabarcoding dataset.** `demo/eelgrass` holds the published files of a COI study of
+  invertebrates in Nova Scotia eelgrass meadows (Trask et al., Dryad, CC0): reads per species and
+  sample, and the site coordinates, with no sample table, controls or sequences.
+  `dev/faire_mapper_eelgrass/run.sh OUTDIR` makes the sample table, then runs the FAIRe mapper,
+  FAIRe-fier and FAIRe to Darwin Core, to 869 presence records for GBIF.
 - **Worked example.** `docs/walkthroughs/seames_18s_to_ena.md` follows three SEA-MES 18S samples
   from the lab's spreadsheet, through the FAIRe mapper, FAIRe-fier and FAIRe2ENA, to a submission
   that ENA's test service accepted. It ran the scripts the Galaxy tools wrap from the command line,
   so it shows the steps and their outputs, not Galaxy itself.
 - **Without Galaxy.** `shiny/` is a Shiny app that runs the same tools on a person's own computer, in
   a web browser, with the same command lines (`shiny/README.md`). Its review screen is the FAIRe
-  mapper's review sheet, and it can take a review sheet filled in with Excel. It has a button that
-  loads a 16S demonstration from `demo/seames`.
+  mapper's review sheet, and it can take a review sheet filled in with Excel. Its Start page offers
+  demonstrations to load: SEA-MES (16S metabarcoding, the full dataset), the khapra beetle (qPCR) and
+  Nova Scotia eelgrass (COI metabarcoding, the least a dataset needs), the last two to presence and
+  absence records for GBIF.
 - **Network.** Only *edna2obis: match taxa* needs the internet, to look up names in WoRMS and GBIF.
   It sends one request at a time by default, and at most 4.
 - **Language model (optional).** *FAIRe mapper: ask a language model* needs a model service: one
@@ -104,6 +117,7 @@ tools/
   faire2qiime/    one ToolShed repository
   faire2mdt/      one ToolShed repository
   edna2obis/      one ToolShed repository (two tools sharing macros.xml)
+  faire2dwc/      one ToolShed repository (new: presence and absence records for GBIF and OBIS)
   faire_mapper/   one ToolShed repository (eight tools sharing macros.xml; bundles the checklist v1.0.2, its full template and a primer table)
 workflows/faire/  three Galaxy workflows that chain the tools, each with its tests and test data
 shiny/            a Shiny app that runs the tools on a person's own computer, without Galaxy

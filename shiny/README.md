@@ -27,15 +27,17 @@ been done, asks before work could be lost, and explains errors in plain words (s
 mistakes and warnings*, below). Its Start page also lists what you'll need for a FAIRe dataset.
 Version 0.7.0 (17 November 2026) maps in rounds: when your table gains columns or samples, the
 mapping can be run again with your earlier review, and only what is new needs reviewing (see
-*Mapping in rounds*, below).
+*Mapping in rounds*, below). Version 0.8.0 (23 November 2026) takes qPCR and ddPCR results, adds
+*FAIRe to Darwin Core* for presence and absence records, and offers a choice of demonstrations,
+for a workshop on making FAIR eDNA datasets (see *Trying it with the demonstration data*, below).
 
 ## What it covers
 
 | Step | Tools |
 |---|---|
-| 1. Make a workbook | FAIRe-ator (a blank template); the FAIRe mapper (identify your files, profile and propose a mapping, review it, find primers, values for the whole project, write the workbook), with the optional language model step |
+| 1. Make a workbook | FAIRe-ator (a blank template); the FAIRe mapper (identify your files, profile and propose a mapping, review it, find primers, values for the whole project, write the workbook with OTU tables, library tables or qPCR results), with the optional language model step |
 | 2. Check | FAIRe-fier |
-| 3. Convert | FAIRe2NCBI (BioSample and SRA), FAIRe2ENA (samples, and experiments and runs), FAIRe2MDT, edna2obis (match taxa and build the Darwin Core archive) and FAIRe2QIIME |
+| 3. Convert | FAIRe2NCBI (BioSample and SRA), FAIRe2ENA (samples, and experiments and runs), FAIRe2MDT, edna2obis (match taxa and build the Darwin Core archive), FAIRe to Darwin Core (presence and absence) and FAIRe2QIIME |
 
 The review screen is the review sheet that propose mapping writes, row for row: each column heading
 of the sample table (an input term), with some of its values, the proposed term and its score, the
@@ -408,11 +410,23 @@ somewhere other than `../tools`, `FAIRE_PYTHON` to use a Python other than the o
 
 ## Trying it with the demonstration data
 
-The Start page has a button that loads a small cut of CSIRO's SEA-MES eDNA data record (Deagle et al.
-2025; see `demo/README.md`). It adds the files to *Your files* and fills in the forms for them, so you
-can follow each step through to a demonstration FAIRe metadata workbook. Each tool still has to be run
-by pressing its button, and the review is done by hand, as a person would do it. The
-Start page lists the steps. edna2obis looks the names up in WoRMS or GBIF, so it needs internet
+The Start page offers three demonstrations (`demo/README.md`), from the fullest dataset to the least
+a dataset needs:
+
+- **SEA-MES** (`demo/seames`): a small cut of CSIRO's SEA-MES eDNA data record (Deagle et al. 2025),
+  metabarcoding with sequences, curated taxa, a run report and methods. It fills every sheet, for
+  every conversion.
+- **Khapra beetle** (`demo/khapra`): the published files of a qPCR study (Trujillo-González et al.
+  2022), a sample table and 766 reactions, to a workbook with ampData and a Darwin Core archive of
+  presence and absence records for GBIF.
+- **Nova Scotia eelgrass** (`demo/eelgrass`): the published files of a COI metabarcoding study
+  (Trask et al., Dryad), a table of reads per species and sample and the site coordinates, with no
+  sample table, controls or sequences, to presence records for GBIF.
+
+Choosing one and pressing *Load the demonstration data* adds its files to *Your files* and fills in
+the forms for them, so you can follow each step through. Each tool still has to be run by pressing
+its button, and the review is done by hand, as a person would do it. The Start page lists the steps
+for the one loaded. edna2obis looks the names up in WoRMS or GBIF, so it needs internet
 access, and its two steps were not run on the demonstration in testing; the Darwin Core build was
 tested through the app's code on edna2obis's own test data, with its stand-in mapping table.
 
@@ -425,12 +439,32 @@ a warning for each of the 9 columns kept as their own terms, which the checklist
 FAIRe2NCBI writes 13 BioSamples and 13 SRA rows, and FAIRe2ENA 13 samples and 13 experiments and runs.
 (Tested 13 November 2026, up to the workbook through the app and the conversions from the command
 line with the app's settings. On 10 November, version 0.1.0 also ran FAIRe2MDT, which writes a
-workbook for Fish16S, and FAIRe2QIIME, which writes a metadata file and a manifest.)
+workbook for Fish16S, and FAIRe2QIIME, which writes a metadata file and a manifest. On 23 November,
+version 0.8.0 gave the same mapping, workbook and FAIRe-fier result through the app's server code,
+and FAIRe to Darwin Core wrote 108 presence records for the 11 samples, leaving out the 2 controls.)
+
+For the khapra beetle demonstration: *a. Your files* finds the sample table, the qPCR results, the
+project values, the taxon table and the README. *Fill in the authors' answers* rejects *sample
+type* (kept as the authors' own term) and changes *Category* to samp_category and *Extraction
+technique* to nucl_acid_ext_kit. The workbook has 90 rows (57 samples, 33 controls), ampData with the
+766 reactions, and detected_notDetected for each of the four assays (each assay on each machine). Apply
+mapping warns about a Cq of 0 and Cq values above the assays' cycle numbers, which are in the
+published data. FAIRe-fier passes both sheets. FAIRe to Darwin Core writes 162 records: 75 present and
+87 absent, with the controls left out. (Tested 23 November 2026 through the app's server code with
+`shiny::testServer`, in R 4.3 with shiny 1.8.)
+
+For the eelgrass demonstration: the mapping accepts 11 of the sample table's 13 columns and sends
+*Replicate* for review, which the authors' answers reject. The workbook has 50 samples, with the
+species table as otuFinal and taxaFinal (138 taxa, each named by its seq_id). It lists seq_run_id
+among the mandatory terms with no value, and warns that dna_sequence is empty. FAIRe-fier passes
+both sheets. FAIRe to Darwin Core writes 869 presence records. (Tested the same way, 23 November
+2026.)
 
 ## How it works
 
-- `app.R` holds the pages' behaviour; `R/ui.R` the pages themselves; `R/tools.R` one function for each
-  Galaxy tool, building its command line; `R/runner.R` finds Python, R and the tools and runs a
+- `app.R` holds the pages' behaviour; `R/ui.R` the pages themselves; `R/demos.R` the demonstrations
+  (their files in `demo/`, the forms each fills in and the reviewer's decisions); `R/tools.R` one
+  function for each Galaxy tool, building its command line; `R/runner.R` finds Python, R and the tools and runs a
   command; `R/helpers.R` reads the review sheet and the other files the tools exchange; and
   `python/fill_review_sheet.py` writes the decisions from the review screen into a copy of the review
   sheet, leaving the rest of it (the drop-downs, the shading and the other sheets) as it was.
@@ -465,6 +499,25 @@ settle then:
 - **The language model.** A hosted version would hold the key on the server (as Galaxy's
   `FAIRE_MAPPER_SERVER` does), with a limit on use, and no longer ask people for theirs.
 - **Internet access.** edna2obis needs to reach WoRMS and GBIF from the server.
+
+## qPCR and ddPCR results
+
+For a targeted assay, *e. Write the workbook* takes one or more tables of qPCR or ddPCR results, one
+row per reaction, under *qPCR or ddPCR results*. The reactions go to ampData, and each sample's
+detected_notDetected for each assay is worked out from them, as apply mapping does in Galaxy:
+
+- 1 when at least one reaction amplified, 0 when none did, and *not applicable* for a sample not
+  tested with that assay. Check this against your study's detection criteria;
+- the technical replicates are numbered when the table has no replicate column;
+- Cq values above the assay's number of cycles (pcr_cycles in the project values) are reported.
+
+The table's columns are found by name (Sample ID, Assay or Target, Cq or Ct, Replicate, Plate,
+Copies). Its assay values must be the assay names given in *e*. Choose *Targeted* as the assay type
+in *b. Propose a mapping* first. *a. Your files* recognises such a table as *qPCR results*.
+
+*3. Convert*, *GBIF and OBIS (presence and absence)*, runs FAIRe to Darwin Core on the workbook: one
+record per sample and assay for a targeted assay (present or absent), or per sample and sequence for
+metabarcoding data (present), with the controls left out. Its report shows below the result.
 
 ## Not yet in the app
 

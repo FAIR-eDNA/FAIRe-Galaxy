@@ -1,23 +1,17 @@
 # Demonstration files
 
-A small cut of CSIRO's SEA-MES eDNA data record, for trying the FAIRe tools app. The files come from
-`demo/seames` and `dev/faire_mapper_seames` in this repository. **They are not data for ecological
-analysis**; use the published record for that.
+The datasets the app's Start page offers. Each folder holds the files a person would add, prepared as
+the FAIRe mapper's guide describes, and a README with the source, the licence and the changes made.
+`R/demos.R` holds each one's settings: the forms it fills in and the reviewer's decisions.
 
-| File | What it is |
-|---|---|
-| `SEA-MES_10L_samples.csv` | The 13 10 L samples from file 1 of the record (the NCBI BioSample sheet), with the column *Negative control type* added, as a person following the mapper's guide would add it (`dev/faire_mapper_seames/prepare_table.py`) |
-| `4_SEA-MES_16S_ASV_level_output_with_seq.csv` | The 16S fish ASV table, with sequences and preliminary taxonomy (written as otuRaw and taxaRaw) |
-| `5_SEA_MES_Fish16S_Tax_Feb_27_2025.csv` | The authors' curated fish taxa (written as otuFinal and taxaFinal) |
-| `filereport_read_run_PRJNA1263580.tsv` | ENA's run report for these samples' libraries (the library table) |
-| `methods.txt` | The methods from the project's NESP final report (for finding primers) |
-| `SEA-MES_project_values_Fish16S.tsv` | Values for the whole project, as the trial gave them (`dev/faire_mapper_seames/project_values.tsv`), with otu_final_description changed to describe file 5 |
-| `biosample_accessions.tsv`, `ena_sample_receipt.xml` | The samples' BioSample accessions and a stand-in ENA receipt, made from the run report by `dev/faire_mapper_seames/accessions.py`, as the samples are registered already |
+| Folder | Dataset | What it shows | Licence |
+|---|---|---|---|
+| `seames` | SEA-MES eDNA data record (Deagle et al. 2025), 13 water samples, 16S fish | Metabarcoding with every part: sequences, raw and curated tables, run report, methods, controls; every conversion | CC BY 4.0 |
+| `eelgrass` | Nova Scotia eelgrass COI metabarcoding (Trask et al., Dryad), 50 samples at 17 sites | Metabarcoding with the least it needs: reads per species and sample, and site coordinates; no sample table, controls or sequences; to GBIF as presence | CC0 1.0 |
+| `khapra` | Khapra beetle qPCR (Trujillo-González et al. 2022), 90 samples and controls, 766 reactions | A targeted study with the least it needs: samples, assay details, a result for each reaction; to GBIF as presence and absence | CC0 1.0 |
 
-## Source and licence
+**These files are for trying the tools, not for ecological analysis.** Use the published records for
+that.
 
-Deagle BE, Jayasinghe SA, Bessey C, Bodrossy L, West KM (2025). Environmental DNA data from the RV
-Investigator South-East Australian Marine Ecosystem Survey (SEA-MES) voyages (IN2023_V05 and
-IN2024_V03), version 2. CSIRO Data Access Portal, doi:10.25919/ngqx-3557. Licensed under CC BY 4.0.
-Raw reads: NCBI BioProject PRJNA1263580. The methods text is from the project's NESP final report
-(Deagle et al. 2025, CC BY 4.0). The changes made are listed above and in `demo/seames/README.md`.
+For a workshop, `dev/workshop/make_packages.sh` makes a zip of each dataset, holding the published files
+as downloaded, the same files prepared for the app, and a page of steps for participants.

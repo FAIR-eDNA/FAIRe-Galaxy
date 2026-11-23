@@ -1,0 +1,6 @@
+# A person's review of the crosswalk for the eelgrass sample table (made by prepare_table.py), as the
+# guide describes: confirm a match, change its term, or delete the row so the column is kept as a
+# user-defined field.
+# action: confirm | delete | term:<FAIRe term> | add:<FAIRe term> (a second row for the same column)
+column	action	reason
+Replicate	delete	the replicate number at the site (1 to 3); biological_rep is the number of replicates for the project, so kept as a user-defined field

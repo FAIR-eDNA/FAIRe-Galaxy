@@ -1,0 +1,6 @@
+Phylum,Class,Species,Probability,LIZ_01,LIZ_02,LIZ_03,LIZ_FB
+Mollusca,Bivalvia,Tridacna_maxima,1,12,0,30,0
+Mollusca,Gastropoda,Conus_sp._BOLD:AAA1234,0.97,0,8,0,0
+Cnidaria,Anthozoa,Acropora_cf._millepora,0.96,5,5,0,0
+Echinodermata,Asteroidea,Acanthaster_planci,1,0,0,44,2
+Annelida,Polychaeta,Eunice_aphroditois,0.99,3,0,0,0

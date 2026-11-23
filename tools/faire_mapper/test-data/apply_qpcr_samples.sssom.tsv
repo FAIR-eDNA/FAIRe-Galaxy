@@ -1,0 +1,40 @@
+# curie_map:
+#   FAIRe: https://github.com/FAIR-eDNA/FAIRe_checklist#
+#   local: 'urn:faire-mapper:local:'
+#   skos: http://www.w3.org/2004/02/skos/core#
+#   semapv: https://w3id.org/semapv/vocab/
+#   MIXS: https://w3id.org/mixs/
+#   dwc: http://rs.tdwg.org/dwc/terms/
+# mapping_set_id: urn:faire-mapper:apply_qpcr_samples.csv
+# mapping_set_description: Proposed mapping of the columns of apply_qpcr_samples.csv to FAIRe terms (FAIRe_checklist_v1.0.2.xlsx)
+# license: https://creativecommons.org/publicdomain/zero/1.0/
+# mapping_tool: faire_mapper 0.10.0
+# mapping_date: 2026-11-23
+# extension_definitions:
+#   - slot_name: combine_order
+#     property: urn:faire-mapper:combine_order
+#     type_hint: xsd:integer
+#   - slot_name: value_part
+#     property: urn:faire-mapper:value_part
+#     type_hint: xsd:string
+# comment: each row's comment says what the FAIRe term means, why it was proposed, what the
+#   apply mapping tool will do with the values and, for rows to review, what to check.
+#   combine_order numbers the columns that together build one value, in order
+#   (geo_loc_name is country, then region, then locality). value_part says which part of each
+#   cell a term takes: number or unit (1 L fills samp_size and samp_size_unit), latitude or
+#   longitude (MIxS lat_lon), or a conversion (negative control if yes). The apply mapping
+#   tool applies rows with skos:exactMatch; change a row to skos:exactMatch to confirm it.
+#   A column with no skos:exactMatch row is kept as a user-defined field, unless the apply
+#   mapping tool is set to leave such columns out. Rows with a MIxS or Darwin Core term (MIXS: or
+#   dwc:) are for columns with no FAIRe term: confirmed, they name the user-defined field.
+subject_id	subject_label	predicate_id	object_id	object_label	mapping_justification	confidence	comment	combine_order	value_part
+local:Sample_ID	Sample ID	skos:exactMatch	FAIRe:samp_name	samp_name	semapv:CompositeMatching	1.0	FAIRe term: samp_name. Sample Name is a name that you choose for the sample. Why: Strong match. The column name matches 'sample identifier', another name for this FAIRe term. A different value on every row. For example: W1, W2, W3.		
+local:Category	Category	skos:exactMatch	FAIRe:samp_category	samp_category	semapv:CompositeMatching	0.865	FAIRe term: samp_category. A type/category of a sample. Allowed values: sample, negative control, positive control, PCR standard. Why: Moderate match. The column name partly matches the FAIRe term's own name ('sample category'). Values match the allowed values (100% of distinct values).		
+local:Negative_control_type	Negative control type	skos:exactMatch	FAIRe:neg_cont_type	neg_cont_type	semapv:CompositeMatching	1.0	FAIRe term: neg_cont_type. A negative control type used in an investigation. Allowed values: site negative, field negative, process negative, extraction negative, PCR negative. Why: Strong match. The column name matches the FAIRe term's own name ('negative control type'). Values match the allowed values (100% of distinct values).		
+local:Date	Date	skos:exactMatch	FAIRe:eventDate	eventDate	semapv:CompositeMatching	1.0	FAIRe term: eventDate. The date and time of sampling, either as an instance (single point in time) or interval. Why: Strong match. The column name matches 'date', another name for this FAIRe term. Dates (dd/mm/yyyy). What happens: The tool will convert dates from dd/mm/yyyy to ISO 8601 (yyyy-mm-dd).		
+local:Latitude	Latitude	skos:exactMatch	FAIRe:decimalLatitude	decimalLatitude	semapv:CompositeMatching	1.0	FAIRe term: decimalLatitude. The geographic latitude in decimal degrees using WGS84 datum. Why: Strong match. The column name matches 'latitude', another name for this FAIRe term. Values are decimal degrees within latitude range (-42.9302 to -42.8901).		
+local:Longitude	Longitude	skos:exactMatch	FAIRe:decimalLongitude	decimalLongitude	semapv:CompositeMatching	1.0	FAIRe term: decimalLongitude. The geographic longitude in decimal degrees using WGS84 datum. Why: Strong match. The column name matches 'longitude', another name for this FAIRe term. Values are decimal degrees within longitude range (147.33 to 147.38).		
+local:Country	Country	skos:exactMatch	FAIRe:geo_loc_name	geo_loc_name	semapv:CompositeMatching	1.0	"FAIRe term: geo_loc_name. The geographical origin of the sample as defined by the country or sea name followed by regions and localities. Why: Strong match. The column name matches 'country', another name for this FAIRe term. Country or sea names, the first part of ""Country: region, locality"". For example: Australia."		
+local:env_broad_scale	env_broad_scale	skos:exactMatch	FAIRe:env_broad_scale	env_broad_scale	semapv:CompositeMatching	1.0	"FAIRe term: env_broad_scale. Major environmental system your sample came from. Why: Strong match. The column name matches the FAIRe term's own name ('environment broad scale'). Values are in ""label [ID]"" form (e.g. ENVO terms)."		
+local:env_local_scale	env_local_scale	skos:exactMatch	FAIRe:env_local_scale	env_local_scale	semapv:CompositeMatching	1.0	"FAIRe term: env_local_scale. The entity or entities which are in your sample or specimen’s local vicinity and which you believe have significant causal influences on your sample. Why: Strong match. The column name matches the FAIRe term's own name ('environment local scale'). Values are in ""label [ID]"" form (e.g. ENVO terms)."		
+local:env_medium	env_medium	skos:exactMatch	FAIRe:env_medium	env_medium	semapv:CompositeMatching	1.0	"FAIRe term: env_medium. Environmental material or materials (pipe separated) immediately surrounded your sample prior to sampling. Why: Strong match. The column name matches the FAIRe term's own name ('environment medium'). Values are in ""label [ID]"" form (e.g. ENVO terms)."		

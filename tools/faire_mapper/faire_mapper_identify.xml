@@ -43,6 +43,17 @@ python '$__tool_directory__/faire_mapper_identify.py'
                 <has_text text="INFO: 8 files"/>
             </assert_stdout>
         </test>
+        <!-- qPCR results (one row per reaction) beside the sample table they belong to -->
+        <test expect_num_outputs="1">
+            <param name="files" value="apply_qpcr_samples.csv,apply_qpcr_results.csv"/>
+            <output name="report">
+                <assert_contents>
+                    <has_n_lines n="3"/>
+                    <has_line_matching expression="^apply_qpcr_samples\.csv\t\tsample table\t.*"/>
+                    <has_line_matching expression="^apply_qpcr_results\.csv\t\tqPCR results\t.*Cq values in Ct; sample names in Sample repeat \(18 rows, 4 samples\); the assay in Target.*targeted assays.*"/>
+                </assert_contents>
+            </output>
+        </test>
         <!-- An Excel file: each sheet on its own -->
         <test expect_num_outputs="1">
             <param name="files" value="library_sra_sheet.xlsx,primer_register_small.xlsx"/>
@@ -120,6 +131,9 @@ Here is what the tool looks for in each kind of file:
 - **Library tables** (run reports, SRA sheets) have run accessions such as SRR numbers, or library
   names with their sequence file names. A sample sheet that also names each sample's files is
   reported as a sample table that can serve as the library table too.
+- **qPCR or ddPCR results** have one row per reaction: a column of Cq values (numbers, or
+  *Undetermined*), or of copies beside an assay column, and sample names that repeat, once for each
+  technical replicate.
 - **Sequences in FASTA format** have a header line starting with *>* before each sequence. They are
   recognised by their content, whatever the file is called (.fa, .fasta, .fna, .txt or no ending).
 - **Text** (methods, ReadMe files), plain or as a PDF, is reported with the primer sequences it holds,
