@@ -318,13 +318,12 @@ e70100.
     ]]></help>
     <citations>
         <citation type="doi">10.1002/edn3.70100</citation>
-        <!-- a DataCite DOI, which Crossref (used by planemo's citation check) does not hold -->
+        <!-- a DataCite DOI, given as a link: planemo checks DOIs against Crossref, which does not hold it -->
         <citation type="bibtex">@misc{abarenkov2023publishing,
   author = {Abarenkov, Kessy and others},
   title = {Publishing DNA-derived data through biodiversity data platforms},
   publisher = {GBIF Secretariat},
   year = {2023},
-  doi = {10.35035/doc-vf1a-nr22},
   url = {https://doi.org/10.35035/doc-vf1a-nr22}
 }</citation>
     </citations>
