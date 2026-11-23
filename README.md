@@ -55,8 +55,8 @@ Notes for Galaxy Australia and other evaluators.
   shown at the end of every tool's help: where to start, the steps in order, and which tool serves
   which repository.
 - **Installing.** Each folder under `tools/` is one ToolShed repository with its own tests
-  (`planemo test tools/FOLDER`). The tools are not on the ToolShed yet, as the owner account is still
-  to be chosen. Dependencies come from conda (conda-forge and bioconda) or containers. All 157 tool
+  (`planemo test tools/FOLDER`). The tools are not on the ToolShed yet. They will be published under
+  the ToolShed account `fair-edna`, which is still to be registered. Dependencies come from conda (conda-forge and bioconda) or containers. All 157 tool
   tests pass on Galaxy release_26.1 in this repository's checks; the tools were also tested on
   release_25.0. Tools use profile 23.0, except *FAIRe mapper: ask a language model* (25.1, for
   Galaxy's credentials).
@@ -142,8 +142,7 @@ folders installed locally; once the tools are on the ToolShed, the IDs become To
 release_26.1 (as the IUC uses; current planemo cannot set up release_25.0 there), a manual trigger
 that tests every tool, `dev/` ignored, no R lint, and the ToolShed deploy off until the repository variable
 `TOOLSHED_DEPLOY` is `true` (after the owners in each `.shed.yml` and the secrets `TTS_API_KEY` and
-`TS_API_KEY` are set). Its lint step fails on warnings, so the placeholder owners in `.shed.yml`
-will fail it until they are filled in.
+`TS_API_KEY` are set). The owner in each `.shed.yml` is `fair-edna`.
 
 `dev/` holds work that is not published to the ToolShed: `fairefier_equivalence/` checks that the
 FAIRe-fier command line gives the same outputs as the web app; `faire_mapper_benchmark/` scores the
@@ -207,13 +206,20 @@ replace functions inside the upstream code while it runs; their READMEs say whic
 - **GitHub home** (3 and 11 November 2026). The repository is
   [FAIR-eDNA/FAIRe-Galaxy](https://github.com/FAIR-eDNA/FAIRe-Galaxy). Galaxy Australia advises
   that the tools go to the IUC, or stay with maintainers who publish them from their own ToolShed
-  account. Which of these, and who maintains them, is still to be decided.
+  account. Galaxy Australia does not want to manage the tools, as it lacks the domain knowledge.
+- **ToolShed owner and maintainers** (23 November 2026). The tools are published under a FAIR-eDNA
+  account on the ToolShed, `fair-edna`, and maintained by Oliver Berry and Miwa Takahashi (CSIRO),
+  with the FAIRe committee that Miwa chairs. The FAIRe team looks after the checklist and several of
+  the upstream scripts, so it holds the knowledge the tools need. Maintenance happens in this
+  repository: a change merged to `main` is published to the ToolShed by the continuous
+  integration. Galaxy Australia installs the tools on the eDNA Lab and updates them when the
+  maintainers ask.
 - **Language model optional.** Every tool works without one. A model's answers are marked as
   such, and only a person's answers count as confirmed.
 - **Credit and ownership** (7 November 2026). Oliver Berry (CSIRO) wrote the Galaxy tools for the
-  upstream FAIRe tools and developed the FAIRe mapper, with Claude (Anthropic). Each tool's
-  `<creator>` block names him, and its help credits both. Each upstream tool stays with its own
-  developers. Future maintenance is to be decided (see GitHub home above).
+  upstream FAIRe tools and developed the FAIRe mapper, with Claude (Anthropic). Each tool's help
+  credits both, and its `<creator>` block names him and Miwa Takahashi, the maintainers (see
+  ToolShed owner and maintainers above). Each upstream tool stays with its own developers.
 
 ## Steps common to all tools
 
@@ -228,8 +234,11 @@ data to ENA from inside Galaxy.
    were posted on 17 November 2026; the others are still to report. (All the upstream repositories
    now have licence files: FAIRe-ator, the FAIRe checklist and FAIRe2MDT added theirs on 11
    November 2026.)
-2. Choose a ToolShed owner account (the GitHub home is FAIR-eDNA/FAIRe-Galaxy). Fill in `owner`
-   in each `.shed.yml`, and add maintainers to each `<creator>` block.
+2. ToolShed owner `fair-edna` (decided 23 November 2026; filled in each `.shed.yml`, with Oliver
+   Berry and Miwa Takahashi in each `<creator>` block). Still to do: register `fair-edna` on the
+   main ToolShed and the Test ToolShed (with a shared FAIRe email address, so the account outlasts
+   a change of role), add their API keys as the repository secrets `TS_API_KEY` and `TTS_API_KEY`,
+   and set the repository variable `TOOLSHED_DEPLOY` to `true`.
 3. Continuous integration (done, `.github/workflows/pr.yaml`). The IUC's planemo-ci GitHub Actions workflow runs lint and tests on
    every pull request and can publish to the ToolShed on merge.
 4. Publish to the Test ToolShed, check the tools install on a test Galaxy, then publish to the main

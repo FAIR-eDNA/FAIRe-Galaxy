@@ -30,7 +30,7 @@ Upstream: [csiro/FAIRe-fier](https://github.com/csiro/FAIRe-fier) at commit `183
 | `test-data/` | Test workbooks (see below) |
 | `faire_guide.xml` | The guide shown at the end of every FAIRe tool's help (`@HELP_FAIRE_GUIDE@`); a copy of `dev/faire_guide/faire_guide.xml`, updated by `dev/faire_guide/sync.py` |
 | `LICENSE` | MIT licence for the wrapper code in this folder. `fairefier_cli.py` is derived from FAIRe-fier's own code and keeps its BSD 3-Clause licence (`LICENSE.upstream`), as do the upstream files |
-| `.shed.yml` | ToolShed metadata (owner still to fill in) |
+| `.shed.yml` | ToolShed metadata (owner `fair-edna`) |
 
 The equivalence check is in `dev/fairefier_equivalence/` at the top of the repository, outside the
 tool folder, so it is not published to the ToolShed.
@@ -137,8 +137,8 @@ To the FAIRe checklist and FAIRe-ator authors:
    every FAIRe-ator template shows one error.
 3. **Test with real Australian workbooks** and compare with the hosted app at
    shiny.csiro.au/FAIRe-fier, ideally with people who already use it.
-4. **Fill in `.shed.yml`** and add the wrapper maintainers to the `<creator>` block, then publish
-   to the Test ToolShed and main ToolShed, and ask Galaxy Australia to install it.
+4. **ToolShed owner and maintainers** (done, 23 November 2026): `owner` is `fair-edna` in `.shed.yml`, and Oliver Berry and Miwa Takahashi are the maintainers in
+   the `<creator>` block. Next, publish to the Test ToolShed and main ToolShed, and ask Galaxy Australia to install it.
 
 ### Should do
 

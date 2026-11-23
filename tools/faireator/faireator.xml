@@ -13,6 +13,7 @@
     <creator>
         <organization name="FAIR eDNA (FAIRe) collaboration, FAIRe-ator developers" url="https://github.com/FAIR-eDNA/FAIRe-ator"/>
         <person givenName="Oliver" familyName="Berry"/>
+        <person givenName="Miwa" familyName="Takahashi"/>
     </creator>
     <requirements>
         <requirement type="package" version="4.4.3">r-base</requirement>

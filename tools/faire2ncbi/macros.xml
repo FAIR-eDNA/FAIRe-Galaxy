@@ -84,6 +84,7 @@ accepted.
         <creator>
             <organization name="NOAA 'Omics, AOML (FAIRe2NCBI developers)" url="https://github.com/aomlomics/FAIRe2NCBI"/>
             <person givenName="Oliver" familyName="Berry"/>
+            <person givenName="Miwa" familyName="Takahashi"/>
         </creator>
     </xml>
     <token name="@HELP_LAYOUT@"><![CDATA[

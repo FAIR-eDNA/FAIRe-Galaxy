@@ -1,5 +1,5 @@
 name: faire2dwc
-owner: CHANGE_ME
+owner: fair-edna
 description: FAIRe eDNA presence and absence records as a Darwin Core archive for GBIF and OBIS
 long_description: |
   Turns a FAIR eDNA (FAIRe) workbook into a Darwin Core archive (occurrence core, DNA derived

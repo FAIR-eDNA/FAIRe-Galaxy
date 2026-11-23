@@ -10,6 +10,7 @@
     <creator>
         <organization name="NOAA 'Omics, AOML (FAIRe2QIIME developers)" url="https://github.com/aomlomics/faire2qiime"/>
         <person givenName="Oliver" familyName="Berry"/>
+        <person givenName="Miwa" familyName="Takahashi"/>
     </creator>
     <requirements>
         <requirement type="package" version="3.12">python</requirement>

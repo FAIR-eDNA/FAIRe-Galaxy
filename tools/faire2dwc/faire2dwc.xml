@@ -9,6 +9,7 @@
     </macros>
     <creator>
         <person givenName="Oliver" familyName="Berry" url="https://github.com/ollybolly"/>
+        <person givenName="Miwa" familyName="Takahashi"/>
         <organization name="CSIRO" url="https://www.csiro.au"/>
     </creator>
     <requirements>

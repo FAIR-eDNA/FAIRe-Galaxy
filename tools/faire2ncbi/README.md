@@ -15,7 +15,7 @@ CC0 licence.
 ## Status
 
 - `planemo lint`: passes with no warnings.
-- `planemo shed_lint`: passes except for the placeholder owner in `.shed.yml`.
+- `planemo shed_lint`: passes.
 - `planemo test`: all tests pass in Galaxy 25.0 (summary at the end of this file).
 - Tested with FAIRe-ator layout workbooks (two assays, and one assay in `project_level`) and a
   FAIRe-NOAA layout workbook.
@@ -35,7 +35,7 @@ CC0 licence.
 | `test-data/` | Test workbooks and accession tables (see below) |
 | `faire_guide.xml` | The guide shown at the end of every FAIRe tool's help (`@HELP_FAIRE_GUIDE@`); a copy of `dev/faire_guide/faire_guide.xml`, updated by `dev/faire_guide/sync.py` |
 | `LICENSE` | MIT licence for the wrapper code in this folder (upstream files keep their own licence) |
-| `.shed.yml` | ToolShed metadata (owner still to fill in) |
+| `.shed.yml` | ToolShed metadata (owner `fair-edna`) |
 
 `scripts/` and `docs/` keep the upstream layout, because `paths.py` finds the templates relative to
 the scripts. Not included: `update_FAIRe_associatedSequences.py` and
@@ -225,7 +225,7 @@ of input), and one checklist of the other points
    1169740, *estuary metagenome* 1649191, *marine sediment metagenome* 412755, *freshwater sediment
    metagenome* 556182) match NCBI pages in web searches, but NCBI's browser check stopped the pages
    opening from here; open them in a browser to finish.
-4. **Fill in `.shed.yml`.** Set `owner`, and add the maintainers to
+4. **ToolShed owner and maintainers** (done, 23 November 2026): `owner` is `fair-edna` in `.shed.yml`, and Oliver Berry and Miwa Takahashi are the maintainers in
    the `<creator>` block in `macros.xml`.
 5. **Publish to the ToolShed** (Test ToolShed first), then **ask Galaxy Australia to install it**
    in the eDNA lab, next to FAIRe2ENA.
