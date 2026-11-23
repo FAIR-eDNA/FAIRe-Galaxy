@@ -1,7 +1,7 @@
 <tool id="faire2dwc" name="FAIRe to Darwin Core" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="23.0" license="MIT">
     <description>presence and absence records for GBIF and OBIS</description>
     <macros>
-        <token name="@TOOL_VERSION@">0.1.0</token>
+        <token name="@TOOL_VERSION@">0.2.0</token>
         <token name="@VERSION_SUFFIX@">0</token>
         <token name="@NAMES_RE@">^[A-Za-z0-9_.+() ,-]*$</token>
         <token name="@TEXT_RE@">^[^'\\`$]*$</token>
@@ -223,7 +223,27 @@ python '$__tool_directory__/faire2dwc.py' '$workbook'
                 </assert_contents>
             </output>
         </test>
-        <!-- 4. An assay that is not in the workbook stops the tool -->
+        <!-- 4. One assay sequenced in two runs (otuFinal_MiFish_runA and otuFinal_MiFish_runB): the run goes
+             into each occurrenceID, so the records stay unique -->
+        <test expect_num_outputs="5">
+            <param name="workbook" value="metabarcoding_two_runs.xlsx" ftype="xlsx"/>
+            <section name="eml">
+                <param name="licence" value="CC0-1.0"/>
+            </section>
+            <output name="occurrence">
+                <assert_contents>
+                    <has_n_lines n="4"/>
+                    <has_text text="pond_12S_test_P1_MiFish_runA_asv1"/>
+                    <has_text text="pond_12S_test_P2_MiFish_runB_asv2"/>
+                </assert_contents>
+            </output>
+            <output name="report">
+                <assert_contents>
+                    <has_text text="MiFish: 3 present, 1 detection with no taxon name, 1 control column"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- 5. An assay that is not in the workbook stops the tool -->
         <test expect_failure="true" expect_exit_code="2">
             <param name="workbook" value="targeted_two_assays.xlsx" ftype="xlsx"/>
             <param name="assays" value="NotAnAssay"/>
@@ -263,7 +283,8 @@ Controls (samp_category other than *sample*) are always left out.
     replicate amplified, and the report says how many. A sample whose value is a missing-value
     term (*missing: not provided*) is not written.
   - Metabarcoding: otuFinal and taxaFinal (otuFinal_<assay> and taxaFinal_<assay> for several
-    assays). otuFinal columns are samp_name or lib_id. Sequences with no taxon name are left out.
+    assays, and otuFinal_<assay>_<run> for an assay sequenced in several runs, as FAIRe mapper writes
+    them). otuFinal columns are samp_name or lib_id. Sequences with no taxon name are left out.
 
 - **Taxon table** (optional): names to publish and their identifiers and higher taxonomy, one row
   per name as the workbook gives it. OBIS needs a WoRMS LSID (scientificNameID) for every name;
