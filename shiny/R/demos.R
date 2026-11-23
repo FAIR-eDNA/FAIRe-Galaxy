@@ -137,7 +137,7 @@ DEMOS <- list(
         "from eelgrass (Zostera marina) meadows at 17 sites across Nova Scotia, Canada: ten mainland sites sampled",
         "between July and September 2019, and seven sites (six in Cape Breton, one on the south shore) sampled",
         "between June and October 2023, with three replicates at each site (two at Rose Bay). ASVs were assigned to",
-        "species by the COI RDP classifier v5.0.0 with a probability of at least 0.95, and the reads summed per",
+        "species by the COI RDP classifier v5.0.0 (every published name with a probability of 0.95 or more), and the reads summed per",
         "species (Trask et al., Dryad doi:10.5061/dryad.gqnk98t0c). The records are presence only, and carry no DNA",
         "sequence, as the published files do not link sequences to species. Coordinates are those of each site, and",
         "dates the period in which it was sampled. Raw reads: NCBI BioProject PRJNA1145319. Prepared with the FAIRe",

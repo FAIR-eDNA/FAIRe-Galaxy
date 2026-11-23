@@ -149,7 +149,7 @@ python '$__tool_directory__/faire_mapper_apply.py'
                 <validator type="regex" message="Column names cannot contain quotes">^[^'"]*$</validator>
             </param>
             <param name="otu_run" type="text" value="" optional="true" label="Sequencing run ID (seq_run_id) (optional)"
-                help="Used when the table has no library or run columns: the tool then writes one experimentRunMetadata row per sample of this table, with samp_name, assay_name and this run ID, and lib_id made from those three.">
+                help="Used when the table has no library or run columns: the tool then writes one experimentRunMetadata row per sample of this table, with samp_name, assay_name and this run ID, and lib_id made from those three. Give it also when one assay was sequenced in several runs: each run's table is then kept as its own sheet, otuFinal_assay_run.">
                 <validator type="regex" message="Letters, digits, _, - or . only">^[A-Za-z0-9_.-]*$</validator>
             </param>
             <param name="otu_sequences" type="data" format="fasta" optional="true" label="Sequences of this table (FASTA, optional)"
@@ -489,6 +489,36 @@ python '$__tool_directory__/faire_mapper_apply.py'
                     <has_text text="otu_species_summed.csv: the sequence IDs are in the column 'Species' (the first column, 'Phylum', repeats), so seq_id is the taxon name: reads summed per taxon"/>
                     <has_text text="otu_species_summed.csv: taxonomy from the OTU table (Phylum, Class, Species, Probability)"/>
                     <not_has_text text="columns of counts are not samples"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- One assay sequenced in two runs: the tables stay separate, as otuFinal_<assay>_<run> -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="assay_name" value="COIElasmo"/>
+            <repeat name="otu_tables">
+                <param name="otu" value="otu_species_summed.csv" ftype="csv"/>
+                <param name="otu_run" value="run2019"/>
+            </repeat>
+            <repeat name="otu_tables">
+                <param name="otu" value="otu_species_summed.csv" ftype="csv"/>
+                <param name="otu_run" value="run2023"/>
+            </repeat>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/workbook.xml">
+                        <has_text text="otuFinal_COIElasmo_run2019"/>
+                        <has_text text="taxaFinal_COIElasmo_run2023"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="written as otuFinal_COIElasmo_run2019 and taxaFinal_COIElasmo_run2019 (assay COIElasmo)"/>
+                    <has_text text="written as otuFinal_COIElasmo_run2023 and taxaFinal_COIElasmo_run2023 (assay COIElasmo)"/>
                 </assert_contents>
             </output>
         </test>

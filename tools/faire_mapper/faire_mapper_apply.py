@@ -1647,9 +1647,11 @@ def read_otu_tables(args, sample_out, run_out, other, assays, log, terms, table_
                     if j != i and not curated[j].strip() and stages[j] == 'Raw' and assay_of[j] == assay_of[i]), None)
               if curated[i].strip() and stages[i] == 'Final' else None for i in range(k)]
     in_stage = {'Raw': 0, 'Final': 0}
+    per_assay = {}   # (stage, assay) -> the runs of its tables
     for i in range(k):
         for st in (('Final',) if raw_of[i] else ('Raw', 'Final') if curated[i].strip() else (stages[i],)):
             in_stage[st] += 1
+            per_assay.setdefault((st, assay_of[i]), []).append(runs[i].strip())
     out, suffixes = [], []
     say = lambda m: log.add('OTU and taxonomy tables', m)  # noqa: E731
     for i, path in enumerate(args.otu):
@@ -1665,9 +1667,15 @@ def read_otu_tables(args, sample_out, run_out, other, assays, log, terms, table_
             suffix = assay if (in_stage[stage] > 1 or len(assays) > 1) else ''
             if in_stage[stage] > 1 and not assay:
                 suffix = str(i + 1)
+            # Tables of one assay from different sequencing runs stay separate: <sheet>_<assay>_<run>, as
+            # FAIRe names separate files (otuFinal_<project>_<assay>_<run>)
+            same = per_assay.get((stage, assay_of[i]), [])
+            if assay and len(same) > 1 and all(same) and len(set(same)) == len(same):
+                suffix = f'{assay}_{runs[i].strip()}'
             if (stage, suffix) in suffixes:
-                raise StopError(f"two {stage.lower()} OTU tables are for assay '{assay}'; give each a different "
-                                f"assay name, or set one to raw and the other to final")
+                raise StopError(f"two {stage.lower()} OTU tables are for assay '{assay}'; give each its sequencing "
+                                f"run (a different run ID), a different assay name, or set one to raw and the other "
+                                f"to final")
             suffixes.append((stage, suffix))
             sheet_names = (f'otu{stage}', f'taxa{stage}') if not suffix else \
                 (_sheet_name(f'otu{stage}', suffix), _sheet_name(f'taxa{stage}', suffix))

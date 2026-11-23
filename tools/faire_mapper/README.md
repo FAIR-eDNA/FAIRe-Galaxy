@@ -26,7 +26,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
 
 ## Status
 
-- Version 0.11.0. `planemo lint`: passes with no warnings. `pyflakes`: clean.
+- Version 0.12.0. `planemo lint`: passes with no warnings. `pyflakes`: clean.
 - Goes to Galaxy Australia as an early version with the wrapped FAIRe tools (decided 6 November
   2026). Each tool's help starts with a note saying so, which asks users to check the results and
   send problems to the Galaxy Australia help desk (to confirm with Galaxy Australia, question 8).
@@ -43,6 +43,11 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   independent answer keys (`dev/faire_mapper_real_datasets/`, `dev/faire_mapper_australian_datasets/`,
   summarised below), and end to end on CSIRO's SEA-MES data (`dev/faire_mapper_seames/`). Not yet
   tried on datasets from Australian labs that already have a FAIRe version.
+- New in 0.12.0 (24 November 2026), for the eelgrass demonstration with sequences
+  (`dev/faire_mapper_eelgrass/run_asvs.sh`): OTU tables of one assay from different sequencing runs
+  stay separate. Each is written as otuFinal_<assay>_<run> and taxaFinal_<assay>_<run>, as FAIRe
+  names separate files (otuFinal_<project>_<assay>_<run>). Two tables of one assay and stage with
+  no run, or the same run, still stop the tool.
 - New in 0.11.0 (23 November 2026), for the khapra beetle demonstration (`dev/faire_mapper_khapra/`):
   apply mapping takes **qPCR or ddPCR results** for targeted assays ("qPCR and ddPCR results" below).
   *Identify your files* recognises such a table. Apply mapping writes it to ampData, works out
@@ -1222,7 +1227,8 @@ file (one new test); all 18 propose mapping, 38 apply mapping and 5 identify tes
 detected_notDetected and the cycle check; an assay not among the assay names), one apply mapping test
 for reads summed per species, one propose mapping test for date intervals and one identify test for
 qPCR results; all 19 propose mapping, 41 apply mapping and 6 identify tests pass in Galaxy
-`release_26.1` here.
+`release_26.1` here. 0.12.0 (24 November) adds an apply mapping test for one assay in two runs; all
+42 apply mapping tests pass in Galaxy `release_26.1` here.
 
 | Tool | Test | Checks | Result |
 |---|---|---|---|

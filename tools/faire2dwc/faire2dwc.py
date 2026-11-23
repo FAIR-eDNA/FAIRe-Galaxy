@@ -33,7 +33,7 @@ from xml.etree.ElementTree import Element, ElementTree, indent, SubElement
 
 import pandas as pd
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 HERE = Path(__file__).resolve().parent
 TERMS = HERE / 'faire2dwc_terms.tsv'
 
@@ -257,12 +257,19 @@ def detection_column(sm, assay, n_assays):
 
 
 def otu_tables(path, sheets, assays):
-    """Per assay: (otuFinal frame indexed by seq_id, taxaFinal rows by seq_id)."""
-    out = {}
+    """(assay, run, otuFinal frame indexed by seq_id, taxaFinal rows by seq_id) for each otuFinal sheet:
+    otuFinal, otuFinal_<assay>, or otuFinal_<assay>_<run> for an assay sequenced in several runs."""
+    out = []
     finals = sheets_named(sheets, 'otuFinal')
     for s in finals:
         suffix = s[len('otuFinal_'):] if s != 'otuFinal' else ''
-        assay = suffix if suffix in assays else (next(iter(assays)) if len(assays) == 1 and not suffix else suffix)
+        assay, run = suffix, ''
+        if not suffix and len(assays) == 1:
+            assay = next(iter(assays))
+        elif suffix not in assays:
+            match = sorted((a for a in assays if suffix.startswith(f'{a}_')), key=len, reverse=True)
+            if match:
+                assay, run = match[0], suffix[len(match[0]) + 1:]
         if assay not in assays:
             continue
         otu = read_sheet(path, s, 'seq_id').set_index('seq_id')
@@ -270,7 +277,7 @@ def otu_tables(path, sheets, assays):
         if tname not in sheets:
             raise StopError(f'{s} has no taxonomy sheet ({tname})')
         taxa = read_sheet(path, tname, 'seq_id')
-        out[assay] = (otu, {clean(r['seq_id']): r for _, r in taxa.iterrows() if clean(r['seq_id'])})
+        out.append((assay, run, otu, {clean(r['seq_id']): r for _, r in taxa.iterrows() if clean(r['seq_id'])}))
     return out
 
 
@@ -427,7 +434,8 @@ def convert(args):
                     runs[(clean(r.get('lib_id')))] = clean(r['samp_name'])
         by_name = {clean(r['samp_name']): r for _, r in samples.iterrows()}
         control_names = {clean(x) for x in controls['samp_name']}
-        for assay, (otu, taxa) in tables.items():
+        several = {a for a, *_ in tables if sum(1 for x, *_ in tables if x == a) > 1}
+        for assay, run, otu, taxa in tables:
             values = assays[assay]
             c = counts.setdefault(assay, {'present': 0, 'detections with no taxon name': 0, 'control columns': 0,
                                           'columns not in sampleMetadata': 0})
@@ -452,7 +460,8 @@ def convert(args):
                         c['detections with no taxon name'] += 1
                         continue
                     occ, dna = common(r, values)
-                    occ['occurrenceID'] = f'{project_id}_{samp}_{assay}_{clean(seq_id)}'
+                    part = f'{assay}_{run}' if assay in several and run else assay
+                    occ['occurrenceID'] = f'{project_id}_{samp}_{part}_{clean(seq_id)}'
                     occ['occurrenceStatus'] = 'present'
                     occ.update(taxon_values(name, row, table))
                     seq = clean(row.get('dna_sequence')) if row is not None else ''

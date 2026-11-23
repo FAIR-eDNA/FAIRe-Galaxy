@@ -100,7 +100,9 @@ def targeted():
         'Animalia\tArthropoda\tMalacostraca\tDecapoda\tCarcinidae\tCarcinus\n')
 
 
-def metabarcoding():
+def metabarcoding(two_runs=False):
+    """One MiFish table; or, with two_runs, the same assay sequenced in two runs (P1 in runA; P2 and the
+    blank in runB), as otuFinal_MiFish_runA and otuFinal_MiFish_runB."""
     wb = Workbook()
     wb.remove(wb.active)
     project(wb, [
@@ -128,23 +130,28 @@ def metabarcoding():
             'freshwater biome [ENVO:00000873]', 'pond [ENVO:00000033]', 'fresh water [ENVO:00002011]'],
            ['EB', 'negative control', '', '', 'not applicable: control sample', 'not applicable: control sample',
             '', '', '']])
-    sheet(wb, 'taxaFinal', ['seq_id', 'dna_sequence', 'kingdom', 'phylum', 'class', 'order', 'family', 'genus',
-                            'scientificName', 'taxonRank'],
-          [['asv1', 'CACCGCGGTTATACGAGAGGCCCAAGTTGATAGACATCGGCGTAAAGAGTGG', 'Animalia', 'Chordata', 'Actinopteri',
-            'Cypriniformes', 'Cyprinidae', 'Carassius', 'Carassius auratus', 'species'],
-           ['asv2', 'CACCGCGGTTATACGAGAGGCCCAAGTTGACAGACACCGGCGTAAAGCGTGG', 'Animalia', 'Chordata', 'Amphibia',
-            'Anura', 'Limnodynastidae', 'Limnodynastes', '', 'genus'],
-           ['asv3', 'CACCGCGGTCATACGATTAACCCAAGTCAATAGAAACCGGCGTAAAGAGTGT', '', '', '', '', '', '', '', '']])
-    ws = wb.create_sheet('otuFinal')
-    ws.append(['seq_id', 'P1', 'P2', 'EB'])
-    ws.append(['asv1', 1, 0, 0])
-    ws.append(['asv2', 1, 1, 1])
-    ws.append(['asv3', 0, 1, 0])
-    wb.save(OUT / 'metabarcoding_presence.xlsx')
+    taxa = [['asv1', 'CACCGCGGTTATACGAGAGGCCCAAGTTGATAGACATCGGCGTAAAGAGTGG', 'Animalia', 'Chordata', 'Actinopteri',
+             'Cypriniformes', 'Cyprinidae', 'Carassius', 'Carassius auratus', 'species'],
+            ['asv2', 'CACCGCGGTTATACGAGAGGCCCAAGTTGACAGACACCGGCGTAAAGCGTGG', 'Animalia', 'Chordata', 'Amphibia',
+             'Anura', 'Limnodynastidae', 'Limnodynastes', '', 'genus'],
+            ['asv3', 'CACCGCGGTCATACGATTAACCCAAGTCAATAGAAACCGGCGTAAAGAGTGT', '', '', '', '', '', '', '', '']]
+    columns = ['seq_id', 'dna_sequence', 'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'scientificName',
+               'taxonRank']
+    reads = {'asv1': {'P1': 1, 'P2': 0, 'EB': 0}, 'asv2': {'P1': 1, 'P2': 1, 'EB': 1},
+             'asv3': {'P1': 0, 'P2': 1, 'EB': 0}}
+    runs = {'_MiFish_runA': ['P1'], '_MiFish_runB': ['P2', 'EB']} if two_runs else {'': ['P1', 'P2', 'EB']}
+    for suffix, samples in runs.items():
+        sheet(wb, f'taxaFinal{suffix}', columns, taxa)
+        ws = wb.create_sheet(f'otuFinal{suffix}')
+        ws.append(['seq_id'] + samples)
+        for seq_id, r in reads.items():
+            ws.append([seq_id] + [r[x] for x in samples])
+    wb.save(OUT / ('metabarcoding_two_runs.xlsx' if two_runs else 'metabarcoding_presence.xlsx'))
 
 
 if __name__ == '__main__':
     OUT.mkdir(parents=True, exist_ok=True)
     targeted()
     metabarcoding()
+    metabarcoding(two_runs=True)
     print(f'written to {OUT}')

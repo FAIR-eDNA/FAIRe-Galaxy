@@ -3,7 +3,7 @@
 them, and kingdom Animalia, as all 138 are metazoan invertebrates (the Dryad abstract). Names are as
 the workbook gives them: with a space for the underscore, and to the genus for a name such as
 'Clitellio sp. BOLD:AAG8543' or 'Boonea cf. bisuturalis' (as apply mapping names them).
-Usage: python make_taxa.py Final_ASVTable_withTaxonomy_Filtered.csv OUT.tsv
+Usage: python make_taxa.py TABLE [TABLE ...] OUT.tsv   (the species table, or the per-ASV tables)
 """
 
 import re
@@ -13,8 +13,8 @@ import pandas as pd
 
 UNNAMED = re.compile(r'^(\S+)\s+(sp|spp|sp\d+|cf|aff|nr)\.?\s*\d*(\s.*)?$', re.I)
 
-src, out = sys.argv[1:3]
-d = pd.read_csv(src, usecols=['Phylum', 'Class', 'Species'], dtype=str)
+*srcs, out = sys.argv[1:]
+d = pd.concat([pd.read_csv(x, usecols=['Phylum', 'Class', 'Species'], dtype=str) for x in srcs])
 names = d['Species'].str.strip().str.replace('_', ' ', regex=False).str.replace(r'\s+', ' ', regex=True)
 genus_only = names.str.match(UNNAMED)
 names = names.where(~genus_only, names.str.split(' ').str[0])

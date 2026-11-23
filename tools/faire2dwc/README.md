@@ -18,11 +18,13 @@ metabarcoding data published as presence, such as a species-by-sample table with
 
 ## Status
 
-- Version 0.1.0 (23 November 2026). Written for the khapra beetle demonstration
-  (`demo/khapra/`, `dev/faire_mapper_khapra/run.sh`), at Oliver Berry's request for a tool that
+- Version 0.2.0 (24 November 2026) reads otuFinal_<assay>_<run> sheets, for an assay sequenced in
+  several runs, with the run in each occurrenceID. Version 0.1.0 (23 November 2026) was written for
+  the khapra beetle demonstration (`demo/khapra/`, `dev/faire_mapper_khapra/run.sh`), at Oliver
+  Berry's request for a tool that
   makes it simple to publish presence and absence data to GBIF and OBIS.
 - `planemo lint`: passes with no warnings. `flake8`: clean.
-- `planemo test`: 4 of 4 tests pass in Galaxy 26.1.
+- `planemo test`: 5 of 5 tests pass in Galaxy 26.1.
 - On the khapra beetle data: 162 records from four assay and machine combinations, with the 33
   controls left out. The archive has not been loaded into an IPT yet.
 
@@ -46,7 +48,8 @@ project_level), sampleMetadata, and ampData or otuFinal and taxaFinal.
   estimatedNumberOfCopies and organismQuantity (with organismQuantityType *DNA copies (unit)*).
 
 **Metabarcoding.** One record per sample and sequence with reads (or a 1) in otuFinal (or
-otuFinal_<assay>), named from taxaFinal. The columns of otuFinal can be samp_name or lib_id (mapped
+otuFinal_<assay>, or otuFinal_<assay>_<run> for an assay sequenced in several runs), named from
+taxaFinal. With several runs of one assay, the run goes into each occurrenceID. The columns of otuFinal can be samp_name or lib_id (mapped
 to samples through experimentRunMetadata). Sequences with no taxon name are left out. The sequence
 goes to DNA_sequence when it is a valid IUPAC sequence. Read counts are not published.
 
@@ -130,6 +133,8 @@ Made-up values for real species, built by `dev/faire2dwc/make_test_data.py`:
   copy numbers.
 - `metabarcoding_presence.xlsx`: one MiFish assay, two samples and an extraction blank, three
   sequences (one with no name), and a project_contact for the EML.
+- `metabarcoding_two_runs.xlsx`: the same, with the assay sequenced in two runs
+  (otuFinal_MiFish_runA with P1; otuFinal_MiFish_runB with P2 and the blank).
 - `taxa_carcinus.tsv`: the taxon table for green crab, with its WoRMS LSID.
 
 ## Tests
@@ -140,6 +145,7 @@ Made-up values for real species, built by `dev/faire2dwc/make_test_data.py`:
    creator.
 3. Metabarcoding presence: records and sequences, the unnamed sequence and the control column left
    out, and the creator and contact from project_contact.
-4. An assay not in the workbook stops the tool.
+4. One assay in two runs: the run in each occurrenceID.
+5. An assay not in the workbook stops the tool.
 
 Run them with `planemo test tools/faire2dwc/faire2dwc.xml`.
