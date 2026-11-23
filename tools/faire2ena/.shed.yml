@@ -1,5 +1,5 @@
 name: faire2ena
-owner: CHANGE_ME
+owner: fair-edna
 description: Convert FAIRe eDNA metadata to ENA sample, experiment and run XML
 long_description: |
   Galaxy wrappers for FAIRe2ENA (https://github.com/FAIR-eDNA/FAIRe2ENA), which converts

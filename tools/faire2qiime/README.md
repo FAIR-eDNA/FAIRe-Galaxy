@@ -12,7 +12,7 @@ Upstream: [aomlomics/faire2qiime](https://github.com/aomlomics/faire2qiime) at c
 ## Status
 
 - `planemo lint`: passes with no warnings.
-- `planemo shed_lint`: passes except for the placeholder owner in `.shed.yml`.
+- `planemo shed_lint`: passes.
 - `planemo test`: all tests pass in Galaxy 25.0 (summary at the end of this file).
 - Not yet tested with a workbook made by FAIRe-ator for an Australian project, or with QIIME 2
   itself.
@@ -30,7 +30,7 @@ Upstream: [aomlomics/faire2qiime](https://github.com/aomlomics/faire2qiime) at c
 | `test-data/` | Test workbooks (see below) |
 | `faire_guide.xml` | The guide shown at the end of every FAIRe tool's help (`@HELP_FAIRE_GUIDE@`); a copy of `dev/faire_guide/faire_guide.xml`, updated by `dev/faire_guide/sync.py` |
 | `LICENSE` | MIT licence for the wrapper code in this folder (upstream files keep their own licence) |
-| `.shed.yml` | ToolShed metadata (owner still to fill in) |
+| `.shed.yml` | ToolShed metadata (owner `fair-edna`) |
 
 ## What the wrapper adds
 
@@ -123,8 +123,8 @@ overwrite each other's files, and one checklist of the smaller points
 3. **Check the output in QIIME 2.** Load a metadata file with `qiime metadata tabulate`, and
    import a few samples with a manifest, to confirm QIIME 2 accepts both. QIIME 2 accepts
    `sample_name` as the ID column header, but this has not been checked here.
-4. **Fill in `.shed.yml`.** Set `owner`, and add the maintainers to the
-   `<creator>` block in `faire2qiime.xml`.
+4. **ToolShed owner and maintainers** (done, 23 November 2026): `owner` is `fair-edna` in `.shed.yml`, and Oliver Berry and Miwa Takahashi are the maintainers in
+   the `<creator>` block in `faire2qiime.xml`.
 5. **Publish to the ToolShed** (Test ToolShed first), then **ask Galaxy Australia to install it**.
 
 ### Should do

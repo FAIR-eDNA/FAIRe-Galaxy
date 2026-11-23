@@ -11,6 +11,7 @@
         <person givenName="Suk Yee" familyName="Yong" email="sukyee.yong@csiro.au"/>
         <organization name="CSIRO" url="https://github.com/csiro/FAIRe-fier"/>
         <person givenName="Oliver" familyName="Berry"/>
+        <person givenName="Miwa" familyName="Takahashi"/>
     </creator>
     <requirements>
         <requirement type="package" version="3.12">python</requirement>

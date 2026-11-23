@@ -1,5 +1,5 @@
 name: edna2obis
-owner: CHANGE_ME
+owner: fair-edna
 description: Make Darwin Core tables for OBIS and GBIF from a FAIRe eDNA workbook and ASV tables
 long_description: |
   Galaxy wrappers for edna2obis (https://github.com/aomlomics/edna2obis), which turns a FAIR eDNA

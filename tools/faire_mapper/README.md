@@ -315,7 +315,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
 | `faire_guide.xml` | The guide shown at the end of every FAIRe tool's help (`@HELP_FAIRE_GUIDE@`); a copy of `dev/faire_guide/faire_guide.xml`, updated by `dev/faire_guide/sync.py` |
 | `LICENSE` | MIT licence for the code in this folder. Bundled data keep their own licences: the checklist and full template are CC BY 4.0 (`checklist/LICENSE`), the primer table's sources are listed in `primers/README.md`, and `mixs_dwc_terms.tsv` names its sources and licences (MIxS CC0, Darwin Core CC BY 4.0) at its top |
 | `checklist/LICENSE` | The FAIRe checklist's CC BY 4.0 licence |
-| `.shed.yml` | ToolShed metadata (owner still to fill in) |
+| `.shed.yml` | ToolShed metadata (owner `fair-edna`) |
 
 The benchmark is in `dev/faire_mapper_benchmark/` at the top of the repository, outside the tool
 folder, so it is not published to the ToolShed.
@@ -1024,7 +1024,7 @@ test.
    needed.)
 2. ~~**Wait for the FAIRe checklist's licence file.**~~ Done 11 November 2026 (CC BY 4.0). The
    mapper code is MIT (decided 3 November 2026).
-3. **Fill in `.shed.yml`** (owner) and the `<creator>` block in `macros.xml`.
+3. **ToolShed owner and maintainers** (done, 23 November 2026): `owner` is `fair-edna` in `.shed.yml`, and Oliver Berry and Miwa Takahashi are the maintainers in the `<creator>` block in `macros.xml`.
 4. **Publish to the Test ToolShed**, then ask Galaxy Australia to install it alongside the other
    FAIRe tools.
 

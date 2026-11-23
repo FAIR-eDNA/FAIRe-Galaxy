@@ -1,5 +1,5 @@
 name: faire2ncbi
-owner: CHANGE_ME
+owner: fair-edna
 description: Make NCBI BioSample and SRA metadata tables from a FAIRe eDNA workbook
 long_description: |
   Galaxy wrappers for FAIRe2NCBI (https://github.com/aomlomics/FAIRe2NCBI), which converts

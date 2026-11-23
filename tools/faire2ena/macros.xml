@@ -40,6 +40,7 @@ accepted.
         <creator>
             <organization name="FAIRe2ENA developers, Minderoo OceanOmics Centre at UWA" url="https://github.com/FAIR-eDNA/FAIRe2ENA"/>
             <person givenName="Oliver" familyName="Berry"/>
+            <person givenName="Miwa" familyName="Takahashi"/>
         </creator>
     </xml>
     <token name="@HELP_FOOTER@"><![CDATA[

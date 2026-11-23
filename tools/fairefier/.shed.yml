@@ -1,5 +1,5 @@
 name: fairefier
-owner: CHANGE_ME
+owner: fair-edna
 description: Check FAIRe eDNA metadata against the FAIRe checklist (FAIRe-fier)
 long_description: |
   Galaxy wrapper for FAIRe-fier (https://github.com/csiro/FAIRe-fier), CSIRO's validator for FAIR

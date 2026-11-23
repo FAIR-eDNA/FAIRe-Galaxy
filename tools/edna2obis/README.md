@@ -14,8 +14,7 @@ Upstream: [aomlomics/edna2obis](https://github.com/aomlomics/edna2obis) at commi
 ## Status
 
 - `planemo lint`: passes with no warnings.
-- `planemo shed_lint`: passes except for the placeholder owner in `.shed.yml`; its ToolShed check
-  needs network access and could not run here.
+- `planemo shed_lint`: passes; its ToolShed check needs network access and could not run here.
 - `planemo test`: the 9 tests of *build Darwin Core tables* pass in Galaxy 25.0 (results at the end
   of this file). They run offline, with mapping tables made for the tests.
 - The 2 tests of *match taxa* need internet access to WoRMS and GBIF. They passed on GitHub on 6
@@ -38,7 +37,7 @@ Upstream: [aomlomics/edna2obis](https://github.com/aomlomics/edna2obis) at commi
 | `LICENSE.upstream` | Upstream MIT licence |
 | `faire_guide.xml` | The guide shown at the end of every FAIRe tool's help (`@HELP_FAIRE_GUIDE@`); a copy of `dev/faire_guide/faire_guide.xml`, updated by `dev/faire_guide/sync.py` |
 | `LICENSE` | MIT licence for the wrapper code in this folder (upstream files keep their own licence) |
-| `.shed.yml` | ToolShed metadata (owner still to fill in) |
+| `.shed.yml` | ToolShed metadata (owner `fair-edna`) |
 | `test-data/` | Test workbooks, tables, mapping tables, EML files (see below) |
 
 `main.py` and `data_mapper.yaml` sit at the top of the folder and the modules in `src-v3/`, as
@@ -301,8 +300,8 @@ end. The others are not yet reported: they are to be checked against 4.0.0 first
 5. ~~**Check the citation.**~~ Done 7 November: the Zenodo DOI `10.5281/zenodo.23667395`, upstream's
    own citation in the README of the pinned commit, resolves to *aomlomics/edna2obis: v3.2.0* (Willms
    B and Silliman K, published 26 October 2026, MIT licence), the release the wrapper uses.
-6. **Fill in `.shed.yml`** (`owner`) and add the maintainers to the
-   `<creator>` block in `macros.xml`; then publish to the Test ToolShed, and ask Galaxy Australia to
+6. **ToolShed owner and maintainers** (done, 23 November 2026): `owner` is `fair-edna` in `.shed.yml`, and Oliver Berry and Miwa Takahashi are the maintainers in
+   the `<creator>` block in `macros.xml`. Next, publish to the Test ToolShed, and ask Galaxy Australia to
    install both tools in the eDNA lab next to the other FAIRe tools.
 
 ### Should do

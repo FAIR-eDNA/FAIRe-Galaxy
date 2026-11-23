@@ -106,7 +106,7 @@ scientificNameID (for OBIS), a licence and a creator.
 - Load an archive into an IPT (GBIF's test IPT or the ALA's) and confirm the extension mapping and
   the EML.
 - Try the OBIS route with a marine targeted dataset and WoRMS LSIDs.
-- Fill in the ToolShed owner in `.shed.yml`.
+- ToolShed owner `fair-edna` and maintainers in `<creator>`: done (23 November 2026).
 
 ## Files
 
@@ -118,7 +118,7 @@ scientificNameID (for OBIS), a licence and a creator.
 | `faire_guide.xml` | The shared FAIRe tools guide, copied by `dev/faire_guide/sync.py` |
 | `test-data/` | Test workbooks and taxon table, made by `dev/faire2dwc/make_test_data.py` |
 | `LICENSE` | MIT |
-| `.shed.yml` | ToolShed metadata (owner still to fill in) |
+| `.shed.yml` | ToolShed metadata (owner `fair-edna`) |
 
 ## Test data
 

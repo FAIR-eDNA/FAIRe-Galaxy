@@ -99,6 +99,7 @@ accepted.
         <creator>
             <organization name="NOAA 'Omics, AOML (edna2obis developers)" url="https://github.com/aomlomics/edna2obis"/>
             <person givenName="Oliver" familyName="Berry"/>
+            <person givenName="Miwa" familyName="Takahashi"/>
         </creator>
     </xml>
     <token name="@HELP_MATCHING@"><![CDATA[

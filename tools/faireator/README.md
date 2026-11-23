@@ -30,7 +30,7 @@ Both are CC BY 4.0: the licence files were added upstream on 11 November 2026 (F
 | `LICENSE` | MIT licence for the wrapper code in this folder (upstream files keep their own licence) |
 | `LICENSE.upstream` | FAIRe-ator's CC BY 4.0 licence |
 | `checklist/LICENSE` | The FAIRe checklist's CC BY 4.0 licence |
-| `.shed.yml` | ToolShed metadata (owner still to fill in) |
+| `.shed.yml` | ToolShed metadata (owner `fair-edna`) |
 
 ## How the wrapper works
 
@@ -84,8 +84,8 @@ Choices made in the wrapper:
    lists show. Make one template for each assay type to check.
 3. **Ask a few users to try it**, ideally people who have used FAIRe-ator in R, and compare the
    Galaxy template with one made in R using the same options.
-4. **Fill in `.shed.yml`** and add the maintainers to the `<creator>` block, then publish to the
-   Test ToolShed and the main ToolShed, and ask Galaxy Australia to install it.
+4. **ToolShed owner and maintainers** (done, 23 November 2026): `owner` is `fair-edna` in `.shed.yml`, and Oliver Berry and Miwa Takahashi are the maintainers in
+   the `<creator>` block. Next, publish to the Test ToolShed and the main ToolShed, and ask Galaxy Australia to install it.
 
 ### Should do
 

@@ -1,5 +1,5 @@
 name: faireator
-owner: CHANGE_ME
+owner: fair-edna
 description: Make a FAIRe eDNA metadata template tailored to a study
 long_description: |
   Galaxy wrapper for FAIRe-ator (https://github.com/FAIR-eDNA/FAIRe-ator), which builds an Excel
