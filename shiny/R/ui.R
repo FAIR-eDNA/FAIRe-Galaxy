@@ -30,7 +30,7 @@ run_button <- function(id, label) actionButton(id, label, class = "btn-primary r
 GLOSSARY <- c(
   sample_table = paste("Your table of sample details: one row per sample, with columns such as the sample name, date,",
                        "place, depth and volume. The mapper proposes a FAIRe term for each of its columns."),
-  data_dictionary = paste("A file that says what each column of your sample table holds, such as 'Days frozen: number",
+  data_dictionary = paste("A data dictionary or schema: a file that says what each column of your sample table holds, such as 'Days frozen: number",
                           "of days the water was frozen before filtering'. It can be a table (column name, description,",
                           "units) or a ReadMe with one line per column. It helps the mapper with unclear column names.",
                           "Leave it as None if you don't have one."),
@@ -80,7 +80,10 @@ GLOSSARY <- c(
                     "the OTU table names its sequences (ASV_1 ...) but does not hold them, as LCA outputs do."),
   stage = paste("Final: the reads you report, after your curation. Raw: the reads as they came from the pipeline,",
                 "before curation. FAIRe keeps each in its own pair of sheets."),
-  run_id = "A name for the sequencing run these reads came from, such as AGRF_2024-12.",
+  run_id = paste("seq_run_id is mandatory for metabarcoding data. Give a short identifier for the sequencing run, using",
+                 "only letters, numbers, underscores or hyphens (no spaces), so that software can read it. Each OTU",
+                 "table should hold the reads of one assay from one sequencing run, because read counts can only be",
+                 "compared (for example as relative read abundance) within the same run."),
   library_table = paste("A table of sequencing libraries: library names, sequence file names and checksums, such as ENA's",
                         "or NCBI's run report, or your sequencing facility's run sheet."),
   crosswalk = paste("The record of which column of your table goes to which FAIRe term. The review sheet is the version",
@@ -91,7 +94,24 @@ GLOSSARY <- c(
                      "for Australian Eastern Standard Time. Used to give times of collection in local time."),
   curated_column = "A column of the OTU table that holds your curated names, if they differ from the lineage's.",
   lineage = "The column of the lineage to use when the table has more than one (from SILVA and PR2, say).",
-  layout = "How the read counts are laid out: samples as columns, samples as rows, or one row per sample and sequence.",
+  layout = "How the read counts are laid out: samples as columns, samples as rows, or one row per sample and OTU.",
+  sample_type_other = "This option will include all the sample-type-specific fields in the output.",
+  user_fields_project = paste("Names of fields you would like in projectMetadata that are not in the FAIRe checklist,",
+                              "separated by commas, for example funder, permit_number. They are added at the end of",
+                              "projectMetadata."),
+  user_fields_sample = paste("Names of fields you would like in sampleMetadata that are not in the FAIRe checklist,",
+                             "separated by commas, for example plot_id, burn_age. They are added at the end of",
+                             "sampleMetadata."),
+  geo_loc_name = paste("The geographical origin of the sample: the country or sea name, followed by regions and",
+                       "localities, in the form <country or sea>: <region>, <locality>. For example \"USA: Maryland,",
+                       "Bethesda\" or \"Atlantic Ocean: Charlie Gibbs Fracture Zone\". Country and sea names come from",
+                       "the INSDC list (insdc.org/country.html)."),
+  date_order = paste("Dates such as 06/09/2017 can be read as 6 September or June 9. Tell the app which way round",
+                     "your table writes them. Dates with the year first (2017-09-06 or 2017/09/06), and columns with a",
+                     "day above 12, can only be read one way and are read without asking."),
+  more_for_table = paste("Settings you only need when the app cannot work them out: a separate taxonomy table or",
+                         "FASTA file, the Excel sheets, the layout of the read counts, and the columns that give each",
+                         "row's assay, curated names or lineage."),
   file_kind = paste("What the file seems to be, from its layout, column names and values. If it is wrong, choose the",
                     "right kind: the app then offers the file in the right places."),
   req_levels = paste("FAIRe gives each term a requirement level: Mandatory (M), Highly recommended (HR), Recommended (R)",
@@ -116,13 +136,13 @@ GLOSSARY <- c(
 KIND_PLACE <- c(
   "sample table" = "b. Propose a mapping: Sample table",
   "OTU or ASV table" = "e. Write the workbook: OTU or ASV table",
-  "taxonomy table" = "e. Write the workbook: Taxonomy table (under More for this table)",
+  "taxonomy table" = "e. Write the workbook: Taxonomy table (under More settings for this table)",
   "library table" = "e. Write the workbook: Library table",
   "crosswalk" = "c. Review: Add a review sheet you filled in, or Use a crosswalk you edited yourself",
   "data dictionary" = "b. Propose a mapping: Data dictionary",
   "project values" = "d. Methods and project values: Or load a table of values",
   "primer table" = "d. Methods and project values, Primers: My own primer table",
-  "sequences (FASTA)" = "e. Write the workbook: Sequences of this table (under More for this table)",
+  "sequences (FASTA)" = "e. Write the workbook: Sequences of this table (under More settings for this table)",
   "text" = "d. Methods and project values: Your methods (text or PDF)",
   "not recognised" = "Check the file: its column names may be below a title (set the header row) or on another sheet.")
 
@@ -131,6 +151,13 @@ term_label <- function(label, key) {
   tags$span(label, " ", bslib::tooltip(
     tags$span(class = "term-help", tabindex = "0", role = "button", `aria-label` = paste("What is", label), icon("circle-question")),
     GLOSSARY[[key]], placement = "right"))
+}
+
+# The sample types to tick, ending with Other (all the sample-type-specific fields), as in FAIRe-ator.
+sample_type_input <- function(id, label, selected = "Water") {
+  checkboxGroupInput(id, label, inline = TRUE, selected = selected,
+                     choiceNames = c(as.list(names(SAMPLE_TYPES)), list(term_label("Other", "sample_type_other"))),
+                     choiceValues = c(unname(SAMPLE_TYPES), "other"))
 }
 
 workbook_picker <- function(id) tagList(uiOutput(paste0(id, "_ui")), uiOutput(paste0(id, "_stale")))
@@ -238,12 +265,13 @@ faireator_panel <- function() {
                      c("Metabarcoding" = "metabarcoding", "Targeted (qPCR or ddPCR detection of particular taxa)" = "targeted")),
         textInput("fa_assay_name", "Assay name(s)", placeholder = "for example MiFish, 16SFish"),
         help_text("Short names with no spaces, separated by commas. Each assay gets its own column in projectMetadata."),
-        checkboxGroupInput("fa_sample_type", "Sample type(s)", c(SAMPLE_TYPES, "All sample types" = "other"),
-                           selected = "Water", inline = TRUE),
+        sample_type_input("fa_sample_type", "Sample type(s)"),
         checkboxGroupInput("fa_req_lev", "Fields to include as well as the mandatory ones", REQ_LEVELS,
                            selected = REQ_LEVELS, inline = TRUE),
-        textInput("fa_project_fields", "Extra projectMetadata fields (optional)", placeholder = "for example funder"),
-        textInput("fa_sample_fields", "Extra sampleMetadata fields (optional)", placeholder = "for example plot_id, burn_age"),
+        textInput("fa_project_fields", term_label("User-defined projectMetadata fields (optional)", "user_fields_project"),
+                  placeholder = "for example funder"),
+        textInput("fa_sample_fields", term_label("User-defined sampleMetadata fields (optional)", "user_fields_sample"),
+                  placeholder = "for example plot_id, burn_age"),
         run_button("run_faireator", "Make the template")
       ),
       card(card_header("Result"), uiOutput("faireator_result"))
@@ -306,8 +334,8 @@ mapper_panel <- function() {
             tags$h6(class = "group-head", "Your study"),
             help_text("These decide which FAIRe terms apply to your samples."),
             radioButtons("map_assay_type", term_label("Assay type", "assay_type"), c("Metabarcoding" = "metabarcoding",
-                                                           "Targeted" = "targeted", "Either" = "any"), inline = TRUE),
-            checkboxGroupInput("map_sample_types", term_label("Sample types", "sample_types"), SAMPLE_TYPES, selected = "Water", inline = TRUE),
+                                                           "Targeted" = "targeted"), inline = TRUE),
+            sample_type_input("map_sample_types", term_label("Sample types", "sample_types")),
             uiOutput("map_dictionary_ui"),
             checkboxInput("map_other_terms", term_label("Suggest MIxS or Darwin Core terms for columns with no FAIRe term", "other_terms"), TRUE),
             help_text("The FAIRe guidelines ask for a MIxS or Darwin Core term, where one exists, before a name of",
@@ -328,8 +356,8 @@ mapper_panel <- function() {
                      "the mapper's call and why. The mapper's accepted matches have Accept already. For each row,",
                      "choose Accept to use the proposed term, Reject to keep the column as your own term, or Change",
                      "and pick a replacement: the best candidates for the column come first. A MIxS or Darwin Core",
-                     "term is used by accepting it, or by choosing it as the replacement. Rows for review are",
-                     "shaded; a row for review with no decision is kept as your own term. Do the review here and",
+                     "term is used by accepting it, or by choosing it as the replacement. A row for review with",
+                     "no decision is kept as your own term. Do the review here and",
                      "save it, or, if you would rather, do it in Excel (see below)."),
           uiOutput("review_toolbar"),
           uiOutput("review_saved"),
@@ -379,7 +407,7 @@ mapper_panel <- function() {
                        "reads them for the primers, which it checks against a reference table of published primers,",
                        "and for the other method details, such as the filters, extraction kit, PCR conditions,",
                        "sequencing kit, software and reference databases. Both give proposals for you to check;",
-                       "what you keep goes into the values for the whole project, on the right."),
+                       "what you keep goes into projectMetadata, on the right."),
             conditionalPanel("input.methods_tabs != 'Primers' || input.pr_mode == 'text'", uiOutput("pr_texts_ui")),
             uiOutput("pr_texts_open"),
             navset_underline(
@@ -417,7 +445,7 @@ mapper_panel <- function() {
             )
           ),
           card(
-            card_header(term_label("Values for the whole project", "project_values")),
+            card_header(term_label("projectMetadata: values for the whole project or each assay", "project_values")),
             step_intro("Some FAIRe fields hold one value for the whole project or for each assay: the primers, the",
                        "extraction kit, the sequencing platform, the reference database and so on. Most come from",
                        "your methods. List them here and they are written to projectMetadata. Leave the assay empty",
@@ -470,14 +498,19 @@ mapper_panel <- function() {
               help_text("Separated by commas. Filled in from the assays named in d. Methods and project values: keep",
                         "the same names, so the project values go with the right OTU tables. Leave empty when an OTU",
                         "table names its assays in a column."),
-              textInput("ap_country", "Country or sea for geo_loc_name (optional)", placeholder = "for example Australia"),
+              textInput("ap_country", term_label("Country or sea for geo_loc_name (optional)", "geo_loc_name"),
+                        placeholder = "for example Australia"),
+              help_text("Give only the country or sea name. It is put in front of the region and locality columns of",
+                        "your table, to give values such as Australia: Western Australia, Rottnest Island. Leave it",
+                        "empty when a column of your table already names the country or sea."),
               textInput("ap_utc_offset", term_label("UTC offset of the times of collection (optional)", "utc_offset"), placeholder = "for example +10:00"),
               help_text("When the table gives the time of collection in its own column, the time is joined to its",
                         "date in eventDate, in local time. Give the offset of local time from UTC, such as +10:00",
                         "for Australian Eastern Standard Time; times the column name says are UTC are converted to",
                         "local time with it."),
-              selectInput("ap_date_order", "Dates such as 06/09/2017",
-                          c("Stop and ask me" = "stop", "Day first (as in Australia)" = "dmy", "Month first" = "mdy")),
+              selectInput("ap_date_order", term_label("How your table writes dates such as 06/09/2017", "date_order"),
+                          c("Not sure: stop and ask me" = "stop", "Day first: 6 September 2017 (as in Australia)" = "dmy",
+                            "Month first: June 9, 2017 (as in the USA)" = "mdy")),
               accordion(
                 open = FALSE,
                 accordion_panel(

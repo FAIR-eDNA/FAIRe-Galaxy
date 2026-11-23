@@ -46,6 +46,36 @@ DECISIONS <- c("Accept", "Reject", "Change")
 # rows: one per input term, with the REVIEW_COLS fields. choices: for each input term, its replacement
 # list from the hidden Choices sheet, split where the sheet leaves a blank line: the best candidates
 # (a MIxS or Darwin Core term first, when the mapper found one) and then every other term.
+# CSV for opening in Excel: UTF-8 with a byte order mark (so Excel shows ° and µ), every value quoted.
+write_csv <- function(df, path) {
+  q <- function(x) { x <- as.character(x); x[is.na(x)] <- ""; paste0('"', gsub('"', '""', enc2utf8(x), fixed = TRUE), '"') }
+  lines <- c(paste(q(names(df)), collapse = ","),
+             if (nrow(df)) do.call(paste, c(unname(lapply(df, q)), sep = ",")))
+  con <- file(path, open = "wb")
+  on.exit(close(con))
+  writeBin(as.raw(c(0xef, 0xbb, 0xbf)), con)
+  writeLines(lines, con, useBytes = TRUE)
+}
+read_csv <- function(path) {
+  tryCatch(utils::read.csv(path, colClasses = "character", check.names = FALSE, na.strings = character(),
+                           fileEncoding = "UTF-8-BOM"),
+           error = function(e) NULL)
+}
+# A CSV copy of a tool's TSV output, written beside it, for opening in Excel. NULL for other files, and for
+# TSV files that start with # lines (such as the SSSOM crosswalk's metadata block), which stay TSV only.
+csv_copy <- function(path) {
+  if (!grepl("\\.tsv$", path, ignore.case = TRUE) || !file.exists(path)) return(NULL)
+  first <- tryCatch(readLines(path, n = 1, warn = FALSE), error = function(e) "")
+  if (!length(first) || startsWith(first, "#")) return(NULL)
+  out <- sub("\\.tsv$", ".csv", path, ignore.case = TRUE)
+  if (!file.exists(out) || file.mtime(out) < file.mtime(path)) {
+    d <- read_tsv(path)
+    if (is.null(d)) return(NULL)
+    write_csv(d, out)
+  }
+  out
+}
+
 read_review_sheet <- function(path) {
   sheets <- readxl::excel_sheets(path)
   if (!"Review" %in% sheets) stop("this file has no Review sheet, so it is not a review sheet from propose mapping")
