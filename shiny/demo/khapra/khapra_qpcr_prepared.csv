@@ -1,0 +1,767 @@
+Sample ID,Sample type,Location,Cq,Assay,METHOD,extraction,machine,assay_name,pcr_plate_id
+1520,Dust sample,Tuggeranong,33.35,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1520,Dust sample,Tuggeranong,33.55,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1520,Dust sample,Tuggeranong,33.39,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1521,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1521,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1521,Dust sample,Tuggeranong,39.07,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1522,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1522,Dust sample,Tuggeranong,33.1,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1522,Dust sample,Tuggeranong,39.91,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1523,Dust sample,Tuggeranong,34.43,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1523,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1523,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1524,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1524,Dust sample,Tuggeranong,39.95,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1524,Dust sample,Tuggeranong,36.8,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1525,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1525,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1525,Dust sample,Tuggeranong,37.61,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1526,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1526,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1526,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1527,Dust sample,Tuggeranong,36.24,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1527,Dust sample,Tuggeranong,34.41,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1527,Dust sample,Tuggeranong,35.63,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1528,Dust sample,Tuggeranong,37.91,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1528,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1528,Dust sample,Tuggeranong,36.96,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1529,Dust sample,Tuggeranong,33.69,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1529,Dust sample,Tuggeranong,30.95,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1529,Dust sample,Tuggeranong,31.67,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1534,Dust sample,Tuggeranong,29.14,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1534,Dust sample,Tuggeranong,32.89,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1534,Dust sample,Tuggeranong,34.36,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1535,Dust sample,Tuggeranong,32.22,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1535,Dust sample,Tuggeranong,34.08,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1535,Dust sample,Tuggeranong,34.75,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1536,Dust sample,Tuggeranong,33.88,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1536,Dust sample,Tuggeranong,29.98,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1536,Dust sample,Tuggeranong,28.91,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1537,Dust sample,Tuggeranong,36.33,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1537,Dust sample,Tuggeranong,33.02,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1537,Dust sample,Tuggeranong,31.51,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1538,Field control,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1538,Field control,Tuggeranong,37.02,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1538,Field control,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1539,Field control,Tuggeranong,38.97,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1539,Field control,Tuggeranong,42.04,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1539,Field control,Tuggeranong,35.62,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1540,Field control,Tuggeranong,33.88,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1540,Field control,Tuggeranong,35.14,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1540,Field control,Tuggeranong,0,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1541,Dust sample,Tuggeranong,37.75,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1541,Dust sample,Tuggeranong,38.25,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1541,Dust sample,Tuggeranong,37.87,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1542,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1542,Dust sample,Tuggeranong,34.34,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1542,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1543,Dust sample,Tuggeranong,35.7,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1543,Dust sample,Tuggeranong,31.98,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1543,Dust sample,Tuggeranong,36.2,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1544,Dust sample,Tuggeranong,32.81,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1544,Dust sample,Tuggeranong,33.09,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1544,Dust sample,Tuggeranong,33.98,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1545,Dust sample,Tuggeranong,36.3,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1545,Dust sample,Tuggeranong,36.48,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1545,Dust sample,Tuggeranong,40.21,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1546,Dust sample,Tuggeranong,33.19,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1546,Dust sample,Tuggeranong,31.96,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1546,Dust sample,Tuggeranong,32.19,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1547,Dust sample,Tuggeranong,36.4,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1547,Dust sample,Tuggeranong,36.98,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1547,Dust sample,Tuggeranong,38.56,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1548,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1548,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1548,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1549,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1549,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1549,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1552,Field control,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1552,Field control,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1552,Field control,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1562,Dust sample,Tuggeranong,32.03,FURUI,Vacuumed sample,EtoHQiagen BT,Franklin,FuruiFranklin,missing: not provided
+1562,Dust sample,Tuggeranong,37.19,FURUI,Vacuumed sample,EtoHQiagen BT,Franklin,FuruiFranklin,missing: not provided
+1562,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,Franklin,FuruiFranklin,missing: not provided
+1572,Dust sample,Tuggeranong,39.05,FURUI,Vacuumed sample,EtoHQiagen BT,Franklin,FuruiFranklin,missing: not provided
+1572,Dust sample,Tuggeranong,31.12,FURUI,Vacuumed sample,EtoHQiagen BT,Franklin,FuruiFranklin,missing: not provided
+1572,Dust sample,Tuggeranong,31.48,FURUI,Vacuumed sample,EtoHQiagen BT,Franklin,FuruiFranklin,missing: not provided
+1574,Dust sample,Tuggeranong,33.1,FURUI,Vacuumed sample,EtoHQiagen BT,Franklin,FuruiFranklin,missing: not provided
+1574,Dust sample,Tuggeranong,33.17,FURUI,Airborne sample,EtoHQiagen BT,Franklin,FuruiFranklin,missing: not provided
+1574,Dust sample,Tuggeranong,33.1,FURUI,Airborne sample,EtoHQiagen BT,Franklin,FuruiFranklin,missing: not provided
+1603,Dust sample,Fyshwick,35.45,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1603,Dust sample,Fyshwick,34.07,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1603,Dust sample,Fyshwick,37.75,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1605,Dust sample,Fyshwick,33.94,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1605,Dust sample,Fyshwick,34.94,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1605,Dust sample,Fyshwick,36.2,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1606,Dust sample,Fyshwick,Undetermined,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1606,Dust sample,Fyshwick,Undetermined,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1606,Dust sample,Fyshwick,34.56,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1607,Dust sample,Fyshwick,30.84,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1607,Dust sample,Fyshwick,30.83,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1607,Dust sample,Fyshwick,31.36,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1608,Dust sample,Fyshwick,20.25355338,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1608,Dust sample,Fyshwick,28.18555755,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1609,Dust sample,Fyshwick,25.81,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1609,Dust sample,Fyshwick,27.17,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1609,Dust sample,Fyshwick,27.6,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1610,Field control,Fyshwick,36.6,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1610,Field control,Fyshwick,Undetermined,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1610,Field control,Fyshwick,33.55,FURUI,Vacuumed sample,Biomeme,Franklin,FuruiFranklin,missing: not provided
+1586,Dust sample,Kambah,30.88,FURUI,Vacuumed sample,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1586,Dust sample,Kambah,31.03,FURUI,Vacuumed sample,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1586,Dust sample,Kambah,31.16,FURUI,Vacuumed sample,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1591,Dust sample,Kambah,19.99,FURUI,Vacuumed sample,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1591,Dust sample,Kambah,20.24,FURUI,Vacuumed sample,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1591,Dust sample,Kambah,20.29,FURUI,Vacuumed sample,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1520,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1520,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1520,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1521,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1521,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1521,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1522,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1522,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1522,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1523,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1523,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1523,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1524,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1524,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1524,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1525,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1525,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1525,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1526,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1526,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1526,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1527,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1527,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1527,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1528,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1528,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1528,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1529,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1529,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1529,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1530,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1530,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1530,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1531,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1531,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1531,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1536,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1536,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1536,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1537,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1537,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1537,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1538,Field control,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1538,Field control,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1538,Field control,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1539,Field control,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1539,Field control,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1539,Field control,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1540,Field control,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1540,Field control,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1540,Field control,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1541,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1541,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1541,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1542,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1542,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1542,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1543,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1543,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1543,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1544,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1544,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1544,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1545,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1545,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1545,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1546,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1546,Dust sample,Tuggeranong,32.79,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1546,Dust sample,Tuggeranong,32.47,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1547,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1547,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1547,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1548,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1548,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1548,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1549,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1549,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1549,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1550,Field control,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1550,Field control,Tuggeranong,35.16,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1550,Field control,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1551,Field control,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1551,Field control,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1551,Field control,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1552,Field control,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1552,Field control,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1552,Field control,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1562,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,Franklin,OlsonFranklin,missing: not provided
+1562,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,Franklin,OlsonFranklin,missing: not provided
+1562,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,Franklin,OlsonFranklin,missing: not provided
+1572,Dust sample,Tuggeranong,37.06871776,OLSON,Vacuumed sample,EtoHQiagen BT,Franklin,OlsonFranklin,missing: not provided
+1572,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,Franklin,OlsonFranklin,missing: not provided
+1572,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,Franklin,OlsonFranklin,missing: not provided
+1574,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,EtoHQiagen BT,Franklin,OlsonFranklin,missing: not provided
+1574,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,EtoHQiagen BT,Franklin,OlsonFranklin,missing: not provided
+1574,Dust sample,Tuggeranong,30.99,OLSON,Airborne sample,EtoHQiagen BT,Franklin,OlsonFranklin,missing: not provided
+1603,Dust sample,Fyshwick,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1603,Dust sample,Fyshwick,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1603,Dust sample,Fyshwick,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1604,Dust sample,Fyshwick,28.26,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1604,Dust sample,Fyshwick,27.54,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1604,Dust sample,Fyshwick,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1605,Dust sample,Fyshwick,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1605,Dust sample,Fyshwick,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1605,Dust sample,Fyshwick,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1609,Dust sample,Fyshwick,24.11,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1609,Dust sample,Fyshwick,24.13,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1609,Dust sample,Fyshwick,24.84,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1610,Field control,Fyshwick,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1610,Field control,Fyshwick,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1610,Field control,Fyshwick,Undetermined,OLSON,Vacuumed sample,Biomeme,Franklin,OlsonFranklin,missing: not provided
+1586,Dust sample,Kambah,28.64,OLSON,Vacuumed sample,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1586,Dust sample,Kambah,28.22,OLSON,Vacuumed sample,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1586,Dust sample,Kambah,28.73,OLSON,Vacuumed sample,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1591,Dust sample,Kambah,18.23,OLSON,Vacuumed sample,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1591,Dust sample,Kambah,19.21,OLSON,Vacuumed sample,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1591,Dust sample,Kambah,19.42,OLSON,Vacuumed sample,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1520,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1520,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1520,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1521,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1521,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1521,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1522,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1522,Dust sample,Tuggeranong,52.05568974,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1522,Dust sample,Tuggeranong,54.0396844,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1523,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1523,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1523,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1524,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1524,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1524,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1525,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1525,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1525,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1526,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1526,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1526,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1527,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1527,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1527,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1528,Dust sample,Tuggeranong,46.8241763,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1528,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1528,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1529,Dust sample,Tuggeranong,47.09012091,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1529,Dust sample,Tuggeranong,44.57871159,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1529,Dust sample,Tuggeranong,44.42484098,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1530,Dust sample,Tuggeranong,44.390575,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1530,Dust sample,Tuggeranong,44.52323196,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1530,Dust sample,Tuggeranong,45.39293888,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1531,Dust sample,Tuggeranong,45.77412413,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1531,Dust sample,Tuggeranong,44.46003141,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1531,Dust sample,Tuggeranong,42.55504908,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1532,Dust sample,Tuggeranong,53.02156823,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1532,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1532,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1533,Dust sample,Tuggeranong,47.52856836,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1533,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1533,Dust sample,Tuggeranong,47.48703573,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1534,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1534,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1534,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1535,Dust sample,Tuggeranong,48.09658389,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1535,Dust sample,Tuggeranong,48.47828366,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1535,Dust sample,Tuggeranong,41.68539565,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1536,Dust sample,Tuggeranong,50.69849217,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1536,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1536,Dust sample,Tuggeranong,51.10731217,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1537,Dust sample,Tuggeranong,49.45090081,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1537,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1537,Dust sample,Tuggeranong,50.61941327,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1538,Field control,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1538,Field control,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1538,Field control,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1539,Field control,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1539,Field control,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1539,Field control,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1540,Field control,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1540,Field control,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1540,Field control,Tuggeranong,Undetermined,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1541,Dust sample,Tuggeranong,52.62671737,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1541,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1541,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1542,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1542,Dust sample,Tuggeranong,52.04524214,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1542,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1543,Dust sample,Tuggeranong,51.38431693,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1543,Dust sample,Tuggeranong,52.21365616,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1543,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1544,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1544,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1544,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1545,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1545,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1545,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1546,Dust sample,Tuggeranong,48.21183894,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1546,Dust sample,Tuggeranong,53.45862405,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1546,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1547,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1547,Dust sample,Tuggeranong,50.78227627,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1547,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1548,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1548,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1548,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1549,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1549,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1549,Dust sample,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1550,Field control,Tuggeranong,49.49147526,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1550,Field control,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1550,Field control,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1551,Field control,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1551,Field control,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1551,Field control,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1552,Field control,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1552,Field control,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1552,Field control,Tuggeranong,Undetermined,FURUI,Airborne sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1553,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1553,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1553,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1554,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1554,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1554,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1555,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1555,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1555,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1556,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1556,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1556,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1557,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1557,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1557,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1558,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1558,Dust sample,Tuggeranong,51.92526121,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1558,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1559,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1559,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1559,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1560,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1560,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1560,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1561,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1561,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1561,Dust sample,Tuggeranong,49.80927872,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1562,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1562,Dust sample,Tuggeranong,45.92188815,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1562,Dust sample,Tuggeranong,48.27941969,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1563,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1563,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1563,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1564,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1564,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1564,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1565,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1565,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1565,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1566,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1566,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1566,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1567,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1567,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1567,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1568,Dust sample,Tuggeranong,40.97243956,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1568,Dust sample,Tuggeranong,44.17861746,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1568,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1569,Dust sample,Tuggeranong,42.39783358,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1569,Dust sample,Tuggeranong,44.43014727,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1569,Dust sample,Tuggeranong,Undetermined,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1570,Dust sample,Tuggeranong,48.32017026,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1570,Dust sample,Tuggeranong,50.40652666,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1570,Dust sample,Tuggeranong,49.99369348,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1571,Dust sample,Tuggeranong,37.32266132,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1571,Dust sample,Tuggeranong,38.85750437,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1571,Dust sample,Tuggeranong,39.94851948,FURUI,Vacuumed sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1574,Dust sample,Tuggeranong,47.77970787,FURUI,Airborne sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1574,Dust sample,Tuggeranong,48.31789458,FURUI,Airborne sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1575,Dust sample,Tuggeranong,48.05180846,FURUI,Airborne sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1575,Dust sample,Tuggeranong,50.67204717,FURUI,Airborne sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1575,Dust sample,Tuggeranong,51.475107,FURUI,Airborne sample,EtoHQiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1579,Dust sample,Kambah,38.90287151,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1579,Dust sample,Kambah,39.47826487,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1579,Dust sample,Kambah,41.80657863,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1580,Dust sample,Kambah,44.84488396,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1580,Dust sample,Kambah,46.30315994,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1580,Dust sample,Kambah,46.41516057,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1581,Dust sample,Kambah,47.39784907,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1581,Dust sample,Kambah,48.29412954,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1581,Dust sample,Kambah,50.9733913,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1582,Dust sample,Kambah,42.27417842,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1582,Dust sample,Kambah,43.24005092,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1582,Dust sample,Kambah,44.91981199,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1583,Dust sample,Kambah,48.62734081,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1583,Dust sample,Kambah,50.84053388,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1583,Dust sample,Kambah,Undetermined,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1584,Dust sample,Kambah,47.56429284,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1584,Dust sample,Kambah,47.24106648,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1584,Dust sample,Kambah,47.03411601,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1585,Dust sample,Kambah,45.61419418,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1585,Dust sample,Kambah,47.15059698,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1585,Dust sample,Kambah,50.75301782,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1589,Dust sample,Kambah,28.5879137,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1589,Dust sample,Kambah,29.8784072,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1589,Dust sample,Kambah,31.19956819,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1590,Dust sample,Kambah,23.72078563,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1590,Dust sample,Kambah,23.36037945,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1590,Dust sample,Kambah,25.88467692,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1591,Dust sample,Kambah,24.86185882,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1591,Dust sample,Kambah,25.37952533,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1591,Dust sample,Kambah,23.79290767,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1593,Dust sample,Kambah,42.91264149,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1593,Dust sample,Kambah,41.439929,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1593,Dust sample,Kambah,Undetermined,FURUI,sweeping-vacuum,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1598,Tissue sample,gDNA positive D0,40.54788052,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1598,Tissue sample,gDNA positive D0,40.16169791,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1598,Tissue sample,gDNA positive D0,39.74063194,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1599,Tissue sample,gDNA positive D0,44.68073225,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1599,Tissue sample,gDNA positive D0,44.54592209,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1599,Tissue sample,gDNA positive D0,46.47017459,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1605,Dust sample,Fyshwick,41.47973009,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1605,Dust sample,Fyshwick,40.89432749,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1605,Dust sample,Fyshwick,38.1502745,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1606,Dust sample,Fyshwick,29.42571598,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1606,Dust sample,Fyshwick,28.84284236,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1606,Dust sample,Fyshwick,28.97034263,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1609,Dust sample,Fyshwick,34.6874827,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1609,Dust sample,Fyshwick,33.90437061,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1609,Dust sample,Fyshwick,33.39862785,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1610,Field control,Fyshwick,43.10057802,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1610,Field control,Fyshwick,44.27304719,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1610,Field control,Fyshwick,42.96609954,FURUI,Vacuumed sample,Biomeme,ViiA7,FuruiViiA7,missing: not provided
+1599,Tissue sample,gDNA positive D0,40.34351457,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1599,Tissue sample,gDNA positive D0,39.23299399,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1599,Tissue sample,gDNA positive D0,40.26027184,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1599,Tissue sample,gDNA positive D1,38.71116567,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1599,Tissue sample,gDNA positive D1,39.03459349,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1599,Tissue sample,gDNA positive D1,40.20837067,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1599,Tissue sample,gDNA positive D2,37.94982757,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1599,Tissue sample,gDNA positive D2,37.11307915,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1599,Tissue sample,gDNA positive D2,38.931425,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1599,Tissue sample,gDNA positive D3,35.36221769,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1599,Tissue sample,gDNA positive D3,35.45151848,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1599,Tissue sample,gDNA positive D3,36.47174222,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1599,Tissue sample,gDNA positive D4,31.63289198,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1599,Tissue sample,gDNA positive D4,31.54112984,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1599,Tissue sample,gDNA positive D4,32.04712065,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1599,Tissue sample,gDNA positive D5,26.9790898,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1599,Tissue sample,gDNA positive D5,27.36335712,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1599,Tissue sample,gDNA positive D5,27.63880528,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1599,Tissue sample,gDNA positive D6,21.51955814,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1599,Tissue sample,gDNA positive D6,22.21214103,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1599,Tissue sample,gDNA positive D6,21.99392701,FURUI,Genomic DNA,Qiagen BT,ViiA7,FuruiViiA7,missing: not provided
+1520,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1520,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1520,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1521,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1521,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1521,Dust sample,Tuggeranong,52.32954311,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1522,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1522,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1522,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1523,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1523,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1523,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1524,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1524,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1524,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1525,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1525,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1525,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1526,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1526,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1526,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1527,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1527,Dust sample,Tuggeranong,53.57349788,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1527,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1528,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1528,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1528,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1529,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1529,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1529,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1530,Dust sample,Tuggeranong,51.12269836,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1530,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1530,Dust sample,Tuggeranong,51.45191816,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1531,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1531,Dust sample,Tuggeranong,50.77628949,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1531,Dust sample,Tuggeranong,50.40911847,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1532,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1532,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1532,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1533,Dust sample,Tuggeranong,49.49608588,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1533,Dust sample,Tuggeranong,54.11505006,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1533,Dust sample,Tuggeranong,47.40055911,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1534,Dust sample,Tuggeranong,51.01823169,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1534,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1534,Dust sample,Tuggeranong,51.16139475,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1535,Dust sample,Tuggeranong,49.01727691,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1535,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1535,Dust sample,Tuggeranong,51.79892545,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1536,Dust sample,Tuggeranong,50.96948684,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1536,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1536,Dust sample,Tuggeranong,49.47774888,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1537,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1537,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1537,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1538,Field control,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1538,Field control,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1538,Field control,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1539,Field control,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1539,Field control,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1539,Field control,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1540,Field control,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1540,Field control,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1540,Field control,Tuggeranong,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1541,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1541,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1541,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1542,Dust sample,Tuggeranong,51.87143513,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1542,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1542,Dust sample,Tuggeranong,50.21610892,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1543,Dust sample,Tuggeranong,46.17332471,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1543,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1543,Dust sample,Tuggeranong,50.70267338,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1544,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1544,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1544,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1545,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1545,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1545,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1546,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1546,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1546,Dust sample,Tuggeranong,47.8484126,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1547,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1547,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1547,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1548,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1548,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1548,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1549,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1549,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1549,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1550,Field control,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1550,Field control,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1550,Field control,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1551,Field control,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1551,Field control,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1551,Field control,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1552,Field control,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1552,Field control,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1552,Field control,Tuggeranong,Undetermined,OLSON,Airborne sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1553,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1553,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1553,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1554,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1554,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1554,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1555,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1555,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1555,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1556,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1556,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1556,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1557,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1557,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1557,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1558,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1558,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1558,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1559,Dust sample,Tuggeranong,50.36073204,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1559,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1559,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1562,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1562,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1562,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1563,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1564,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1564,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1564,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1565,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1565,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1565,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1566,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1566,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1566,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1567,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1567,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1567,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1568,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1568,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1568,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1569,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1569,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1569,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1570,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1570,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1570,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1571,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1571,Dust sample,Tuggeranong,50.19796313,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1571,Dust sample,Tuggeranong,51.92819363,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1572,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1572,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1572,Dust sample,Tuggeranong,Undetermined,OLSON,Vacuumed sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1574,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1574,Dust sample,Tuggeranong,38.99295317,OLSON,Airborne sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1574,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1575,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1575,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1575,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1576,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1576,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1576,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1577,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1577,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1577,Dust sample,Tuggeranong,Undetermined,OLSON,Airborne sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1578,Dust sample,Tuggeranong,50.5543504,OLSON,Airborne sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1578,Dust sample,Tuggeranong,48.71820324,OLSON,Airborne sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1578,Dust sample,Tuggeranong,49.78051613,OLSON,Airborne sample,EtoHQiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1582,Dust sample,Kambah,Undetermined,OLSON,sweeping-vacuum,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1582,Dust sample,Kambah,Undetermined,OLSON,sweeping-vacuum,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1582,Dust sample,Kambah,Undetermined,OLSON,sweeping-vacuum,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1583,Dust sample,Kambah,52.54541559,OLSON,sweeping-vacuum,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1583,Dust sample,Kambah,48.6470682,OLSON,sweeping-vacuum,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1583,Dust sample,Kambah,49.97400466,OLSON,sweeping-vacuum,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1584,Dust sample,Kambah,47.64324277,OLSON,sweeping-vacuum,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1584,Dust sample,Kambah,44.53316457,OLSON,sweeping-vacuum,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1584,Dust sample,Kambah,47.09880271,OLSON,sweeping-vacuum,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1589,Dust sample,Kambah,Undetermined,OLSON,sweeping-vacuum,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1589,Dust sample,Kambah,Undetermined,OLSON,sweeping-vacuum,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1589,Dust sample,Kambah,Undetermined,OLSON,sweeping-vacuum,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1590,Dust sample,Kambah,50.49077133,OLSON,sweeping-vacuum,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1590,Dust sample,Kambah,48.98487414,OLSON,sweeping-vacuum,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1590,Dust sample,Kambah,51.00593464,OLSON,sweeping-vacuum,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1591,Dust sample,Kambah,49.50866661,OLSON,sweeping-vacuum,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1591,Dust sample,Kambah,47.989687,OLSON,sweeping-vacuum,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1591,Dust sample,Kambah,50.29596623,OLSON,sweeping-vacuum,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1592,Dust sample,Kambah,33.9340886,OLSON,sweeping-vacuum,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1592,Dust sample,Kambah,32.61887359,OLSON,sweeping-vacuum,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1592,Dust sample,Kambah,34.91975474,OLSON,sweeping-vacuum,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1593,Dust sample,Kambah,30.81277628,OLSON,sweeping-vacuum,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1593,Dust sample,Kambah,29.44317505,OLSON,sweeping-vacuum,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1593,Dust sample,Kambah,30.2673539,OLSON,sweeping-vacuum,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1598,Tissue sample,gDNA positive,34.85717245,OLSON,Genomic DNA,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1598,Tissue sample,gDNA positive,33.86535669,OLSON,Genomic DNA,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1598,Tissue sample,gDNA positive,35.70557923,OLSON,Genomic DNA,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1606,Dust sample,Fyshwick,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1606,Dust sample,Fyshwick,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1606,Dust sample,Fyshwick,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1607,Dust sample,Fyshwick,50.28011228,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1607,Dust sample,Fyshwick,46.62484129,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1607,Dust sample,Fyshwick,47.82479399,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1608,Dust sample,Fyshwick,35.49649213,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1608,Dust sample,Fyshwick,34.15804159,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1608,Dust sample,Fyshwick,35.72766106,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1609,Dust sample,Fyshwick,43.37706521,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1609,Dust sample,Fyshwick,42.02181077,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1609,Dust sample,Fyshwick,42.6021209,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1610,Field control,Fyshwick,49.3983116,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1610,Field control,Fyshwick,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1610,Field control,Fyshwick,Undetermined,OLSON,Vacuumed sample,Biomeme,ViiA7,OlsonViiA7,missing: not provided
+1598,Tissue sample,gDNA positive,36.06494925,OLSON,Genomic DNA,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1598,Tissue sample,gDNA positive,35.05872609,OLSON,Genomic DNA,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1598,Tissue sample,gDNA positive,37.42998715,OLSON,Genomic DNA,Qiagen BT,ViiA7,OlsonViiA7,missing: not provided
+1594,Tissue sample,gDNA positive,20.29,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,20.2,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,20.12,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,20.31,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,20.19,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,20.16,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,20.18,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,20.15,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,21.14,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,20.16,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,21.24,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,21.21,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,20.16,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,21.29,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,20.13,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,20.12,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,21.36,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,21.27,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,20.14,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,20.18,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,20.15,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,20.09,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,20.16,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,20.22,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,20.22,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,20.19,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,20.03,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,18.46,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,21.48,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,23.12,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,18.35,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,21.19,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,23.33,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,20.22,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,20.19,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,20.03,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,20.15,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,20.09,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1594,Tissue sample,gDNA positive,21.23,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,25.88,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,25.47,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,25.47,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,25.16,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,25.52,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,26.05,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,25.02,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,25.04,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,24.79,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,25.21,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,25.02,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,25.33,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,24.68,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,25.36,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,24.73,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,25.44,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,25.05,OLSON,Genomic DNA,Qiagen BT,Franklin,OlsonFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,27.15,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,26.97,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,28.13,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,26.74,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,27.99,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,27.9,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,26.83,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,27.95,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,28.5,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,26.7,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,27.98,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,28.11,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,25.59,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,26.73,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,36.83,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,26.6,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,26.84,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,28.27,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,26.94,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,27.02,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,26.9,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,26.77,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,26.72,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,26.79,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,26.81,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,28.28,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,26.76,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,26.81,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,26.89,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,28.81,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,29.73,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,28.31,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided
+1595,Tissue sample,gDNA positive,29.26,FURUI,Genomic DNA,Qiagen BT,Franklin,FuruiFranklin,missing: not provided

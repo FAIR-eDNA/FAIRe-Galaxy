@@ -38,6 +38,7 @@ from openpyxl.worksheet.datavalidation import DataValidation
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import faire_mapper as fm  # noqa: E402
+import faire_mapper_amp as fa  # noqa: E402
 import faire_mapper_kinds as fk  # noqa: E402
 import faire_mapper_library as fl  # noqa: E402
 import faire_mapper_otu as fo  # noqa: E402
@@ -344,7 +345,7 @@ def convert_dates(column, values, date_order, profile):
             out.append(v.isoformat())
             continue
         s = str(v).strip()
-        if fm.ISO_OFFSET_RE.match(s) or PARTIAL_ISO.match(s):
+        if fm.ISO_OFFSET_RE.match(s) or PARTIAL_ISO.match(s) or fm.iso_interval(s):
             out.append(s)
             continue
         if serial and re.match(r'^\d+(\.0+)?$', s):
@@ -649,6 +650,12 @@ def build_workbook(args, df, rows, terms, by_name, log, others=()):
     project = {'project_id': args.project_id, 'assay_type': args.assay_type, 'checkls_ver': checklist_ver}
     if len(assays) == 1:
         project['assay_name'] = assays[0]
+    elif assays and args.assay_type == 'targeted':
+        # FAIRe-fier reads a targeted project's assays from project_level (A | B), to check assay_name and
+        # the detected_notDetected_<assay> columns of sampleMetadata; FAIRe-ator leaves it empty.
+        project['assay_name'] = ' | '.join(assays)
+        log.add('Project values', f"assay_name in project_level: {project['assay_name']}, as FAIRe-fier reads the "
+                                  f"assays of a targeted project from it (each assay column also has its name)")
     by_assay = {a: {} for a in assays}   # values for one assay, in its projectMetadata column
 
     n = len(df)
@@ -1177,6 +1184,23 @@ def build_workbook(args, df, rows, terms, by_name, log, others=()):
                 log.add('Warnings', f"{t['label']}: classified with PR2; name PR2 and its version in otu_db "
                                     f"(projectMetadata), e.g. PR2 v5.0.0")
 
+    # ---- qPCR and ddPCR results: ampData, and detected_notDetected where the table gives none
+    amp_rows = []
+    if getattr(args, 'amp', None):
+        if args.assay_type != 'targeted':
+            log.add('Warnings', 'qPCR results are for targeted assays (ampData); not used for metabarcoding')
+        elif not assays:
+            raise StopError('give the assay names (--assay_name) to read the qPCR results')
+        else:
+            try:
+                amp_rows, detected = fa.read_results(args.amp, args.amp_sheet, args.amp_name, args.amp_assay_column,
+                                                     assays, sample_out['samp_name'], log.add)
+            except ValueError as e:
+                raise StopError(str(e))
+            fa.fill_detections(sample_out, assays, detected, log.add)
+            fa.check_cycles(amp_rows, {a: by_assay.get(a, {}).get('pcr_cycles') or project.get('pcr_cycles')
+                                       for a in assays}, log.add)
+
     # ---- controls: their empty mandatory cells (a term FAIRe asks of every row, such as eventDate or
     # geo_loc_name) are given "not applicable: control sample", FAIRe's term for them
     ctrl = control_rows(sample_out, n)
@@ -1354,6 +1378,9 @@ def build_workbook(args, df, rows, terms, by_name, log, others=()):
                 log.add('Warnings', f'{t}: not a column of experimentRunMetadata; not written')
         if st and in_place[st]:
             for r in by_stage[st][0]['taxa'].values():
+                ws.append([_cell(r.get(c)) for c in cols])
+        if name == 'ampData' and amp_rows:
+            for r in amp_rows:
                 ws.append([_cell(r.get(c)) for c in cols])
         _style_sample_sheet(ws, lv, bold)
         if st and in_place[st]:
@@ -2138,6 +2165,15 @@ def main(argv=None):
     ap.add_argument('--otu_stage', action='append', choices=['final', 'raw'],
                     help='for each OTU table: final, written as otuFinal and taxaFinal (the default), or raw, '
                          'written as otuRaw and taxaRaw; one value applies to every table')
+    ap.add_argument('--amp', action='append', help='qPCR or ddPCR results (targeted assays): one row per reaction, '
+                                                   'with the sample, assay and Cq (or copies); written to ampData, '
+                                                   'and used for detected_notDetected where the table gives none; '
+                                                   'repeat for several tables')
+    ap.add_argument('--amp_sheet', action='append', help='Excel sheet of each results table (empty for the first)')
+    ap.add_argument('--amp_name', action='append', help='name of each results table for the log')
+    ap.add_argument('--amp_assay_column', action='append',
+                    help='column of each results table that gives the assay, when it is not called assay, '
+                         'assay_name or target')
     ap.add_argument('--table_name', help='name of the table to record in the README (default: file name)')
     ap.add_argument('--crosswalk_name', help='name of the crosswalk to record in the README (default: file name)')
     ap.add_argument('-o', '--output', required=True, help='FAIRe workbook (.xlsx)')

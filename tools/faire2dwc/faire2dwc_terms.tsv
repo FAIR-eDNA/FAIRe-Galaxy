@@ -1,0 +1,101 @@
+# Darwin Core terms written by FAIRe to Darwin Core, with the FAIRe term each comes from.
+# file: occurrence (core) or dna (the DNA derived data extension, http://rs.gbif.org/terms/1.0/DNADerivedData,
+#   issued 2024-07-11; URIs as the extension gives them).
+# source: sample (sampleMetadata), project (projectMetadata, the assay's column first), taxon (taxaFinal or
+#   the taxon table), computed (made by faire2dwc.py; see the README). unit: a FAIRe term whose value is
+#   added after the number (samp_size 2 with samp_size_unit L gives 2 L), or a fixed unit in brackets.
+file	dwc_term	uri	faire_term	source	unit
+occurrence	occurrenceID	http://rs.tdwg.org/dwc/terms/occurrenceID		computed
+occurrence	basisOfRecord	http://rs.tdwg.org/dwc/terms/basisOfRecord		computed
+occurrence	occurrenceStatus	http://rs.tdwg.org/dwc/terms/occurrenceStatus	detected_notDetected	computed
+occurrence	eventID	http://rs.tdwg.org/dwc/terms/eventID		computed
+occurrence	eventDate	http://rs.tdwg.org/dwc/terms/eventDate	eventDate	sample
+occurrence	verbatimEventDate	http://rs.tdwg.org/dwc/terms/verbatimEventDate	verbatimEventDate	sample
+occurrence	materialSampleID	http://rs.tdwg.org/dwc/terms/materialSampleID	materialSampleID	computed
+occurrence	scientificName	http://rs.tdwg.org/dwc/terms/scientificName	targetTaxonomicAssay	taxon
+occurrence	scientificNameID	http://rs.tdwg.org/dwc/terms/scientificNameID	taxonID	taxon
+occurrence	taxonRank	http://rs.tdwg.org/dwc/terms/taxonRank	taxonRank	taxon
+occurrence	kingdom	http://rs.tdwg.org/dwc/terms/kingdom	kingdom	taxon
+occurrence	phylum	http://rs.tdwg.org/dwc/terms/phylum	phylum	taxon
+occurrence	class	http://rs.tdwg.org/dwc/terms/class	class	taxon
+occurrence	order	http://rs.tdwg.org/dwc/terms/order	order	taxon
+occurrence	family	http://rs.tdwg.org/dwc/terms/family	family	taxon
+occurrence	genus	http://rs.tdwg.org/dwc/terms/genus	genus	taxon
+occurrence	verbatimIdentification	http://rs.tdwg.org/dwc/terms/verbatimIdentification	verbatimIdentification	taxon
+occurrence	identificationRemarks	http://rs.tdwg.org/dwc/terms/identificationRemarks	identificationRemarks	taxon
+occurrence	decimalLatitude	http://rs.tdwg.org/dwc/terms/decimalLatitude	decimalLatitude	sample
+occurrence	decimalLongitude	http://rs.tdwg.org/dwc/terms/decimalLongitude	decimalLongitude	sample
+occurrence	geodeticDatum	http://rs.tdwg.org/dwc/terms/geodeticDatum		computed
+occurrence	coordinateUncertaintyInMeters	http://rs.tdwg.org/dwc/terms/coordinateUncertaintyInMeters	coordinateUncertaintyInMeters	sample
+occurrence	verbatimLatitude	http://rs.tdwg.org/dwc/terms/verbatimLatitude	verbatimLatitude	sample
+occurrence	verbatimLongitude	http://rs.tdwg.org/dwc/terms/verbatimLongitude	verbatimLongitude	sample
+occurrence	verbatimCoordinateSystem	http://rs.tdwg.org/dwc/terms/verbatimCoordinateSystem	verbatimCoordinateSystem	sample
+occurrence	verbatimSRS	http://rs.tdwg.org/dwc/terms/verbatimSRS	verbatimSRS	sample
+occurrence	country	http://rs.tdwg.org/dwc/terms/country	geo_loc_name	computed
+occurrence	countryCode	http://rs.tdwg.org/dwc/terms/countryCode		computed
+occurrence	locality	http://rs.tdwg.org/dwc/terms/locality	geo_loc_name	computed
+occurrence	minimumDepthInMeters	http://rs.tdwg.org/dwc/terms/minimumDepthInMeters	minimumDepthInMeters	sample
+occurrence	maximumDepthInMeters	http://rs.tdwg.org/dwc/terms/maximumDepthInMeters	maximumDepthInMeters	sample
+occurrence	samplingProtocol	http://rs.tdwg.org/dwc/terms/samplingProtocol	samp_collect_method	sample
+occurrence	sampleSizeValue	http://rs.tdwg.org/dwc/terms/sampleSizeValue	samp_size	sample
+occurrence	sampleSizeUnit	http://rs.tdwg.org/dwc/terms/sampleSizeUnit	samp_size_unit	sample
+occurrence	organismQuantity	http://rs.tdwg.org/dwc/terms/organismQuantity	estimatedNumberOfCopies	computed
+occurrence	organismQuantityType	http://rs.tdwg.org/dwc/terms/organismQuantityType	estimatedNumberOfCopies_unit	computed
+occurrence	occurrenceRemarks	http://rs.tdwg.org/dwc/terms/occurrenceRemarks		computed
+occurrence	recordedBy	http://rs.tdwg.org/dwc/terms/recordedBy	recordedBy	project
+occurrence	recordedByID	http://rs.tdwg.org/dwc/terms/recordedByID	recordedByID	project
+occurrence	institutionID	http://rs.tdwg.org/dwc/terms/institutionID	institutionID	project
+occurrence	datasetName	http://rs.tdwg.org/dwc/terms/datasetName	project_name	project
+occurrence	informationWithheld	http://rs.tdwg.org/dwc/terms/informationWithheld	informationWithheld	project
+occurrence	dataGeneralizations	http://rs.tdwg.org/dwc/terms/dataGeneralizations	dataGeneralizations	project
+occurrence	license	http://purl.org/dc/terms/license	license	project
+occurrence	rightsHolder	http://purl.org/dc/terms/rightsHolder	rightsHolder	project
+occurrence	accessRights	http://purl.org/dc/terms/accessRights	accessRights	project
+occurrence	bibliographicCitation	http://purl.org/dc/terms/bibliographicCitation	bibliographicCitation	project
+dna	occurrenceID	http://rs.tdwg.org/dwc/terms/occurrenceID		computed
+dna	samp_name	https://w3id.org/mixs/0001107	samp_name	sample
+dna	project_name	https://w3id.org/mixs/0000092	project_name	project
+dna	env_broad_scale	https://w3id.org/mixs/0000012	env_broad_scale	sample
+dna	env_local_scale	https://w3id.org/mixs/0000013	env_local_scale	sample
+dna	env_medium	https://w3id.org/mixs/0000014	env_medium	sample
+dna	samp_collec_device	https://w3id.org/mixs/0000002	samp_collect_device	sample
+dna	samp_collec_method	https://w3id.org/mixs/0001225	samp_collect_method	sample
+dna	samp_mat_process	https://w3id.org/mixs/0000016	samp_mat_process	sample
+dna	size_frac	https://w3id.org/mixs/0000017	size_frac	sample
+dna	samp_size	https://w3id.org/mixs/0000001	samp_size	sample	samp_size_unit
+dna	samp_vol_we_dna_ext	https://w3id.org/mixs/0000111	samp_vol_we_dna_ext	sample	samp_vol_we_dna_ext_unit
+dna	nucl_acid_ext	https://w3id.org/mixs/0000037	nucl_acid_ext	sample
+dna	nucl_acid_amp	https://w3id.org/mixs/0000038	nucl_acid_amp	project
+dna	concentration	http://data.ggbn.org/schemas/ggbn/terms/concentration	concentration	sample
+dna	concentrationUnit	http://data.ggbn.org/schemas/ggbn/terms/concentrationUnit	concentration_unit	sample
+dna	target_gene	https://w3id.org/mixs/0000044	target_gene	project
+dna	target_subfragment	https://w3id.org/mixs/0000045	target_subfragment	project
+dna	pcr_primer_forward	http://rs.gbif.org/terms/pcr_primer_forward	pcr_primer_forward	project
+dna	pcr_primer_reverse	http://rs.gbif.org/terms/pcr_primer_reverse	pcr_primer_reverse	project
+dna	pcr_primer_name_forward	http://rs.gbif.org/terms/pcr_primer_name_forward	pcr_primer_name_forward	project
+dna	pcr_primer_name_reverse	http://rs.gbif.org/terms/pcr_primer_name_reverse	pcr_primer_name_reverse	project
+dna	pcr_primer_reference	http://rs.gbif.org/terms/pcr_primer_reference	pcr_primer_reference_forward	computed
+dna	pcr_cond	https://w3id.org/mixs/0000049	pcr_cond	project
+dna	annealingTemp	http://rs.gbif.org/terms/miqe/annealingTemp	annealingTemp	project
+dna	annealingTempUnit	http://rs.gbif.org/terms/miqe/annealingTempUnit		computed	[Degrees Celsius]
+dna	probeReporter	http://rs.gbif.org/terms/miqe/probeReporter	probeReporter	project
+dna	probeQuencher	http://rs.gbif.org/terms/miqe/probeQuencher	probeQuencher	project
+dna	ampliconSize	http://rs.gbif.org/terms/miqe/ampliconSize	ampliconSize	project
+dna	amplificationReactionVolume	http://rs.gbif.org/terms/miqe/amplificationReactionVolume	amplificationReactionVolume	project
+dna	amplificationReactionVolumeUnit	http://rs.gbif.org/terms/miqe/amplificationReactionVolumeUnit		computed	[µl]
+dna	pcr_analysis_software	http://rs.gbif.org/terms/miqe/pcr_analysis_software	pcr_analysis_software	project
+dna	thresholdQuantificationCycle	http://rs.gbif.org/terms/miqe/thresholdQuantificationCycle	thresholdQuantificationCycle	project
+dna	baselineValue	http://rs.gbif.org/terms/miqe/baselineValue	baselineValue	project
+dna	automaticThresholdQuantificationCycle	http://rs.gbif.org/terms/miqe/automaticThresholdQuantificationCycle	automaticThresholdQuantificationCycle	project
+dna	automaticBaselineValue	http://rs.gbif.org/terms/miqe/automaticBaselineValue	automaticBaselineValue	project
+dna	quantificationCycle	http://rs.gbif.org/terms/miqe/quantificationCycle	quantificationCycle	computed
+dna	estimatedNumberOfCopies	http://rs.gbif.org/terms/miqe/estimatedNumberOfCopies	estimatedNumberOfCopies	computed
+dna	pcr_primer_lod	http://rs.gbif.org/terms/miqe/pcr_primer_lod	pcr_assay_lod	project	pcr_assay_lod_unit
+dna	pcr_primer_loq	http://rs.gbif.org/terms/miqe/pcr_primer_loq	pcr_assay_loq	project	pcr_assay_loq_unit
+dna	contaminationAssessment	http://rs.gbif.org/terms/miqe/contaminationAssessment	neg_cont_0_1	computed
+dna	seq_meth	https://w3id.org/mixs/0000050	instrument	project
+dna	lib_layout	https://w3id.org/mixs/0000041	lib_layout	project
+dna	otu_class_appr	https://w3id.org/mixs/0000085	otu_clust_tool	project
+dna	otu_seq_comp_appr	https://w3id.org/mixs/0000086	otu_seq_comp_appr	project
+dna	otu_db	https://w3id.org/mixs/0000087	otu_db	project
+dna	DNA_sequence	http://rs.gbif.org/terms/dna_sequence	dna_sequence	taxon
