@@ -1,6 +1,6 @@
 # FAIRe-Galaxy
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24489371.svg)](https://doi.org/10.5281/zenodo.24489371)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.24489371-blue)](https://doi.org/10.5281/zenodo.24489371)
 
 Environmental DNA (eDNA) data are most valuable when other people can find, understand and reuse
 them. The FAIR eDNA (FAIRe) metadata standard describes how to record an eDNA study so that its
