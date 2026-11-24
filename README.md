@@ -27,9 +27,9 @@ The same tools run in three places. Choose the one that suits you:
 
 | | Where it runs | Choose it if | Start here |
 |---|---|---|---|
-| **Galaxy** | In your web browser, on Galaxy Australia's servers | you want nothing to install, a record of every step, or to join the FAIRe steps to your analysis workflows | The Galaxy eDNA Lab, edna.dev.gvl.org.au (being set up) |
-| **Shiny app** | On your own computer, with R and Python | your data must stay on your computer, or you want to try the tools offline | The line of R below, and `shiny/README.md` |
-| **AI assistant** | In Claude, ChatGPT or Microsoft 365 Copilot; your files go to that company | your files are untidy or unusual, and you'd like to be talked through each decision | `skill/README.md` |
+| 🟦 **Galaxy** | In your web browser, on Galaxy Australia's servers | you want nothing to install, a record of every step, or to join the FAIRe steps to your analysis workflows | The Galaxy Australia eDNA Lab, edna.dev.gvl.org.au (being set up) |
+| 🟩 **Shiny app** | On your own computer; needs R and Python | your data must stay with you, you want to work offline, or you'd like a first try | The line of R below, and `shiny/README.md` |
+| 🟧 **AI assistant** | In a chat with Claude, ChatGPT or Microsoft 365 Copilot; your files go to the AI company | you'd like to be talked through each decision, or your files are untidy or unusual | `skill/README.md` |
 
 All three use the same review sheets, so you can start in one and finish in another.
 
