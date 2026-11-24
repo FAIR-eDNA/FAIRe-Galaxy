@@ -64,10 +64,9 @@ steps still needed before deployment.
 
 If you use these tools, please cite three things:
 
-- **This collection**, at the version you used. `CITATION.cff` gives the details, and GitHub's
-  *Cite this repository* button (on the right of the repository's front page) formats them. Each
-  release is archived on Zenodo with its own DOI: v1.0.0 is https://doi.org/10.5281/zenodo.24489372,
-  and https://doi.org/10.5281/zenodo.24489371 covers all versions and always leads to the latest.
+- **This collection**: Berry O, Takahashi M, Bayer P, Coclet C, Formel S, Silliman K, Thompson LR,
+  Willms B, Yong SY (2026). FAIRe-Galaxy: tools for making, checking and sharing FAIR eDNA (FAIRe)
+  datasets. Zenodo. https://doi.org/10.5281/zenodo.24489371
 - **The FAIRe checklist paper**: Takahashi M, Frøslev TG, Paupério J, et al. (2025). A metadata
   checklist and data formatting guidelines to make eDNA FAIR (Findable, Accessible, Interoperable,
   and Reusable). *Environmental DNA* 7(3): e70100. https://doi.org/10.1002/edn3.70100
@@ -76,6 +75,9 @@ If you use these tools, please cite three things:
   https://doi.org/10.5281/zenodo.23667395), and the repositories of FAIRe-ator, FAIRe2MDT,
   FAIRe2ENA, FAIRe2NCBI and FAIRe2QIIME, all listed in `CITATION.cff`. Galaxy shows each tool's
   citations on its page.
+
+GitHub's *Cite this repository* button, on the right of the repository's front page, gives the
+citation in other formats.
 
 The collection's authors are the people who wrote the tools it brings together:
 
