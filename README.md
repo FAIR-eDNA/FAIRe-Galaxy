@@ -25,6 +25,11 @@ the app, sets it up and starts it (`shiny/README.md` has the details):
 source("https://raw.githubusercontent.com/FAIR-eDNA/FAIRe-Galaxy/main/shiny/start.R")
 ```
 
+They can also be used through an AI assistant such as Claude, ChatGPT or Microsoft 365 Copilot.
+`skill/` holds a skill package for these assistants: the assistant runs the same tools, explains
+what they find, asks the researcher what only they can answer, and records each decision
+(`skill/README.md` has the details and setup notes).
+
 ## The tools
 
 The Galaxy tools wrap the community's scripts, and add a FAIRe mapper that turns a lab's own tables
