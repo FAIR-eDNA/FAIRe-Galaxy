@@ -279,7 +279,10 @@ replace functions inside the upstream code while it runs; their READMEs say whic
   the upstream scripts, so it holds the knowledge the tools need. Maintenance happens in this
   repository: a change merged to `main` is published to the ToolShed by the continuous
   integration. Galaxy Australia installs the tools on the eDNA Lab and updates them when the
-  maintainers ask.
+  maintainers ask. On 24 November 2026 Oliver Berry and Miwa Takahashi agreed to be the custodians
+  of the account. `fair-edna` is registered with Oliver Berry's CSIRO email, and Miwa Takahashi has
+  her own ToolShed account, registered with her CSIRO email, with write access to every
+  repository.
 - **Language model optional.** Every tool works without one. A model's answers are marked as
   such, and only a person's answers count as confirmed.
 - **Credit and ownership** (7 November 2026). Oliver Berry (CSIRO) wrote the Galaxy tools for the
@@ -301,10 +304,11 @@ data to ENA from inside Galaxy.
    now have licence files: FAIRe-ator, the FAIRe checklist and FAIRe2MDT added theirs on 11
    November 2026.)
 2. ToolShed owner `fair-edna` (decided 23 November 2026; filled in each `.shed.yml`, with Oliver
-   Berry and Miwa Takahashi in each `<creator>` block). Still to do: register `fair-edna` on the
-   main ToolShed and the Test ToolShed (with a shared FAIRe email address, so the account outlasts
-   a change of role), add their API keys as the repository secrets `TS_API_KEY` and `TTS_API_KEY`,
-   and set the repository variable `TOOLSHED_DEPLOY` to `true`.
+   Berry and Miwa Takahashi in each `<creator>` block; custodians and emails agreed 24 November
+   2026). Still to do: register `fair-edna` on the main ToolShed and the Test ToolShed with Oliver
+   Berry's CSIRO email; add their API keys as the repository secrets `TS_API_KEY` and
+   `TTS_API_KEY`; set the repository variable `TOOLSHED_DEPLOY` to `true`; and, once the
+   repositories exist, give Miwa Takahashi's ToolShed account write access to each one.
 3. Continuous integration (done, `.github/workflows/pr.yaml`). The IUC's planemo-ci GitHub Actions workflow runs lint and tests on
    every pull request and can publish to the ToolShed on merge.
 4. Publish to the Test ToolShed, check the tools install on a test Galaxy, then publish to the main
