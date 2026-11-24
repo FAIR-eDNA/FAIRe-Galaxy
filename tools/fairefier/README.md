@@ -12,6 +12,11 @@ Upstream: [csiro/FAIRe-fier](https://github.com/csiro/FAIRe-fier) at commit `183
 
 - `planemo lint`: passes with no warnings. `pyflakes`: clean.
 - `planemo test`: all 6 tests pass in Galaxy 25.0 (summary at the end of this file).
+- Fixed 24 November 2026: the highlighted workbook of warnings and errors stopped with an
+  AttributeError when sample names were numbers (1520, as in the khapra beetle data), because pandas
+  reads them as integers. `highlight_cells_bysampnameloc` now compares them as text. The outputs for
+  the four test workbooks are unchanged. FAIRe-fier's own `validate_module.py` has the same code, so
+  this is worth offering upstream.
 - **Same results as the web app.** The outputs were compared cell by cell, including every
   highlight colour, with the app's own Shiny code run headlessly (see "How equivalence was
   checked" below). Six cases, all identical.

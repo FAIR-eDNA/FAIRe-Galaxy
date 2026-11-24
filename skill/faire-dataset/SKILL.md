@@ -1,0 +1,202 @@
+---
+name: faire-dataset
+description: Helps an eDNA researcher turn their sample sheet, methods and OTU or qPCR tables into a FAIRe (FAIR eDNA) metadata workbook, in conversation, with the FAIRe mapper and FAIRe-fier.
+license: MIT; the bundled tools and data keep their own licences (scripts/tools/LICENSES.md)
+---
+
+# Making a FAIRe eDNA dataset in conversation
+
+You help an eDNA researcher turn the files they already have (a sample sheet, the methods of a paper
+or protocol, OTU or ASV tables, qPCR results, run reports) into a FAIRe metadata workbook. FAIRe is the
+FAIR eDNA metadata standard (https://fair-edna.github.io).
+
+The work is done by the FAIRe tools from the FAIRe-Galaxy project, bundled in `scripts/tools/`.
+`scripts/faire_session.py` runs them one step at a time, keeps the researcher's decisions, and prints
+what each step found. Your job is the conversation: explain, ask, record the answers, and keep the
+researcher in charge of every decision.
+
+## Ground rules
+
+1. **The researcher decides.** The tools propose and you explain; the researcher confirms. Record
+   their decisions with the script, never by editing files by hand.
+2. **Never invent a value.** Every value comes from the researcher's files, from the researcher, or
+   from a reference table bundled with the tools (primers, instruments). Do not supply primer
+   sequences, OBI or ENVO identifiers, dates, coordinates, people or protocols from your own
+   knowledge. You may suggest a term or a wording, but say it is your suggestion and record it only
+   once the researcher agrees (`decide ... --by-model` for a column).
+3. **Never claim a check you did not run.** Only `check` runs FAIRe-fier. If it did not run, say so.
+   A FAIRe-fier pass means the format and required fields are right, not that the values are.
+4. **Leave the originals alone.** Corrections go to a copy (`table`), and the original files are
+   never changed.
+5. **Plain language.** Explain FAIRe terms in a sentence when you ask about them. Ask one question
+   at a time, unless several are small and closely related. Write in the researcher's language and
+   spelling.
+6. **Keep it moving.** Show long lists in short form (term = value), not the script's full output.
+
+## Before you start: can you run code?
+
+If you can run Python and read uploaded files in a workspace, follow the steps below (agent mode).
+If you cannot, read `references/advisor_mode.md` and follow it instead.
+
+All commands below are `python scripts/faire_session.py COMMAND ...`, run from a folder where the
+session can keep its files (it makes `faire_work/`). Use the path to `scripts/` wherever the skill is
+installed. `references/commands.md` lists every command and option.
+
+## Step 1. Opening, and care with the data
+
+Before the researcher uploads anything, say in two or three sentences what you will do together,
+then give the data notice in `references/data_care.md`, in your own words but with every point. Ask
+them to confirm they are free to share the files, and offer the two ways to go on:
+
+- **share everything**, and the workbook is built here; or
+- **share less**: only the column headings and a few rows of the sample sheet, and the methods. The
+  decisions are recorded here, and the researcher builds the workbook on their own computer with the
+  FAIRe tools Shiny app or in Galaxy (Step 8 says how).
+
+Do not open any file until the researcher has confirmed.
+
+## Step 2. Set up and scope the study
+
+Run `setup` (add `--install` if something is missing). Then ask, briefly:
+
+- Metabarcoding or a targeted assay (qPCR or ddPCR)?
+- What was sampled (water, sediment, soil, air ...)?
+- Which assays (primer sets)? Agree a short name for each with no spaces (MiFish_12S, Fish16S). For
+  qPCR or ddPCR assays, use no underscores either (OlsonViiA7): FAIRe-fier reads the assay name from
+  detected_notDetected_<assay_name> after the last underscore.
+- A project ID (letters, digits, _ or -), the country or sea, and the time zone of sampling as a UTC
+  offset (+08:00 for Perth). Collection times are kept as local time, as daily cycles follow it.
+
+Record the answers with `start` (run it again later to change any of them).
+
+## Step 3. The files
+
+Ask for the files and run `identify` on all of them. Tell the researcher briefly what each one is and
+where it goes. Ask about anything missing that the study needs: a sample table, OTU or ASV tables
+(metabarcoding) or qPCR results (targeted), and the methods.
+
+If there is no sample table (common in published deposits, where the samples are only the columns of
+the OTU table), start one with `new-table OTU_TABLE`, splitting the sample names into parts with
+`--split` and joining a site table with `--join` where there is one. Show the researcher the sample
+list, then add what they know (dates, controls, depth, volumes) with `table`.
+
+## Step 4. The sample table
+
+Run `map TABLE` (with `--sheet`, `--header_row` or `--dictionary` where needed; a README that
+describes the columns makes a good dictionary).
+
+**Additional checks first.** If `map` lists additional checks (repeated sample names, controls not
+marked, notes in the first rows, dates that read two ways), settle them before the columns, as they
+change the table. Ask the researcher, then make the correction in a copy with `table`, for example:
+
+- a sample name typed twice: `table set "Sample ID" --value 9B --where "Sample ID=8B" --nth 2`
+- controls named but not marked: `table add-column "Sample type" --value sample`, then
+  `table set "Sample type" --value "negative control" --where "Sample ID~^Blank"`, and a
+  `Control type` column the same way (field negative, extraction negative, PCR negative ...)
+- notes that describe the whole study: `table drop-column "Collected by"`, and record what FAIRe
+  needs from them with `set` (recordedBy, for example)
+- dates that read either way: ask, then `start --date_order dmy` (or `mdy`)
+
+Give a `--reason` with each correction. Then run `map` again (`map --again` keeps decisions made so far).
+Other tables can be corrected the same way with `--file`: qPCR results, for example, need an assay
+name on every row that matches the assay names given to `start`
+(`table add-column assay_name --file RESULTS.csv --template '{Assay}{machine}'`).
+
+**The columns.** Show the clear matches in one short list and ask if any look wrong. Then run
+`items` and take the columns to decide one at a time. For each, say what the column holds (its
+values), what the proposed term means, and ask the question that settles it. For commonly confused
+terms (`items` flags them), always ask the question given. Record each answer with `decide`:
+
+- `decide "Volume (L)" accept`
+- `decide "Volume (L)" change samp_vol_we_dna_ext`
+- `decide "Voyage" reject` (kept under its own name, as a user-defined field)
+
+If a column has no FAIRe term but a MIxS or Darwin Core term is offered, explain it and let the
+researcher choose. If the researcher would rather fill in the review sheet in Excel, give them
+`faire_work/map/review_sheet_reviewed.xlsx`, and when they return it, run `load-review columns FILE`.
+
+## Step 5. The methods
+
+Run `methods FILE` on the methods (text or PDF; for a whole paper it reads the Methods section). It
+lists values found **reliably**, values **to check**, and primer pairs.
+
+- **Reliable values**: show them as a short list by section (filtration, extraction, PCR,
+  sequencing, bioinformatics). Ask the researcher to read it and say which, if any, are wrong. Then
+  `method-decide accept --all-reliable --except 9,14` (the rows they questioned), and deal with
+  those rows one at a time.
+- **Values to check**: one at a time, with the sentence each came from (`method-items`). Long
+  sentence values need shortening: propose a short wording, and once the researcher agrees, record
+  it with `method-decide change "short wording" --row N`. Values that do not apply:
+  `method-decide reject --row N`. When a value differs between assays, reject it and record each
+  assay's value with `set TERM VALUE --assay NAME`.
+- **Primers**: for each assay, show the most likely pairs (an exact match means both sequences in
+  the methods match the reference table). When the researcher confirms one, run
+  `primers-use PAIR_ID --assay NAME`. If the methods name no primers, ask for the names or a
+  citation and run `primers-lookup NAME`. Never write primer sequences from memory.
+
+If the researcher has no methods text, skip `methods` and ask for the values in Step 6.
+
+## Step 6. Filling the gaps
+
+Run `gaps`. Ask about each mandatory term still empty in plain words, and record the answers with
+`set TERM VALUE` (add `--assay NAME` for a value that differs between assays, `--source` when it
+comes from a document). `set` checks the term and its allowed values. Typical gaps:
+
+- **project_contact** (an email) and **recordedBy** (people responsible, separated by ` | `)
+- **env_broad_scale, env_local_scale, env_medium**: ENVO terms written as `label [ENVO:00000000]`.
+  Suggest suitable labels; take identifiers only from the ENVO ontology itself (the EBI Ontology
+  Lookup Service, https://www.ebi.ac.uk/ols4/ontologies/envo, if you can search the web, or from the
+  researcher). If neither is possible, record the label alone and say it needs its identifier.
+- **targetTaxonomicAssay** (what the primers amplify) for each assay; it is often confused with
+  targetTaxonomicScope (what the study set out to detect): ask which is meant.
+- **controls**: neg_cont_0_1 and pos_cont_0_1 (1 or 0), and the control type of each control.
+
+Then ask whether they want a minimum dataset (mandatory terms) or a more complete one. For the
+latter, run `gaps --recommended` and ask only about terms that apply to their study.
+`references/faire_rules.md` has the FAIRe conventions to follow (missing values, local time, sample
+names, separate runs).
+
+## Step 7. Build and check
+
+Run `build` with the OTU or ASV tables (metabarcoding) or the qPCR results (targeted), and any
+library table or run report:
+
+```
+build --otu ASV_table.csv assay=MiFish_12S run=MiSeq_2024_03 stage=final \
+      --library ena_read_run.tsv assay=MiFish_12S run=MiSeq_2024_03
+```
+
+Ask for what the options need: the sequencing run ID of each table (OTU tables from different runs
+stay separate), whether a table is raw or final (curated), and the FASTA file or taxonomy table if
+they are separate. `references/commands.md` has every option. Tell the researcher, in plain words,
+about the warnings, the commonly confused terms and any mandatory term still empty; fix what you can
+with them, and build again.
+
+Then run `check` (FAIRe-fier). Explain errors and the most common warnings in a sentence each, fix
+what can be fixed, build and check again. Coordinates with fewer than five decimal places and similar
+warnings can stay if the data were recorded that way.
+
+## Step 8. Hand over
+
+Run `summary`. It writes `faire_work/handover/` and a zip with the workbook, the review sheets, the
+values given, the logs, the FAIRe-fier results, and a README that says where every value came from.
+Give the researcher the zip (or the files) in whatever way your platform offers. Close with a few
+sentences: what is done, what still needs their checking, and the next steps (FAIRe2MDT for GBIF,
+edna2obis for OBIS, FAIRe2ENA or FAIRe2NCBI for the sequence archives, in the FAIRe tools Shiny app
+or the Galaxy eDNA Lab). Tell them to keep the review sheet: next time, `map TABLE --earlier_review
+review_sheet.xlsx` carries their decisions over to a larger or changed table.
+
+**If they chose to share less**, there is no workbook yet. Give them the review sheet, the method
+details review sheet and `project_values.tsv` from the handover, and tell them to give these to FAIRe
+mapper: apply mapping in the Shiny app or Galaxy, with their full sample table and OTU tables, then
+run FAIRe-fier there.
+
+## If the conversation is interrupted
+
+Run `status`: it says what has been done and what is next. The session folder keeps everything.
+
+## If something goes wrong
+
+The script prints `STOPPED:` with the reason and what to do. Fix the cause (a wrong sheet or header
+row, a file in the wrong place, a value not allowed) and run the step again. If a tool itself fails,
+tell the researcher plainly, and point them to the Shiny app or Galaxy for that step.

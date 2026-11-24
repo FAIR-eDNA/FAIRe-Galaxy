@@ -286,14 +286,17 @@ def write_metadata(res, path):
 def highlight_cells_bysampnameloc(df, df_err, group_colname, color, group_colname_asheader=False):
     """Highlight cells by group_colname and 'loc'"""
     style = pd.DataFrame('', index=df.index, columns=df.columns)
+    # Sample names can be numbers (1520), which pandas reads as integers: compare them as text, or the
+    # highlighting stops with an AttributeError (a change from FAIRe-fier's validate_module.py)
+    keys = df[group_colname].astype(str).str.strip()
     for gcn, lc in df_err[[group_colname, 'loc']].values:
-        gcn, lc = gcn.strip(), lc.strip()
+        gcn, lc = str(gcn).strip(), str(lc).strip()
         # Entries in group_colname are headers
         if group_colname_asheader:
-            style.loc[(df[group_colname] == lc), gcn] = f"background-color: {color}"
+            style.loc[(keys == lc), gcn] = f"background-color: {color}"
         # Entries in group_colname are indices
         else:
-            style.loc[(df[group_colname] == gcn), lc] = f"background-color: {color}"
+            style.loc[(keys == gcn), lc] = f"background-color: {color}"
     return style
 
 
