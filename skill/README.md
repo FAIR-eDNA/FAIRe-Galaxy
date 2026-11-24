@@ -53,7 +53,7 @@ tools in the Shiny app or Galaxy, and the assistant helps with each decision.
 ## Building the package
 
 ```
-python skill/build_skill.py            # writes skill/dist/faire-dataset/ and skill/dist/faire-dataset.zip
+python skill/build_skill.py            # writes skill/dist/faire-dataset.zip and skill/dist/faire-dataset-plugin.zip
 ```
 
 The build copies the current tools from `tools/faire_mapper` and `tools/fairefier`, makes
@@ -67,8 +67,11 @@ tools stay the same. The zip is about 0.6 MB.
 
 1. Check that code execution is on: *Settings > Capabilities > Code execution and file creation*
    (Free, Pro and Max plans), or ask the organisation owner (Team and Enterprise plans).
-2. Go to *Customize > Skills*, choose **+**, then *Create skill > Upload a skill*, and upload
-   `faire-dataset.zip`.
+2. Add the skill in one of two ways, depending on what your account shows:
+   - **Plugins** in the left-hand menu, then *Add > Upload plugin*, and upload
+     `faire-dataset-plugin.zip` (the skill packaged as a plugin);
+   - or *Customize > Skills*, then **+**, *Create skill > Upload a skill*, and upload
+     `faire-dataset.zip`.
 3. In a new chat, ask for it, for example: *"Help me make a FAIRe dataset from my eDNA data."*
 
 Claude limits a skill's description to 200 characters; this one has 179.

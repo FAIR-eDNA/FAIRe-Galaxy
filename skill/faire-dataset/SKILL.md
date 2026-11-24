@@ -28,19 +28,44 @@ researcher in charge of every decision.
    A FAIRe-fier pass means the format and required fields are right, not that the values are.
 4. **Leave the originals alone.** Corrections go to a copy (`table`), and the original files are
    never changed.
-5. **Plain language.** Explain FAIRe terms in a sentence when you ask about them. Ask one question
-   at a time, unless several are small and closely related. Write in the researcher's language and
-   spelling.
+5. **Plain language.** Explain FAIRe terms in a sentence when you ask about them. Write in the
+   researcher's language and spelling.
 6. **Keep it moving.** Show long lists in short form (term = value), not the script's full output.
+7. **Ask the way described in "How to ask" below**: one decision per message, with the answer
+   offered as a choice the researcher can accept in one click.
+
+## How to ask
+
+Researchers find it hard to answer several questions in one reply, so:
+
+- **One decision per message.** Ask about one thing, wait for the answer, act on it, then ask the
+  next. Take the decisions that change the table first (repeated names, controls, note columns),
+  then the columns, then the methods, then the gaps. Say how many are left now and then ("3 more
+  about the table, then the columns").
+- **Offer your proposal as the first choice.** If your platform has a tool for multiple-choice
+  questions with buttons (Claude's ask-user-input tool, for example), use it for every decision:
+  the first option is your proposal, marked as recommended ("Yes, rename it 9B"), then one to three
+  alternatives that make sense ("Keep both as 8B and tell me which is which", "Leave this row out").
+  The researcher can always type something else. Without such a tool, end the message with the
+  proposal as a yes-or-no question and the alternatives in a short list.
+- **Lists of proposals go in one checklist.** Where you have several proposals that are each likely
+  to be right (the clear column matches, the reliable method values, the controls named in the
+  table), show them as one multiple-choice question that allows several answers, every item ticked
+  by default if the tool allows, or otherwise listed with numbers: "Untick (or name the numbers of)
+  any that are wrong." Accept the rest together, then take each item they questioned on its own,
+  with alternatives, as above.
+- **Act straight away** on each answer (record it with the script), confirm it in one line, and go
+  to the next question in the same message.
 
 ## Before you start: can you run code?
 
 If you can run Python and read uploaded files in a workspace, follow the steps below (agent mode).
 If you cannot, read `references/advisor_mode.md` and follow it instead.
 
-All commands below are `python scripts/faire_session.py COMMAND ...`, run from a folder where the
-session can keep its files (it makes `faire_work/`). Use the path to `scripts/` wherever the skill is
-installed. `references/commands.md` lists every command and option.
+All commands below are `python3 ${CLAUDE_SKILL_DIR}/scripts/faire_session.py COMMAND ...`, run from
+a folder where the session can keep its files (it makes `faire_work/`). Where `${CLAUDE_SKILL_DIR}` is
+not set, use the path of the folder that holds this SKILL.md. `references/commands.md` lists every
+command and option.
 
 ## Step 1. Opening, and care with the data
 
@@ -57,7 +82,8 @@ Do not open any file until the researcher has confirmed.
 
 ## Step 2. Set up and scope the study
 
-Run `setup` (add `--install` if something is missing). Then ask, briefly:
+Run `setup` (add `--install` if something is missing). Then ask these, one at a time, offering the
+likely answer as the first choice where the files or the conversation suggest one:
 
 - Metabarcoding or a targeted assay (qPCR or ddPCR)?
 - What was sampled (water, sediment, soil, air ...)?
@@ -87,7 +113,8 @@ describes the columns makes a good dictionary).
 
 **Additional checks first.** If `map` lists additional checks (repeated sample names, controls not
 marked, notes in the first rows, dates that read two ways), settle them before the columns, as they
-change the table. Ask the researcher, then make the correction in a copy with `table`, for example:
+change the table. Take them one at a time, each with your proposed correction as the first choice,
+and make each correction in a copy with `table` as soon as it is agreed, for example:
 
 - a sample name typed twice: `table set "Sample ID" --value 9B --where "Sample ID=8B" --nth 2`
 - controls named but not marked: `table add-column "Sample type" --value sample`, then
@@ -102,8 +129,9 @@ Other tables can be corrected the same way with `--file`: qPCR results, for exam
 name on every row that matches the assay names given to `start`
 (`table add-column assay_name --file RESULTS.csv --template '{Assay}{machine}'`).
 
-**The columns.** Show the clear matches in one short list and ask if any look wrong. Then run
-`items` and take the columns to decide one at a time. For each, say what the column holds (its
+**The columns.** Show the clear matches as one checklist (see "How to ask"), with an example value
+for each, and take any the researcher questions one at a time. Then run `items` and take the columns
+to decide one at a time. For each, say what the column holds (its
 values), what the proposed term means, and ask the question that settles it. For commonly confused
 terms (`items` flags them), always ask the question given. Record each answer with `decide`:
 
@@ -120,8 +148,9 @@ researcher choose. If the researcher would rather fill in the review sheet in Ex
 Run `methods FILE` on the methods (text or PDF; for a whole paper it reads the Methods section). It
 lists values found **reliably**, values **to check**, and primer pairs.
 
-- **Reliable values**: show them as a short list by section (filtration, extraction, PCR,
-  sequencing, bioinformatics). Ask the researcher to read it and say which, if any, are wrong. Then
+- **Reliable values**: show them as a checklist by section (filtration, extraction, PCR,
+  sequencing, bioinformatics; one checklist per section if the list is long). Ask the researcher to
+  untick any that are wrong. Then
   `method-decide accept --all-reliable --except 9,14` (the rows they questioned), and deal with
   those rows one at a time.
 - **Values to check**: one at a time, with the sentence each came from (`method-items`). Long
