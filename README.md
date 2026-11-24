@@ -1,5 +1,7 @@
 # FAIRe-Galaxy
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24489371.svg)](https://doi.org/10.5281/zenodo.24489371)
+
 Environmental DNA (eDNA) data are most valuable when other people can find, understand and reuse
 them. The FAIR eDNA (FAIRe) metadata standard describes how to record an eDNA study so that its
 data are Findable, Accessible, Interoperable and Reusable, and the eDNA community has written a set
@@ -57,7 +59,8 @@ If you use these tools, please cite three things:
 
 - **This collection**, at the version you used. `CITATION.cff` gives the details, and GitHub's
   *Cite this repository* button (on the right of the repository's front page) formats them. Each
-  release is archived on Zenodo with its own DOI, which the release notes give.
+  release is archived on Zenodo with its own DOI: v1.0.0 is https://doi.org/10.5281/zenodo.24489372,
+  and https://doi.org/10.5281/zenodo.24489371 covers all versions and always leads to the latest.
 - **The FAIRe checklist paper**: Takahashi M, Frøslev TG, Paupério J, et al. (2025). A metadata
   checklist and data formatting guidelines to make eDNA FAIR (Findable, Accessible, Interoperable,
   and Reusable). *Environmental DNA* 7(3): e70100. https://doi.org/10.1002/edn3.70100
@@ -77,6 +80,20 @@ The collection's authors are the people who wrote the tools it brings together:
 - Philipp Bayer (Minderoo OceanOmics Centre at UWA): FAIRe2ENA;
 - Clement Coclet, Luke Thompson, Katherine Silliman and Bayden Willms (NOAA 'Omics, AOML):
   FAIRe2NCBI, FAIRe2QIIME and edna2obis.
+
+## Use of AI
+
+Much of the new code and documentation in this repository (the Galaxy wrappers, the FAIRe mapper,
+FAIRe to Darwin Core, the Shiny app and the AI assistant skill) was written with Claude, an AI model
+made by Anthropic. Oliver Berry directed the work, reviewed the changes and tested the tools on
+benchmark tables, published datasets and the demonstration sets in `demo/`, and the authors take
+responsibility for the content. Claude is not listed as an author, as AI tools cannot take
+responsibility for their work. The upstream tools wrapped here (FAIRe-ator, FAIRe-fier, FAIRe2MDT,
+FAIRe2ENA, FAIRe2NCBI, FAIRe2QIIME and edna2obis) are their authors' own work.
+
+The tools themselves do not use AI, with two exceptions that the user chooses: the optional *ask a
+language model* step of the FAIRe mapper, and the AI assistant skill in `skill/`. Both send data to
+the AI service the user picks, and say so before they do.
 
 ## Evaluating the tools
 
