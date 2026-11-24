@@ -81,6 +81,20 @@ The collection's authors are the people who wrote the tools it brings together:
 - Clement Coclet, Luke Thompson, Katherine Silliman and Bayden Willms (NOAA 'Omics, AOML):
   FAIRe2NCBI, FAIRe2QIIME and edna2obis.
 
+## Use of AI
+
+Much of the new code and documentation in this repository (the Galaxy wrappers, the FAIRe mapper,
+FAIRe to Darwin Core, the Shiny app and the AI assistant skill) was written with Claude, an AI model
+made by Anthropic. Oliver Berry directed the work, reviewed the changes and tested the tools on
+benchmark tables, published datasets and the demonstration sets in `demo/`, and the authors take
+responsibility for the content. Claude is not listed as an author, as AI tools cannot take
+responsibility for their work. The upstream tools wrapped here (FAIRe-ator, FAIRe-fier, FAIRe2MDT,
+FAIRe2ENA, FAIRe2NCBI, FAIRe2QIIME and edna2obis) are their authors' own work.
+
+The tools themselves do not use AI, with two exceptions that the user chooses: the optional *ask a
+language model* step of the FAIRe mapper, and the AI assistant skill in `skill/`. Both send data to
+the AI service the user picks, and say so before they do.
+
 ## Evaluating the tools
 
 Notes for Galaxy Australia and other evaluators.
