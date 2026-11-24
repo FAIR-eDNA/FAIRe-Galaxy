@@ -100,7 +100,24 @@ build --otu PATH [assay=NAME] [run=RUN_ID] [stage=final|raw] [sequences=FASTA] [
 | Command | What it does |
 |---|---|
 | `check [--show N]` | Runs FAIRe-fier on the workbook and lists the errors and warnings, grouped. The full list is in `faire_work/check/`. |
-| `summary` | Writes `faire_work/handover/` (workbook, review sheets, values, logs, FAIRe-fier results and a README of where every value came from) and a zip of it. |
+| `summary` | Writes `faire_work/handover/` (workbook, review sheets, values, logs, FAIRe-fier results, converted files and a README of where every value came from) and a zip of it. |
+
+## Converting
+
+`convert TARGET [options]` converts the checked workbook into `faire_work/convert/TARGET/`. It stops
+if the workbook has not been checked, or if FAIRe-fier found errors (add `--anyway` for a draft). It
+prints the files written, the converter's messages (a message repeated for many samples is shown
+once, with a count) and what to do with the files. Uploading stays with the researcher.
+
+| Target | Writes | Options |
+|---|---|---|
+| `gbif` | A Darwin Core archive (`dwca.zip`: occurrences with the DNA derived data extension and EML), the tables on their own, and `report.md` (FAIRe to Darwin Core). Targeted assays give presence and absence records; metabarcoding gives presence records. Controls are left out. | `--publish_to gbif\|obis\|both`, `--licence CC0-1.0\|CC-BY-4.0\|CC-BY-NC-4.0`, `--given_name`, `--surname`, `--organisation`, `--email`, `--orcid`, `--title`, `--abstract`, `--keywords`, `--assays A,B`, `--no_absences`, `--taxa TABLE` (name, then scientificName, scientificNameID, taxonRank, kingdom ... genus), `--country_code AU` |
+| `ncbi` | `biosample.tsv`, and for metabarcoding `sra.tsv` (FAIRe2NCBI). | `--organism "freshwater metagenome"`, `--bioproject PRJNA...`, `--mandatory_fill "not collected"` (or not provided, not applicable, missing, missing: control sample; default: stop and list the empty fields), `--duplicates_column COLUMN`, `--instrument_model` |
+| `ena` | `samples.xml` and `submission.xml` (FAIRe2ENA). Experiments and runs need the receipt, so they run later in the Shiny app or Galaxy. | `--center_name` (required), `--taxon_id` (408172 marine, 449393 freshwater, 410658 soil, 655179 air metagenome) |
+| `qiime` | QIIME 2 sample metadata and manifests, one set per assay (FAIRe2QIIME). | `--sample_name_column lib_id`, `--sequences_folder PATH` |
+
+FAIRe2MDT (GBIF's Metabarcoding Data Toolkit) and edna2obis (OBIS) are not bundled: they need R or
+the WoRMS and GBIF web services. They run in the Shiny app and Galaxy.
 
 ## The session folder
 
@@ -117,5 +134,6 @@ faire_work/
   values.tsv                   values the researcher gave or confirmed, with their source
   build/                       the workbook and apply mapping's log
   check/                       FAIRe-fier's outputs
+  convert/                     the converted files, one folder for each target
   handover/ and *_handover.zip what to give the researcher
 ```

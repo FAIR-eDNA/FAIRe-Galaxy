@@ -30,6 +30,15 @@ MAPPER_FILES = ['faire_mapper.py', 'faire_mapper_amp.py', 'faire_mapper_apply.py
 MAPPER_DIRS = ['checklist', 'method_details', 'primers']
 FAIREFIER_FILES = ['fairefier_cli.py', 'create_validator.py', 'config_data.py', 'LICENSE', 'LICENSE.upstream']
 FAIREFIER_CHECKLISTS = ['FAIRe_checklist_v1.0.2.xlsx', 'FAIRe_checklist_v1.0.xlsx', 'LICENSE']
+# The converters the skill can run in a chat workspace: Python only, and no web services
+# (edna2obis needs WoRMS or GBIF, and FAIRe2MDT needs R, so they stay in the Shiny app and Galaxy).
+CONVERTERS = {
+    'faire2ncbi': ['faire2ncbi_galaxy.py', 'normalise_faire.py', 'scripts', 'docs', 'LICENSE', 'LICENSE.upstream'],
+    'faire2ena': ['faire2ena_galaxy.py', 'faire2ena_run.py', 'faire2ena_sample.py', 'LICENSE', 'LICENSE.upstream'],
+    'faire2dwc': ['faire2dwc.py', 'faire2dwc_terms.tsv', 'LICENSE'],
+    'faire2qiime': ['faire2qiime.py', 'faire2qiime_by_assay.py', 'faire2qiime_run.py', 'normalise_faire.py',
+                    'LICENSE', 'LICENSE.upstream'],
+}
 
 
 def terms_reference(checklist, out):
@@ -91,6 +100,14 @@ def main(outdir=None):
         shutil.copy(REPO / 'tools' / 'fairefier' / f, tools / 'fairefier' / f)
     for f in FAIREFIER_CHECKLISTS:
         shutil.copy(REPO / 'tools' / 'fairefier' / 'checklist' / f, tools / 'fairefier' / 'checklist' / f)
+    for tool, files in CONVERTERS.items():
+        (tools / tool).mkdir(parents=True, exist_ok=True)
+        for f in files:
+            src = REPO / 'tools' / tool / f
+            if src.is_dir():
+                shutil.copytree(src, tools / tool / f, ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
+            else:
+                shutil.copy(src, tools / tool / f)
     try:
         commit = subprocess.run(['git', '-C', str(REPO), 'log', '-1', '--format=%H %cs'], capture_output=True,
                                 text=True, check=True).stdout.strip()
@@ -116,7 +133,7 @@ def main(outdir=None):
         shutil.rmtree(plug)
     (plug / '.claude-plugin').mkdir(parents=True)
     shutil.copytree(pkg, plug / 'skills' / 'faire-dataset')
-    version = '1.2.0'
+    version = '1.3.0'
     (plug / '.claude-plugin' / 'plugin.json').write_text(json.dumps({
         'name': 'faire-dataset', 'displayName': 'FAIRe dataset assistant', 'version': version,
         'description': 'Helps eDNA researchers turn their sample sheets, methods and OTU or qPCR tables into a FAIRe '

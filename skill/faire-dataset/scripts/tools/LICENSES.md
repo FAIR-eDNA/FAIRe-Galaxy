@@ -13,6 +13,10 @@ unchanged so the skill works without downloading anything.
 | `faire_mapper/method_details/` (vocabulary and reliability tables) | MIT, as the mapper |
 | `fairefier/fairefier_cli.py`, `create_validator.py`, `config_data.py` (FAIRe-fier, by Suk Yee Yong, CSIRO) | BSD 3-Clause (`fairefier/LICENSE.upstream`) |
 | `fairefier/checklist/` | CC BY 4.0 (`fairefier/checklist/LICENSE`) |
+| `faire2ncbi/scripts/`, `faire2ncbi/docs/` (FAIRe2NCBI, NOAA 'Omics, https://github.com/aomlomics/FAIRe2NCBI) | CC0 1.0 (`faire2ncbi/LICENSE.upstream`) |
+| `faire2ena/faire2ena_sample.py`, `faire2ena_run.py` (FAIRe2ENA, Minderoo OceanOmics Centre at UWA, https://github.com/FAIR-eDNA/FAIRe2ENA) | MIT (`faire2ena/LICENSE.upstream`) |
+| `faire2qiime/faire2qiime.py` (faire2qiime, NOAA 'Omics, https://github.com/aomlomics/faire2qiime) | CC0 1.0 (`faire2qiime/LICENSE.upstream`) |
+| `faire2dwc/` (FAIRe to Darwin Core), and the drivers `faire2ncbi_galaxy.py`, `faire2ena_galaxy.py`, `faire2qiime_by_assay.py`, `faire2qiime_run.py` and `normalise_faire.py` | MIT (`LICENSE` in each folder) |
 
 `../faire_session.py` and the skill's instructions (`SKILL.md`, `references/`) are MIT, as the
 FAIRe-Galaxy project.
