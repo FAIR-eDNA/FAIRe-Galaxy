@@ -137,7 +137,8 @@ def main(outdir=None):
     (plug / '.claude-plugin' / 'plugin.json').write_text(json.dumps({
         'name': 'faire-dataset', 'displayName': 'FAIRe dataset assistant', 'version': version,
         'description': 'Helps eDNA researchers turn their sample sheets, methods and OTU or qPCR tables into a FAIRe '
-                       'metadata workbook in conversation, using the FAIRe mapper and FAIRe-fier.',
+                       'metadata workbook in conversation, using the FAIRe mapper and FAIRe-fier, and convert '
+                       'it for GBIF, OBIS, NCBI, ENA or QIIME 2.',
         'author': {'name': 'FAIR-eDNA', 'url': 'https://github.com/FAIR-eDNA/FAIRe-Galaxy'},
         'license': 'MIT'}, indent=2) + '\n', encoding='utf-8')
     shutil.copy(HERE / 'README.md', plug / 'README.md')
