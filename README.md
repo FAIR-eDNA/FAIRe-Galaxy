@@ -299,7 +299,8 @@ inputs) are the texts the tools show in Galaxy, for reuse on the Galaxy eDNA Lab
 data to ENA from inside Galaxy.
 
 1. Agree with the upstream authors that the wrappers can be published, and report the issues listed
-   in each README, and ask for tagged releases. The issues for edna2obis, FAIRe2QIIME and FAIRe2NCBI
+   in each README, and ask for tagged releases. As of 24 November 2026 the upstream authors have
+   been told informally, except Philipp Bayer (FAIRe2ENA), who is still to be asked. The issues for edna2obis, FAIRe2QIIME and FAIRe2NCBI
    were posted on 17 November 2026; the others are still to report. (All the upstream repositories
    now have licence files: FAIRe-ator, the FAIRe checklist and FAIRe2MDT added theirs on 11
    November 2026.)
