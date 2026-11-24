@@ -19,18 +19,25 @@ With the tools you can:
 - **convert** it for a sequence archive (NCBI or ENA), a biodiversity database (GBIF or OBIS), or an
   analysis in QIIME 2.
 
-The same tools also run on your own computer in a small R Shiny app (`shiny/`), a good way to try
-them on your data before you submit anything. With R and Python installed, this line in R downloads
-the app, sets it up and starts it (`shiny/README.md` has the details):
+## Three ways to use the tools
+
+The same tools run in three places. Choose the one that suits you:
+
+<p align="center"><img src="docs/images/three_ways.svg" width="820" alt="Three ways to use the FAIRe tools: Galaxy, in your web browser (nothing to install, a record of every step, joins your analysis workflows); the Shiny app, on your own computer (data stay with you, works offline, good for a first try); and an AI assistant, in a chat with Claude, ChatGPT or Microsoft 365 Copilot (talks you through each decision, copes with untidy files; your files go to the AI company)."></p>
+
+| | Where it runs | Choose it if | Start here |
+|---|---|---|---|
+| **Galaxy** | In your web browser, on Galaxy Australia's servers | you want nothing to install, a record of every step, or to join the FAIRe steps to your analysis workflows | The Galaxy eDNA Lab, edna.dev.gvl.org.au (being set up) |
+| **Shiny app** | On your own computer, with R and Python | your data must stay on your computer, or you want to try the tools offline | The line of R below, and `shiny/README.md` |
+| **AI assistant** | In Claude, ChatGPT or Microsoft 365 Copilot; your files go to that company | your files are untidy or unusual, and you'd like to be talked through each decision | `skill/README.md` |
+
+All three use the same review sheets, so you can start in one and finish in another.
+
+To start the Shiny app, run this line in R. It downloads the app, sets it up and starts it:
 
 ```r
 source("https://raw.githubusercontent.com/FAIR-eDNA/FAIRe-Galaxy/main/shiny/start.R")
 ```
-
-They can also be used through an AI assistant such as Claude, ChatGPT or Microsoft 365 Copilot.
-`skill/` holds a skill package for these assistants: the assistant runs the same tools, explains
-what they find, asks the researcher what only they can answer, and records each decision
-(`skill/README.md` has the details and setup notes).
 
 ## The tools
 
