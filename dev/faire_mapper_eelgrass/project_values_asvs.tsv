@@ -4,7 +4,7 @@ project_contact	Nick Jeffery (Nick.Jeffery@dfo-mpo.gc.ca)
 institution	Fisheries and Oceans Canada, Bedford Institute of Oceanography	
 license	http://creativecommons.org/publicdomain/zero/1.0/legalcode	
 bibliographicCitation	Data from: Applying eDNA metabarcoding to assess invertebrate biodiversity of eelgrass (Zostera marina) meadows across Nova Scotia (2025). Dryad. https://doi.org/10.5061/dryad.gqnk98t0c	
-dataGeneralizations	Coordinates are those of each site, shared by its replicate samples. The 2019 samples have the date their site was visited; the 2023 samples have the period in which the sites were sampled (June to October 2023), as the files give no date for them	
+dataGeneralizations	Coordinates are those of each site, shared by its replicate samples, and each sample has the date its site was visited	
 targetTaxonomicAssay	Metazoa	LerayCOI
 target_gene	COI	LerayCOI
 pcr_primer_forward	GGWACWGGWTGAACWGTWTAYCCYCC	LerayCOI
@@ -18,5 +18,8 @@ otu_seq_comp_appr	QIIME 2 2024.5: cutadapt, then DADA2 (denoising and merging)	L
 otu_db	COI RDP classifier v5.0.0	LerayCOI
 otu_final_description	Reads per ASV and sample: ASVs from DADA2 assigned to species by the COI RDP classifier v5.0.0 with a probability above 0.90, kept where the species is in the published table (Final_ASVTable_withTaxonomy_Filtered.csv); one table for each year, from the authors' GitHub repository (dfo-mar-mpas/coastal-invertebrate-metabarcoding)	LerayCOI
 pcr_0_1	1	
-recordedBy	missing: not provided	
+platform	ILLUMINA	
+instrument	Illumina MiSeq [OBI_0002003]	
+sequencing_location	Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo, BC (run COI_2019) | The Centre for Applied Genomics, Toronto (run COI_2023)	
+seq_method_additional	The samples from 2019 were sequenced in 2020 (run COI_2019), and those from 2023 separately in late 2023 (run COI_2023), each on an Illumina MiSeq	
 neg_cont_0_1	1	

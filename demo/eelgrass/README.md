@@ -56,7 +56,8 @@ It runs each step as a person would in Galaxy or the Shiny app:
    (`reviewer_decisions.tsv`). The one row for review is *Replicate*, which the review keeps as the
    authors' own column, as FAIRe's biological_rep is the number of replicates for the project.
 3. **Apply mapping**, with the species table as otuFinal and taxaFinal, and the project values
-   (`project_values.tsv`): primers, target gene, pipeline, reference database, licence and citation.
+   (`project_values.tsv`): primers, target gene, pipeline, reference database, sequencing platform
+   and location, licence and citation.
 4. **FAIRe-fier** checks the workbook.
 5. **FAIRe to Darwin Core** writes the archive for GBIF.
 
@@ -84,7 +85,8 @@ authors.
 The authors' GitHub repository
 ([dfo-mar-mpas/coastal-invertebrate-metabarcoding](https://github.com/dfo-mar-mpas/coastal-invertebrate-metabarcoding))
 holds what the Dryad files lack: reads per ASV, each ASV's classification and sequence, the
-controls, the date of each 2019 site visit, and a key to the 2023 samples. Nick Jeffery agreed on 24
+controls, the date of each site visit and who collected the samples (`data/Site_coordinates.csv`),
+and a key to the 2023 samples. Nick Jeffery agreed on 24
 November 2026 that we can use them, and is adding a licence to the repository. Until it is there,
 this repository holds no copies: `fetch_github.sh` downloads the files at a fixed commit and checks
 each one.
@@ -97,11 +99,12 @@ bash dev/faire_mapper_eelgrass/run_asvs.sh OUTDIR
    0.90, in `code/R/01a_Merge_taxonomy_andASVs.R`) whose species is in the published table and
    that have reads in a published sample. It writes one table and one FASTA file for each year.
 2. `prepare_table.py` makes the sample table as before, now with the 23 controls and the date of
-   each 2019 site visit. The 2023 samples keep the period of sampling.
+   each site visit. recordedBy lists the people who collected the samples at all sites.
 3. Apply mapping writes each year's table as its own sheet (otuFinal_LerayCOI_COI_2019 and
    otuFinal_LerayCOI_COI_2023), with a sequence for every ASV. The two years were processed
    separately, so each is treated as its own sequencing batch. COI_2019 and COI_2023 are our labels,
-   not run IDs from the sequencer.
+   not run IDs from the sequencer. The project values give the platform and where each year was
+   sequenced.
 4. FAIRe to Darwin Core writes one presence record per sample and ASV, each with its sequence.
 
 What you should see:
@@ -111,21 +114,31 @@ What you should see:
   *Speziorchestia grillus*). The authors probably named these after classification.
 - 27 of the 6,900 sample and species cells differ from the published table (`differences.tsv`), from
   the authors' curation after classification. Two look like swapped columns: *Cancer borealis* in
-  TAW-1 and TAW-3, and *Ameritella agilis* in ESB-2 and ESB-3.
-- 23 controls: in 2019, a field control at each site, a lab control (CON-LC) and six extraction
-  negatives; in 2023, a control at five sites and an extraction control. Only one has reads in the
+  TAW-1 and TAW-3, and *Ameritella agilis* in ESB-2 and ESB-3. The authors advise following the
+  per-ASV tables, as here.
+- RSE-3 is left out, as in the published table.
+- 23 controls: in 2019, a field control at each site (field negative), a lab control (CON-LC,
+  process negative) and six extraction negatives; in 2023, a field control at five sites and an
+  extraction control. Only one has reads in the
   ASVs kept: the North River control (NOR-C), with 84 reads of *Polydora cornuta*, which the North
   River samples do not have.
 - FAIRe-fier: *Success* for both sheets, with no mandatory term left empty.
 - FAIRe to Darwin Core: 1,046 presence records (600 from 2019, 446 from 2023), every one with its
   DNA sequence, and the 23 controls left out.
 
-Questions for the authors:
-- what the control codes mean (FC, LC and ENEG in 2019; C in 2023);
-- the dates of the 2023 samples;
-- the sequencing runs and platform for each year;
-- why RSE-3 is left out of the published table;
-- whether the 27 differences are curation or swapped columns.
+What the authors told us (Nick Jeffery, 24 November 2026):
+- **Controls:** FC (2019) and C (2023) are field controls, distilled water filtered in the field. LC
+  is a lab control, distilled water filtered in the lab. ENEG and Extraction-C are extraction
+  negatives.
+- **Dates:** `Site_coordinates.csv` in their repository has the date of each site visit. For two
+  sites it differs from the 2019 field sheet (`MAR_2019eDNASiteData.csv`): Wreck Cove (25 July in
+  one, 15 July in the other) and Franks George Island (26 and 13 September). We use
+  `Site_coordinates.csv`, as the authors suggested.
+- **Sequencing:** the 2019 samples were sequenced in 2020 on an Illumina MiSeq at the Pacific
+  Biological Station (Fisheries and Oceans Canada, Nanaimo), and the 2023 samples in late 2023 on a
+  MiSeq at The Centre for Applied Genomics (Toronto).
+- **RSE-3** had unusual species and possible contamination, so the authors dropped it.
+- **The 27 differences:** the reason isn't recorded; follow the per-ASV tables.
 
 ## Things to know about these data
 
@@ -134,10 +147,11 @@ Questions for the authors:
   records can't carry the sequence that identified them, and the identifications can't be checked
   or redone from the records. The authors' per-ASV files close that gap (see *With the sequences*,
   below).
-- **No sample dates.** Each record gets the period in which its site was sampled. The Dryad README
-  says the Cape Breton sites were sampled between June and August 2023, and its methods say June to
-  October for the seven sites of 2023 (one, Chebogue, is on the south shore). The demonstration uses
-  the wider period.
+- **No sample dates in the Dryad files.** Each record gets the period in which its site was
+  sampled. The Dryad README says the Cape Breton sites were sampled between June and August 2023,
+  and its methods say June to October for the seven sites of 2023 (one, Chebogue, is on the south
+  shore). The demonstration uses the wider period. The authors' GitHub repository has the date of
+  each site visit, which the version with sequences uses.
 - **Site coordinates.** Each replicate takes its site's coordinates. dataGeneralizations says so.
 - **What was sampled.** The 2019 samples were water samples (He et al. 2022, the fish study the
   2019 sites came from). The Dryad files don't say for 2023, so the same is assumed.

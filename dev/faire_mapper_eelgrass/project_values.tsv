@@ -18,4 +18,8 @@ otu_seq_comp_appr	QIIME 2 2024.5: cutadapt, then DADA2 (denoising and merging)	L
 otu_db	COI RDP classifier v5.0.0	LerayCOI
 otu_final_description	Reads per species and sample: ASVs from DADA2, assigned to species by the COI RDP classifier v5.0.0 (every published name with a probability of 0.95 or more), and summed per species (Final_ASVTable_withTaxonomy_Filtered.csv)	LerayCOI
 pcr_0_1	1	
+platform	ILLUMINA	
+instrument	Illumina MiSeq [OBI_0002003]	
+sequencing_location	Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo, BC (samples from 2019) | The Centre for Applied Genomics, Toronto (samples from 2023)	
+seq_method_additional	The samples from 2019 were sequenced in 2020, and those from 2023 separately in late 2023, each on an Illumina MiSeq	
 recordedBy	missing: not provided	
