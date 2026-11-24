@@ -23,6 +23,8 @@ With the tools you can:
 
 The same tools run in three places. Choose the one that suits you:
 
+<p align="center"><img src="docs/images/three_ways.svg" width="820" alt="Three ways to use the FAIRe tools: Galaxy, in your web browser (nothing to install, a record of every step, joins your analysis workflows); the Shiny app, on your own computer (data stay with you, works offline, good for a first try); and an AI assistant, in a chat with Claude, ChatGPT or Microsoft 365 Copilot (talks you through each decision, copes with untidy files; your files go to the AI company)."></p>
+
 | | Where it runs | Choose it if | Start here |
 |---|---|---|---|
 | **Galaxy** | In your web browser, on Galaxy Australia's servers | you want nothing to install, a record of every step, or to join the FAIRe steps to your analysis workflows | The Galaxy eDNA Lab, edna.dev.gvl.org.au (being set up) |
