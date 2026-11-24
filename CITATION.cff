@@ -48,6 +48,14 @@ authors:
     given-names: Suk Yee
     affiliation: CSIRO
     orcid: "https://orcid.org/0000-0002-5204-2902"
+doi: 10.5281/zenodo.24489371
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.24489371
+    description: All versions (resolves to the latest release)
+  - type: doi
+    value: 10.5281/zenodo.24489372
+    description: Version v1.0.0
 repository-code: "https://github.com/FAIR-eDNA/FAIRe-Galaxy"
 url: "https://github.com/FAIR-eDNA/FAIRe-Galaxy"
 license: MIT

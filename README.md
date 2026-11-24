@@ -1,5 +1,7 @@
 # FAIRe-Galaxy
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24489371.svg)](https://doi.org/10.5281/zenodo.24489371)
+
 Environmental DNA (eDNA) data are most valuable when other people can find, understand and reuse
 them. The FAIR eDNA (FAIRe) metadata standard describes how to record an eDNA study so that its
 data are Findable, Accessible, Interoperable and Reusable, and the eDNA community has written a set
@@ -57,7 +59,8 @@ If you use these tools, please cite three things:
 
 - **This collection**, at the version you used. `CITATION.cff` gives the details, and GitHub's
   *Cite this repository* button (on the right of the repository's front page) formats them. Each
-  release is archived on Zenodo with its own DOI, which the release notes give.
+  release is archived on Zenodo with its own DOI: v1.0.0 is https://doi.org/10.5281/zenodo.24489372,
+  and https://doi.org/10.5281/zenodo.24489371 covers all versions and always leads to the latest.
 - **The FAIRe checklist paper**: Takahashi M, Frøslev TG, Paupério J, et al. (2025). A metadata
   checklist and data formatting guidelines to make eDNA FAIR (Findable, Accessible, Interoperable,
   and Reusable). *Environmental DNA* 7(3): e70100. https://doi.org/10.1002/edn3.70100
