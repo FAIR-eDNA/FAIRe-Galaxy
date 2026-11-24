@@ -33,6 +33,10 @@ The same tools run in three places. Choose the one that suits you:
 
 All three use the same review sheets, so you can start in one and finish in another.
 
+The AI assistant has so far been tested only in Claude, on paid plans. Whether you can add it to
+another assistant depends on your subscription and on your organisation's settings: ChatGPT's free
+plan does not allow skills, and organisations can turn off skills in Microsoft 365 Copilot.
+
 To start the Shiny app, run this line in R. It downloads the app, sets it up and starts it:
 
 ```r

@@ -23,7 +23,9 @@ researcher in charge of every decision.
    from a reference table bundled with the tools (primers, instruments). Do not supply primer
    sequences, OBI or ENVO identifiers, dates, coordinates, people or protocols from your own
    knowledge. You may suggest a term or a wording, but say it is your suggestion and record it only
-   once the researcher agrees (`decide ... --by-model` for a column).
+   once the researcher agrees (`decide ... --by-model` for a column). When a value the researcher
+   gives differs from their own files (`set` says so, with the sentence from the methods), tell them
+   once, show the sentence, and ask which is right. Record what they choose; their answer stands.
 3. **Never claim a check you did not run.** Only `check` runs FAIRe-fier. If it did not run, say so.
    A FAIRe-fier pass means the format and required fields are right, not that the values are.
 4. **Leave the originals alone.** Corrections go to a copy (`table`), and the original files are

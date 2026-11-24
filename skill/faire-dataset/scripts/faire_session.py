@@ -1104,6 +1104,70 @@ def cmd_primers_lookup(args):
 
 # ---------------------------------------------------------------- values the researcher gives
 
+def _norm_value(v):
+    """A value as text for comparing: numbers as numbers, text without case, spaces or punctuation."""
+    v = str(v or '').strip()
+    try:
+        f = float(v)
+        return str(int(f)) if f == int(f) else str(f)
+    except ValueError:
+        return re.sub(r'[\s.,;:()]+', ' ', v.lower()).strip()
+
+
+def _assay_fits(row_assay, assay):
+    """A method value with no assay fits every assay; one named for an assay fits it and its variants
+    (Olson fits OlsonViiA7)."""
+    row_assay = (row_assay or '').strip().lower()
+    return not row_assay or not assay or row_assay in assay.lower() or assay.lower() in row_assay
+
+
+def methods_conflicts(w, s, term, value, assay):
+    """Where the researcher's files give this term a value and none of them is the value given:
+    [(value in the files, sentence)]. Nothing when the value given matches any of them."""
+    mine = _norm_value(value)
+    found = []   # (value as written, value for comparing, sentence)
+    try:
+        for r in method_rows(w):
+            if r['FAIRe term'] == term and _assay_fits(r.get('Assay'), assay) and r.get('Proposed value'):
+                found.append((r['Proposed value'], _norm_value(r['Proposed value']), r.get('From the methods', '')))
+    except Stop:
+        pass
+    texts = []
+    if term in ('ampliconSize', 'pcr_primer_forward', 'pcr_primer_reverse', 'probe_seq') and s.get('methods'):
+        sys.path.insert(0, str(MAPPER))
+        import faire_mapper_text as ft   # noqa: E402
+        for m in s['methods']:
+            try:
+                texts.append(ft.read_text(m))
+            except Exception:
+                continue
+    if term == 'ampliconSize':
+        sentences = [x.strip() for t in texts for x in re.split(r'(?<=[.!?])\s+(?=[A-Z])', re.sub(r'\s+', ' ', t))]
+        for sen in sentences:
+            for size in dict.fromkeys(re.findall(r'(\d+)\s*-?\s*(?:bp|base[- ]pairs?)\b', sen, re.I)):
+                found.append((size + ' bp', size, sen))
+        mine = set(re.findall(r'\d+', str(value)))
+        if not found or any(f[1] in mine for f in found):
+            return []
+    elif term in ('pcr_primer_forward', 'pcr_primer_reverse', 'probe_seq'):
+        seq = re.sub(r'[^A-Za-z]', '', str(value)).upper()
+        joined = [re.sub(r"(?<=[A-Za-z])[ -](?=[A-Za-z])|5'-|-3'", '', t) for t in texts]
+        seqs = {x.upper() for t in joined
+                for x in re.findall(r'(?<![A-Za-z])[ACGTRYSWKMBDHVNIacgtryswkmbdhvni]{15,}(?![A-Za-z])', t)}
+        if seqs and seq and seq not in seqs and not any(f[1] == mine for f in found):
+            near = difflib.get_close_matches(seq, sorted(seqs), n=1, cutoff=0.6)
+            return [(near[0] if near else ', '.join(sorted(seqs)[:4]),
+                     'the closest sequence written in the methods' if near else 'the sequences written in the methods')]
+        return []
+    if not found or any(f[1] == mine for f in found):
+        return []
+    out = []
+    for v, _, sen in found:
+        if (v, sen) not in out:
+            out.append((v, sen))
+    return out[:3]
+
+
 def cmd_set(args):
     w = work_dir(args)
     s = load_state(w)
@@ -1146,6 +1210,14 @@ def cmd_set(args):
     cq = confused_question(args.term)
     if cq:
         print(f'Commonly confused, so confirm with the researcher: {cq}')
+    conflicts = methods_conflicts(w, s, args.term, value, args.assay or '')
+    if conflicts:
+        print('Differs from the methods, which give:')
+        for theirs, sentence in conflicts:
+            where = sentence if sentence.startswith('the ') else '"' + short(sentence, 300) + '"'
+            print(f'  - {short(theirs, 120)}: {where}')
+        print('Ask the researcher which is right. To keep the value given, nothing more is needed; to use the '
+              'other, run set again.')
     return 0
 
 

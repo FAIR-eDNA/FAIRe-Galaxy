@@ -64,6 +64,16 @@ tools stay the same. The zip is about 0.6 MB.
 
 ## Setting it up
 
+So far the skill has been tested only in Claude, on paid plans. Whether you can add it to an
+assistant depends on your subscription and on your organisation's settings for that assistant.
+Trials so far:
+
+| Assistant | Status |
+|---|---|
+| Claude (Max) | Works: added as a plugin, and run on the khapra beetle data |
+| ChatGPT (free plan) | Could not be added: the free plan does not allow skills |
+| Microsoft 365 Copilot | Not yet added: organisations can turn off skills or agent building |
+
 ### Claude (claude.ai, desktop and mobile apps)
 
 1. Check that code execution is on: *Settings > Capabilities > Code execution and file creation*
@@ -79,9 +89,9 @@ Claude limits a skill's description to 200 characters; this one has 179.
 
 ### ChatGPT
 
-In *Skills*, choose *Create > Upload from your computer* and upload the zip. In business and
-enterprise workspaces an administrator may need to allow skills and skill uploads. ChatGPT runs the
-scripts in its own Python workspace.
+In *Skills*, choose *Create > Upload from your computer* and upload the zip. Skills need a paid
+plan; in business and enterprise workspaces an administrator may also need to allow skills and skill
+uploads. ChatGPT runs the scripts in its own Python workspace. Not yet tried.
 
 ### Microsoft 365 Copilot
 
@@ -92,9 +102,10 @@ Skills are added to a declarative agent, made in Agent Builder:
 2. Turn on the *Code interpreter* capability.
 3. Add the skill: upload `faire-dataset.zip`.
 
-This needs a Microsoft 365 Copilot licence. It has not been tried yet: the first thing to check is
-whether the agent's code interpreter runs the skill's scripts. If it does not, the assistant falls
-back to advisor mode, which still works.
+This needs a Microsoft 365 Copilot licence, and an organisation can turn off skills or agent
+building; ask your IT team if the options above are missing. Once it can be added, the first thing to
+check is whether the agent's code interpreter runs the skill's scripts. If it does not, the assistant
+falls back to advisor mode, which still works.
 
 ### Coding assistants (Claude Code, Codex, GitHub Copilot in VS Code, Gemini CLI)
 
