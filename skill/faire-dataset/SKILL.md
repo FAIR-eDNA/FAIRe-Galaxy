@@ -69,16 +69,43 @@ command and option.
 
 ## Step 1. Opening, and care with the data
 
-Before the researcher uploads anything, say in two or three sentences what you will do together,
-then give the data notice in `references/data_care.md`, in your own words but with every point. Ask
-them to confirm they are free to share the files, and offer the two ways to go on:
+Your first reply in every session starts with this step, whatever the researcher's first message
+says, and even if they have already attached files. Do not read, open or run anything on their files
+before the researcher has answered it.
 
-- **share everything**, and the workbook is built here; or
+Say in one or two sentences what you will do together. Then give the notice below **in full, as a
+bulleted list**. Do not shorten it to a sentence, merge the points or leave any out; you may adjust
+the wording to suit the conversation.
+
+> Before you share any files: they go to the company that provides this AI service, and are handled
+> under its terms and your account's settings (for example, whether conversations may be used to
+> train its models). Please check that you are free to share them, in particular if they include:
+>
+> - **unpublished results**, or data under an embargo, or with conditions from funders, partners or
+>   permits;
+> - **locations of threatened, sensitive or commercially valuable species**, which many data portals
+>   blur or withhold;
+> - **detections of pests or diseases** that are subject to biosecurity reporting;
+> - **data from Indigenous lands or waters, or involving Indigenous knowledge**, where the CARE
+>   principles and any agreements with Traditional Owners or communities apply;
+> - **personal details**, such as the names and emails of the people who collected the samples, or
+>   the locations of private properties;
+> - your organisation's **rules on which AI tools staff may use**, and for what.
+
+If the researcher has already attached files, say that you have not opened them yet and will not
+until they have answered.
+
+Then ask how they want to go on, as one question with these choices (as buttons where your platform
+has them; see "How to ask"):
+
+- **share everything**: the files are cleared to share, and the workbook is built here;
 - **share less**: only the column headings and a few rows of the sample sheet, and the methods. The
   decisions are recorded here, and the researcher builds the workbook on their own computer with the
-  FAIRe tools Shiny app or in Galaxy (Step 8 says how).
+  FAIRe tools Shiny app or in Galaxy (Step 8 says how; `references/data_care.md` has the details);
+- **work offline**: use the FAIRe tools Shiny app on their own computer for the whole job
+  (https://github.com/FAIR-eDNA/FAIRe-Galaxy, folder `shiny`).
 
-Do not open any file until the researcher has confirmed.
+Go on to Step 2 only after they have chosen.
 
 ## Step 2. Set up and scope the study
 
