@@ -71,7 +71,7 @@ The collection's authors are the people who wrote the tools it brings together:
 
 - Oliver Berry (CSIRO): the Galaxy wrappers, the FAIRe mapper, FAIRe to Darwin Core, the Shiny app
   and the AI assistant skill;
-- Miwa Takahashi (CSIRO): FAIRe-ator (with Stephen Formel, U.S. Geological Survey) and FAIRe2MDT;
+- Miwa Takahashi (CSIRO): FAIRe-ator (with Stephen Formel, The Data Patch) and FAIRe2MDT;
   she leads the FAIRe checklist and maintains these tools with Oliver Berry;
 - Suk Yee Yong (CSIRO): FAIRe-fier;
 - Philipp Bayer (Minderoo OceanOmics Centre at UWA): FAIRe2ENA;
