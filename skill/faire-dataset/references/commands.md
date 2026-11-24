@@ -59,7 +59,7 @@ and listed in the handover.
 |---|---|
 | `set TERM VALUE [--assay NAME] [--source TEXT]` | Records a value for the whole study, or for one assay. Checks that the term exists and the value is allowed (`--force` keeps a value that is not). Says when the term is a commonly confused one. Project terms go to projectMetadata; sample terms are written for every sample unless a column of the table gives them. |
 | `unset TERM [--assay NAME]` | Removes a value recorded with set. |
-| `gaps [--recommended]` | Mandatory terms still without a value (and highly recommended ones with `--recommended`). |
+| `gaps [--recommended]` | Mandatory terms still without a value. With `--recommended`, also the highly recommended terms still empty that can apply to the study, by section (no qPCR probe terms for metabarcoding, no precipitation terms when the samples were filtered). |
 
 ## Building and checking
 

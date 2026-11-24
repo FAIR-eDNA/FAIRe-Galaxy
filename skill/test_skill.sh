@@ -65,6 +65,11 @@ $S --work "$W" set targetTaxonomicAssay Actinopterygii --assay 16S_Fish > /dev/n
 $S --work "$W" set targetTaxonomicAssay Metazoa --assay COI_Leray > /dev/null
 $S --work "$W" set neg_cont_0_1 1 > /dev/null
 $S --work "$W" set pos_cont_0_1 0 > /dev/null
+gaps=$($S --work "$W" gaps --recommended)   # the optional terms offered as one checklist
+grep -q "samp_vol_we_dna_ext:" <<< "$gaps" || { echo "FAIL day-night: gaps --recommended misses samp_vol_we_dna_ext"; fail=1; }
+! grep -q "probeReporter" <<< "$gaps" || { echo "FAIL day-night: gaps --recommended lists qPCR probe terms"; fail=1; }
+$S --work "$W" set samp_vol_we_dna_ext 500 --source "methods: half of each 1 L filter was extracted" > /dev/null
+$S --work "$W" set samp_vol_we_dna_ext_unit mL > /dev/null
 $S --work "$W" build \
     --otu "$D/Day_night_16S_LCA_output.txt" assay=16S_Fish run=AGRF_NovaSeq6000_SP sequences="$D/Day_night_16S_ASV.fasta" \
     --otu "$D/Day_night_COI_LCA_output.txt" assay=COI_Leray run=AGRF_NovaSeq6000_SP sequences="$D/Day_night_COI_ASV.fasta" \
@@ -73,6 +78,13 @@ $S --work "$W" build \
 $S --work "$W" check > /dev/null || true
 $S --work "$W" summary > /dev/null
 check_pass "$W" day-night pass
+"$py" - "$W"/build/*_FAIRe.xlsx <<'PY' || { echo "FAIL day-night: samp_vol_we_dna_ext not in the workbook"; fail=1; }
+import sys, openpyxl
+rows = list(openpyxl.load_workbook(sys.argv[1], read_only=True)['sampleMetadata'].iter_rows(values_only=True))
+head = next(r for r in rows if r and r[0] == 'samp_name')
+vals = {str(r[head.index('samp_vol_we_dna_ext')]) for r in rows[rows.index(head) + 1:] if r and r[0]}
+sys.exit(0 if vals == {'500'} or vals == {'500.0'} else 1)
+PY
 
 echo "== 2. khapra beetle (qPCR)"
 K="$repo/demo/khapra"; W="$out/khapra"; rm -rf "$W"

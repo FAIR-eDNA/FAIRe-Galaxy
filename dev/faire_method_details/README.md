@@ -78,14 +78,15 @@ gives few because it refers to another paper for the laboratory work.
 On SEA-MES, against the values written by hand for its trial (27 values within the tool's scope), the
 tool proposed 20 of them, 2 in part, and missed 5. The two in part: it proposes the 4 °C storage before
 filtering as samp_store_temp and the −80 °C storage of the filters as prepped_samp_store_temp, where the
-hand-made values put −80 in samp_store_temp; and it gives the filtered volume in litres where the
+hand-made values put −80 in samp_store_temp (the tool was right, and the hand-made values have
+since been corrected); and it gives the filtered volume in litres where the
 hand-made values use mL. The five missed are a link to the laboratory protocol and four descriptions
 written for the FAIRe record (how the raw and final tables were made, and the screening of non-target
 taxa), which are not sentences in the methods.
 
 On the held-out paper, with the rules as frozen, the tool proposed 40 of the 52 hand-made values within
-its scope, got 2 wrong, gave 1 under the neighbouring FAIRe term (−80 °C as prepped_samp_store_temp)
-and missed 9. The two wrong were the PCR programme and annealing temperature: the paper writes the
+its scope, got 2 wrong, gave 1 under a different FAIRe term from the hand-made values (−80 °C as
+prepped_samp_store_temp, which was right; the hand-made value has since been corrected) and missed 9. The two wrong were the PCR programme and annealing temperature: the paper writes the
 range of the two assays' annealing temperatures as "46°C–54°C", with the degree sign on both numbers,
 and the tool read the second as −54. The run showed three faults, all general, which were then fixed:
 that way of writing a range; soft hyphens that PDFs leave inside words ("two-­step", "MF-­Millipore"),

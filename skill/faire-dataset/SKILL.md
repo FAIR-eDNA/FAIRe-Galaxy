@@ -207,10 +207,19 @@ comes from a document). `set` checks the term and its allowed values. Typical ga
   targetTaxonomicScope (what the study set out to detect): ask which is meant.
 - **controls**: neg_cont_0_1 and pos_cont_0_1 (1 or 0), and the control type of each control.
 
-Then ask whether they want a minimum dataset (mandatory terms) or a more complete one. For the
-latter, run `gaps --recommended` and ask only about terms that apply to their study.
-`references/faire_rules.md` has the FAIRe conventions to follow (missing values, local time, sample
-names, separate runs).
+Then run `gaps --recommended`. It lists the highly recommended terms still empty that can apply to
+the study. These are optional and matter less for later uses of the data than the mandatory terms,
+so keep this short. Look in the methods and the sample table's notes for values that answer any of
+them (the volume that went into the extraction, the amplicon length, the number of PCR replicates),
+and offer those you find as one checklist (see "How to ask"), each with the sentence it came from.
+Record the ones the researcher keeps with `set TERM VALUE --source FILE`. A value you work out from
+two facts, such as 500 mL when half of a 1 L filter was extracted, is your suggestion: show how you
+got it. Say the other terms can be added later, and do not ask about them one by one.
+
+Some values are judgement calls for the person entering the data (see "Judgement calls" in
+`references/faire_rules.md`): give the readings in a sentence, propose one, and take their choice.
+`references/faire_rules.md` also has the FAIRe conventions to follow (missing values, local time,
+sample names, separate runs).
 
 ## Step 7. Build and check
 

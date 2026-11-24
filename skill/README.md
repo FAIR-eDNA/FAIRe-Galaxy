@@ -43,7 +43,8 @@ can therefore be finished in the Shiny app or Galaxy, and a review made there ca
    commonly confused terms apart.
 5. The methods are read for values for the whole study and for primers; the researcher confirms the
    reliable values as a list and the others one at a time.
-6. The mandatory terms still empty are asked about in plain words.
+6. The mandatory terms still empty are asked about in plain words. Highly recommended terms that the
+   methods answer are offered as one optional checklist.
 7. The workbook is built with the OTU tables or qPCR results, and checked with FAIRe-fier.
 8. The researcher gets a zip of the workbook, review sheets, logs and a README of provenance.
 
