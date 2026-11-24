@@ -8,8 +8,10 @@ bundled FAIRe checklist.
 
 Usage: python skill/build_skill.py [OUTDIR]     (default: skill/dist)
 Writes OUTDIR/faire-dataset/ and OUTDIR/faire-dataset.zip (one top-level folder, as Claude, ChatGPT
-and Microsoft 365 Copilot expect for an uploaded skill).
+and Microsoft 365 Copilot expect for an uploaded skill), and OUTDIR/faire-dataset-plugin.zip, the same
+skill as a plugin for claude.ai's Customize > Plugins > Add > Upload plugin.
 """
+import json
 import re
 import shutil
 import subprocess
@@ -108,8 +110,29 @@ def main(outdir=None):
         for f in sorted(pkg.rglob('*')):
             if f.is_file():
                 zf.write(f, f.relative_to(out).as_posix())
+    # The same skill as a plugin, for claude.ai accounts that add skills through Customize > Plugins
+    plug = out / 'faire-dataset-plugin'
+    if plug.exists():
+        shutil.rmtree(plug)
+    (plug / '.claude-plugin').mkdir(parents=True)
+    shutil.copytree(pkg, plug / 'skills' / 'faire-dataset')
+    version = '1.0.0'
+    (plug / '.claude-plugin' / 'plugin.json').write_text(json.dumps({
+        'name': 'faire-dataset', 'displayName': 'FAIRe dataset assistant', 'version': version,
+        'description': 'Helps eDNA researchers turn their sample sheets, methods and OTU or qPCR tables into a FAIRe '
+                       'metadata workbook in conversation, using the FAIRe mapper and FAIRe-fier.',
+        'author': {'name': 'FAIR-eDNA', 'url': 'https://github.com/FAIR-eDNA/FAIRe-Galaxy'},
+        'license': 'MIT'}, indent=2) + '\n', encoding='utf-8')
+    shutil.copy(HERE / 'README.md', plug / 'README.md')
+    pz = out / 'faire-dataset-plugin.zip'
+    if pz.exists():
+        pz.unlink()
+    with zipfile.ZipFile(pz, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for f in sorted(plug.rglob('*')):
+            if f.is_file():
+                zf.write(f, f.relative_to(out).as_posix())
     size = z.stat().st_size / 1e6
-    print(f'Built {pkg}\n      {z} ({size:.1f} MB), FAIRe-Galaxy {commit}')
+    print(f'Built {pkg}\n      {z} ({size:.1f} MB), FAIRe-Galaxy {commit}\n      {pz} (the same skill as a plugin)')
 
 
 if __name__ == '__main__':

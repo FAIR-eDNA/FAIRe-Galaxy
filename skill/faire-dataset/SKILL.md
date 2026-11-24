@@ -38,9 +38,10 @@ researcher in charge of every decision.
 If you can run Python and read uploaded files in a workspace, follow the steps below (agent mode).
 If you cannot, read `references/advisor_mode.md` and follow it instead.
 
-All commands below are `python scripts/faire_session.py COMMAND ...`, run from a folder where the
-session can keep its files (it makes `faire_work/`). Use the path to `scripts/` wherever the skill is
-installed. `references/commands.md` lists every command and option.
+All commands below are `python3 ${CLAUDE_SKILL_DIR}/scripts/faire_session.py COMMAND ...`, run from
+a folder where the session can keep its files (it makes `faire_work/`). Where `${CLAUDE_SKILL_DIR}` is
+not set, use the path of the folder that holds this SKILL.md. `references/commands.md` lists every
+command and option.
 
 ## Step 1. Opening, and care with the data
 
