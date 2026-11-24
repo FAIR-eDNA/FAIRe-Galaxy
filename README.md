@@ -51,6 +51,33 @@ order you would use them: make a workbook, check it, then convert it for where y
 Each tool directory has its own README with what the wrapper adds, upstream issues found, and the
 steps still needed before deployment.
 
+## How to cite
+
+If you use these tools, please cite three things:
+
+- **This collection**, at the version you used. `CITATION.cff` gives the details, and GitHub's
+  *Cite this repository* button (on the right of the repository's front page) formats them. Each
+  release is archived on Zenodo with its own DOI, which the release notes give.
+- **The FAIRe checklist paper**: Takahashi M, Frøslev TG, Paupério J, et al. (2025). A metadata
+  checklist and data formatting guidelines to make eDNA FAIR (Findable, Accessible, Interoperable,
+  and Reusable). *Environmental DNA* 7(3): e70100. https://doi.org/10.1002/edn3.70100
+- **The tools you ran**, as their authors ask: FAIRe-fier (Yong 2026,
+  http://hdl.handle.net/102.100.100/734538), edna2obis (Willms and Silliman 2026,
+  https://doi.org/10.5281/zenodo.23667395), and the repositories of FAIRe-ator, FAIRe2MDT,
+  FAIRe2ENA, FAIRe2NCBI and FAIRe2QIIME, all listed in `CITATION.cff`. Galaxy shows each tool's
+  citations on its page.
+
+The collection's authors are the people who wrote the tools it brings together:
+
+- Oliver Berry (CSIRO): the Galaxy wrappers, the FAIRe mapper, FAIRe to Darwin Core, the Shiny app
+  and the AI assistant skill;
+- Miwa Takahashi (CSIRO): FAIRe-ator (with Stephen Formel, U.S. Geological Survey) and FAIRe2MDT;
+  she leads the FAIRe checklist and maintains these tools with Oliver Berry;
+- Suk Yee Yong (CSIRO): FAIRe-fier;
+- Philipp Bayer (Minderoo OceanOmics Centre at UWA): FAIRe2ENA;
+- Clement Coclet, Luke Thompson, Katherine Silliman and Bayden Willms (NOAA 'Omics, AOML):
+  FAIRe2NCBI, FAIRe2QIIME and edna2obis.
+
 ## Evaluating the tools
 
 Notes for Galaxy Australia and other evaluators.
