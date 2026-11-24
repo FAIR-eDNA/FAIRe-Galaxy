@@ -75,8 +75,26 @@ A column with no FAIRe term is kept under its own name as a user-defined field. 
 a MIxS or Darwin Core term first, as the FAIRe guidelines prefer an existing standard's term to a
 new name; the researcher chooses.
 
+## Judgement calls
+
+Some terms can be read more than one way, and the person entering the data decides. Give the
+readings in a sentence, propose one, record their choice and move on. These details matter less for
+later uses of the data than the samples, dates, places, controls and taxa. Examples:
+
+- **Storage temperature**: samp_store_temp is for the sample before any processing (water before
+  filtering), and prepped_samp_store_temp for the processed sample (the filters). When the methods
+  give only one temperature, ask which it was.
+- **Identity cut-offs**: when the methods give one cut-off for any assignment and a stricter one for
+  species names (85% and 98%, say), FAIRe's definition ("minimum percent identity for taxonomic
+  assignment") points to the first for tax_class_id_cutoff and tax_class_query_cutoff, with the
+  species rule in tax_class_other. Some researchers prefer the species cut-off; propose the first
+  and take their choice.
+- **Analyses done for a paper**: a sentence such as "ASVs were merged by taxonomy" describes the
+  paper's analyses. If the tables in the workbook are per ASV, say so in the value or leave it out.
+
 ## Minimum or complete
 
-The mandatory terms (some only under conditions) make a minimum dataset. Highly recommended terms
-are worth asking about where they apply. `references/faire_terms.md` lists both. Ask the researcher which they
-want; do not ask about every optional term.
+The mandatory terms (some only under conditions) make a minimum dataset. After them,
+`gaps --recommended` lists the highly recommended terms still empty that can apply to the study;
+`references/faire_terms.md` lists both. Offer only those the files or the researcher can answer, as
+one checklist; do not ask about every optional term.

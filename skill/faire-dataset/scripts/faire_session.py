@@ -1207,9 +1207,7 @@ def cmd_gaps(args):
         return r['term'] not in later
     rows = [r for r in rows if applies(r)]
     if args.recommended:
-        terms = checklist_terms()
-        extra = [t for t in terms.values() if t.requirement.lower() == 'highly recommended' and t.name not in got
-                 and any(sh in ('projectMetadata', 'sampleMetadata', 'experimentRunMetadata') for sh in t.sheets)]
+        extra = recommended_gaps(w, s, got)
     if not rows:
         print('Every mandatory term the mapper listed has a value now (the build log gives the final word).')
     else:
@@ -1225,10 +1223,57 @@ def cmd_gaps(args):
         print('\ndetected_notDetected comes from the qPCR or ddPCR results given to build (--amp), with the '
               'detection criteria; it is not set by hand.')
     if args.recommended:
-        print(f'\n{len(extra)} highly recommended term(s) without a value (ask only about the ones that apply):')
+        print(f'\n{len(extra)} highly recommended term(s) without a value. These are optional: offer only those '
+              'that the methods, the sample table or the researcher can answer, as one checklist, and leave the rest.')
+        section = None
         for t in extra:
-            print(f'  - {t.name}: {short(t.description, 160)}')
+            if t.section != section:
+                section = t.section
+                print(f'  {section or "Other"}:')
+            print(f'    - {t.name}: {short(t.description, 160)}')
     return 0
+
+
+# Highly recommended terms that only apply to some studies.
+PROBE_TERMS = {'probeReporter', 'probeQuencher', 'probe_seq', 'probe_ref', 'probe_conc'}
+PRECIP_TERMS = {'precip_chem_prep', 'precip_force_prep', 'precip_time_prep', 'precip_temp_prep'}
+FILTER_TERMS = {'filter_passive_active_0_1', 'size_frac', 'filter_diameter', 'filter_material', 'filter_name'}
+
+
+def known_values(w):
+    """Values given with set, and method values accepted or changed."""
+    vals = {r['term']: r['value'] for r in read_values(w) if r.get('value')}
+    try:
+        for r in method_rows(w):
+            dec = r.get("Reviewer's decision", '').lower()
+            v = r.get('Your value') or (r.get('Proposed value') if dec == 'accept' else '')
+            if v and dec != 'reject':
+                vals.setdefault(r['FAIRe term'], v)
+    except Stop:
+        pass
+    return vals
+
+
+def recommended_gaps(w, s, got):
+    """The highly recommended terms still empty that can apply to this study, in checklist order."""
+    vals = known_values(w)
+    sys.path.insert(0, str(MAPPER))
+    import faire_mapper as fm   # noqa: E402
+    assay_type = s.get('assay_type')
+    terms = fm.load_checklist(str(CHECKLIST), assay_type=assay_type,
+                              sheets=('projectMetadata', 'sampleMetadata', 'experimentRunMetadata'))
+    out = []
+    for t in terms:
+        if t.requirement.lower() != 'highly recommended' or t.name in got:
+            continue
+        if assay_type == 'metabarcoding' and t.name in PROBE_TERMS:
+            continue
+        if t.name in PRECIP_TERMS and got & FILTER_TERMS:
+            continue   # the samples were filtered, so there was no precipitation step
+        if t.name == 'screen_contam_method' and vals.get('screen_contam_0_1') == '0':
+            continue
+        out.append(t)
+    return out
 
 
 # ---------------------------------------------------------------- build
