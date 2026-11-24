@@ -1,0 +1,239 @@
+cff-version: 1.2.0
+message: >-
+  If you use these tools, please cite this collection (the version you used), and also the FAIRe
+  checklist paper and the individual tools you ran (listed under references).
+title: "FAIRe-Galaxy: tools for making, checking and sharing FAIR eDNA (FAIRe) datasets"
+type: software
+abstract: >-
+  The FAIR eDNA (FAIRe) tools in Galaxy, an R Shiny app and an AI assistant skill. They make a FAIRe
+  metadata workbook from a lab's own sample tables, methods and OTU or qPCR tables (FAIRe mapper,
+  FAIRe-ator), check it against the FAIRe checklist (FAIRe-fier), and convert it for the sequence
+  archives (FAIRe2NCBI, FAIRe2ENA), biodiversity databases (FAIRe2MDT, edna2obis, FAIRe to Darwin
+  Core) and QIIME 2 (FAIRe2QIIME). The collection wraps tools written by the eDNA community and adds
+  new ones; each tool keeps its own licence and credits its authors.
+authors:
+  - family-names: Berry
+    given-names: Oliver
+    affiliation: CSIRO
+    orcid: "https://orcid.org/0000-0001-7545-5083"
+  - family-names: Takahashi
+    given-names: Miwa
+    affiliation: CSIRO
+    orcid: "https://orcid.org/0000-0001-8952-051X"
+  - family-names: Bayer
+    given-names: Philipp
+    affiliation: Minderoo OceanOmics Centre at UWA
+    orcid: "https://orcid.org/0000-0001-8530-3067"
+  - family-names: Coclet
+    given-names: Clement
+    affiliation: "NOAA 'Omics, Atlantic Oceanographic and Meteorological Laboratory"
+    orcid: "https://orcid.org/0000-0002-6672-148X"
+  - family-names: Formel
+    given-names: Stephen
+    affiliation: The Data Patch
+    orcid: "https://orcid.org/0000-0001-7418-1244"
+  - family-names: Silliman
+    given-names: Katherine
+    affiliation: "NOAA 'Omics, Atlantic Oceanographic and Meteorological Laboratory"
+    orcid: "https://orcid.org/0000-0001-5964-3965"
+  - family-names: Thompson
+    given-names: Luke R.
+    affiliation: "NOAA 'Omics, Atlantic Oceanographic and Meteorological Laboratory"
+    orcid: "https://orcid.org/0000-0002-3911-1280"
+  - family-names: Willms
+    given-names: Bayden
+    affiliation: "NOAA 'Omics, Atlantic Oceanographic and Meteorological Laboratory"
+    orcid: "https://orcid.org/0009-0003-2751-7317"
+  - family-names: Yong
+    given-names: Suk Yee
+    affiliation: CSIRO
+    orcid: "https://orcid.org/0000-0002-5204-2902"
+repository-code: "https://github.com/FAIR-eDNA/FAIRe-Galaxy"
+url: "https://github.com/FAIR-eDNA/FAIRe-Galaxy"
+license: MIT
+keywords:
+  - environmental DNA
+  - eDNA
+  - metabarcoding
+  - qPCR
+  - FAIR data
+  - metadata
+  - FAIRe
+  - Galaxy
+  - biodiversity data
+references:
+  - type: article
+    title: "A Metadata Checklist and Data Formatting Guidelines to Make eDNA FAIR (Findable, Accessible, Interoperable, and Reusable)"
+    authors:
+      - family-names: Takahashi
+        given-names: Miwa
+        orcid: "https://orcid.org/0000-0001-8952-051X"
+      - family-names: Frøslev
+        given-names: Tobias Guldberg
+        orcid: "https://orcid.org/0000-0002-3530-013X"
+      - family-names: Paupério
+        given-names: Joana
+        orcid: "https://orcid.org/0000-0003-2569-0768"
+      - family-names: Thalinger
+        given-names: Bettina
+        orcid: "https://orcid.org/0000-0001-9315-8648"
+      - family-names: Klymus
+        given-names: Katy
+        orcid: "https://orcid.org/0000-0002-8843-6241"
+      - family-names: Helbing
+        given-names: Caren C.
+        orcid: "https://orcid.org/0000-0002-8861-1070"
+      - family-names: Villacorta-Rath
+        given-names: Cecilia
+        orcid: "https://orcid.org/0000-0002-1060-5447"
+      - family-names: Silliman
+        given-names: Katherine
+        orcid: "https://orcid.org/0000-0001-5964-3965"
+      - family-names: Thompson
+        given-names: Luke R.
+        orcid: "https://orcid.org/0000-0002-3911-1280"
+      - family-names: Jungbluth
+        given-names: Sean P.
+        orcid: "https://orcid.org/0000-0001-9265-8341"
+      - family-names: Yong
+        given-names: Suk Yee
+        orcid: "https://orcid.org/0000-0002-5204-2902"
+      - family-names: Formel
+        given-names: Stephen
+        orcid: "https://orcid.org/0000-0001-7418-1244"
+      - family-names: Jenkins
+        given-names: Gareth
+        orcid: "https://orcid.org/0009-0000-2919-0723"
+      - family-names: Laporte
+        given-names: Martin
+        orcid: "https://orcid.org/0000-0002-0622-123X"
+      - family-names: Deagle
+        given-names: Bruce
+        orcid: "https://orcid.org/0000-0001-7651-3687"
+      - family-names: Rajbhandari
+        given-names: Sachit
+        orcid: "https://orcid.org/0000-0002-9952-0801"
+      - family-names: Jeppesen
+        given-names: Thomas Stjernegaard
+        orcid: "https://orcid.org/0000-0003-1691-239X"
+      - family-names: Bissett
+        given-names: Andrew
+        orcid: "https://orcid.org/0000-0001-7396-1484"
+      - family-names: Jerde
+        given-names: Christopher
+        orcid: "https://orcid.org/0000-0002-8074-3466"
+      - family-names: Hahn
+        given-names: Erin E.
+        orcid: "https://orcid.org/0000-0001-6459-9508"
+      - family-names: Schriml
+        given-names: Lynn M.
+        orcid: "https://orcid.org/0000-0001-8910-9851"
+      - family-names: Hunter
+        given-names: Christopher
+        orcid: "https://orcid.org/0000-0002-1335-0881"
+      - family-names: Newman
+        given-names: Peggy
+        orcid: "https://orcid.org/0000-0002-9084-5992"
+      - family-names: Woollard
+        given-names: Peter
+        orcid: "https://orcid.org/0000-0002-7654-6902"
+      - family-names: Harper
+        given-names: Lynsey R.
+        orcid: "https://orcid.org/0000-0003-0923-1801"
+      - family-names: Dunn
+        given-names: Nicholas
+        orcid: "https://orcid.org/0000-0002-6231-5222"
+      - family-names: West
+        given-names: Katrina
+        orcid: "https://orcid.org/0000-0002-9026-5058"
+      - family-names: Haderlé
+        given-names: Rachel
+        orcid: "https://orcid.org/0009-0004-5752-3336"
+      - family-names: Wilkinson
+        given-names: Shaun
+        orcid: "https://orcid.org/0000-0002-7332-7931"
+      - family-names: Acharya-Patel
+        given-names: Neha
+        orcid: "https://orcid.org/0000-0002-3792-4675"
+      - family-names: Lopez
+        given-names: Mark Louie D.
+        orcid: "https://orcid.org/0000-0003-4288-4871"
+      - family-names: Cochrane
+        given-names: Guy
+        orcid: "https://orcid.org/0000-0001-7954-7057"
+      - family-names: Berry
+        given-names: Oliver
+        orcid: "https://orcid.org/0000-0001-7545-5083"
+    journal: Environmental DNA
+    volume: 7
+    issue: 3
+    start: e70100
+    year: 2025
+    doi: 10.1002/edn3.70100
+  - type: software
+    title: FAIRe-fier
+    authors:
+      - family-names: Yong
+        given-names: Suk Yee
+        orcid: "https://orcid.org/0000-0002-5204-2902"
+    repository-code: "https://github.com/csiro/FAIRe-fier"
+    identifiers:
+      - type: other
+        value: "hdl:102.100.100/734538"
+    license: BSD-3-Clause
+  - type: software
+    title: edna2obis
+    authors:
+      - family-names: Willms
+        given-names: Bayden
+        orcid: "https://orcid.org/0009-0003-2751-7317"
+      - family-names: Silliman
+        given-names: Katherine
+    repository-code: "https://github.com/aomlomics/edna2obis"
+    doi: 10.5281/zenodo.23667395
+    license: MIT
+  - type: software
+    title: FAIRe2NCBI
+    authors:
+      - family-names: Coclet
+        given-names: Clement
+        orcid: "https://orcid.org/0000-0002-6672-148X"
+      - family-names: Thompson
+        given-names: Luke R.
+      - family-names: Silliman
+        given-names: Katherine
+    repository-code: "https://github.com/aomlomics/FAIRe2NCBI"
+    license: CC0-1.0
+  - type: software
+    title: FAIRe2QIIME (faire2qiime)
+    authors:
+      - family-names: Thompson
+        given-names: Luke R.
+      - family-names: Silliman
+        given-names: Katherine
+    repository-code: "https://github.com/aomlomics/faire2qiime"
+    license: CC0-1.0
+  - type: software
+    title: FAIRe2ENA
+    authors:
+      - family-names: Bayer
+        given-names: Philipp
+        orcid: "https://orcid.org/0000-0001-8530-3067"
+    repository-code: "https://github.com/FAIR-eDNA/FAIRe2ENA"
+    license: MIT
+  - type: software
+    title: "FAIRe-ator (FAIR eDNA template generator)"
+    authors:
+      - family-names: Takahashi
+        given-names: Miwa
+      - family-names: Formel
+        given-names: Stephen
+    repository-code: "https://github.com/FAIR-eDNA/FAIRe-ator"
+    license: CC-BY-4.0
+  - type: software
+    title: FAIRe2MDT
+    authors:
+      - family-names: Takahashi
+        given-names: Miwa
+    repository-code: "https://github.com/FAIR-eDNA/FAIRe2MDT"
+    license: CC-BY-4.0
