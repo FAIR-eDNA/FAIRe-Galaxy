@@ -56,17 +56,6 @@ authors:
     given-names: Tobias Guldberg
     affiliation: "Global Biodiversity Information Facility; University of Copenhagen"
     orcid: "https://orcid.org/0000-0002-3530-013X"
-doi: 10.5281/zenodo.24489371
-identifiers:
-  - type: doi
-    value: 10.5281/zenodo.24489371
-    description: All versions (resolves to the latest release)
-  - type: doi
-    value: 10.5281/zenodo.24519084
-    description: Version v1.1.0
-  - type: doi
-    value: 10.5281/zenodo.24489372
-    description: Version v1.0.0
 repository-code: "https://github.com/FAIR-eDNA/FAIRe-Galaxy"
 url: "https://github.com/FAIR-eDNA/FAIRe-Galaxy"
 license: MIT
