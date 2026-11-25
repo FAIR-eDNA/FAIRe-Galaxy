@@ -50,8 +50,8 @@ presence and absence records that could go to GBIF.
 - The archive has 162 records: 75 present and 87 absent. The 33 controls are left out. Why does
   GBIF want the absences?
 - The field negative controls amplified too. Where in the archive would a data user learn that?
-- The store locations were withheld. What do decimalLatitude, coordinateUncertaintyInMeters,
-  informationWithheld and dataGeneralizations say?
+- The store locations were withheld. What do decimalLatitude, geo_loc_name and
+  informationWithheld say, and what does the archive's report say about the missing coordinates?
 
 ## Doing the preparation yourself
 
@@ -59,8 +59,8 @@ To see what a person adds before mapping, start from `published/` and add these 
 
 - to `Sample_metadata.csv`:
   - *Category*: sample, negative control or positive control, from *sample type*;
-  - *Latitude*, *Longitude* and *coordinateUncertaintyInMeters*: the centre of Tuggeranong or
-    Fyshwick, with an uncertainty that covers it;
+  - *Latitude* and *Longitude*: "missing: restricted access" for the samples, as the authors
+    withheld the stores' locations;
   - *State*, and ENVO terms for env_broad_scale, env_local_scale and env_medium;
 - to the qPCR results: an *assay_name* column naming each assay and machine (for example
   OlsonViiA7), with no underscores.

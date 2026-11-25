@@ -6,4 +6,3 @@ column	action	reason
 sample type	delete	the authors' sample types (dust, airborne, field control ...): kept as a user-defined field; Category gives samp_category
 Category	term:samp_category	sample, negative control or positive control, added by prepare_table.py
 Extraction technique	term:nucl_acid_ext_kit	the extraction kit (Biomeme M1 sample prep, DNeasy Blood and Tissue kit), not sample processing
-coordinateUncertaintyInMeters	confirm	the Darwin Core term, kept as a user-defined field with that name
