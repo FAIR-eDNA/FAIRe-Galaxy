@@ -476,6 +476,10 @@ def main(argv=None):
     with open(outdir / 'fairefier_summary.json', 'w') as f:
         json.dump(summary, f, indent=2)
     print(f"INFO: wrote {', '.join(summary['files'])} and fairefier_summary.json")
+    if not summary['valid']:  # an addition to FAIRe-fier's messages
+        print('WARNING: GBIF, OBIS, NCBI and ENA accept a dataset only when every mandatory FAIRe term has a value, '
+              "or a FAIRe missing-value term where it is truly unknown (such as 'missing: not collected'). Fix the "
+              'errors above and check again before you convert the workbook.', file=sys.stderr)
     return 1 if (args.strict and not summary['valid']) else 0
 
 

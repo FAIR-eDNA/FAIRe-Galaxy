@@ -253,6 +253,8 @@ python '$__tool_directory__/faire2dwc.py' '$workbook'
         </test>
     </tests>
     <help><![CDATA[
+@HELP_BEFORE_CONVERTING@
+
 **What it does**
 
 This tool turns a FAIR eDNA (`FAIRe <https://fair-edna.github.io/>`_) workbook into a Darwin Core

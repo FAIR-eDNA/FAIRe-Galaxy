@@ -223,6 +223,8 @@ Rscript --vanilla '$__tool_directory__/faire2mdt_galaxy.R'
         </test>
     </tests>
     <help><![CDATA[
+@HELP_BEFORE_CONVERTING@
+
 **What it does**
 
 This tool converts FAIR eDNA (`FAIRe <https://fair-edna.github.io/>`_) metabarcoding data for one

@@ -193,6 +193,8 @@ python '$__tool_directory__/faire2ena_galaxy.py' sample
     <help><![CDATA[
 @CHECK_BEFORE_UPLOAD@
 
+@HELP_BEFORE_CONVERTING@
+
 **What it does**
 
 This tool converts the **sampleMetadata** sheet of a FAIRe workbook into an ENA SAMPLE XML file,

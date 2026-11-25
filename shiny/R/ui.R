@@ -573,7 +573,8 @@ convert_page <- function() {
         help_text("Each tool writes the files for one destination, and you then upload them yourself. NCBI and",
                   "ENA take the sample and run tables, GBIF takes data through its Metabarcoding Data Toolkit",
                   "(MDT) or an IPT, OBIS through an IPT, and QIIME 2 takes the metadata and manifests. qPCR and",
-                  "ddPCR results go to GBIF and OBIS as presence and absence records."))
+                  "ddPCR results go to GBIF and OBIS as presence and absence records.")),
+      uiOutput("cv_mandatory_warning")
     ),
     navset_card_tab(
       nav_panel(

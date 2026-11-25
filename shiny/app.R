@@ -1669,6 +1669,20 @@ server <- function(input, output, session) {
     if (is.null(wb)) return(notify_error("Choose a workbook.", "ck_wb"))
     rv$res$fairefier <- with_run("Checking the workbook", run_fairefier(sd, wb, input$ck_version))
   })
+  # Repositories refuse a dataset without every mandatory term: said on the Convert page, more strongly
+  # when the last FAIRe-fier check in this session did not pass
+  output$cv_mandatory_warning <- renderUI({
+    res <- rv$res$fairefier
+    s <- if (!is.null(res) && file.exists(res$outputs$summary %||% "")) jsonlite::fromJSON(res$outputs$summary) else NULL
+    failed <- !is.null(s) && !isTRUE(s$valid)
+    div(class = if (failed) "res-fail" else "res-warn", icon("triangle-exclamation"),
+        tags$b("Before you convert: "),
+        "GBIF, OBIS, NCBI and ENA accept a dataset only when every mandatory FAIRe term has a value, or a FAIRe",
+        "missing-value term where it is truly unknown (such as 'missing: not collected' or 'not applicable').",
+        if (failed) tags$b("The last FAIRe-fier check did not pass: fix its errors and the mandatory terms with no value,",
+                           "then check again, or the files written here are likely to be refused.")
+        else "Check the workbook with FAIRe-fier first (step 2), and fix its errors and any mandatory term with no value.")
+  })
   output$fairefier_result <- renderUI({
     res <- rv$res$fairefier
     if (is.null(res)) return(help_text("FAIRe-fier's findings appear here."))
@@ -1680,7 +1694,9 @@ server <- function(input, output, session) {
             icon(if (isTRUE(s$valid)) "circle-check" else "circle-xmark"),
             if (isTRUE(s$valid)) "The workbook passes." else tagList(tags$b("Error: "), "the workbook does not pass yet.")),
         if (isTRUE(s$valid)) help_text("A pass means the format and the required fields are right, not that the values",
-                                       "are: those rest on your review of the mapping and the method details."),
+                                       "are: those rest on your review of the mapping and the method details.")
+        else help_text("GBIF, OBIS, NCBI and ENA will not accept the dataset until it passes: every mandatory term needs",
+                       "a value, or a FAIRe missing-value term (such as 'missing: not collected') where it is truly unknown."),
         div(class = "stats", lapply(sheets, function(sh) {
           x <- s[[sh]]
           stat_tile(if (isTRUE(x$valid)) "passes" else sprintf("%d errors", x$errors),
