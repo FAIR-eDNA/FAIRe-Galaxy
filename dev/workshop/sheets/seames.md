@@ -13,12 +13,25 @@ South-East Australian Marine Ecosystem Survey (Deagle et al. 2025, CSIRO Data Ac
 This exercise fills every sheet of a FAIRe workbook and runs every conversion: NCBI, ENA, GBIF, OBIS
 and QIIME 2.
 
-## What is in this folder
+## The files
 
-- `files/`: the files the app's demonstration loads.
-- `README.md`: the source, the licence and the changes made.
+You don't need to download anything for the exercise: the app loads the files itself. They are in
+[`shiny/demo/seames`](../../../shiny/demo/seames), whose README gives the source, the licence and the
+changes made. To download one, open it and press *Download raw file* at the top right.
 
-[[COMMON]]
+## Before you start
+
+You need R (4.1 or later), Python (3.10 to 3.13) and the FAIRe tools app. To install the app, paste
+this line into the R console (in RStudio, the *Console* tab) and press Enter:
+
+```r
+source("https://raw.githubusercontent.com/FAIR-eDNA/FAIRe-Galaxy/main/shiny/start.R")
+```
+
+The first time takes about 15 minutes, as it downloads the packages the tools need. After that the
+same line starts the app in your web browser in a few seconds, and updates it first when a newer
+version is out. If your organisation blocks
+installers, ask your IT support before the workshop.
 
 ## The exercise
 

@@ -9,20 +9,41 @@ were tested with two qPCR assays, each on a benchtop and a portable machine (Tru
 This exercise turns those files into a FAIRe workbook, checks it, and makes a Darwin Core archive of
 presence and absence records that could go to GBIF.
 
-## What is in this folder
+## The files
 
-- `published/`: the three files as they are on Dryad.
-- `prepared/`: the same files with the columns a person adds before mapping (see *Doing the
-  preparation yourself*), plus a taxon table and `khapra_notes.md` (details of the assays from the
-  paper that the README leaves out). The app's demonstration loads these.
-- `README.md`: the source and licence.
+You don't need to download anything for the exercise: the app loads the files itself. They are here
+to look at, and for *Doing the preparation yourself* at the end. To download one, open it and press
+*Download raw file* at the top right.
 
-[[COMMON]]
+- As published on Dryad ([`demo/khapra`](../../../demo/khapra), with the source and licence in its
+  README): [`Sample_metadata.csv`](../../../demo/khapra/Sample_metadata.csv),
+  [`Amplification_data_khapra_05012022_dryad.csv`](../../../demo/khapra/Amplification_data_khapra_05012022_dryad.csv)
+  and [`Trujillo_Gonzalez_et_al_2022_README.txt`](../../../demo/khapra/Trujillo_Gonzalez_et_al_2022_README.txt).
+- Prepared for the app ([`shiny/demo/khapra`](../../../shiny/demo/khapra)): the same files with the columns
+  a person adds before mapping ([`khapra_samples_prepared.csv`](../../../shiny/demo/khapra/khapra_samples_prepared.csv),
+  [`khapra_qpcr_prepared.csv`](../../../shiny/demo/khapra/khapra_qpcr_prepared.csv)), a taxon table
+  ([`khapra_taxa.tsv`](../../../shiny/demo/khapra/khapra_taxa.tsv)), and
+  [`khapra_notes.md`](../../../shiny/demo/khapra/khapra_notes.md), the details of the assays from the paper
+  that the README leaves out.
+
+## Before you start
+
+You need R (4.1 or later), Python (3.10 to 3.13) and the FAIRe tools app. To install the app, paste
+this line into the R console (in RStudio, the *Console* tab) and press Enter:
+
+```r
+source("https://raw.githubusercontent.com/FAIR-eDNA/FAIRe-Galaxy/main/shiny/start.R")
+```
+
+The first time takes about 15 minutes, as it downloads the packages the tools need. After that the
+same line starts the app in your web browser in a few seconds, and updates it first when a newer
+version is out. If your organisation blocks
+installers, ask your IT support before the workshop.
 
 ## The exercise
 
 1. On the app's **Start** page, choose **Khapra beetle** and press *Load the demonstration data*.
-   (Or add the files in `prepared/` yourself with *Add files*.)
+   (Or download the prepared files and add them yourself with *Add files*.)
 2. **1. Make a workbook, FAIRe mapper, a. Your files**: run it. It should find a sample table, the
    qPCR results, a taxon table, the README and the notes.
 3. **b. Propose a mapping**: run it on `khapra_samples_prepared.csv`, with the README as the data
@@ -59,7 +80,8 @@ presence and absence records that could go to GBIF.
 
 ## Doing the preparation yourself
 
-To see what a person adds before mapping, start from `published/` and add these columns in Excel:
+To see what a person adds before mapping, start from the published files and add these columns in
+Excel:
 
 - to `Sample_metadata.csv`:
   - *Category*: sample, negative control or positive control, from *sample type*;
@@ -69,4 +91,4 @@ To see what a person adds before mapping, start from `published/` and add these 
 - to the qPCR results: an *assay_name* column naming each assay and machine (for example
   OlsonViiA7), with no underscores.
 
-Then compare your files with those in `prepared/`.
+Then compare your files with the prepared ones.

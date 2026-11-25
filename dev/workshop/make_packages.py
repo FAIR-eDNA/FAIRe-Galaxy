@@ -1,7 +1,8 @@
-"""Makes a zip of each demonstration dataset for a workshop on making FAIR eDNA datasets with the FAIRe
-tools app: the published files as downloaded (where the repository holds them), the files prepared
-for the app (shiny/demo/<name>), the dataset's README, and a page of steps for participants
+"""Makes a zip of each demonstration dataset, for a workshop that wants handouts: the published files
+as downloaded (where the repository holds them) in published/, the files prepared for the app
+(shiny/demo/<name>) in prepared/ (files/ for SEA-MES), the dataset's README, and the page of steps
 (dev/workshop/sheets/<name>.md, as Markdown and as a web page made with pandoc if it is installed).
+The pages link to the files in this repository; in a zip, the same files sit beside the page.
 
 Usage: python dev/workshop/make_packages.py OUTDIR
 """
@@ -26,11 +27,10 @@ PACKAGES = {
 
 out = Path(sys.argv[1]).resolve()
 out.mkdir(parents=True, exist_ok=True)
-common = (sheets / 'common_start.md').read_text(encoding='utf-8').strip()
 pandoc = shutil.which('pandoc')
 for name, (zip_name, published, files, app_folder) in PACKAGES.items():
     app = repo / 'shiny' / 'demo' / name
-    sheet = (sheets / f'{name}.md').read_text(encoding='utf-8').replace('[[COMMON]]', common)
+    sheet = (sheets / f'{name}.md').read_text(encoding='utf-8')
     zpath = out / f'{zip_name}.zip'
     with zipfile.ZipFile(zpath, 'w', zipfile.ZIP_DEFLATED) as z:
         z.writestr(f'{zip_name}/STEPS.md', sheet)

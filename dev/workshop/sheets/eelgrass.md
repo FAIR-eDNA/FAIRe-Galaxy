@@ -9,20 +9,41 @@ This exercise shows what can still be made FAIR from such files: a FAIRe workboo
 FAIRe-fier, and presence records for GBIF. It also shows what is lost when the sequences are not
 published with the identifications.
 
-## What is in this folder
+## The files
 
-- `published/`: the species table, the site coordinates and the Dryad README, as published.
-- `prepared/`: the sample table a person makes from them, a taxon table, and `eelgrass_notes.md`
-  (details the README leaves out, each with its source), with the published files. The app's
-  demonstration loads these.
-- `README.md`: the source and licence.
+You don't need to download anything for the exercise: the app loads the files itself. They are here
+to look at, and for *Doing the preparation yourself* at the end. To download one, open it and press
+*Download raw file* at the top right.
 
-[[COMMON]]
+- As published on Dryad ([`demo/eelgrass`](../../../demo/eelgrass), with the source and licence in its
+  README): the species table
+  [`Final_ASVTable_withTaxonomy_Filtered.csv`](../../../demo/eelgrass/Final_ASVTable_withTaxonomy_Filtered.csv),
+  the site coordinates [`Site_coordinates.csv`](../../../demo/eelgrass/Site_coordinates.csv) and
+  [`Dryad_README.md`](../../../demo/eelgrass/Dryad_README.md).
+- Prepared for the app ([`shiny/demo/eelgrass`](../../../shiny/demo/eelgrass)): the sample table a person
+  makes from them ([`eelgrass_samples_prepared.csv`](../../../shiny/demo/eelgrass/eelgrass_samples_prepared.csv)),
+  a taxon table ([`eelgrass_taxa.tsv`](../../../shiny/demo/eelgrass/eelgrass_taxa.tsv)), and
+  [`eelgrass_notes.md`](../../../shiny/demo/eelgrass/eelgrass_notes.md), the details the README leaves out,
+  each with its source.
+
+## Before you start
+
+You need R (4.1 or later), Python (3.10 to 3.13) and the FAIRe tools app. To install the app, paste
+this line into the R console (in RStudio, the *Console* tab) and press Enter:
+
+```r
+source("https://raw.githubusercontent.com/FAIR-eDNA/FAIRe-Galaxy/main/shiny/start.R")
+```
+
+The first time takes about 15 minutes, as it downloads the packages the tools need. After that the
+same line starts the app in your web browser in a few seconds, and updates it first when a newer
+version is out. If your organisation blocks
+installers, ask your IT support before the workshop.
 
 ## The exercise
 
 1. On the app's **Start** page, choose **Nova Scotia eelgrass** and press *Load the demonstration
-   data*. (Or add the files in `prepared/` yourself with *Add files*.)
+   data*. (Or download the prepared files and add them yourself with *Add files*.)
 2. **1. Make a workbook, FAIRe mapper, a. Your files**: run it. Which file is the OTU table? Why does
    it say the reads are summed per taxon?
 3. **b. Propose a mapping**: run it on `eelgrass_samples_prepared.csv`, with `Dryad_README.md` as the
@@ -56,8 +77,8 @@ published with the identifications.
 
 ## Doing the preparation yourself
 
-Start from `published/` and make the sample table in Excel: one row per sample column of
+Start from the published files and make the sample table in Excel: one row per sample column of
 `Final_ASVTable_withTaxonomy_Filtered.csv` (CAB-1, CAB-2 ...). Add the site name, its latitude and
 longitude from `Site_coordinates.csv` (WRK02 is Wreck Cove, WRK), the date range from the Dryad
 README, the country and province, and ENVO terms. Then compare yours with
-`prepared/eelgrass_samples_prepared.csv`.
+[`eelgrass_samples_prepared.csv`](../../../shiny/demo/eelgrass/eelgrass_samples_prepared.csv).
