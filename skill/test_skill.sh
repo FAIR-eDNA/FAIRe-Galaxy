@@ -124,15 +124,11 @@ $S --work "$W" set pcr_0_1 1 > /dev/null
 $S --work "$W" set amp_vis_method qPCR > /dev/null
 $S --work "$W" build --amp "$K/Amplification_data_khapra_05012022_dryad.csv" assay_column=assay_name > /dev/null
 $S --work "$W" check > /dev/null || true
-# FAIRe-fier finds errors (terms left for the researcher), so convert stops unless asked for a draft
-if $S --work "$W" convert gbif > /dev/null 2>&1; then echo "FAIL khapra: converted with errors"; fail=1; fi
-for a in FURUIFranklin FURUIViiA7 OLSONFranklin OLSONViiA7; do
-    $S --work "$W" set targetTaxonomicAssay "Trogoderma granarium" --assay $a > /dev/null
-done
-$S --work "$W" build --amp "$K/Amplification_data_khapra_05012022_dryad.csv" assay_column=assay_name > /dev/null
-$S --work "$W" check > /dev/null || true
-$S --work "$W" convert gbif --anyway --country_code AU > /dev/null
-[ -s "$W/convert/gbif/dwca.zip" ] || { echo "FAIL khapra: no Darwin Core archive"; fail=1; }
+# Mandatory terms are left for the researcher, so convert refuses, names them, and says why
+if $S --work "$W" convert gbif > "$out/khapra_convert.txt" 2>&1; then echo "FAIL khapra: converted with mandatory terms empty"; fail=1; fi
+grep -q "need at least every mandatory FAIRe term" "$out/khapra_convert.txt" && grep -q "recordedBy" "$out/khapra_convert.txt" \
+    || { echo "FAIL khapra: convert did not say which mandatory terms are empty"; cat "$out/khapra_convert.txt"; fail=1; }
+[ ! -e "$W/convert/gbif" ] || { echo "FAIL khapra: a conversion was written"; fail=1; }
 $S --work "$W" summary > /dev/null
 check_pass "$W" khapra ran
 

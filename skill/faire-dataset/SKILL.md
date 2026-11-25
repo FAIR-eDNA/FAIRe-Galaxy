@@ -249,17 +249,17 @@ warnings can stay if the data were recorded that way.
 
 ## Step 8. Offer conversion
 
-Once the workbook is checked, offer to convert it for the databases and archives the researcher
-plans to use. Ask one question, as a checklist, with these choices:
+GBIF, OBIS, NCBI and ENA need at least every mandatory FAIRe term, so `convert` runs only when the
+workbook has them all and FAIRe-fier finds no errors. Until then, do not offer conversion or run a
+converter any other way: say why, and go back to Step 6 for the mandatory terms still empty (a value,
+or a FAIRe missing-value term where it is truly unknown). Then offer to convert it for the databases
+and archives the researcher plans to use. Ask one question, as a checklist, with these choices:
 
 - GBIF or OBIS: a Darwin Core archive of occurrence records (`convert gbif`)
 - NCBI: BioSample table, and SRA table for metabarcoding (`convert ncbi`)
 - ENA: sample XML (`convert ena`)
 - QIIME 2: sample metadata and manifests (`convert qiime`)
 - None for now
-
-If FAIRe-fier found errors, say that converting now gives a draft only, and suggest fixing the errors
-first. Run `convert` with `--anyway` only if they still want the draft.
 
 Before each conversion, ask for what it needs, one question at a time, as listed in
 `references/converting.md` (licence and contact for GBIF, the metagenome for NCBI, the Webin centre

@@ -1746,6 +1746,18 @@ CONVERT_NOTES = {
 }
 
 
+def mandatory_empty(w):
+    """The mandatory terms apply mapping left with no value, from its log of the last build."""
+    log = w / 'build' / 'apply_mapping_log.txt'
+    if not log.exists():
+        return []
+    part = log.read_text(encoding='utf-8').split('## Mandatory terms with no value', 1)
+    if len(part) < 2:
+        return []
+    lines = [ln[2:].strip() for ln in part[1].split('\n## ', 1)[0].splitlines() if ln.startswith('- ')]
+    return list(dict.fromkeys(re.split(r' \(|:', x)[0].strip() for x in lines if x != 'none'))
+
+
 def cmd_convert(args):
     w = work_dir(args)
     s = load_state(w)
@@ -1756,11 +1768,25 @@ def cmd_convert(args):
     if not c.get('ran'):
         raise Stop('Check the workbook with FAIRe-fier first (check): converting an unchecked workbook passes its '
                    'problems on to the archives.')
+    summ_file = w / 'check' / 'fairefier_summary.json'
+    if summ_file.exists() and summ_file.stat().st_mtime < wbk.stat().st_mtime:
+        raise Stop('The workbook was built again after the last check. Run check before converting.')
+    # GBIF, OBIS, NCBI and ENA need at least every mandatory FAIRe term: no conversion until the workbook has
+    # them all (a value, or a FAIRe missing-value term where it is truly unknown) and FAIRe-fier finds no errors.
+    empty = mandatory_empty(w)
     summ = c.get('summary') or {}
     errors = [k for k, v in summ.items() if isinstance(v, dict) and v.get('errors')]
-    if summ.get('valid') is False and not args.anyway:
-        raise Stop('FAIRe-fier found errors in the workbook. Fix them and check again before converting, or add '
-                   '--anyway if the researcher wants a draft conversion.' + (f' Sheets with errors: {errors}' if errors else ''))
+    if empty or summ.get('valid') is False:
+        why = []
+        if empty:
+            why.append(f"{len(empty)} mandatory term(s) have no value: {short(', '.join(empty), 600)}")
+        if summ.get('valid') is False:
+            why.append('FAIRe-fier found errors' + (f" in {' and '.join(errors)}" if errors else ''))
+        raise Stop('Not converted. GBIF, OBIS, NCBI and ENA need at least every mandatory FAIRe term, so a workbook '
+                   'is converted only when it has them all and FAIRe-fier finds no errors. ' + '; '.join(why) + '. '
+                   'Go back to the gaps with the researcher: give each mandatory term its value, or a FAIRe '
+                   "missing-value term (such as 'missing: not collected') where it is truly unknown, then build and "
+                   'check again.')
     if args.target == 'ncbi':
         import importlib.util
         if importlib.util.find_spec('yaml') is None:
@@ -2210,7 +2236,6 @@ def main(argv=None):
     p.add_argument('target', choices=['ncbi', 'ena', 'gbif', 'qiime'],
                    help='ncbi: BioSample and SRA tables; ena: ENA sample XML; gbif: a Darwin Core archive for GBIF '
                         'or OBIS (presence and absence); qiime: QIIME 2 metadata')
-    p.add_argument('--anyway', action='store_true', help='convert although FAIRe-fier found errors (a draft)')
     p.add_argument('--organism', default='marine metagenome',
                    help='ncbi: the metagenome the samples are, such as freshwater metagenome or air metagenome')
     p.add_argument('--bioproject', help='ncbi: the BioProject accession, if there is one')

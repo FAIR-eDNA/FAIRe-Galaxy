@@ -103,7 +103,8 @@ cannot run code, so use advisor mode."*
 6. The mandatory terms still empty are asked about in plain words. Highly recommended terms that the
    methods answer are offered as one optional checklist.
 7. The workbook is built with the OTU tables or qPCR results, and checked with FAIRe-fier.
-8. The assistant offers to convert the checked workbook: a Darwin Core archive for GBIF or OBIS,
+8. Once every mandatory term is filled and FAIRe-fier finds no errors, the assistant offers to
+   convert the workbook: a Darwin Core archive for GBIF or OBIS,
    BioSample and SRA tables for NCBI, sample XML for ENA, or QIIME 2 metadata. It asks for what each
    needs (licence and contact, Webin centre name, metagenome) and goes through the converter's
    messages. FAIRe2MDT and edna2obis need R or web services, so they stay in the Shiny app and Galaxy.
@@ -178,8 +179,8 @@ sets through every step, with the researcher's answers written into the script:
   the site coordinates.
 
 The day-night test also converts the workbook for GBIF, ENA and QIIME 2, and checks that NCBI stops
-and names the replicate samples it cannot tell apart. The khapra test checks that conversion waits
-for a clean check, then writes a draft Darwin Core archive of presence and absence records.
+and names the replicate samples it cannot tell apart. The khapra test checks that conversion is refused
+while mandatory terms are empty, and that the refusal names them.
 
 ```
 bash skill/test_skill.sh OUTDIR          # PYTHON=... to use another Python

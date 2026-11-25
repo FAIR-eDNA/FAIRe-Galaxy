@@ -57,7 +57,8 @@ values for the whole project, apply mapping, FAIRe-fier.
 6. **Build and check.** The researcher runs *apply mapping* with the reviewed sheets, the values and
    their OTU or qPCR tables, then *FAIRe-fier*. Ask them to share the log and FAIRe-fier's report, and
    explain each error and the common warnings, and what to change.
-7. **Convert.** Once FAIRe-fier passes, ask which databases or archives they plan to use, and point
+7. **Convert.** Only once every mandatory term is filled and FAIRe-fier finds no errors (GBIF, OBIS,
+   NCBI and ENA need them all), ask which databases or archives they plan to use, and point
    them to the matching converters in the Shiny app or Galaxy: FAIRe2MDT or FAIRe to Darwin Core for
    GBIF, edna2obis or FAIRe to Darwin Core for OBIS, FAIRe2NCBI, FAIRe2ENA, and FAIRe2QIIME. Explain
    the messages the converters give, as in SKILL.md Step 8. Uploading stays with the researcher.

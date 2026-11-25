@@ -127,7 +127,9 @@ build --otu PATH [assay=NAME] [run=RUN_ID] [stage=final|raw] [sequences=FASTA] [
 ## Converting
 
 `convert TARGET [options]` converts the checked workbook into `faire_work/convert/TARGET/`. It stops
-if the workbook has not been checked, or if FAIRe-fier found errors (add `--anyway` for a draft). It
+until the workbook has every mandatory FAIRe term (a value or a FAIRe missing-value term) and FAIRe-fier
+finds no errors, as GBIF, OBIS, NCBI and ENA need them all; it names the terms still empty. It also
+stops if the workbook was built again after the last check. It
 prints the files written, the converter's messages (a message repeated for many samples is shown
 once, with a count) and what to do with the files. Uploading stays with the researcher.
 
