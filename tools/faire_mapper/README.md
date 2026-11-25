@@ -43,6 +43,13 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   independent answer keys (`dev/faire_mapper_real_datasets/`, `dev/faire_mapper_australian_datasets/`,
   summarised below), and end to end on CSIRO's SEA-MES data (`dev/faire_mapper_seames/`). Not yet
   tried on datasets from Australian labs that already have a FAIRe version.
+- New in 0.12.2 (25 November 2026): *find primers* reads a citation written "Leray et al. (2013)".
+  It split methods text into sentences at every full stop followed by a capital or a bracket, so
+  "et al." ended a sentence and the year went with the next; the citation was not found, and the
+  eelgrass README gave no primers. A full stop after "et al." or an initial no longer ends a
+  sentence. On the other methods texts in this repository the results are the same, except that the
+  SEA-MES methods now also give the pairs of the two papers they cite this way (Leray et al. 2013;
+  Berry et al. 2017), ten candidates in place of eight.
 - New in 0.12.1 (25 November 2026): the workbook's README sheet opens with a summary: what to
   review before submitting (warnings in yellow, mandatory terms with no value in red), a table and
   a small bar chart of the reviewer's decisions, then the lines it had before.
@@ -115,7 +122,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
     the text of a PDF with pypdf, which all the mapper tools now list as a requirement. The PDF's
     lines are kept, as a table's cells come out one per line, and a primer sequence wrapped in its
     cell is joined again. On the SEA-MES methods saved as a PDF, find primers gives the same eight
-    candidates as from the text. A PDF of scanned pages has no text, and the tools say so.
+    candidates as from the text (ten since 0.12.2). A PDF of scanned pages has no text, and the tools say so.
   - *Identify your files* recognises FASTA files and PDFs by their content, whatever their names
     (Galaxy's are dataset_N.dat): a FASTA file is reported as sequences, to give beside the OTU table
     that names them, and a PDF as text, with its pages and words.
@@ -1249,6 +1256,7 @@ qPCR results; all 19 propose mapping, 41 apply mapping and 6 identify tests pass
 | find primers | 3 | Names, with the user's table added: user's alias found, bad row left out, unknown names reported | passed |
 | find primers | 4 | User's table only, with a gene filter | passed |
 | find primers | 5 | Methods text with sequences: the TAReuk pair named from the table, a pair not in the table shown as written with its names and gene, an adapter ignored; the pairs marked exact match and as written | passed |
+| find primers | 6 | A citation written "Leray et al. (2013)" in a sentence naming COI: the Leray pairs, with mlCOIintF/jgHCO2198 among them (since 0.12.2) | passed |
 | build primer table | 1 | User's rows added to the bundled table; bad row reported | passed |
 | build primer table | 2 | New table from a register spreadsheet and a TSV; reused primer names reported | passed |
 | build primer table | 3 | A correction row replaces the pair it corrects and records the change | passed |

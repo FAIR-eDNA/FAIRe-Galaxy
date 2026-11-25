@@ -100,6 +100,18 @@ $search.names
                 </assert_contents>
             </output>
         </test>
+        <!-- A citation written "Leray et al. (2013)": the "." of "et al." does not end the sentence -->
+        <test expect_num_outputs="1">
+            <conditional name="search">
+                <param name="mode" value="text"/>
+                <param name="texts" value="primer_methods_etal.txt"/>
+            </conditional>
+            <output name="candidates">
+                <assert_contents>
+                    <has_line_matching expression="^Leray et al\. \(2013\)\treference\t.*mlCOIintF/jgHCO2198.*GGWACWGGWTGAACWGTWTAYCCYCC.*"/>
+                </assert_contents>
+            </output>
+        </test>
         <!-- The same methods as a PDF: the same candidates -->
         <test expect_num_outputs="1">
             <conditional name="search">

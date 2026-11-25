@@ -1,0 +1,1 @@
+Water was filtered through 0.45 um membranes. All samples were analysed for a fragment of the COI gene amplified by the Leray et al. (2013) primer set. Reads were denoised with DADA2.

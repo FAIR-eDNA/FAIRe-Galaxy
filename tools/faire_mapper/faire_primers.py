@@ -26,7 +26,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import faire_mapper_text as ft  # noqa: E402
 
-__version__ = '0.12.0'
+__version__ = '0.12.2'
 # FAIRe term names wherever FAIRe has a term; the rest describe the table itself.
 COLUMNS = ['primer_pair_id', 'assay_name', 'assay_type', 'targetTaxonomicAssay', 'targetTaxonomicScope',
            'target_gene', 'target_subfragment',
@@ -465,18 +465,25 @@ def _name_like(word):
     return bool(re.search(r'\d|[a-z][A-Z]|[_\-]', word))
 
 
+# Where a sentence ends: after '.' or ';' and before a capital or '(', but not after "et al." or an
+# initial ("Leray et al. (2013)", "Leray M., Yang J. Y."), which would part a citation from its year.
+SENTENCE_END = re.compile(r'(?<!\bal\.)(?<!\b[A-Z]\.)(?<=[.;])\s+(?=[A-Z(])')
+
+
 def from_text(t, text):
     """Primer pairs named or cited in a methods text, keyed by the words that matched."""
     found = {}
     cited_authors = set()
-    for sentence in re.split(r'(?<=[.;])\s+(?=[A-Z(])', text):
+    for sentence in SENTENCE_END.split(text):
         genes = {gene_of(g).lower() for g in re.findall(r'(?<![0-9])(\d\dS|COI|CO1|cox1|CytB|cyt b|ITS\d?|D-loop|ND\d)(?![a-z])', sentence, re.I)}
         for m in REF_IN_TEXT.finditer(sentence):
             ref = f'{m.group(1)} et al., {m.group(2)}'
             cands = [c for c in lookup(t, ref) if c['matched_by'] == 'reference'
                      and c['target_gene'] and gene_of(c['target_gene']).lower() in genes]
             if cands:   # a citation counts only when the sentence names the primers' gene
-                found.setdefault(m.group(0).strip(), []).extend(cands)
+                cite = m.group(0).strip()
+                cite += ')' * (cite.count('(') - cite.count(')'))   # "Leray et al. (2013)"
+                found.setdefault(cite, []).extend(cands)
                 cited_authors.add(key(m.group(1)))
     words = set(re.findall(r'[A-Za-z0-9][A-Za-z0-9_\-]{2,}[A-Za-z0-9]', text))
     words |= {p for w in list(words) for p in w.split('_') if len(p) >= 4}
