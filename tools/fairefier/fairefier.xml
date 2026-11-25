@@ -4,7 +4,7 @@
         <!-- Upstream has no tagged releases. The version is the date of the pinned
              commit (csiro/FAIRe-fier 183505d). -->
         <token name="@TOOL_VERSION@">2026.06.30</token>
-        <token name="@VERSION_SUFFIX@">1</token>
+        <token name="@VERSION_SUFFIX@">2</token>
         <import>faire_guide.xml</import>
     </macros>
     <creator>
