@@ -15,7 +15,11 @@
 # Outputs (same files as the app's download buttons):
 #   fairefier_metadata.xlsx    when a worksheet validates
 #   fairefier_warn_error.xlsx  when there are warnings or errors
-# plus, for scripts and pipelines:
+# plus, added for the FAIRe-Galaxy tools:
+#   fairefier_highlighted.xlsx when there are warnings or errors: a copy of the workbook as given,
+#                              every sheet kept, with each flagged cell yellow (warning) or red
+#                              (error) and a note giving FAIRe-fier's message
+# and, for scripts and pipelines:
 #   a tab-separated table of every warning and error
 #   a JSON summary (pass/fail per worksheet, counts, message)
 ##################################################
@@ -364,6 +368,62 @@ def issues_table(res):
     return pd.concat(parts, ignore_index=True)[cols] if parts else pd.DataFrame(columns=cols)
 
 
+def write_highlighted(workbook, issues, path):
+    """A copy of the workbook as given, every sheet and row kept, with each cell FAIRe-fier flags filled
+    yellow (warning) or light red (error) and a note giving its message and any suggested value. A
+    problem with a whole column (record ALL) marks the column's heading; with a term or column that is
+    not in the sheet, the sample name (or term name) of the row. An addition to FAIRe-fier's outputs."""
+    from openpyxl import load_workbook
+    from openpyxl.comments import Comment
+    from openpyxl.styles import PatternFill
+    wb = load_workbook(workbook)
+    fills = {'warning': PatternFill('solid', fgColor='FFFF00'), 'error': PatternFill('solid', fgColor='FFC7CE')}
+    flagged = {}
+    for sheet, key in (('projectMetadata', term_name_col), ('sampleMetadata', samp_name_col)):
+        name = f'{sheet}_revise' if f'{sheet}_revise' in wb.sheetnames else sheet
+        if name not in wb.sheetnames:
+            continue
+        ws = wb[name]
+        head = next(((c.row, c.column) for row in ws.iter_rows(min_row=1, max_row=6) for c in row
+                     if str(c.value).strip() == key), None)
+        if head is None:
+            continue
+        hrow, kcol = head
+        cols = {str(c.value).strip(): c.column for c in ws[hrow] if c.value is not None}
+        rows = {}
+        for r in range(hrow + 1, ws.max_row + 1):
+            v = ws.cell(r, kcol).value
+            if v is not None:
+                rows.setdefault(str(v).strip(), r)
+        for i in issues[issues.worksheet == sheet].itertuples():
+            rec, term = str(i.record).strip(), str(i.term).strip()
+            if sheet == 'projectMetadata':  # terms are rows, the project and assays are columns
+                r = rows.get(term, hrow)
+                c = kcol if rec == 'ALL' or term not in rows else cols.get(rec, kcol)
+            else:  # samples are rows, terms are columns
+                r = hrow if rec == 'ALL' else rows.get(rec, hrow)
+                c = cols.get(term, kcol)
+            text = f'{i.level.capitalize()}, {term}: {i.message}'
+            if isinstance(i.suggested, str) and i.suggested.strip():
+                text += f' Suggested: {i.suggested.strip()}'
+            f = flagged.setdefault((name, r, c), {'level': 'warning', 'text': []})
+            if i.level == 'error':
+                f['level'] = 'error'
+            if text not in f['text']:
+                f['text'].append(text)
+    for (name, r, c), f in flagged.items():
+        cell = wb[name].cell(r, c)
+        cell.fill = fills[f['level']]
+        note = '\n'.join(f['text'])
+        note = note[:1500] + (' ...' if len(note) > 1500 else '')
+        if cell.comment is not None:  # the template's own note on the term stays, below FAIRe-fier's
+            note += '\n\n' + cell.comment.text
+        cell.comment = Comment(note, 'FAIRe-fier',
+                               width=320, height=min(60 + 15 * note.count('\n') + len(note) // 3, 400))
+    wb.save(path)
+    return len(flagged)
+
+
 # ---------------------------------------------------------------- checklist choice
 
 def available_checklists(checklist_dir):
@@ -457,6 +517,13 @@ def main(argv=None):
 
     issues = issues_table(res)
     issues.to_csv(outdir / 'fairefier_issues.tsv', sep='\t', index=False)
+    if not issues.empty:
+        try:
+            n = write_highlighted(args.workbook, issues, outdir / 'fairefier_highlighted.xlsx')
+            written.append('fairefier_highlighted.xlsx')
+            print(f"INFO: fairefier_highlighted.xlsx marks {n} cell(s): warnings yellow, errors red, each with a note")
+        except Exception as e:  # the highlighted copy is a convenience; the checks above stand without it
+            print(f"WARNING: could not write fairefier_highlighted.xlsx ({e})")
     pm_ok = 'For projectMetadata: Success!' in res['message']
     sm_ok = 'For sampleMetadata: Success!' in res['message']
     summary = {

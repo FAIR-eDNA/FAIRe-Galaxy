@@ -121,7 +121,7 @@ build --otu PATH [assay=NAME] [run=RUN_ID] [stage=final|raw] [sequences=FASTA] [
 
 | Command | What it does |
 |---|---|
-| `check [--show N]` | Runs FAIRe-fier on the workbook and lists the errors and warnings, grouped. The full list is in `faire_work/check/`. |
+| `check [--show N]` | Runs FAIRe-fier on the workbook and lists the errors and warnings, grouped. The full list is in `faire_work/check/fairefier_issues.tsv`, and `fairefier_highlighted.xlsx` there is the workbook with each problem cell filled yellow (warning) or red (error) and a note giving the message. |
 | `summary` | Writes `faire_work/handover/` (workbook, review sheets, values, logs, FAIRe-fier results, converted files and a README of where every value came from) and a zip of it. |
 
 ## Converting

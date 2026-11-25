@@ -107,8 +107,8 @@ cannot run code, so use advisor mode."*
    BioSample and SRA tables for NCBI, sample XML for ENA, or QIIME 2 metadata. It asks for what each
    needs (licence and contact, Webin centre name, metagenome) and goes through the converter's
    messages. FAIRe2MDT and edna2obis need R or web services, so they stay in the Shiny app and Galaxy.
-9. The researcher gets a zip of the workbook, review sheets, logs, converted files and a README of
-   provenance. Uploading stays with them.
+9. The researcher gets a zip of the workbook, a copy with FAIRe-fier's problem cells highlighted,
+   the review sheets, logs, converted files and a README of provenance. Uploading stays with them.
 
 If the assistant cannot run code, it follows `references/advisor-mode.md`: the researcher runs the
 tools in the Shiny app or Galaxy, and the assistant helps with each decision.

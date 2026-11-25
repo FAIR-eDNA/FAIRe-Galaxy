@@ -1717,7 +1717,10 @@ def cmd_check(args):
                 eg = ', '.join(x for x in recs[:4] if x)
                 print(f'  - {level} in {sheet}, {term}: {short(msg, 200)} ({len(recs)} row(s)'
                       + (f', e.g. {eg}' if eg else '') + ')')
-            print('All of them: check/fairefier_issues.tsv; the highlighted workbook: check/fairefier_warn_error.xlsx')
+            print('All of them: check/fairefier_issues.tsv.')
+    if (d / 'fairefier_highlighted.xlsx').exists():
+        print('The workbook with each problem cell filled yellow (warning) or red (error), and a note on the cell '
+              'giving the message: check/fairefier_highlighted.xlsx. Offer it to the researcher.')
     print('\nA pass means the format and required fields are right. Whether the values are right rests on the review.')
     return 0
 
@@ -1896,6 +1899,8 @@ def cmd_summary(args):
         take(values_path(w), 'project_values.tsv')
     for f in ('fairefier_issues.tsv', 'fairefier_warn_error.xlsx', 'fairefier_summary.json'):
         take(w / 'check' / f)
+    if s.get('workbook'):
+        take(w / 'check' / 'fairefier_highlighted.xlsx', f"{Path(s['workbook']).stem}_highlighted.xlsx")
     for target, info in (s.get('converted') or {}).items():
         for f in info.get('files', []):
             src = w / 'convert' / target / f
@@ -1986,6 +1991,9 @@ def cmd_summary(args):
     c = s.get('checked')
     if c and c.get('ran'):
         L.append(f"- FAIRe-fier ran ({c['when']}): {short(json.dumps(c.get('summary'), ensure_ascii=False), 400)}")
+        if (w / 'check' / 'fairefier_highlighted.xlsx').exists() and s.get('workbook'):
+            L.append(f"- {Path(s['workbook']).stem}_highlighted.xlsx is the workbook with each cell FAIRe-fier flagged "
+                     'filled yellow (warning) or red (error), with a note on the cell giving the message.')
     else:
         L.append('- FAIRe-fier has NOT been run on this workbook in this session. Run it in the Shiny app or Galaxy '
                  'before sharing the data.')

@@ -242,8 +242,9 @@ they are separate. `references/commands.md` has every option. Tell the researche
 about the warnings, the commonly confused terms and any mandatory term still empty; fix what you can
 with them, and build again.
 
-Then run `check` (FAIRe-fier). Explain errors and the most common warnings in a sentence each, fix
-what can be fixed, build and check again. Coordinates with fewer than five decimal places and similar
+Then run `check` (FAIRe-fier). Explain errors and the most common warnings in a sentence each, and
+give the researcher `check/fairefier_highlighted.xlsx` (problem cells yellow or red, each with a
+note). Fix what can be fixed, build and check again. Coordinates with fewer than five decimal places and similar
 warnings can stay if the data were recorded that way.
 
 ## Step 8. Offer conversion
