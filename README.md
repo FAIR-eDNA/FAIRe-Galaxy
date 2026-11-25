@@ -21,27 +21,44 @@ With the tools you can:
 
 ## Three ways to use the tools
 
-The same tools run in three places. Choose the one that suits you:
+The same tools run in three places. Choose the one that suits you, and select its card or its link
+under *Start here* to get going:
 
-<p align="center"><img src="docs/images/three_ways.svg" width="820" alt="Three ways to use the FAIRe tools: Galaxy, in your web browser (nothing to install, a record of every step, joins your analysis workflows); the Shiny app, on your own computer (data stay with you, works offline, good for a first try); and an AI assistant, in a chat with Claude, ChatGPT or Microsoft 365 Copilot (talks you through each decision, copes with untidy files; your files go to the AI company)."></p>
+<p align="center">
+<a href="#start-with-galaxy"><img src="docs/images/way_galaxy.svg" width="250" alt="Galaxy, in your web browser: nothing to install, a record of every step, joins your analysis workflows. Galaxy Australia eDNA Lab. Select to start with Galaxy."></a>
+<a href="#start-with-the-shiny-app"><img src="docs/images/way_shiny.svg" width="250" alt="Shiny app, on your own computer: data stay with you, works offline, good for a first try. Needs R and Python. Select to start with the Shiny app."></a>
+<a href="skill/README.md#setting-it-up"><img src="docs/images/way_ai.svg" width="250" alt="AI assistant, in a chat with Claude, ChatGPT or Microsoft 365 Copilot: talks you through each decision, copes with untidy files. Your files go to the AI company. Select to set up the AI assistant."></a>
+</p>
 
 | | Where it runs | Choose it if | Start here |
 |---|---|---|---|
-| 🟦 **Galaxy** | In your web browser, on Galaxy Australia's servers | you want nothing to install, a record of every step, or to join the FAIRe steps to your analysis workflows | The Galaxy Australia eDNA Lab, edna.dev.gvl.org.au (being set up) |
-| 🟩 **Shiny app** | On your own computer; needs R and Python | your data must stay with you, you want to work offline, or you'd like a first try | The line of R below, and `shiny/README.md` |
-| 🟧 **AI assistant** | In a chat with Claude, ChatGPT or Microsoft 365 Copilot; your files go to the AI company | you'd like to be talked through each decision, or your files are untidy or unusual | `skill/README.md` |
+| 🟦 **Galaxy** | In your web browser, on Galaxy Australia's servers | you want nothing to install, a record of every step, or to join the FAIRe steps to your analysis workflows | [Start with Galaxy](#start-with-galaxy), below |
+| 🟩 **Shiny app** | On your own computer; needs R and Python | your data must stay with you, you want to work offline, or you'd like a first try | [Start with the Shiny app](#start-with-the-shiny-app), below |
+| 🟧 **AI assistant** | In a chat with Claude, ChatGPT or Microsoft 365 Copilot; your files go to the AI company | you'd like to be talked through each decision, or your files are untidy or unusual | [Setting up the AI assistant](skill/README.md#setting-it-up), in the skill's README |
 
 All three use the same review sheets, so you can start in one and finish in another.
 
-The AI assistant has so far been tested only in Claude, on paid plans. Whether you can add it to
-another assistant depends on your subscription and on your organisation's settings: ChatGPT's free
-plan does not allow skills, and organisations can turn off skills in Microsoft 365 Copilot.
+### Start with Galaxy
 
-To start the Shiny app, run this line in R. It downloads the app, sets it up and starts it:
+The tools will be in the [Galaxy Australia eDNA Lab](https://edna.dev.gvl.org.au), which is being
+set up. Once they are there, open the Lab in your web browser and follow
+[the guide to the tools](docs/faire_tools_guide.md). It says which tool to start with, depending on
+what you already have, and the same guide is in each tool's help. Until then, the Shiny app and the
+AI assistant run the same tools.
+
+### Start with the Shiny app
+
+With R (4.1 or later) and Python (3.10 to 3.13) on your computer, run this line in R. It downloads
+the app, sets it up and opens it in your web browser:
 
 ```r
 source("https://raw.githubusercontent.com/FAIR-eDNA/FAIRe-Galaxy/main/shiny/start.R")
 ```
+
+The first time takes about 15 minutes, most of it downloading packages. To try the app before using
+your own data, load one of the demonstration datasets on its *Start* page. The app's README has
+[more on setting it up](shiny/README.md#downloading-and-running-it), including what to do if you
+don't have Python yet, and [the demonstration datasets](shiny/README.md#trying-it-with-the-demonstration-data).
 
 ## The tools
 

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 274 264" width="274" height="264" font-family="Helvetica, Arial, sans-serif">
+  <!-- Galaxy: one of the three cards in the README -->
+  <g transform="translate(2,2)">
+    <rect width="270" height="260" rx="12" fill="#eaf2fb" stroke="#2c6fb7" stroke-width="2"/>
+    <rect width="270" height="54" rx="12" fill="#2c6fb7"/>
+    <rect y="40" width="270" height="14" fill="#2c6fb7"/>
+    <g fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linejoin="round">
+      <rect x="24" y="15" width="34" height="25" rx="3"/>
+      <line x1="24" y1="22" x2="58" y2="22"/>
+      <circle cx="29" cy="18.5" r="0.9" fill="#ffffff"/><circle cx="33" cy="18.5" r="0.9" fill="#ffffff"/>
+      <circle cx="41" cy="31" r="5"/><path d="M 36 31 h 10 M 41 26 q -3 5 0 10 M 41 26 q 3 5 0 10"/>
+    </g>
+    <text x="150" y="35" text-anchor="middle" font-size="22" font-weight="bold" fill="#ffffff">Galaxy</text>
+    <text x="135" y="84" text-anchor="middle" font-size="14" font-style="italic" fill="#1d4f86">In your web browser</text>
+    <path d="M 22 116 l 4 4 l 8 -9" fill="none" stroke="#2c6fb7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="42" y="122" font-size="15" fill="#222">Nothing to install</text>
+    <path d="M 22 144 l 4 4 l 8 -9" fill="none" stroke="#2c6fb7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="42" y="150" font-size="15" fill="#222">A record of every step</text>
+    <path d="M 22 172 l 4 4 l 8 -9" fill="none" stroke="#2c6fb7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="42" y="178" font-size="15" fill="#222">Joins your analysis</text>
+    <text x="42" y="198" font-size="15" fill="#222">workflows</text>
+    <text x="135" y="240" text-anchor="middle" font-size="13" fill="#1d4f86">Galaxy Australia eDNA Lab</text>
+  </g>
+</svg>
