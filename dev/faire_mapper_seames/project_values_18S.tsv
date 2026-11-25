@@ -27,7 +27,8 @@ pcr_0_1	1
 project_contact	Bruce Deagle (Bruce.Deagle@csiro.au)
 samp_collect_device	12 L Niskin bottle on a 36-bottle CTD rosette
 filter_passive_active_0_1	1
-samp_store_temp	-80
+samp_store_temp	4
+prepped_samp_store_temp	-80
 sterilise_method	Sampling and filtration equipment was soaked in 10% bleach for at least 6 hours between runs; lines were primed with 10% bleach for 15 minutes and flushed three times with Milli-Q water.
 env_broad_scale	Marine biome [ENVO:01000020]
 env_local_scale	Neritic Pelagic Zone Biome [ENVO:01000032]|Oceanic Pelagic Zone Biome [ENVO:01000033]|Marine Neritic Benthic Zone Biome [ENVO:01000025]|Neritic Pelagic Zone Biome [ENVO:01000032]
