@@ -4,7 +4,8 @@ A third way to make a FAIRe dataset, alongside the Galaxy tools and the Shiny ap
 talks with an AI assistant, which runs the same FAIRe tools in its own workspace, explains what they
 find, asks the questions only the researcher can answer, and records each decision. At the end the
 researcher gets the FAIRe workbook, checked by FAIRe-fier, and a README that says where every value
-came from.
+came from. If they want, the assistant then converts the workbook for GBIF or OBIS, NCBI, ENA or
+QIIME 2; the researcher uploads the files with their own accounts.
 
 The package follows the open Agent Skills format (a folder with a `SKILL.md`), which Claude, ChatGPT,
 Microsoft 365 Copilot and most coding assistants can load. One package serves all of them.
@@ -22,11 +23,13 @@ faire-dataset/
     advisor_mode.md         how to help when the assistant cannot run code
   scripts/
     faire_session.py        runs the tools one step at a time and keeps the session's decisions
-    tools/                  copies of the FAIRe mapper and FAIRe-fier from tools/, with their licences
+    tools/                  copies of the FAIRe mapper, FAIRe-fier and the Python converters from tools/,
+                            with their licences
 ```
 
 The assistant never writes the workbook itself. `faire_session.py` runs FAIRe mapper (identify,
-propose mapping, find method details, find primers, apply mapping) and FAIRe-fier, and keeps the
+propose mapping, find method details, find primers, apply mapping), FAIRe-fier and the converters
+(FAIRe to Darwin Core, FAIRe2NCBI, FAIRe2ENA and FAIRe2QIIME), and keeps the
 researcher's decisions in the same review sheets the Galaxy tools and the Shiny app use. A session
 can therefore be finished in the Shiny app or Galaxy, and a review made there can be brought back.
 
@@ -46,7 +49,12 @@ can therefore be finished in the Shiny app or Galaxy, and a review made there ca
 6. The mandatory terms still empty are asked about in plain words. Highly recommended terms that the
    methods answer are offered as one optional checklist.
 7. The workbook is built with the OTU tables or qPCR results, and checked with FAIRe-fier.
-8. The researcher gets a zip of the workbook, review sheets, logs and a README of provenance.
+8. The assistant offers to convert the checked workbook: a Darwin Core archive for GBIF or OBIS,
+   BioSample and SRA tables for NCBI, sample XML for ENA, or QIIME 2 metadata. It asks for what each
+   needs (licence and contact, Webin centre name, metagenome) and goes through the converter's
+   messages. FAIRe2MDT and edna2obis need R or web services, so they stay in the Shiny app and Galaxy.
+9. The researcher gets a zip of the workbook, review sheets, logs, converted files and a README of
+   provenance. Uploading stays with them.
 
 If the assistant cannot run code, it follows `references/advisor_mode.md`: the researcher runs the
 tools in the Shiny app or Galaxy, and the assistant helps with each decision.
@@ -57,10 +65,11 @@ tools in the Shiny app or Galaxy, and the assistant helps with each decision.
 python skill/build_skill.py            # writes skill/dist/faire-dataset.zip and skill/dist/faire-dataset-plugin.zip
 ```
 
-The build copies the current tools from `tools/faire_mapper` and `tools/fairefier`, makes
+The build copies the current tools from `tools/faire_mapper`, `tools/fairefier` and the four Python
+converters (`tools/faire2dwc`, `faire2ncbi`, `faire2ena`, `faire2qiime`), makes
 `references/faire_terms.md` from the checklist, and records the commit in
 `scripts/tools/SOURCE_COMMIT`. Rebuild after any change to the tools, so the package and the Galaxy
-tools stay the same. The zip is about 0.6 MB.
+tools stay the same. The zip is about 1 MB.
 
 ## Setting it up
 
@@ -134,6 +143,10 @@ sets through every step, with the researcher's answers written into the script:
 - **eelgrass** (`demo/eelgrass`): no sample table, so one is made from the OTU table's columns and
   the site coordinates.
 
+The day-night test also converts the workbook for GBIF, ENA and QIIME 2, and checks that NCBI stops
+and names the replicate samples it cannot tell apart. The khapra test checks that conversion waits
+for a clean check, then writes a draft Darwin Core archive of presence and absence records.
+
 ```
 bash skill/test_skill.sh OUTDIR          # PYTHON=... to use another Python
 ```
@@ -158,5 +171,6 @@ their data, in each of Claude, ChatGPT and Copilot.
 
 `SKILL.md`, `references/` and `faire_session.py` are MIT, as the rest of this repository. The bundled
 tools and data keep their own licences, listed in `scripts/tools/LICENSES.md`: the FAIRe checklist is
-CC BY 4.0, FAIRe-fier is BSD 3-Clause, and most rows of the primer table come from Takahashi et al.
+CC BY 4.0, FAIRe-fier is BSD 3-Clause, FAIRe2NCBI and faire2qiime are CC0 1.0, FAIRe2ENA is MIT, and
+most rows of the primer table come from Takahashi et al.
 2023 under CC BY-NC 4.0.

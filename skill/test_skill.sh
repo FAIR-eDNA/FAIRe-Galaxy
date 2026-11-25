@@ -76,7 +76,21 @@ $S --work "$W" build \
     --library "$D/fastq_file_names.txt" assay=16S_Fish filter=16S_Fish run=AGRF_NovaSeq6000_SP \
     --library "$D/fastq_file_names.txt" assay=COI_Leray filter=COI_Leray run=AGRF_NovaSeq6000_SP > /dev/null
 $S --work "$W" check > /dev/null || true
+# Conversions: the Darwin Core archive, ENA samples and QIIME 2 metadata are written; NCBI stops,
+# as these replicate samples have identical BioSample attributes, and says so.
+$S --work "$W" convert gbif --licence CC-BY-4.0 --given_name Katrina --surname West > /dev/null
+$S --work "$W" convert ena --center_name "Example University" > /dev/null
+$S --work "$W" convert qiime > /dev/null
+if $S --work "$W" convert ncbi --mandatory_fill "not collected" > "$out/ncbi.txt"; then
+    echo "FAIL day-night: NCBI should stop on identical BioSamples"; fail=1
+elif ! grep -q "identical BioSample attributes" "$out/ncbi.txt"; then
+    echo "FAIL day-night: NCBI stopped for another reason"; cat "$out/ncbi.txt"; fail=1
+fi
+for f in gbif/dwca.zip ena/samples.xml qiime/out/West2024_DayNight_16S_metadata.tsv; do
+    [ -s "$W/convert/$f" ] || { echo "FAIL day-night: no convert/$f"; fail=1; }
+done
 $S --work "$W" summary > /dev/null
+[ -s "$W/handover/convert/gbif/dwca.zip" ] || { echo "FAIL day-night: conversions not in the handover"; fail=1; }
 check_pass "$W" day-night pass
 "$py" - "$W"/build/*_FAIRe.xlsx <<'PY' || { echo "FAIL day-night: samp_vol_we_dna_ext not in the workbook"; fail=1; }
 import sys, openpyxl
@@ -104,6 +118,15 @@ $S --work "$W" set pcr_0_1 1 > /dev/null
 $S --work "$W" set amp_vis_method qPCR > /dev/null
 $S --work "$W" build --amp "$K/Amplification_data_khapra_05012022_dryad.csv" assay_column=assay_name > /dev/null
 $S --work "$W" check > /dev/null || true
+# FAIRe-fier finds errors (terms left for the researcher), so convert stops unless asked for a draft
+if $S --work "$W" convert gbif > /dev/null 2>&1; then echo "FAIL khapra: converted with errors"; fail=1; fi
+for a in FURUIFranklin FURUIViiA7 OLSONFranklin OLSONViiA7; do
+    $S --work "$W" set targetTaxonomicAssay "Trogoderma granarium" --assay $a > /dev/null
+done
+$S --work "$W" build --amp "$K/Amplification_data_khapra_05012022_dryad.csv" assay_column=assay_name > /dev/null
+$S --work "$W" check > /dev/null || true
+$S --work "$W" convert gbif --anyway --country_code AU > /dev/null
+[ -s "$W/convert/gbif/dwca.zip" ] || { echo "FAIL khapra: no Darwin Core archive"; fail=1; }
 $S --work "$W" summary > /dev/null
 check_pass "$W" khapra ran
 

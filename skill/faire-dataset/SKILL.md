@@ -1,6 +1,6 @@
 ---
 name: faire-dataset
-description: Helps an eDNA researcher turn their sample sheet, methods and OTU or qPCR tables into a FAIRe (FAIR eDNA) metadata workbook, in conversation, with the FAIRe mapper and FAIRe-fier.
+description: Helps an eDNA researcher turn their sample sheet, methods and OTU or qPCR tables into a checked FAIRe (FAIR eDNA) workbook, in conversation, and convert it for GBIF, OBIS, NCBI or ENA.
 license: MIT; the bundled tools and data keep their own licences (scripts/tools/LICENSES.md)
 ---
 
@@ -103,7 +103,7 @@ has them; see "How to ask"):
 - **share everything**: the files are cleared to share, and the workbook is built here;
 - **share less**: only the column headings and a few rows of the sample sheet, and the methods. The
   decisions are recorded here, and the researcher builds the workbook on their own computer with the
-  FAIRe tools Shiny app or in Galaxy (Step 8 says how; `references/data_care.md` has the details);
+  FAIRe tools Shiny app or in Galaxy (Step 9 says how; `references/data_care.md` has the details);
 - **work offline**: use the FAIRe tools Shiny app on their own computer for the whole job
   (https://github.com/FAIR-eDNA/FAIRe-Galaxy, folder `shiny`).
 
@@ -243,20 +243,63 @@ Then run `check` (FAIRe-fier). Explain errors and the most common warnings in a 
 what can be fixed, build and check again. Coordinates with fewer than five decimal places and similar
 warnings can stay if the data were recorded that way.
 
-## Step 8. Hand over
+## Step 8. Offer conversion
+
+Once the workbook is checked, offer to convert it for the databases and archives the researcher
+plans to use. Ask one question, as a checklist, with these choices:
+
+- GBIF or OBIS: a Darwin Core archive of occurrence records (`convert gbif`)
+- NCBI: BioSample table, and SRA table for metabarcoding (`convert ncbi`)
+- ENA: sample XML (`convert ena`)
+- QIIME 2: sample metadata and manifests (`convert qiime`)
+- None for now
+
+If FAIRe-fier found errors, say that converting now gives a draft only, and suggest fixing the errors
+first. Run `convert` with `--anyway` only if they still want the draft.
+
+Before each conversion, ask for what it needs, one question at a time, and never invent these:
+
+- **gbif**: the licence (CC0-1.0, CC-BY-4.0 or CC-BY-NC-4.0), and the name, organisation and email
+  of the dataset contact (`--licence`, `--given_name`, `--surname`, `--organisation`, `--email`,
+  `--orcid`). Ask whether it is for GBIF, OBIS or both (`--publish_to`). For targeted assays,
+  absence records are written unless they say otherwise (`--no_absences`). If kingdom or other
+  ranks are empty, offer to make a small taxon table (name, scientificName, kingdom ...) with them
+  and pass it with `--taxa`; OBIS needs WoRMS IDs in scientificNameID.
+- **ncbi**: which metagenome the samples are (`--organism`, such as freshwater metagenome), and the
+  BioProject accession if they have one.
+- **ena**: the centre name of their ENA Webin account (`--center_name`), and the NCBI taxonomy ID
+  of the metagenome (`--taxon_id`).
+- **qiime**: the column that names the samples (`--sample_name_column`, default lib_id) and the
+  folder of the fastq files (`--sequences_folder`), for the manifests.
+
+`convert` prints the files it wrote, the messages to go through with the researcher, and what to do
+with the files. Go through every message. A converter may stop and list what it needs (an empty
+mandatory field, samples that NCBI cannot tell apart). Offer the fix: fill the value in the workbook
+(`set`, then `build` and `check`), or the matching option (`--mandatory_fill` with a missing-value
+term they choose, `--duplicates_column` with a column that tells the samples apart). A converter may
+also fill a default, such as a depth of 0 when no depth is given; tell the researcher, as the value
+would be wrong, and offer to fill the real value instead.
+
+Uploading stays with the researcher, on their own accounts: say so, and do not offer to submit. For
+metabarcoding data with read counts, GBIF's Metabarcoding Data Toolkit (FAIRe2MDT) and edna2obis
+(for OBIS) give fuller records than `convert gbif`; they run in the FAIRe tools Shiny app or the
+Galaxy eDNA Lab, as they need R or the WoRMS and GBIF web services. ENA experiments and runs come
+after the samples are registered, as they need the receipt; they run there too.
+
+## Step 9. Hand over
 
 Run `summary`. It writes `faire_work/handover/` and a zip with the workbook, the review sheets, the
-values given, the logs, the FAIRe-fier results, and a README that says where every value came from.
-Give the researcher the zip (or the files) in whatever way your platform offers. Close with a few
-sentences: what is done, what still needs their checking, and the next steps (FAIRe2MDT for GBIF,
-edna2obis for OBIS, FAIRe2ENA or FAIRe2NCBI for the sequence archives, in the FAIRe tools Shiny app
-or the Galaxy eDNA Lab). Tell them to keep the review sheet: next time, `map TABLE --earlier_review
-review_sheet.xlsx` carries their decisions over to a larger or changed table.
+values given, the logs, the FAIRe-fier results, any converted files, and a README that says where
+every value came from. Give the researcher the zip (or the files) in whatever way your platform
+offers. Close with a few sentences: what is done, what still needs their checking, and the next
+steps (submitting the converted files, or the conversions still to run in the Shiny app or Galaxy).
+Tell them to keep the review sheet: next time, `map TABLE --earlier_review review_sheet.xlsx`
+carries their decisions over to a larger or changed table.
 
 **If they chose to share less**, there is no workbook yet. Give them the review sheet, the method
 details review sheet and `project_values.tsv` from the handover, and tell them to give these to FAIRe
 mapper: apply mapping in the Shiny app or Galaxy, with their full sample table and OTU tables, then
-run FAIRe-fier there.
+run FAIRe-fier and the converters there.
 
 ## If the conversation is interrupted
 

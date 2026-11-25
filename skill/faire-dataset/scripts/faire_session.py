@@ -27,6 +27,7 @@ Steps, in order (python faire_session.py STEP --help for each):
   gaps           list the mandatory FAIRe terms still without a value
   build          write the FAIRe workbook
   check          check the workbook with FAIRe-fier
+  convert        convert the checked workbook for NCBI, ENA, GBIF or OBIS, or QIIME 2
   summary        write the handover folder: the files, and where every value came from
   status         what has been done so far, and what is next
 """
@@ -49,11 +50,13 @@ FAIREFIER = HERE / 'tools' / 'fairefier'
 CHECKLIST = MAPPER / 'checklist' / 'FAIRe_checklist_v1.0.2.xlsx'
 TEMPLATE = MAPPER / 'checklist' / 'FAIRe_checklist_v1.0.2_FULLtemplate.xlsx'
 CONFUSED = MAPPER / 'commonly_confused_terms.tsv'
+TOOLS = HERE / 'tools'
 
 NEEDED = [('pandas', 'pandas', ''), ('openpyxl', 'openpyxl', ''), ('numpy', 'numpy', ''),
           ('pypdf', 'pypdf', 'reading methods given as PDF; text files still work'),
           ('pydantic', 'pydantic', 'FAIRe-fier, the check step'),
-          ('jinja2', 'jinja2', "FAIRe-fier's highlighted workbook, in the check step")]
+          ('jinja2', 'jinja2', "FAIRe-fier's highlighted workbook, in the check step"),
+          ('yaml', 'pyyaml', 'the NCBI conversion, in the convert step')]
 TESTED = 'Python 3.10 and 3.13; pandas 2.2.3 and 3.0; openpyxl 3.1.5; pypdf 5.1 and 6.17; pydantic 2'
 
 VALUES_HEAD = ['term', 'value', 'assay', 'status', 'source']
@@ -1526,6 +1529,154 @@ def cmd_check(args):
     return 0
 
 
+# ---------------------------------------------------------------- convert
+
+CONVERT_NOTES = {
+    'ncbi': ('NCBI (BioSample and SRA)', [
+        'biosample.tsv: upload at https://submit.ncbi.nlm.nih.gov/subs/biosample/ (choose a batch submission '
+        'and the MIMARKS survey package the table names).',
+        'sra.tsv (metabarcoding): upload at https://submit.ncbi.nlm.nih.gov/subs/sra/ with the sequence files, '
+        'after the BioSamples have accessions.']),
+    'ena': ('ENA (samples)', [
+        'samples.xml and submission.xml: submit with your ENA Webin account (Webin-REST or the Webin portal). '
+        'The receipt gives each sample an accession.',
+        'Experiments and runs come after the samples: they need the receipt and your study accession, so run '
+        'this step again later in the Shiny app or Galaxy (FAIRe2ENA: experiments and runs).']),
+    'gbif': ('a Darwin Core archive for GBIF or OBIS', [
+        'dwca.zip: publish it through an IPT (Integrated Publishing Toolkit) that your organisation or a GBIF or '
+        'OBIS node runs, or ask your GBIF node for help. report.md says what went into it.']),
+    'qiime': ('QIIME 2 metadata', [
+        'The metadata (and manifest) files go into your QIIME 2 analysis; nothing to upload.']),
+}
+
+
+def cmd_convert(args):
+    w = work_dir(args)
+    s = load_state(w)
+    wbk = Path(s.get('workbook', ''))
+    if not s.get('workbook') or not wbk.exists():
+        raise Stop('Build the workbook first (build), and check it (check).')
+    c = s.get('checked') or {}
+    if not c.get('ran'):
+        raise Stop('Check the workbook with FAIRe-fier first (check): converting an unchecked workbook passes its '
+                   'problems on to the archives.')
+    summ = c.get('summary') or {}
+    errors = [k for k, v in summ.items() if isinstance(v, dict) and v.get('errors')]
+    if summ.get('valid') is False and not args.anyway:
+        raise Stop('FAIRe-fier found errors in the workbook. Fix them and check again before converting, or add '
+                   '--anyway if the researcher wants a draft conversion.' + (f' Sheets with errors: {errors}' if errors else ''))
+    if args.target == 'ncbi':
+        import importlib.util
+        if importlib.util.find_spec('yaml') is None:
+            raise Stop('The NCBI conversion needs PyYAML: run setup --install (or pip install pyyaml). If it '
+                       'cannot be installed, the researcher can run FAIRe2NCBI in the Shiny app or Galaxy.')
+    d = w / 'convert' / args.target
+    if d.exists():
+        shutil.rmtree(d)
+    d.mkdir(parents=True)
+    made, logs = [], []
+    if args.target == 'ncbi':
+        tool = TOOLS / 'faire2ncbi' / 'faire2ncbi_galaxy.py'
+        bargs = ['biosample', '--input_file', wbk, '--organism', args.organism, '--output', d / 'biosample.tsv',
+                 '--config_out', d / 'biosample_config.yaml', '--mandatory_fill', args.mandatory_fill] + (
+                    ['--duplicates_column', args.duplicates_column] if args.duplicates_column else []) + (['--bioproject', args.bioproject] if args.bioproject else [])
+        code, out = run_tool(tool, bargs, d, quiet=True)
+        logs.append(('BioSample', code, out))
+        if s.get('assay_type') == 'metabarcoding':
+            sargs = ['sra', '--input_file', wbk, '--organism', args.organism, '--output', d / 'sra.tsv',
+                     '--config_out', d / 'sra_config.yaml'] + (['--instrument_model', args.instrument_model]
+                                                               if args.instrument_model else [])
+            code, out = run_tool(tool, sargs, d, quiet=True)
+            logs.append(('SRA', code, out))
+    elif args.target == 'ena':
+        if not args.center_name:
+            raise Stop('ENA needs the centre name of the researcher\'s Webin account (--center_name).')
+        code, out = run_tool(TOOLS / 'faire2ena' / 'faire2ena_galaxy.py',
+                             ['sample', '--input_file', wbk, '--center_name', args.center_name, '--taxon_id',
+                              args.taxon_id, '--output_file', d / 'samples.xml', '--submission_file',
+                              d / 'submission.xml'], d, quiet=True)
+        logs.append(('ENA samples', code, out))
+    elif args.target == 'gbif':
+        targs = [wbk, '--workbook_name', wbk.name, '--target', args.publish_to,
+                 '--absences' if not args.no_absences else '--no-absences',
+                 '--archive', d / 'dwca.zip', '--occurrence', d / 'occurrence.txt', '--dna', d / 'dna_derived_data.txt',
+                 '--eml', d / 'eml.xml', '--report', d / 'report.md']
+        for k in ('assays', 'country_code', 'title', 'abstract', 'keywords', 'licence', 'given_name', 'surname',
+                  'organisation', 'email', 'orcid', 'taxa'):
+            v = getattr(args, k)
+            if v:
+                targs += [f'--{k}', str(Path(v).resolve()) if k == 'taxa' else v]
+        code, out = run_tool(TOOLS / 'faire2dwc' / 'faire2dwc.py', targs, d, quiet=True)
+        logs.append(('Darwin Core archive', code, out))
+    elif args.target == 'qiime':
+        q = TOOLS / 'faire2qiime'
+        code, out = run_tool(q / 'normalise_faire.py', [wbk, d / 'normalised.xlsx', '--check_column',
+                                                       args.sample_name_column], d, quiet=True)
+        logs.append(('normalise', code, out))
+        if code == 0:
+            (d / 'out').mkdir()
+            code, out = run_tool(q / 'faire2qiime_by_assay.py',
+                                 [q / 'faire2qiime.py', d / 'normalised.xlsx', d / 'out', '--', '--sample_name_column',
+                                  args.sample_name_column, '--absolute_path_sequences', args.sequences_folder], d,
+                                 quiet=True)
+            out = '\n'.join(ln for ln in out.splitlines() if ln.strip() and 'pyfiglet' not in ln
+                            and not set(ln.strip()) <= set('=_|/\\ ()`\'-.,<>'))
+            logs.append(('FAIRe2QIIME', code, out))
+    made = sorted(str(p.relative_to(d)) for p in d.rglob('*')
+                  if p.is_file() and p.name not in ('normalised.xlsx', 'prepared.xlsx', 'answers.yaml'))
+    ok = all(c == 0 for _, c, _ in logs)
+    title, notes = CONVERT_NOTES[args.target]
+    print(f"Conversion to {title}: {'done' if ok else 'stopped'}.")
+    for step, code, out in logs:
+        lines = [ln for ln in out.splitlines() if ln.strip() and 'PerformanceWarning' not in ln
+                 and not ln.lstrip().startswith(('frame.insert', 'newframe', 'df[', 'self.'))]
+        if code != 0:
+            print(f'\n{step} stopped. Its last messages:')
+            print('\n'.join('  ' + short(ln, 300) for ln in lines[-15:]))
+            continue
+        # The same message for many samples is shown once, with a count and a few of the samples.
+        groups = {}
+        for ln in lines:
+            if (not re.search(r'warn|error|missing|cannot|could not|skipp|left out|default', ln, re.I)
+                    or re.match(r"\s*(Default value:|Use default value|Note: 'blank')", ln)):
+                continue
+            m = re.search(r"(?i)(sample(?: name)?) '?([^\s',]+)'?", ln)
+            key = ln.replace(m.group(2), '…', 1) if m else ln
+            groups.setdefault(key, []).append(m.group(2) if m else '')
+        if groups:
+            print(f'\n{step}: messages to read with the researcher:')
+            for key, who in list(groups.items())[:20]:
+                names = [x for x in who if x]
+                extra = (f' ({len(who)} samples, such as {", ".join(names[:4])})' if len(who) > 1 else '')
+                print('  - ' + short(key, 300) + extra)
+    if made:
+        print(f'\nFiles in convert/{args.target}/: ' + ', '.join(made))
+    rep = d / 'report.md'
+    if ok and rep.exists():
+        # The parts of the Darwin Core report to go through with the researcher.
+        part, keep = None, []
+        for ln in rep.read_text(encoding='utf-8').splitlines():
+            if ln.startswith('## '):
+                part = ln[3:]
+                if part in ('Records', 'What GBIF and OBIS will want', 'Notes'):
+                    keep.append('\n' + part + ':')
+            elif part in ('Records', 'What GBIF and OBIS will want', 'Notes') and ln.strip():
+                keep.append('  ' + ln)
+        print('\n'.join(keep))
+    if ok:
+        print('\nWhat to do with them (the researcher submits them with their own account):')
+        for n in notes:
+            print('  - ' + n)
+    else:
+        print('\nNothing to submit yet. Go through the messages above with the researcher: fix the workbook (set, '
+              'then build and check again) or choose an option of convert, then convert again.')
+    s.setdefault('converted', {})[args.target] = dict(ok=ok, files=made,
+                                                      when=dt.datetime.now().isoformat(timespec='seconds'))
+    save_state(w, s)
+    log_event(w, 'convert', f"{args.target}: {'done' if ok else 'stopped'}")
+    return 0 if ok else 2
+
+
 # ---------------------------------------------------------------- summary and handover
 
 def cmd_summary(args):
@@ -1552,6 +1703,13 @@ def cmd_summary(args):
         take(values_path(w), 'project_values.tsv')
     for f in ('fairefier_issues.tsv', 'fairefier_warn_error.xlsx', 'fairefier_summary.json'):
         take(w / 'check' / f)
+    for target, info in (s.get('converted') or {}).items():
+        for f in info.get('files', []):
+            src = w / 'convert' / target / f
+            if src.exists():
+                (h / 'convert' / target / Path(f).parent).mkdir(parents=True, exist_ok=True)
+                shutil.copy(src, h / 'convert' / target / f)
+                copies.append(f'convert/{target}/{f}')
     L = [f"# FAIRe dataset: {s.get('project_id') or '(no project ID yet)'}", '',
          f"Prepared in conversation with an AI assistant using the FAIRe tools from FAIR-eDNA/FAIRe-Galaxy, on "
          f"{dt.date.today().isoformat()}.", '',
@@ -1638,6 +1796,13 @@ def cmd_summary(args):
     else:
         L.append('- FAIRe-fier has NOT been run on this workbook in this session. Run it in the Shiny app or Galaxy '
                  'before sharing the data.')
+    conv = s.get('converted') or {}
+    if conv:
+        L += ['', '## Conversions', '']
+        for target, info in conv.items():
+            title, notes = CONVERT_NOTES[target]
+            L.append(f"- {title}: {'done' if info.get('ok') else 'stopped'} ({info.get('when', '')}); "
+                     f"files in convert/{target}/. " + ' '.join(notes))
     L += ['', '## Next steps', '',
           '- Open the workbook and check it, especially the values marked for checking and the terms still empty.',
           '- Keep the review sheet: give it as the earlier review if you map a changed or larger table later.',
@@ -1647,8 +1812,9 @@ def cmd_summary(args):
     (h / 'README.md').write_text('\n'.join(L) + '\n', encoding='utf-8')
     zpath = w / f"{s.get('project_id') or 'faire'}_handover.zip"
     with zipfile.ZipFile(zpath, 'w', zipfile.ZIP_DEFLATED) as z:
-        for f in sorted(h.iterdir()):
-            z.write(f, f'{s.get("project_id") or "faire"}_handover/{f.name}')
+        for f in sorted(h.rglob('*')):
+            if f.is_file():
+                z.write(f, f'{s.get("project_id") or "faire"}_handover/{f.relative_to(h).as_posix()}')
     print(f'Handover folder: {h}\nZip: {zpath}\nFiles: ' + ', '.join(['README.md'] + copies))
     return 0
 
@@ -1838,6 +2004,37 @@ def main(argv=None):
     p.add_argument('--workbook')
     p.add_argument('--show', type=int, default=25, help='issues to print')
     p.set_defaults(fn=cmd_check)
+
+    p = sub.add_parser('convert', help='convert the checked workbook for a database or archive')
+    p.add_argument('target', choices=['ncbi', 'ena', 'gbif', 'qiime'],
+                   help='ncbi: BioSample and SRA tables; ena: ENA sample XML; gbif: a Darwin Core archive for GBIF '
+                        'or OBIS (presence and absence); qiime: QIIME 2 metadata')
+    p.add_argument('--anyway', action='store_true', help='convert although FAIRe-fier found errors (a draft)')
+    p.add_argument('--organism', default='marine metagenome',
+                   help='ncbi: the metagenome the samples are, such as freshwater metagenome or air metagenome')
+    p.add_argument('--bioproject', help='ncbi: the BioProject accession, if there is one')
+    p.add_argument('--mandatory_fill', default='stop',
+                   choices=['stop', 'not collected', 'not provided', 'not applicable', 'missing',
+                            'missing: control sample'],
+                   help='ncbi: what to write in empty mandatory BioSample fields (default: stop and list them). '
+                        'Only with the researcher\'s agreement')
+    p.add_argument('--duplicates_column', help='ncbi: a sampleMetadata column that tells apart samples whose '
+                                               'BioSample attributes are otherwise identical (such as replicate)')
+    p.add_argument('--instrument_model', help='ncbi: the sequencer, when the workbook does not give it')
+    p.add_argument('--center_name', help="ena: the centre name of the researcher's Webin account")
+    p.add_argument('--taxon_id', default='408172',
+                   help='ena: NCBI taxonomy ID of the metagenome (408172 marine, 449393 freshwater, 410658 soil, '
+                        '655179 air)')
+    p.add_argument('--publish_to', choices=['gbif', 'obis', 'both'], default='gbif', help='gbif: where it will go')
+    p.add_argument('--no_absences', action='store_true', help='gbif: leave out absence records')
+    p.add_argument('--assays', help='gbif: assays to publish, comma-separated (default all)')
+    p.add_argument('--taxa', help='gbif: a taxon table (name, scientificName, scientificNameID ...); OBIS needs WoRMS IDs')
+    p.add_argument('--country_code', help='gbif: ISO two-letter country code, when geo_loc_name is not enough')
+    for k in ('title', 'abstract', 'keywords', 'licence', 'given_name', 'surname', 'organisation', 'email', 'orcid'):
+        p.add_argument(f'--{k}', help='gbif: for the dataset description (EML)')
+    p.add_argument('--sample_name_column', default='lib_id', help='qiime: the column that names the samples')
+    p.add_argument('--sequences_folder', default='/path/to/sequences', help='qiime: where the fastq files are')
+    p.set_defaults(fn=cmd_convert)
 
     p = sub.add_parser('summary', help='write the handover folder and zip')
     p.set_defaults(fn=cmd_summary)
