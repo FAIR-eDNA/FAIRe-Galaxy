@@ -36,7 +36,7 @@ Trials so far:
 |---|---|
 | Claude (Max) | Works: added as a plugin, and run on the khapra beetle data |
 | ChatGPT (free plan) | Could not be added: the free plan does not allow skills |
-| Microsoft 365 Copilot (Premium) | Uploads: `faire-dataset-copilot.zip` (1.3.1 and later) is accepted. Running it not yet tried. Organisations can turn off skills or agent building |
+| Microsoft 365 Copilot (Premium) | Works so far: `faire-dataset-copilot.zip` (1.3.1 and later) uploads to an agent with Code interpreter on, and `setup` runs (Python 3.12, pandas 2.2.2, numpy 1.26). A full session not yet tried. Organisations can turn off skills or agent building |
 
 ### Claude (claude.ai, desktop and mobile apps)
 
@@ -184,7 +184,7 @@ for a clean check, then writes a draft Darwin Core archive of presence and absen
 bash skill/test_skill.sh OUTDIR          # PYTHON=... to use another Python
 ```
 
-All three pass with Python 3.10 and 3.13, pandas 2.2.3 and 3.0. This tests the machinery. How well
+All three pass with Python 3.10, 3.12 and 3.13, pandas 2.2.2, 2.2.3 and 3.0, and numpy 1.26 and 2. This tests the machinery. How well
 a given assistant follows SKILL.md in conversation still needs trying with real researchers and
 their data, in each of Claude, ChatGPT and Copilot.
 

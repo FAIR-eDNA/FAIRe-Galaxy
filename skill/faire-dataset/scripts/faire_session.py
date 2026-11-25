@@ -98,7 +98,7 @@ NEEDED = [('pandas', 'pandas', ''), ('openpyxl', 'openpyxl', ''), ('numpy', 'num
           ('pydantic', 'pydantic', 'FAIRe-fier, the check step'),
           ('jinja2', 'jinja2', "FAIRe-fier's highlighted workbook, in the check step"),
           ('yaml', 'pyyaml', 'the NCBI conversion, in the convert step')]
-TESTED = 'Python 3.10 and 3.13; pandas 2.2.3 and 3.0; openpyxl 3.1.5; pypdf 5.1 and 6.17; pydantic 2'
+TESTED = 'Python 3.10, 3.12 and 3.13; pandas 2.2.2, 2.2.3 and 3.0; numpy 1.26 and 2; openpyxl 3.1.5; pypdf 5.1 and 6.17; pydantic 2'
 
 VALUES_HEAD = ['term', 'value', 'assay', 'status', 'source']
 DECISIONS = ('Accept', 'Reject', 'Change')
