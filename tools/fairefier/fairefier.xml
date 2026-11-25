@@ -103,14 +103,6 @@ python '$__tool_directory__/fairefier_cli.py' input.xlsx
                 </assert_contents>
             </output>
             <output_collection name="workbooks" type="list" count="2">
-                <element name="fairefier_warn_error">
-                    <assert_contents>
-                        <has_archive_member path="xl/workbook.xml">
-                            <has_text text="name=&quot;projectMetadata_error&quot;"/>
-                            <has_text text="name=&quot;sampleMetadata_revise&quot;"/>
-                        </has_archive_member>
-                    </assert_contents>
-                </element>
                 <element name="fairefier_highlighted">
                     <assert_contents>
                         <has_archive_member path="xl/workbook.xml">
@@ -118,6 +110,14 @@ python '$__tool_directory__/fairefier_cli.py' input.xlsx
                         </has_archive_member>
                         <has_archive_member path="xl/comments/comment2.xml">
                             <has_text text="Closest option found. Suggested: sample"/>
+                        </has_archive_member>
+                    </assert_contents>
+                </element>
+                <element name="fairefier_warn_error">
+                    <assert_contents>
+                        <has_archive_member path="xl/workbook.xml">
+                            <has_text text="name=&quot;projectMetadata_error&quot;"/>
+                            <has_text text="name=&quot;sampleMetadata_revise&quot;"/>
                         </has_archive_member>
                     </assert_contents>
                 </element>
