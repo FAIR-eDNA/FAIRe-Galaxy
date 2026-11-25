@@ -235,7 +235,9 @@ Australian studies; `faire_mapper_seames/` runs every tool it can on CSIRO's SEA
 (Deagle et al. 2025), from the published sample sheets to the NCBI and ENA run tables (its four
 largest files are downloaded from the record, not stored here), and
 `demo/seames` holds a demonstration set cut from it (25 samples, 0.5 MB, same files and layouts); `faire2mdt/` compares the FAIRe2MDT wrapper with the script run by hand on
-the FAIRe examples; `faire_guide/` holds the shared help guide (below).
+the FAIRe examples; `faire_guide/` holds the shared help guide (below); `faire_sense_check/` is a
+prototype of a one-page visual check of a workbook before it goes to a repository (a map, dates,
+controls, reads, taxa and qPCR results, with a short list of things that look wrong).
 
 Every tool's help ends with the same guide, **Using the FAIRe tools in Galaxy**: where to start,
 the steps in order, what each tool needs, and which tool serves which repository. It is the token
