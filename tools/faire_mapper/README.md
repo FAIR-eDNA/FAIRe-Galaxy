@@ -43,13 +43,8 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   independent answer keys (`dev/faire_mapper_real_datasets/`, `dev/faire_mapper_australian_datasets/`,
   summarised below), and end to end on CSIRO's SEA-MES data (`dev/faire_mapper_seames/`). Not yet
   tried on datasets from Australian labs that already have a FAIRe version.
-- New in 0.12.2 (25 November 2026): *find primers* reads a citation written "Leray et al. (2013)".
-  It split methods text into sentences at every full stop followed by a capital or a bracket, so
-  "et al." ended a sentence and the year went with the next; the citation was not found, and the
-  eelgrass README gave no primers. A full stop after "et al." or an initial no longer ends a
-  sentence. On the other methods texts in this repository the results are the same, except that the
-  SEA-MES methods now also give the pairs of the two papers they cite this way (Leray et al. 2013;
-  Berry et al. 2017), ten candidates in place of eight.
+- New in 0.12.3 (25 November 2026), from running the Shiny app's demonstrations with no values
+  loaded for the whole project:
   - Find primers writes a tab inside a field (a line quoted from a table in the methods) as a space,
     so every row of its table has one field per column. The Shiny app could not read the khapra
     README's candidates.
@@ -58,6 +53,13 @@ model is used, as agreed; the tools are built so one can be added later (see bel
     khapra Latitude and Longitude, where the authors withheld the locations) in the review sheet.
     It left such columns out, so apply mapping kept them as the person's own terms and FAIRe-fier
     found decimalLatitude and decimalLongitude empty.
+- New in 0.12.2 (25 November 2026): *find primers* reads a citation written "Leray et al. (2013)".
+  It split methods text into sentences at every full stop followed by a capital or a bracket, so
+  "et al." ended a sentence and the year went with the next; the citation was not found, and the
+  eelgrass README gave no primers. A full stop after "et al." or an initial no longer ends a
+  sentence. On the other methods texts in this repository the results are the same, except that the
+  SEA-MES methods now also give the pairs of the two papers they cite this way (Leray et al. 2013;
+  Berry et al. 2017), ten candidates in place of eight.
 - New in 0.12.1 (25 November 2026): the workbook's README sheet opens with a summary: what to
   review before submitting (warnings in yellow, mandatory terms with no value in red), a table and
   a small bar chart of the reviewer's decisions, then the lines it had before.

@@ -446,7 +446,7 @@ and taxaRaw and the 48 curated fish taxa as otuFinal and taxaFinal. FAIRe-fier p
 a warning for each of the 9 columns kept as their own terms, which the checklist does not list.
 FAIRe2NCBI writes 13 BioSamples and 13 SRA rows, and FAIRe2ENA 13 samples and 13 experiments and runs.
 On 25 November 2026, with the values for the whole project found and typed as the Start page's steps
-say (version 0.12.2), the workbook had 62 FAIRe terms, FAIRe-fier passed both sheets, FAIRe2ENA wrote
+say (version 0.12.3), the workbook had 62 FAIRe terms, FAIRe-fier passed both sheets, FAIRe2ENA wrote
 the same experiments and runs, and FAIRe to Darwin Core wrote the same 108 records.
 (Tested 13 November 2026, up to the workbook through the app and the conversions from the command
 line with the app's settings. On 10 November, version 0.1.0 also ran FAIRe2MDT, which writes a
