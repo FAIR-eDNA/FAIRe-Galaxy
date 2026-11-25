@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build the faire-dataset skill package from this repository.
 
-The skill's own files (SKILL.md, references/, scripts/faire_session.py, scripts/tools/LICENSES.md) live
+The skill's own files (SKILL.md, references/, scripts/faire_session.py, scripts/LICENSES.md) live
 in skill/faire-dataset/. The FAIRe tools it runs are copied in from tools/ at build time, so the
 package always carries the repository's current tools, and references/faire_terms.md is made from the
 bundled FAIRe checklist.
@@ -29,6 +29,11 @@ MAPPER_FILES = ['faire_mapper.py', 'faire_mapper_amp.py', 'faire_mapper_apply.py
                 'commonly_confused_terms.tsv', 'mixs_dwc_terms.tsv', 'LICENSE']
 MAPPER_DIRS = ['checklist', 'method_details', 'primers']
 FAIREFIER_FILES = ['fairefier_cli.py', 'create_validator.py', 'config_data.py', 'LICENSE', 'LICENSE.upstream']
+# The file types Microsoft 365 Copilot accepts in a skill (resource files and scripts)
+COPILOT_TYPES = {'.json', '.xml', '.yaml', '.yml', '.ini', '.config', '.utf8', '.docx', '.doc', '.docm', '.pdf',
+                 '.txt', '.rtf', '.md', '.ppt', '.pptx', '.ppsm', '.xlsx', '.xls', '.xlsm', '.csv', '.tsv', '.html',
+                 '.htm', '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.log', '.py', '.js', '.mjs', '.cjs', '.ts', '.mts',
+                 '.sh', '.bash'}
 FAIREFIER_CHECKLISTS = ['FAIRe_checklist_v1.0.2.xlsx', 'FAIRe_checklist_v1.0.xlsx', 'LICENSE']
 # The converters the skill can run in a chat workspace: Python only, and no web services
 # (edna2obis needs WoRMS or GBIF, and FAIRe2MDT needs R, so they stay in the Shiny app and Galaxy).
@@ -89,7 +94,10 @@ def main(outdir=None):
     if pkg.exists():
         shutil.rmtree(pkg)
     shutil.copytree(SRC, pkg, ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
-    tools = pkg / 'scripts' / 'tools'
+    # The tool folders sit at the top of the skill (faire_mapper/, fairefier/, faire2dwc/ ...), so that no
+    # file is more than two folders down: Microsoft 365 Copilot refuses packages more than three folders
+    # deep. Copilot also accepts only some file types, so LICENSE files get a .txt ending.
+    tools = pkg
     (tools / 'faire_mapper').mkdir(parents=True, exist_ok=True)
     (tools / 'fairefier' / 'checklist').mkdir(parents=True, exist_ok=True)
     for f in MAPPER_FILES:
@@ -108,6 +116,9 @@ def main(outdir=None):
                 shutil.copytree(src, tools / tool / f, ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
             else:
                 shutil.copy(src, tools / tool / f)
+    for f in list(pkg.rglob('LICENSE*')):
+        if f.name in ('LICENSE', 'LICENSE.upstream'):
+            f.rename(f.with_name(f.name.replace('.', '_') + '.txt'))
     try:
         commit = subprocess.run(['git', '-C', str(REPO), 'log', '-1', '--format=%H %cs'], capture_output=True,
                                 text=True, check=True).stdout.strip()
@@ -117,9 +128,17 @@ def main(outdir=None):
             commit += ' (with uncommitted changes)'
     except (subprocess.CalledProcessError, FileNotFoundError):
         commit = 'unknown'
-    (tools / 'SOURCE_COMMIT').write_text(commit + '\n', encoding='utf-8')
+    (pkg / 'scripts' / 'SOURCE_COMMIT.txt').write_text(commit + '\n', encoding='utf-8')
     terms_reference(tools / 'faire_mapper' / 'checklist' / 'FAIRe_checklist_v1.0.2.xlsx',
                     pkg / 'references' / 'faire_terms.md')
+    files = [f for f in pkg.rglob('*') if f.is_file()]
+    deepest = max(len(f.relative_to(pkg).parts) - 1 for f in files)
+    assert deepest <= 2, f'a file in the package is {deepest} folders down'
+    odd = [str(f.relative_to(pkg)) for f in files if f.suffix.lower() not in COPILOT_TYPES]
+    assert not odd, f'file types Microsoft 365 Copilot does not accept: {odd}'
+    assert len(files) <= 350, f'{len(files)} files; Copilot takes at most 350'
+    n = len((pkg / 'SKILL.md').read_text(encoding='utf-8'))
+    assert n < 20000, f'SKILL.md has {n} characters; Copilot takes fewer than 20,000'
     z = out / 'faire-dataset.zip'
     if z.exists():
         z.unlink()
@@ -127,13 +146,22 @@ def main(outdir=None):
         for f in sorted(pkg.rglob('*')):
             if f.is_file():
                 zf.write(f, f.relative_to(out).as_posix())
+    # The same files with SKILL.md at the top of the zip, with no folder around them, as Microsoft 365
+    # Copilot's Upload skill expects
+    cz = out / 'faire-dataset-copilot.zip'
+    if cz.exists():
+        cz.unlink()
+    with zipfile.ZipFile(cz, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for f in sorted(pkg.rglob('*')):
+            if f.is_file():
+                zf.write(f, f.relative_to(pkg).as_posix())
     # The same skill as a plugin, for claude.ai accounts that add skills through Customize > Plugins
     plug = out / 'faire-dataset-plugin'
     if plug.exists():
         shutil.rmtree(plug)
     (plug / '.claude-plugin').mkdir(parents=True)
     shutil.copytree(pkg, plug / 'skills' / 'faire-dataset')
-    version = '1.3.0'
+    version = '1.3.1'
     (plug / '.claude-plugin' / 'plugin.json').write_text(json.dumps({
         'name': 'faire-dataset', 'displayName': 'FAIRe dataset assistant', 'version': version,
         'description': 'Helps eDNA researchers turn their sample sheets, methods and OTU or qPCR tables into a FAIRe '
@@ -150,7 +178,8 @@ def main(outdir=None):
             if f.is_file():
                 zf.write(f, f.relative_to(out).as_posix())
     size = z.stat().st_size / 1e6
-    print(f'Built {pkg}\n      {z} ({size:.1f} MB), FAIRe-Galaxy {commit}\n      {pz} (the same skill as a plugin)')
+    print(f'Built {pkg}\n      {z} ({size:.1f} MB), FAIRe-Galaxy {commit}\n      {pz} (the same skill as a plugin)'
+          f'\n      {cz} (the same skill with SKILL.md at the top, for Microsoft 365 Copilot)')
 
 
 if __name__ == '__main__':

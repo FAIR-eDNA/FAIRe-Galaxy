@@ -19,9 +19,11 @@ Download the zip for your assistant from the latest release of this repository:
 - [faire-dataset-plugin.zip](https://github.com/FAIR-eDNA/FAIRe-Galaxy/releases/latest/download/faire-dataset-plugin.zip),
   the skill packaged as a plugin, for Claude's *Plugins* menu;
 - [faire-dataset.zip](https://github.com/FAIR-eDNA/FAIRe-Galaxy/releases/latest/download/faire-dataset.zip),
-  for Claude's *Skills* menu, ChatGPT, Microsoft 365 Copilot and coding assistants.
+  for Claude's *Skills* menu, ChatGPT and coding assistants;
+- [faire-dataset-copilot.zip](https://github.com/FAIR-eDNA/FAIRe-Galaxy/releases/latest/download/faire-dataset-copilot.zip),
+  the same files with `SKILL.md` at the top of the zip, for Microsoft 365 Copilot.
 
-Each [release](https://github.com/FAIR-eDNA/FAIRe-Galaxy/releases) carries both, built from that
+Each [release](https://github.com/FAIR-eDNA/FAIRe-Galaxy/releases) carries all three, built from that
 release's code. Then follow the steps for your assistant below.
 
 ### Which assistants it works in
@@ -34,7 +36,7 @@ Trials so far:
 |---|---|
 | Claude (Max) | Works: added as a plugin, and run on the khapra beetle data |
 | ChatGPT (free plan) | Could not be added: the free plan does not allow skills |
-| Microsoft 365 Copilot | Not yet added: organisations can turn off skills or agent building |
+| Microsoft 365 Copilot (Premium) | Skill upload available; `faire-dataset-copilot.zip` being tried. Organisations can turn off skills or agent building |
 
 ### Claude (claude.ai, desktop and mobile apps)
 
@@ -62,7 +64,10 @@ Skills are added to a declarative agent, made in Agent Builder:
 1. Create an agent (for example *FAIRe dataset assistant*), with short instructions such as *"Help
    eDNA researchers make FAIRe datasets with the faire-dataset skill."*
 2. Turn on the *Code interpreter* capability.
-3. Add the skill: upload `faire-dataset.zip`.
+3. Add the skill: upload `faire-dataset-copilot.zip`. Copilot wants `SKILL.md` at the top of the zip,
+   no file more than three folders down, at most 350 files, only some file types (Python, Markdown,
+   text, TSV, Excel and the like) and instructions under 20,000 characters; the build checks all of
+   these.
 
 This needs a Microsoft 365 Copilot licence, and an organisation can turn off skills or agent
 building; ask your IT team if the options above are missing. Once it can be added, the first thing to
@@ -119,10 +124,13 @@ faire-dataset/
     faire_terms.md          the mandatory and highly recommended FAIRe terms (made from the checklist)
     commands.md             every command of faire_session.py
     advisor_mode.md         how to help when the assistant cannot run code
+    converting.md           what each conversion needs from the researcher
   scripts/
     faire_session.py        runs the tools one step at a time and keeps the session's decisions
-    tools/                  copies of the FAIRe mapper, FAIRe-fier and the Python converters from tools/,
-                            with their licences
+    LICENSES.md             the licences of the bundled tools and data
+    SOURCE_COMMIT.txt       the FAIRe-Galaxy commit the tools were copied from
+  faire_mapper/, fairefier/, faire2dwc/, faire2ncbi/, faire2ena/, faire2qiime/
+                            copies of the FAIRe mapper, FAIRe-fier and the Python converters from tools/
 ```
 
 The assistant never writes the workbook itself. `faire_session.py` runs FAIRe mapper (identify,
@@ -139,8 +147,10 @@ python skill/build_skill.py            # writes skill/dist/faire-dataset.zip and
 
 The build copies the current tools from `tools/faire_mapper`, `tools/fairefier` and the four Python
 converters (`tools/faire2dwc`, `faire2ncbi`, `faire2ena`, `faire2qiime`), makes
-`references/faire_terms.md` from the checklist, and records the commit in
-`scripts/tools/SOURCE_COMMIT`. Rebuild after any change to the tools, so the package and the Galaxy
+`references/faire_terms.md` from the checklist, and records the commit in `SOURCE_COMMIT.txt`. The
+tool folders sit at the top of the skill, and each `LICENSE` file gets a `.txt` ending, to meet
+Microsoft 365 Copilot's limits on folder depth and file types. Rebuild after any change to the tools,
+so the package and the Galaxy
 tools stay the same. The zip is about 1 MB.
 
 When a release is published on GitHub, the workflow `.github/workflows/skill_release.yaml` builds
@@ -188,7 +198,7 @@ their data, in each of Claude, ChatGPT and Copilot.
 ## Licences
 
 `SKILL.md`, `references/` and `faire_session.py` are MIT, as the rest of this repository. The bundled
-tools and data keep their own licences, listed in `scripts/tools/LICENSES.md`: the FAIRe checklist is
+tools and data keep their own licences, listed in `scripts/LICENSES.md`: the FAIRe checklist is
 CC BY 4.0, FAIRe-fier is BSD 3-Clause, FAIRe2NCBI and faire2qiime are CC0 1.0, FAIRe2ENA is MIT, and
 most rows of the primer table come from Takahashi et al.
 2023 under CC BY-NC 4.0.

@@ -45,12 +45,15 @@ import zipfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-MAPPER = HERE / 'tools' / 'faire_mapper'
-FAIREFIER = HERE / 'tools' / 'fairefier'
+
+
+# The bundled tools sit at the top of the skill, beside SKILL.md (faire_mapper/, fairefier/, faire2dwc/ ...)
+TOOLS = HERE.parent
+MAPPER = TOOLS / 'faire_mapper'
+FAIREFIER = TOOLS / 'fairefier'
 CHECKLIST = MAPPER / 'checklist' / 'FAIRe_checklist_v1.0.2.xlsx'
 TEMPLATE = MAPPER / 'checklist' / 'FAIRe_checklist_v1.0.2_FULLtemplate.xlsx'
 CONFUSED = MAPPER / 'commonly_confused_terms.tsv'
-TOOLS = HERE / 'tools'
 
 NEEDED = [('pandas', 'pandas', ''), ('openpyxl', 'openpyxl', ''), ('numpy', 'numpy', ''),
           ('pypdf', 'pypdf', 'reading methods given as PDF; text files still work'),
@@ -151,7 +154,7 @@ def cmd_setup(args):
     if missing and not args.install:
         print('Install with:  pip install ' + ' '.join(m for m, _ in missing)
               + '   (or run setup --install; add --break-system-packages if pip refuses the system Python)')
-    commit = HERE / 'tools' / 'SOURCE_COMMIT'
+    commit = HERE / 'SOURCE_COMMIT.txt'
     print(f'FAIRe tools: FAIRe-Galaxy commit {commit.read_text().split()[0][:7] if commit.exists() else "unknown"}'
           f'; tested with {TESTED}.')
     if essential:

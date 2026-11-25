@@ -1,7 +1,7 @@
 ---
 name: faire-dataset
 description: Helps an eDNA researcher turn their sample sheet, methods and OTU or qPCR tables into a checked FAIRe (FAIR eDNA) workbook, in conversation, and convert it for GBIF, OBIS, NCBI or ENA.
-license: MIT; the bundled tools and data keep their own licences (scripts/tools/LICENSES.md)
+license: MIT; the bundled tools and data keep their own licences (scripts/LICENSES.md)
 ---
 
 # Making a FAIRe eDNA dataset in conversation
@@ -10,9 +10,9 @@ You help an eDNA researcher turn the files they already have (a sample sheet, th
 or protocol, OTU or ASV tables, qPCR results, run reports) into a FAIRe metadata workbook. FAIRe is the
 FAIR eDNA metadata standard (https://fair-edna.github.io).
 
-The work is done by the FAIRe tools from the FAIRe-Galaxy project, bundled in `scripts/tools/`.
-`scripts/faire_session.py` runs them one step at a time, keeps the researcher's decisions, and prints
-what each step found. Your job is the conversation: explain, ask, record the answers, and keep the
+The work is done by the FAIRe tools from the FAIRe-Galaxy project, bundled in the folders beside this
+file (`faire_mapper/`, `fairefier/` and the converters). `scripts/faire_session.py` runs them one
+step at a time, keeps the researcher's decisions, and prints what each step found. Your job is the conversation: explain, ask, record the answers, and keep the
 researcher in charge of every decision.
 
 ## Ground rules
@@ -143,15 +143,12 @@ describes the columns makes a good dictionary).
 **Additional checks first.** If `map` lists additional checks (repeated sample names, controls not
 marked, notes in the first rows, dates that read two ways), settle them before the columns, as they
 change the table. Take them one at a time, each with your proposed correction as the first choice,
-and make each correction in a copy with `table` as soon as it is agreed, for example:
-
-- a sample name typed twice: `table set "Sample ID" --value 9B --where "Sample ID=8B" --nth 2`
-- controls named but not marked: `table add-column "Sample type" --value sample`, then
-  `table set "Sample type" --value "negative control" --where "Sample ID~^Blank"`, and a
-  `Control type` column the same way (field negative, extraction negative, PCR negative ...)
-- notes that describe the whole study: `table drop-column "Collected by"`, and record what FAIRe
-  needs from them with `set` (recordedBy, for example)
-- dates that read either way: ask, then `start --date_order dmy` (or `mdy`)
+and make each correction in a copy with `table` as soon as it is agreed (`references/commands.md`):
+a sample name typed twice (`table set ... --where ... --nth 2`), controls named but not marked
+(`table add-column "Sample type"`, then `table set` with `--where "Sample ID~^Blank"`, and a
+`Control type` column the same way), notes that describe the whole study (`table drop-column`, then
+record what FAIRe needs from them with `set`), dates that read either way (ask, then
+`start --date_order dmy` or `mdy`).
 
 Give a `--reason` with each correction. Then run `map` again (`map --again` keeps decisions made so far).
 Other tables can be corrected the same way with `--file`: qPCR results, for example, need an assay
@@ -257,20 +254,9 @@ plans to use. Ask one question, as a checklist, with these choices:
 If FAIRe-fier found errors, say that converting now gives a draft only, and suggest fixing the errors
 first. Run `convert` with `--anyway` only if they still want the draft.
 
-Before each conversion, ask for what it needs, one question at a time, and never invent these:
-
-- **gbif**: the licence (CC0-1.0, CC-BY-4.0 or CC-BY-NC-4.0), and the name, organisation and email
-  of the dataset contact (`--licence`, `--given_name`, `--surname`, `--organisation`, `--email`,
-  `--orcid`). Ask whether it is for GBIF, OBIS or both (`--publish_to`). For targeted assays,
-  absence records are written unless they say otherwise (`--no_absences`). If kingdom or other
-  ranks are empty, offer to make a small taxon table (name, scientificName, kingdom ...) with them
-  and pass it with `--taxa`; OBIS needs WoRMS IDs in scientificNameID.
-- **ncbi**: which metagenome the samples are (`--organism`, such as freshwater metagenome), and the
-  BioProject accession if they have one.
-- **ena**: the centre name of their ENA Webin account (`--center_name`), and the NCBI taxonomy ID
-  of the metagenome (`--taxon_id`).
-- **qiime**: the column that names the samples (`--sample_name_column`, default lib_id) and the
-  folder of the fastq files (`--sequences_folder`), for the manifests.
+Before each conversion, ask for what it needs, one question at a time, as listed in
+`references/converting.md` (licence and contact for GBIF, the metagenome for NCBI, the Webin centre
+name for ENA). Never invent these.
 
 `convert` prints the files it wrote, the messages to go through with the researcher, and what to do
 with the files. Go through every message. A converter may stop and list what it needs (an empty
