@@ -1,4 +1,4 @@
-# FAIRe-Galaxy
+# FAIRe-Galaxy - making it easy to share your eDNA data
 
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.24489371-blue)](https://doi.org/10.5281/zenodo.24489371)
 
