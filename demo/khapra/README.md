@@ -44,13 +44,14 @@ It runs each step as a person would in Galaxy or the Shiny app:
    following the mapper's guide adds before mapping, and leave the published files unchanged:
    - a *Category* column (sample, negative control or positive control) and the control types;
    - the state, so geo_loc_name reads *Australia: Australian Capital Territory, Tuggeranong*;
-   - coordinates for the samples (see below);
+   - *Latitude* and *Longitude* as "missing: restricted access", as the authors withheld the
+     stores' locations (see below);
    - ENVO terms: urban biome, shop, and dust or air;
    - for the results, an assay name for each assay and machine (OlsonViiA7, OlsonFranklin,
      FuruiViiA7 and FuruiFranklin), as FAIRe treats each combination as an assay with its own
      conditions.
 2. **Propose mapping** on the sample table, with the Dryad README as its data dictionary, then the
-   reviewer's decisions (`reviewer_decisions.tsv`, 4 rows).
+   reviewer's decisions (`reviewer_decisions.tsv`, 3 rows).
 3. **Find method details** in the README, to compare with the project values.
 4. **Apply mapping**, with the qPCR results. This writes the reactions to ampData and works out
    detected_notDetected for each sample and assay. The project values (`project_values.tsv`) give
@@ -62,13 +63,12 @@ It runs each step as a person would in Galaxy or the Shiny app:
 
 ## What you should see
 
-- FAIRe-fier: *Success* for projectMetadata and sampleMetadata. It warns that the coordinates have
-  fewer than the five decimal places it recommends (they are district and suburb centres, so more
-  digits would claim a precision they lack), and about the two columns kept as user-defined fields
-  (coordinateUncertaintyInMeters and sample_type).
+- FAIRe-fier: *Success* for projectMetadata and sampleMetadata. It warns only about the column kept
+  as a user-defined field (sample_type).
 - Apply mapping warns about one Cq of 0, 23 OlsonViiA7 reactions with a Cq above the assay's 50
   cycles and 49 FuruiViiA7 reactions above 45 (see below).
-- FAIRe to Darwin Core writes 162 records, with the 33 controls left out:
+- FAIRe to Darwin Core writes 162 records, with the 33 controls left out. Its report notes that
+  decimalLatitude is empty in every record, which GBIF recommends and OBIS requires:
 
   | Assay | Present | Absent | Not written |
   |---|---|---|---|
@@ -85,10 +85,12 @@ authors.
 
 ## Things to know about these data
 
-- **Locations were withheld.** The authors left out the stores' locations as sensitive. The
-  coordinates are the centres of the Tuggeranong district and the suburb of Fyshwick, with an
-  uncertainty of 10 km and 3 km. informationWithheld and dataGeneralizations say so, and both go to
-  GBIF with each record.
+- **Locations were withheld.** The authors left out the stores' locations as sensitive, and the
+  published files have no coordinates. The workbook gives decimalLatitude and decimalLongitude as
+  "missing: restricted access", and only the district or suburb the authors name (Tuggeranong,
+  Fyshwick) in geo_loc_name. informationWithheld says so and goes to GBIF with each record, whose
+  locality is the district or suburb. No coordinates are made up from the place names: that would
+  add a position the authors chose not to give.
 - **Field negative controls amplified.** The paper reports positive replicates in field controls
   from both stores (8 of 65 at Tuggeranong, 6 of 12 at Fyshwick), and the Fyshwick samples were
   collected with a vacuum cleaner used in an earlier khapra beetle response. Some present records may

@@ -1,7 +1,5 @@
 # FAIRe-Galaxy - making it easy to share your eDNA data
 
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.24489371-blue)](https://doi.org/10.5281/zenodo.24489371)
-
 Environmental DNA (eDNA) data are most valuable when other people can find, understand and reuse
 them. The FAIR eDNA (FAIRe) metadata standard describes how to record an eDNA study so that its
 data are Findable, Accessible, Interoperable and Reusable, and the eDNA community has written a set
@@ -86,8 +84,8 @@ steps still needed before deployment.
 If you use these tools, please cite three things:
 
 - **This collection**: Berry O, Takahashi M, Bayer P, Coclet C, Formel S, Silliman K, Thompson LR,
-  Willms B, Yong SY (2026). FAIRe-Galaxy: tools for making, checking and sharing FAIR eDNA (FAIRe)
-  datasets. Zenodo. https://doi.org/10.5281/zenodo.24489371
+  Willms B, Yong SY, Jeppesen TS, Frøslev TG (2026). FAIRe-Galaxy: tools for making, checking and
+  sharing FAIR eDNA (FAIRe) datasets. https://github.com/FAIR-eDNA/FAIRe-Galaxy
 - **The FAIRe checklist paper**: Takahashi M, Frøslev TG, Paupério J, et al. (2025). A metadata
   checklist and data formatting guidelines to make eDNA FAIR (Findable, Accessible, Interoperable,
   and Reusable). *Environmental DNA* 7(3): e70100. https://doi.org/10.1002/edn3.70100

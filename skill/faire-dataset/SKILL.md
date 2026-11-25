@@ -1,7 +1,6 @@
 ---
 name: faire-dataset
 description: Helps an eDNA researcher turn their sample sheet, methods and OTU or qPCR tables into a checked FAIRe (FAIR eDNA) workbook, in conversation, and convert it for GBIF, OBIS, NCBI or ENA.
-license: MIT; the bundled tools and data keep their own licences (scripts/tools/LICENSES.md)
 ---
 
 # Making a FAIRe eDNA dataset in conversation
@@ -10,9 +9,11 @@ You help an eDNA researcher turn the files they already have (a sample sheet, th
 or protocol, OTU or ASV tables, qPCR results, run reports) into a FAIRe metadata workbook. FAIRe is the
 FAIR eDNA metadata standard (https://fair-edna.github.io).
 
-The work is done by the FAIRe tools from the FAIRe-Galaxy project, bundled in `scripts/tools/`.
-`scripts/faire_session.py` runs them one step at a time, keeps the researcher's decisions, and prints
-what each step found. Your job is the conversation: explain, ask, record the answers, and keep the
+The work is done by the FAIRe tools from the FAIRe-Galaxy project (the FAIRe mapper, FAIRe-fier and
+the converters), bundled with their code in `scripts/` and their data in `assets/` (the FAIRe
+checklist, the primer table, the term lists; `assets/tool-layout.json` says where each goes). Run only
+`scripts/faire_session.py`: it puts the tools together on first use, runs them one step at a time,
+keeps the researcher's decisions, and prints what each step found. Licences: `references/licences.md`. Your job is the conversation: explain, ask, record the answers, and keep the
 researcher in charge of every decision.
 
 ## Ground rules
@@ -44,6 +45,10 @@ Researchers find it hard to answer several questions in one reply, so:
   next. Take the decisions that change the table first (repeated names, controls, note columns),
   then the columns, then the methods, then the gaps. Say how many are left now and then ("3 more
   about the table, then the columns").
+- **Show the proposal before asking.** Put the proposed value itself in the message or in the
+  choice (the term and identifier, the column and term, the value and the sentence it came from).
+  Never ask the researcher to accept something they have not yet seen, such as "Use what you
+  suggest".
 - **Offer your proposal as the first choice.** If your platform has a tool for multiple-choice
   questions with buttons (Claude's ask-user-input tool, for example), use it for every decision:
   the first option is your proposal, marked as recommended ("Yes, rename it 9B"), then one to three
@@ -62,7 +67,7 @@ Researchers find it hard to answer several questions in one reply, so:
 ## Before you start: can you run code?
 
 If you can run Python and read uploaded files in a workspace, follow the steps below (agent mode).
-If you cannot, read `references/advisor_mode.md` and follow it instead.
+If you cannot, read `references/advisor-mode.md` and follow it instead.
 
 All commands below are `python3 ${CLAUDE_SKILL_DIR}/scripts/faire_session.py COMMAND ...`, run from
 a folder where the session can keep its files (it makes `faire_work/`). Where `${CLAUDE_SKILL_DIR}` is
@@ -103,7 +108,7 @@ has them; see "How to ask"):
 - **share everything**: the files are cleared to share, and the workbook is built here;
 - **share less**: only the column headings and a few rows of the sample sheet, and the methods. The
   decisions are recorded here, and the researcher builds the workbook on their own computer with the
-  FAIRe tools Shiny app or in Galaxy (Step 9 says how; `references/data_care.md` has the details);
+  FAIRe tools Shiny app or in Galaxy (Step 9 says how; `references/data-care.md` has the details);
 - **work offline**: use the FAIRe tools Shiny app on their own computer for the whole job
   (https://github.com/FAIR-eDNA/FAIRe-Galaxy, folder `shiny`).
 
@@ -143,15 +148,12 @@ describes the columns makes a good dictionary).
 **Additional checks first.** If `map` lists additional checks (repeated sample names, controls not
 marked, notes in the first rows, dates that read two ways), settle them before the columns, as they
 change the table. Take them one at a time, each with your proposed correction as the first choice,
-and make each correction in a copy with `table` as soon as it is agreed, for example:
-
-- a sample name typed twice: `table set "Sample ID" --value 9B --where "Sample ID=8B" --nth 2`
-- controls named but not marked: `table add-column "Sample type" --value sample`, then
-  `table set "Sample type" --value "negative control" --where "Sample ID~^Blank"`, and a
-  `Control type` column the same way (field negative, extraction negative, PCR negative ...)
-- notes that describe the whole study: `table drop-column "Collected by"`, and record what FAIRe
-  needs from them with `set` (recordedBy, for example)
-- dates that read either way: ask, then `start --date_order dmy` (or `mdy`)
+and make each correction in a copy with `table` as soon as it is agreed (`references/commands.md`):
+a sample name typed twice (`table set ... --where ... --nth 2`), controls named but not marked
+(`table add-column "Sample type"`, then `table set` with `--where "Sample ID~^Blank"`, and a
+`Control type` column the same way), notes that describe the whole study (`table drop-column`, then
+record what FAIRe needs from them with `set`), dates that read either way (ask, then
+`start --date_order dmy` or `mdy`).
 
 Give a `--reason` with each correction. Then run `map` again (`map --again` keeps decisions made so far).
 Other tables can be corrected the same way with `--file`: qPCR results, for example, need an assay
@@ -202,9 +204,10 @@ comes from a document). `set` checks the term and its allowed values. Typical ga
 
 - **project_contact** (an email) and **recordedBy** (people responsible, separated by ` | `)
 - **env_broad_scale, env_local_scale, env_medium**: ENVO terms written as `label [ENVO:00000000]`.
-  Suggest suitable labels; take identifiers only from the ENVO ontology itself (the EBI Ontology
-  Lookup Service, https://www.ebi.ac.uk/ols4/ontologies/envo, if you can search the web, or from the
-  researcher). If neither is possible, record the label alone and say it needs its identifier.
+  Search the bundled ENVO before proposing: `envo WORDING ... --term env_medium`, with several
+  wordings (the material, the place, synonyms, a broader word: `envo dust "house dust" particulate`).
+  Show the closest few with their definitions and narrower terms, and propose the most specific class
+  the study supports. `set` checks each identifier against ENVO; never take one from memory.
 - **targetTaxonomicAssay** (what the primers amplify) for each assay; it is often confused with
   targetTaxonomicScope (what the study set out to detect): ask which is meant.
 - **controls**: neg_cont_0_1 and pos_cont_0_1 (1 or 0), and the control type of each control.
@@ -219,8 +222,8 @@ two facts, such as 500 mL when half of a 1 L filter was extracted, is your sugge
 got it. Say the other terms can be added later, and do not ask about them one by one.
 
 Some values are judgement calls for the person entering the data (see "Judgement calls" in
-`references/faire_rules.md`): give the readings in a sentence, propose one, and take their choice.
-`references/faire_rules.md` also has the FAIRe conventions to follow (missing values, local time,
+`references/faire-rules.md`): give the readings in a sentence, propose one, and take their choice.
+`references/faire-rules.md` also has the FAIRe conventions to follow (missing values, local time,
 sample names, separate runs).
 
 ## Step 7. Build and check
@@ -239,14 +242,18 @@ they are separate. `references/commands.md` has every option. Tell the researche
 about the warnings, the commonly confused terms and any mandatory term still empty; fix what you can
 with them, and build again.
 
-Then run `check` (FAIRe-fier). Explain errors and the most common warnings in a sentence each, fix
-what can be fixed, build and check again. Coordinates with fewer than five decimal places and similar
+Then run `check` (FAIRe-fier). Explain errors and the most common warnings in a sentence each, and
+give the researcher `check/fairefier_highlighted.xlsx` (problem cells yellow or red, each with a
+note). Fix what can be fixed, build and check again. Coordinates with fewer than five decimal places and similar
 warnings can stay if the data were recorded that way.
 
 ## Step 8. Offer conversion
 
-Once the workbook is checked, offer to convert it for the databases and archives the researcher
-plans to use. Ask one question, as a checklist, with these choices:
+GBIF, OBIS, NCBI and ENA need at least every mandatory FAIRe term, so `convert` runs only when the
+workbook has them all and FAIRe-fier finds no errors. Until then, do not offer conversion or run a
+converter any other way: say why, and go back to Step 6 for the mandatory terms still empty (a value,
+or a FAIRe missing-value term where it is truly unknown). Then offer to convert it for the databases
+and archives the researcher plans to use. Ask one question, as a checklist, with these choices:
 
 - GBIF or OBIS: a Darwin Core archive of occurrence records (`convert gbif`)
 - NCBI: BioSample table, and SRA table for metabarcoding (`convert ncbi`)
@@ -254,23 +261,9 @@ plans to use. Ask one question, as a checklist, with these choices:
 - QIIME 2: sample metadata and manifests (`convert qiime`)
 - None for now
 
-If FAIRe-fier found errors, say that converting now gives a draft only, and suggest fixing the errors
-first. Run `convert` with `--anyway` only if they still want the draft.
-
-Before each conversion, ask for what it needs, one question at a time, and never invent these:
-
-- **gbif**: the licence (CC0-1.0, CC-BY-4.0 or CC-BY-NC-4.0), and the name, organisation and email
-  of the dataset contact (`--licence`, `--given_name`, `--surname`, `--organisation`, `--email`,
-  `--orcid`). Ask whether it is for GBIF, OBIS or both (`--publish_to`). For targeted assays,
-  absence records are written unless they say otherwise (`--no_absences`). If kingdom or other
-  ranks are empty, offer to make a small taxon table (name, scientificName, kingdom ...) with them
-  and pass it with `--taxa`; OBIS needs WoRMS IDs in scientificNameID.
-- **ncbi**: which metagenome the samples are (`--organism`, such as freshwater metagenome), and the
-  BioProject accession if they have one.
-- **ena**: the centre name of their ENA Webin account (`--center_name`), and the NCBI taxonomy ID
-  of the metagenome (`--taxon_id`).
-- **qiime**: the column that names the samples (`--sample_name_column`, default lib_id) and the
-  folder of the fastq files (`--sequences_folder`), for the manifests.
+Before each conversion, ask for what it needs, one question at a time, as listed in
+`references/converting.md` (licence and contact for GBIF, the metagenome for NCBI, the Webin centre
+name for ENA). Never invent these.
 
 `convert` prints the files it wrote, the messages to go through with the researcher, and what to do
 with the files. Go through every message. A converter may stop and list what it needs (an empty

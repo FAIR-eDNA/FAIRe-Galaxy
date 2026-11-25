@@ -4,6 +4,17 @@ These come from the FAIRe guidelines (https://fair-edna.github.io/guidelines.htm
 checklist v1.0.2 bundled with the tools, and what trials of the FAIRe tools on published datasets
 showed people most often get wrong.
 
+## Contents
+
+- Missing values
+- Dates and times
+- Samples, controls, assays and runs
+- Commonly confused terms
+- Values that must come from a source
+- Terms not in FAIRe
+- Judgement calls
+- Minimum or complete
+
 ## Missing values
 
 When a mandatory term has no value, FAIRe uses the INSDC missing-value terms, and recommends them
@@ -63,9 +74,13 @@ Always ask the question that tells these apart, however strong the match:
   (`methods`, `primers-lookup`, `primers-use`), or as the researcher gives them.
 - **Instruments**: the methods tool adds OBI identifiers from its vocabulary. Do not add others from
   memory.
-- **ENVO terms** (env_broad_scale, env_local_scale, env_medium): `label [ENVO:00000000]`, with the
-  identifier checked in the ENVO ontology (https://www.ebi.ac.uk/ols4/ontologies/envo) or given by
-  the researcher.
+- **ENVO terms** (env_broad_scale, env_local_scale, env_medium): `label [ENVO:00000000]`, with
+  ENVO's own label (not a synonym), found with `envo` in the bundled ENVO release
+  (`assets/envo-terms.tsv`) or given by the researcher. env_broad_scale takes a biome, env_local_scale
+  a place, feature or construction near the sample (a reef, a river, a shop), and env_medium the
+  material sampled (water, soil, dust). `set` stops on an identifier that is not in ENVO or does not
+  match its label, and notes a class from an unusual branch. A newer ENVO release may have terms the
+  bundled one lacks; the researcher can check https://www.ebi.ac.uk/ols4/ontologies/envo.
 - **People and contacts**: only as the researcher gives them. recordedBy lists names separated by
   ` | `; project_contact is an email.
 
@@ -96,5 +111,5 @@ later uses of the data than the samples, dates, places, controls and taxa. Examp
 
 The mandatory terms (some only under conditions) make a minimum dataset. After them,
 `gaps --recommended` lists the highly recommended terms still empty that can apply to the study;
-`references/faire_terms.md` lists both. Offer only those the files or the researcher can answer, as
+`references/faire-terms.md` lists both. Offer only those the files or the researcher can answer, as
 one checklist; do not ask about every optional term.

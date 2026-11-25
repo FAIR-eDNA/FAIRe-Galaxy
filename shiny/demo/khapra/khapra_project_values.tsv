@@ -5,8 +5,7 @@ recordedBy	Alejandro Trujillo-González | Thomas Wallenius
 institution	University of Canberra
 license	http://creativecommons.org/publicdomain/zero/1.0/legalcode
 bibliographicCitation	Trujillo-González A, Thuo DN, Divi U, Sparks K, Wallenius T, Gleeson D (2022) Data from: Detection of khapra beetle environmental DNA using portable technologies in Australian biosecurity. Dryad. https://doi.org/10.5061/dryad.jwstqjq96
-informationWithheld	Locations of the retail stores sampled, withheld by the authors as sensitive and potentially identifying
-dataGeneralizations	Coordinates are the centre of the place the authors name (Tuggeranong district or Fyshwick suburb), with an uncertainty that covers it
+informationWithheld	Locations of the retail stores sampled, withheld by the authors as sensitive and potentially identifying; only the district or suburb is given (geo_loc_name)
 pcr_0_1	1
 neg_cont_0_1	1
 pos_cont_0_1	1

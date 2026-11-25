@@ -27,6 +27,7 @@ Steps, in order (python faire_session.py STEP --help for each):
   gaps           list the mandatory FAIRe terms still without a value
   build          write the FAIRe workbook
   check          check the workbook with FAIRe-fier
+  envo           search the bundled ENVO for env_broad_scale, env_local_scale and env_medium
   convert        convert the checked workbook for NCBI, ENA, GBIF or OBIS, or QIIME 2
   summary        write the handover folder: the files, and where every value came from
   status         what has been done so far, and what is next
@@ -45,19 +46,60 @@ import zipfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-MAPPER = HERE / 'tools' / 'faire_mapper'
-FAIREFIER = HERE / 'tools' / 'fairefier'
+
+
+SKILL = HERE.parent
+
+
+def tools_dir():
+    """The FAIRe tools, in their usual layout. The skill package keeps their code in scripts/ and their data
+    in assets/, as skill packages expect; assets/tool-layout.json says where each file goes. They are put
+    back together once, in a folder the workspace can write to, and found there on later calls."""
+    import hashlib
+    import tempfile
+    lay = SKILL / 'assets' / 'tool-layout.json'
+    if not lay.exists():
+        sys.exit('assets/tool-layout.json is missing: this copy of the skill is incomplete.')
+    tag = hashlib.sha1(lay.read_bytes()).hexdigest()[:12]
+    files = json.loads(lay.read_text(encoding='utf-8'))['files']
+    user = getattr(os, 'getuid', lambda: 0)()
+    for base in (Path(tempfile.gettempdir()), Path.home() / '.cache'):
+        dest = base / f'faire_tools_{user}_{tag}'
+        try:
+            if (dest / '.complete').exists():
+                return dest
+            base.mkdir(parents=True, exist_ok=True)
+            tmp = Path(tempfile.mkdtemp(prefix='faire_tools_tmp_', dir=base))
+            for src, info in files.items():
+                for to in info['to']:
+                    (tmp / to).parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy(SKILL / src, tmp / to)
+            (tmp / '.complete').write_text(tag + '\n', encoding='utf-8')
+            try:
+                tmp.rename(dest)
+            except OSError:  # put together at the same moment by another call
+                shutil.rmtree(tmp, ignore_errors=True)
+            if (dest / '.complete').exists():
+                return dest
+        except OSError:
+            continue
+    sys.exit('Could not put the FAIRe tools together: no folder in this workspace can be written to. '
+             'Use advisor mode (references/advisor-mode.md).')
+
+
+TOOLS = tools_dir()
+MAPPER = TOOLS / 'faire_mapper'
+FAIREFIER = TOOLS / 'fairefier'
 CHECKLIST = MAPPER / 'checklist' / 'FAIRe_checklist_v1.0.2.xlsx'
 TEMPLATE = MAPPER / 'checklist' / 'FAIRe_checklist_v1.0.2_FULLtemplate.xlsx'
 CONFUSED = MAPPER / 'commonly_confused_terms.tsv'
-TOOLS = HERE / 'tools'
 
 NEEDED = [('pandas', 'pandas', ''), ('openpyxl', 'openpyxl', ''), ('numpy', 'numpy', ''),
           ('pypdf', 'pypdf', 'reading methods given as PDF; text files still work'),
           ('pydantic', 'pydantic', 'FAIRe-fier, the check step'),
           ('jinja2', 'jinja2', "FAIRe-fier's highlighted workbook, in the check step"),
           ('yaml', 'pyyaml', 'the NCBI conversion, in the convert step')]
-TESTED = 'Python 3.10 and 3.13; pandas 2.2.3 and 3.0; openpyxl 3.1.5; pypdf 5.1 and 6.17; pydantic 2'
+TESTED = 'Python 3.10, 3.12 and 3.13; pandas 2.2.2, 2.2.3 and 3.0; numpy 1.26 and 2; openpyxl 3.1.5; pypdf 5.1 and 6.17; pydantic 2'
 
 VALUES_HEAD = ['term', 'value', 'assay', 'status', 'source']
 DECISIONS = ('Accept', 'Reject', 'Change')
@@ -151,12 +193,12 @@ def cmd_setup(args):
     if missing and not args.install:
         print('Install with:  pip install ' + ' '.join(m for m, _ in missing)
               + '   (or run setup --install; add --break-system-packages if pip refuses the system Python)')
-    commit = HERE / 'tools' / 'SOURCE_COMMIT'
+    commit = SKILL / 'references' / 'source-commit.txt'
     print(f'FAIRe tools: FAIRe-Galaxy commit {commit.read_text().split()[0][:7] if commit.exists() else "unknown"}'
           f'; tested with {TESTED}.')
     if essential:
         print('Not ready: the tools cannot run without ' + ', '.join(essential) + '. If they cannot be installed '
-              'here, use advisor mode (references/advisor_mode.md).')
+              'here, use advisor mode (references/advisor-mode.md).')
         return 1
     print('Ready.' if not missing else 'Ready, except for the steps named above.')
     return 0
@@ -1171,6 +1213,155 @@ def methods_conflicts(w, s, term, value, assay):
     return out[:3]
 
 
+# ---------------------------------------------------------------- ENVO
+
+ENVO_TABLE = SKILL / 'assets' / 'envo-terms.tsv'
+# Which ENVO branches suit each habitat term (MIxS and FAIRe guidance)
+ENVO_FITS = {'env_broad_scale': ('biome',),
+             'env_local_scale': ('astronomical body part', 'construction', 'environmental system',
+                                 'other material entity'),
+             'env_medium': ('environmental material',)}
+_ENVO = {}
+
+
+def envo_terms():
+    """The bundled ENVO release: {id: row}, the release name, and the narrower terms of each label."""
+    if not _ENVO:
+        if not ENVO_TABLE.exists():
+            raise Stop('assets/envo-terms.tsv is missing: this copy of the skill is incomplete.')
+        lines = ENVO_TABLE.read_text(encoding='utf-8').splitlines()
+        _ENVO['release'] = re.sub(r'^# (ENVO [^;]+);.*', r'\1', lines[0]).replace('releases/', '')
+        rows = list(csv.DictReader(lines[1:], delimiter='\t', quoting=csv.QUOTE_NONE))
+        _ENVO['rows'] = {r['id']: r for r in rows}
+        kids = {}
+        for r in rows:
+            for p in filter(None, r['parents'].split('; ')):
+                kids.setdefault(p, []).append(r['label'])
+        _ENVO['kids'] = kids
+    return _ENVO
+
+
+def envo_fits(branch, term):
+    if term not in ENVO_FITS:
+        return ''
+    return 'fits' if any(b in branch for b in ENVO_FITS[term]) else 'not usually for'
+
+
+def envo_words(x):
+    return re.findall(r'[a-z0-9]+', x.lower())
+
+
+def envo_search(queries, term=None, limit=15):
+    """Rank ENVO classes for one or more wordings: exact label or synonym first, then the wording as a
+    phrase, then all its words, in the label, synonyms or definition. Classes that suit the term rank higher."""
+    e = envo_terms()
+    best = {}
+    for q in queries:
+        qw = envo_words(q)
+        if not qw:
+            continue
+        phrase = ' '.join(qw)
+        for r in e['rows'].values():
+            lab = ' '.join(envo_words(r['label']))
+            syns = [' '.join(envo_words(x)) for x in r['synonyms'].split(' | ') if x]
+            text = set(envo_words(r['label'] + ' ' + r['synonyms']))
+            if lab == phrase:
+                sc = 100
+            elif phrase in syns:
+                sc = 90
+            elif re.search(rf'\b{re.escape(phrase)}\b', lab):
+                sc = 70
+            elif any(re.search(rf'\b{re.escape(phrase)}\b', x) for x in syns):
+                sc = 60
+            elif set(qw) <= set(lab.split()):
+                sc = 50
+            elif set(qw) <= text:
+                sc = 40
+            elif set(qw) <= text | set(envo_words(r['definition'])):
+                sc = 15
+            else:
+                continue
+            sc -= min(len(lab.split()) - len(qw), 8)  # nearer wordings first
+            if term and envo_fits(r['branch'], term) == 'fits':
+                sc += 12
+            elif term and 'not for' in r['branch']:
+                sc -= 30
+            if sc > best.get(r['id'], (-99,))[0]:
+                best[r['id']] = (sc, q)
+    order = sorted(best, key=lambda i: (-best[i][0], e['rows'][i]['label']))
+    return [(e['rows'][i], best[i][1]) for i in order[:limit]], len(order)
+
+
+def envo_print(r, term=None, full=False):
+    e = envo_terms()
+    fit = envo_fits(r['branch'], term) if term else ''
+    print(f"{r['id']}  {r['label']}   [{r['branch']}{'; ' + fit + ' ' + term if fit else ''}]")
+    print(f"    is a: {r['parents'] or '-'}" + (f"; also called: {short(r['synonyms'], 150)}" if r['synonyms'] else ''))
+    if r['definition']:
+        print(f"    {short(r['definition'], 400 if full else 200)}")
+    kids = sorted(e['kids'].get(r['label'], []))
+    if kids:
+        print(f"    narrower: {', '.join(kids[:12 if full else 6])}" + (f' (and {len(kids) - (12 if full else 6)} more)'
+                                                                       if len(kids) > (12 if full else 6) else ''))
+
+
+def cmd_envo(args):
+    e = envo_terms()
+    if args.id:
+        for i in args.id:
+            i = i.strip().replace('_', ':')
+            r = e['rows'].get(i)
+            if r is None:
+                print(f'{i}: not a current ENVO class in {e["release"]} (obsolete, mistyped, or not ENVO).')
+            else:
+                envo_print(r, args.term, full=True)
+        return 0
+    if not args.query:
+        raise Stop('Give one or more wordings to search for, such as: envo dust "house dust" --term env_medium')
+    found, n = envo_search(args.query, args.term, args.limit)
+    print(f'{e["release"]} (bundled): {n} class(es) match ' + ', '.join(f'"{q}"' for q in args.query)
+          + (f'; ranked for {args.term}' if args.term else '') + '.')
+    for r, _ in found:
+        envo_print(r, args.term)
+    if not found:
+        print('Nothing matched. Try other wordings: a broader word, a synonym, the material or the place.')
+    else:
+        print('Show the researcher the closest few, with their definitions, and the narrower terms where one may '
+              'fit better. envo --id ID shows a class in full.')
+    return 0
+
+
+def envo_check(term, value):
+    """Check ENVO identifiers in a habitat value against the bundled ENVO. Returns (problems, notes)."""
+    if term not in ENVO_FITS:
+        return [], []
+    e = envo_terms()
+    problems, notes = [], []
+    for part in [p.strip() for p in value.split('|') if p.strip()]:
+        if part.lower().startswith(('not applicable', 'missing', 'not provided', 'not collected', 'restricted')):
+            continue
+        m = re.fullmatch(r'(.*?)\s*\[(ENVO[:_]\d{8})\]', part)
+        if not m:
+            notes.append(f"'{part}' has no ENVO identifier: find one with envo \"{part}\" --term {term}, or keep the "
+                         f"label alone and say it needs its identifier.")
+            continue
+        label, i = m.group(1).strip(), m.group(2).replace('_', ':')
+        r = e['rows'].get(i)
+        if r is None:
+            problems.append(f'{i} is not a current ENVO class in {e["release"]} (obsolete, mistyped or invented). '
+                            f'Search with envo "{label}" --term {term}.')
+            continue
+        names = [r['label'].lower()] + [x.lower() for x in r['synonyms'].split(' | ') if x]
+        if label.lower() != r['label'].lower():
+            problems.append(f"{i} is '{r['label']}' in ENVO, not '{label}'"
+                            + (' (a synonym; FAIRe takes the ENVO label)' if label.lower() in names else '')
+                            + f". Use '{r['label']} [{i}]', or search again.")
+        elif envo_fits(r['branch'], term) != 'fits':
+            notes.append(f"'{r['label']}' is in ENVO's {r['branch']} branch, not usually used for {term} "
+                         f"(which takes {' or '.join(ENVO_FITS[term])} classes). Confirm with the researcher.")
+    return problems, notes
+
+
 def cmd_set(args):
     w = work_dir(args)
     s = load_state(w)
@@ -1200,8 +1391,10 @@ def cmd_set(args):
                            f"(such as 'not applicable' or 'missing: not collected') if the value is not known.")
             notes.append('kept as given (--force), although it is not one of the allowed values.')
         value = ' | '.join(fixed)
-    if 'ENVO' in (t.description + t.example) and args.term.startswith('env_') and not re.search(r'\[ENVO:\d+\]', value):
-        notes.append("habitat terms take ENVO terms written as 'label [ENVO:00000000]'.")
+    problems, envo_notes = envo_check(args.term, value)
+    if problems and not args.force:
+        raise Stop(' '.join(problems))
+    notes += problems + envo_notes
     if args.assay and s.get('assays') and args.assay not in s['assays']:
         raise Stop(f"'{args.assay}' is not one of the study's assays ({', '.join(s['assays'])}).")
     put_value(w, args.term, value, args.assay or '', args.source or 'given by the researcher in conversation')
@@ -1524,7 +1717,10 @@ def cmd_check(args):
                 eg = ', '.join(x for x in recs[:4] if x)
                 print(f'  - {level} in {sheet}, {term}: {short(msg, 200)} ({len(recs)} row(s)'
                       + (f', e.g. {eg}' if eg else '') + ')')
-            print('All of them: check/fairefier_issues.tsv; the highlighted workbook: check/fairefier_warn_error.xlsx')
+            print('All of them: check/fairefier_issues.tsv.')
+    if (d / 'fairefier_highlighted.xlsx').exists():
+        print('The workbook with each problem cell filled yellow (warning) or red (error), and a note on the cell '
+              'giving the message: check/fairefier_highlighted.xlsx. Offer it to the researcher.')
     print('\nA pass means the format and required fields are right. Whether the values are right rests on the review.')
     return 0
 
@@ -1550,6 +1746,18 @@ CONVERT_NOTES = {
 }
 
 
+def mandatory_empty(w):
+    """The mandatory terms apply mapping left with no value, from its log of the last build."""
+    log = w / 'build' / 'apply_mapping_log.txt'
+    if not log.exists():
+        return []
+    part = log.read_text(encoding='utf-8').split('## Mandatory terms with no value', 1)
+    if len(part) < 2:
+        return []
+    lines = [ln[2:].strip() for ln in part[1].split('\n## ', 1)[0].splitlines() if ln.startswith('- ')]
+    return list(dict.fromkeys(re.split(r' \(|:', x)[0].strip() for x in lines if x != 'none'))
+
+
 def cmd_convert(args):
     w = work_dir(args)
     s = load_state(w)
@@ -1560,11 +1768,25 @@ def cmd_convert(args):
     if not c.get('ran'):
         raise Stop('Check the workbook with FAIRe-fier first (check): converting an unchecked workbook passes its '
                    'problems on to the archives.')
+    summ_file = w / 'check' / 'fairefier_summary.json'
+    if summ_file.exists() and summ_file.stat().st_mtime < wbk.stat().st_mtime:
+        raise Stop('The workbook was built again after the last check. Run check before converting.')
+    # GBIF, OBIS, NCBI and ENA need at least every mandatory FAIRe term: no conversion until the workbook has
+    # them all (a value, or a FAIRe missing-value term where it is truly unknown) and FAIRe-fier finds no errors.
+    empty = mandatory_empty(w)
     summ = c.get('summary') or {}
     errors = [k for k, v in summ.items() if isinstance(v, dict) and v.get('errors')]
-    if summ.get('valid') is False and not args.anyway:
-        raise Stop('FAIRe-fier found errors in the workbook. Fix them and check again before converting, or add '
-                   '--anyway if the researcher wants a draft conversion.' + (f' Sheets with errors: {errors}' if errors else ''))
+    if empty or summ.get('valid') is False:
+        why = []
+        if empty:
+            why.append(f"{len(empty)} mandatory term(s) have no value: {short(', '.join(empty), 600)}")
+        if summ.get('valid') is False:
+            why.append('FAIRe-fier found errors' + (f" in {' and '.join(errors)}" if errors else ''))
+        raise Stop('Not converted. GBIF, OBIS, NCBI and ENA need at least every mandatory FAIRe term, so a workbook '
+                   'is converted only when it has them all and FAIRe-fier finds no errors. ' + '; '.join(why) + '. '
+                   'Go back to the gaps with the researcher: give each mandatory term its value, or a FAIRe '
+                   "missing-value term (such as 'missing: not collected') where it is truly unknown, then build and "
+                   'check again.')
     if args.target == 'ncbi':
         import importlib.util
         if importlib.util.find_spec('yaml') is None:
@@ -1703,6 +1925,8 @@ def cmd_summary(args):
         take(values_path(w), 'project_values.tsv')
     for f in ('fairefier_issues.tsv', 'fairefier_warn_error.xlsx', 'fairefier_summary.json'):
         take(w / 'check' / f)
+    if s.get('workbook'):
+        take(w / 'check' / 'fairefier_highlighted.xlsx', f"{Path(s['workbook']).stem}_highlighted.xlsx")
     for target, info in (s.get('converted') or {}).items():
         for f in info.get('files', []):
             src = w / 'convert' / target / f
@@ -1793,6 +2017,9 @@ def cmd_summary(args):
     c = s.get('checked')
     if c and c.get('ran'):
         L.append(f"- FAIRe-fier ran ({c['when']}): {short(json.dumps(c.get('summary'), ensure_ascii=False), 400)}")
+        if (w / 'check' / 'fairefier_highlighted.xlsx').exists() and s.get('workbook'):
+            L.append(f"- {Path(s['workbook']).stem}_highlighted.xlsx is the workbook with each cell FAIRe-fier flagged "
+                     'filled yellow (warning) or red (error), with a note on the cell giving the message.')
     else:
         L.append('- FAIRe-fier has NOT been run on this workbook in this session. Run it in the Shiny app or Galaxy '
                  'before sharing the data.')
@@ -2009,7 +2236,6 @@ def main(argv=None):
     p.add_argument('target', choices=['ncbi', 'ena', 'gbif', 'qiime'],
                    help='ncbi: BioSample and SRA tables; ena: ENA sample XML; gbif: a Darwin Core archive for GBIF '
                         'or OBIS (presence and absence); qiime: QIIME 2 metadata')
-    p.add_argument('--anyway', action='store_true', help='convert although FAIRe-fier found errors (a draft)')
     p.add_argument('--organism', default='marine metagenome',
                    help='ncbi: the metagenome the samples are, such as freshwater metagenome or air metagenome')
     p.add_argument('--bioproject', help='ncbi: the BioProject accession, if there is one')
@@ -2035,6 +2261,13 @@ def main(argv=None):
     p.add_argument('--sample_name_column', default='lib_id', help='qiime: the column that names the samples')
     p.add_argument('--sequences_folder', default='/path/to/sequences', help='qiime: where the fastq files are')
     p.set_defaults(fn=cmd_convert)
+
+    p = sub.add_parser('envo', help='search the bundled ENVO for habitat terms, or show a class')
+    p.add_argument('query', nargs='*', help='one or more wordings, each searched for ("dust" "house dust" shop)')
+    p.add_argument('--term', choices=sorted(ENVO_FITS), help='rank the classes that suit this FAIRe term first')
+    p.add_argument('--id', nargs='+', help='show these ENVO classes in full, with their narrower terms')
+    p.add_argument('--limit', type=int, default=15, help='how many classes to show (default 15)')
+    p.set_defaults(fn=cmd_envo)
 
     p = sub.add_parser('summary', help='write the handover folder and zip')
     p.set_defaults(fn=cmd_summary)

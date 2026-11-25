@@ -10,7 +10,8 @@ pcr_primer_reference_forward	Berry et al. (2017)	Fish16S
 pcr_primer_reference_reverse	Deagle et al. (2007)	Fish16S
 nucl_acid_ext_kit	DNeasy Blood and Tissue Kit (QIAGEN)	
 filter_material	cellulose ester	
-samp_store_temp	-80	
+samp_store_temp	4	
+prepped_samp_store_temp	-80	
 pcr_cycles	40	
 pcr_dna_vol	2	
 pcr_cond	initial denaturation:95_15;denaturation:95_0.5;annealing:54_1.5;elongation:72_1.5;final elongation:72_10	Fish16S

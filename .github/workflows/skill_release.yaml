@@ -1,4 +1,4 @@
-# Builds the AI assistant skill (skill/build_skill.py) and attaches both zips to a release, so that
+# Builds the AI assistant skill (skill/build_skill.py) and attaches the three zips to a release, so that
 # skill/README.md can link to them under releases/latest/download/. Runs when a release is
 # published; run it by hand (Actions > Attach the skill to a release) to attach the zips to an
 # existing release.
@@ -36,4 +36,5 @@ jobs:
       - name: Attach the zips to the release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "$TAG" skill/dist/faire-dataset.zip skill/dist/faire-dataset-plugin.zip --clobber
+        run: gh release upload "$TAG" skill/dist/faire-dataset.zip skill/dist/faire-dataset-plugin.zip \
+            skill/dist/faire-dataset-copilot.zip --clobber
