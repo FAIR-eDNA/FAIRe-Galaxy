@@ -36,7 +36,7 @@ Trials so far:
 |---|---|
 | Claude (Max) | Works: added as a plugin, and run on the khapra beetle data |
 | ChatGPT (free plan) | Could not be added: the free plan does not allow skills |
-| Microsoft 365 Copilot (Premium) | Skill upload available; `faire-dataset-copilot.zip` being tried. Organisations can turn off skills or agent building |
+| Microsoft 365 Copilot (Premium) | Uploads: `faire-dataset-copilot.zip` (1.3.1 and later) is accepted. Running it not yet tried. Organisations can turn off skills or agent building |
 
 ### Claude (claude.ai, desktop and mobile apps)
 
