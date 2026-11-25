@@ -198,6 +198,15 @@ server <- function(input, output, session) {
     nav_select("main", "FAIRe mapper: from your own tables"); nav_select("mapper_steps", "a. Your files")
   })
   observeEvent(input$start_check, nav_select("main", "2. Check"))
+  # A newer version on GitHub: said on the Start page, with how to get it
+  output$update_notice <- renderUI({
+    if (!newer_app_available()) return(NULL)
+    div(class = "res-warn", icon("circle-up"), tags$b(" A newer version of this app is available."),
+        " To update it, download what you want to keep from Outputs, close the app (press Esc in the R",
+        "console, or Stop in RStudio), and run the start line again:",
+        tags$pre(class = "mb-0 mt-1", tags$code(
+          'source("https://raw.githubusercontent.com/FAIR-eDNA/FAIRe-Galaxy/main/shiny/start.R")')))
+  })
   observeEvent(input$load_demo, {
     id <- input$demo_choice %||% names(DEMOS)[1]
     if (!has_work()) return(load_demo(id))

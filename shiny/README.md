@@ -213,6 +213,10 @@ The first time, it downloads this repository, runs setup.R, and opens the app in
 Afterwards, the same line checks for a newer version, downloads it if there is one, and starts the
 app. To stop the app, press Esc in the R console, or *Stop* in RStudio.
 
+Use this line each time you start the app. Starting it another way (*Run App* in RStudio, or
+`run_app.R`) uses the copy you have, without updating it. Whichever way you start it, the app's
+*Start* page says when a newer version is out (if your computer can reach GitHub).
+
 #### Where the app is kept
 
 You can let the app choose its folder, or choose one yourself.
@@ -395,7 +399,8 @@ the *Outputs* page first. To use it again later, repeat step 4 only.
 
 ### Getting a newer version
 
-If you start the app with the one line above, it updates itself: run the same line again. Otherwise,
+If you start the app with the one line above, it updates itself: run the same line again. The app's
+*Start* page says when a newer version is out, for a copy the one line installed. Otherwise,
 download the repository again (step 2) and run setup.R again (step 3), which only installs what has
 changed. With git, `git pull` in the repository folder does the same as downloading.
 
@@ -471,7 +476,10 @@ both sheets. FAIRe to Darwin Core writes 869 presence records. (Tested the same 
 - `setup.R` installs what the app needs, `run_app.R` starts it, and `start.R` is the one-line start:
   it downloads the repository (or a newer version of it) into one folder, runs setup.R when needed,
   then runs run_app.R. It checks for a newer version by reading the commit at the tip of `main` from
-  GitHub, and records the commit it installed in `.faire_app_version`. A folder chosen with
+  GitHub, and records the commit it installed in `.faire_app_version`. The app makes the same check
+  once each time it starts, for the notice on its Start page (`newer_app_available()` in
+  `R/helpers.R`); it says nothing when it cannot reach GitHub, or when there is no
+  `.faire_app_version` (a copy you downloaded or cloned yourself). A folder chosen with
   `FAIRE_HOME` is remembered in `app_folder.txt` in `tools::R_user_dir("FAIRe-Galaxy", "config")`.
 - The files a person adds, and everything the tools write, go into a folder for the session in R's
   temporary folder. Each run has its own folder, with its inputs, outputs and a log of the exact

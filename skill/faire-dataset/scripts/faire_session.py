@@ -42,6 +42,7 @@ import re
 import shutil
 import subprocess
 import sys
+import urllib.request
 import zipfile
 from pathlib import Path
 
@@ -166,6 +167,39 @@ def checklist_terms(s=None):
 
 # ---------------------------------------------------------------- setup and start
 
+REPOSITORY = 'https://github.com/FAIR-eDNA/FAIRe-Galaxy'
+DOWNLOAD = REPOSITORY + '/blob/main/skill/README.md#download-the-skill'
+
+
+def release_check(timeout=5):
+    """One line on whether this copy of the skill is the newest release. The release tags and their
+    commits come from GitHub's list of the repository's refs; a release's zip is built from its tag's
+    commit, which the package records in references/source-commit.txt. Empty when GitHub cannot be
+    reached (many chat workspaces have no internet access)."""
+    commit = SKILL / 'references' / 'source-commit.txt'
+    own = commit.read_text().split()[0] if commit.exists() else ''
+    try:
+        with urllib.request.urlopen(REPOSITORY + '.git/info/refs?service=git-upload-pack', timeout=timeout) as r:
+            text = r.read(5_000_000).replace(b'\0', b' ').decode('ascii', 'replace')
+    except Exception:
+        return ''
+    tags = {}
+    for sha, name, peeled in re.findall(r'([0-9a-f]{40}) refs/tags/(v\d+(?:\.\d+)*)(\^\{\})?', text):
+        if peeled or name not in tags:   # an annotated tag's commit is the peeled line (^{})
+            tags[name] = sha
+    if not tags:
+        return ''
+    newest = max(tags, key=lambda t: tuple(int(x) for x in t[1:].split('.')))
+    mine = next((t for t, sha in tags.items() if sha == own), '')
+    if mine == newest:
+        return f'Skill: release {mine}, the newest.'
+    if mine:
+        return (f'Skill: release {mine}. A newer release, {newest}, is out: download it from {DOWNLOAD} '
+                f'and replace this skill with it.')
+    return (f'Skill: built from commit {own[:7] or "unknown"}, not from a release; the newest release is '
+            f'{newest} ({DOWNLOAD}).')
+
+
 def cmd_setup(args):
     missing, found = [], []
     for mod, pip_name, purpose in NEEDED:
@@ -196,6 +230,9 @@ def cmd_setup(args):
     commit = SKILL / 'references' / 'source-commit.txt'
     print(f'FAIRe tools: FAIRe-Galaxy commit {commit.read_text().split()[0][:7] if commit.exists() else "unknown"}'
           f'; tested with {TESTED}.')
+    release = release_check()
+    if release:
+        print(release)
     if essential:
         print('Not ready: the tools cannot run without ' + ', '.join(essential) + '. If they cannot be installed '
               'here, use advisor mode (references/advisor-mode.md).')

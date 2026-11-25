@@ -116,8 +116,9 @@ Go on to Step 2 only after they have chosen.
 
 ## Step 2. Set up and scope the study
 
-Run `setup` (add `--install` if something is missing). Then ask these, one at a time, offering the
-likely answer as the first choice where the files or the conversation suggest one:
+Run `setup` (add `--install` if something is missing). If it says a newer release is out, tell the
+researcher once, with its link. Then ask these, one at a time, offering the likely answer as the first
+choice where the files or the conversation suggest one:
 
 - Metabarcoding or a targeted assay (qPCR or ddPCR)?
 - What was sampled (water, sediment, soil, air ...)?
