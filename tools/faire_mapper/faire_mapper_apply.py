@@ -162,6 +162,106 @@ def review_lines(log):
     return lines, warnings
 
 
+def write_readme(ws, readme, log, warnings, project_id, stamp):
+    """The README sheet: a summary at the top (what to review before submitting, highlighted, and a table
+    and chart of the reviewer's decisions), then the lines FAIRe-ator's README has and the review lines."""
+    from openpyxl.chart import BarChart, Reference
+    from openpyxl.styles import Alignment
+    navy, wrap = '1F4E79', Alignment(wrap_text=True, vertical='top')
+    fills = {'warn': PatternFill('solid', fgColor='FFEB9C'), 'bad': PatternFill('solid', fgColor='FFC7CE'),
+             'good': PatternFill('solid', fgColor='C6EFCE'), 'head': PatternFill('solid', fgColor='D9E1F2')}
+    ws.column_dimensions['A'].width = 36
+    for col in 'BCDEF':
+        ws.column_dimensions[col].width = 13
+
+    def heading(text, size=13, colour=navy):
+        ws.append([text])
+        ws.cell(ws.max_row, 1).font = Font(bold=True, size=size, color=colour)
+
+    def boxed(text, fill):
+        ws.append([text])
+        r = ws.max_row
+        ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=6)
+        c = ws.cell(r, 1)
+        c.fill, c.alignment = fills[fill], wrap
+        ws.row_dimensions[r].height = 15.5 * (1 + len(text) // 85)
+
+    heading(f'FAIRe workbook for {project_id}', size=16)
+    ws.append([f'Made by FAIRe mapper {__version__} on {stamp[:10]}. Check it before you submit it anywhere.'])
+    ws.cell(ws.max_row, 1).font = Font(italic=True)
+    ws.append([])
+    heading('To review before you submit', colour='9C0006')
+    review = [w[0].upper() + w[1:] for w in warnings]
+    review += [w[0].upper() + w[1:] for w in log.sections['Warnings'] if w not in warnings]
+    for w in review[:8]:
+        boxed(w, 'warn')
+    if len(review) > 8:
+        boxed(f'And {len(review) - 8} more warnings: see the log.', 'warn')
+    empty = log.sections['Mandatory terms with no value']
+    if empty:
+        names = [re.split(r' \(|:', x)[0] for x in empty]
+        boxed(f"{_n(len(empty), 'mandatory term has', 'mandatory terms have')} no value: "
+              f"{', '.join(dict.fromkeys(names))}. Fill {'it' if len(empty) == 1 else 'them'} in, or give a "
+              f"FAIRe missing-value term (such as 'missing: not collected').", 'bad')
+    if not review and not empty:
+        boxed('FAIRe mapper flagged nothing. The values still rest on the review: check them, and run FAIRe-fier.',
+              'good')
+    boxed('Run FAIRe-fier on the workbook: it checks the format and the required fields, not whether the values '
+          'are right.', 'warn' if review or empty else 'good')
+
+    # the reviewer's decisions, as a table and a chart
+    table = []
+    r = log.review_columns
+    if r:
+        d = r['decisions']
+        table.append(['Column mapping', d['Accept'], d['Change'], d['Reject'], d['']])
+    m = log.review_details
+    for tier, label in (('reliable', 'Method values found reliably'), ('check', 'Method values to check'),
+                        ('', 'Method values')):
+        c = [m.get((tier, o), 0) for o in ('accepted', 'changed', 'rejected', 'undecided')]
+        if sum(c):
+            table.append([label] + c)
+    if table:
+        ws.append([])
+        heading('Decisions on the mapping')
+        ws.append(['', 'Accepted', 'Changed', 'Rejected', 'Not decided'])
+        top = ws.max_row
+        for c in ws[top][:5]:
+            c.font, c.fill = Font(bold=True), fills['head']
+        for row in table:
+            ws.append(row)
+        if r and r.get('carried'):
+            ws.append([f"{_n(r['carried'], 'decision was', 'decisions were')} carried over from an earlier review."])
+            ws.cell(ws.max_row, 1).font = Font(italic=True)
+        chart = BarChart()
+        chart.type, chart.grouping, chart.overlap = 'bar', 'stacked', 100
+        chart.title, chart.style, chart.height, chart.width = 'Decisions', 10, 2.2 + 1.1 * len(table), 13
+        chart.add_data(Reference(ws, min_col=2, max_col=5, min_row=top, max_row=top + len(table)), titles_from_data=True)
+        chart.set_categories(Reference(ws, min_col=1, min_row=top + 1, max_row=top + len(table)))
+        for series, colour in zip(chart.series, ('70AD47', '5B9BD5', 'C00000', 'A5A5A5')):
+            series.graphicalProperties.solidFill = colour
+            series.graphicalProperties.line.solidFill = colour
+        chart.y_axis.majorGridlines = None
+        chart.x_axis.scaling.orientation = 'maxMin'  # the first row of the table at the top
+        chart.y_axis.delete = chart.x_axis.delete = False
+        ws.add_chart(chart, f'G{top - 1}')
+
+    ws.append([])
+    heading('Details')
+    for line in readme:
+        ws.append([line])
+        if line.endswith(';'):
+            ws.cell(ws.max_row, 1).font = Font(bold=True)
+        elif len(line) > 100:  # long lines wrap within the summary's width
+            r = ws.max_row
+            ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=6)
+            ws.cell(r, 1).alignment = wrap
+            ws.row_dimensions[r].height = 15.5 * (1 + len(line) // 85)
+    ws.sheet_view.showGridLines = False
+    ws.sheet_properties.pageSetUpPr.fitToPage = True  # printed one page wide
+    ws.page_setup.fitToWidth, ws.page_setup.fitToHeight = 1, 0
+
+
 # ------------------------------------------------------------------ reading the crosswalk
 
 def read_crosswalk(path):
@@ -1318,8 +1418,7 @@ def build_workbook(args, df, rows, terms, by_name, log, others=()):
     lines, warnings = review_lines(log)
     if lines or warnings:
         readme += ['', 'Review;'] + [w[0].upper() + w[1:] for w in warnings] + [x[0].upper() + x[1:] for x in lines]
-    for line in readme:
-        ws.append([line])
+    write_readme(ws, readme, log, warnings, args.project_id, stamp)
     bold = Font(bold=True)
 
     # projectMetadata

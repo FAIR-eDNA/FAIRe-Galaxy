@@ -224,6 +224,7 @@ run_fairefier <- function(session_dir, workbook, checklist_version = "auto", str
   o <- function(f) file.path(d, "out", f)
   run_result("fairefier", "FAIRe-fier", d, list(s),
              list(summary = o("fairefier_summary.json"), issues = o("fairefier_issues.tsv"),
+                  highlighted = o("fairefier_highlighted.xlsx"),
                   warn_error = o("fairefier_warn_error.xlsx"), metadata = o("fairefier_metadata.xlsx")))
 }
 

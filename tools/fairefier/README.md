@@ -52,6 +52,12 @@ It writes the same two workbooks as the app's download buttons:
 - `fairefier_warn_error.xlsx` when there are warnings or errors, with `_revise` copies of the
   worksheets and the problem cells highlighted.
 
+When there are warnings or errors it also writes `fairefier_highlighted.xlsx`, an addition to
+FAIRe-fier's outputs: a copy of the workbook as given, every sheet kept, with each problem cell filled
+yellow (warning) or light red (error) and a note on the cell giving the message and any suggested
+value. A problem with a whole column marks the column's heading; a template's own note on a term is
+kept below FAIRe-fier's.
+
 It also writes two files for scripts and pipelines, including the planned AI-assisted mapper:
 
 - `fairefier_issues.tsv`: one row per warning or error (worksheet, level, record, term, input,

@@ -19,9 +19,11 @@ Download the zip for your assistant from the latest release of this repository:
 - [faire-dataset-plugin.zip](https://github.com/FAIR-eDNA/FAIRe-Galaxy/releases/latest/download/faire-dataset-plugin.zip),
   the skill packaged as a plugin, for Claude's *Plugins* menu;
 - [faire-dataset.zip](https://github.com/FAIR-eDNA/FAIRe-Galaxy/releases/latest/download/faire-dataset.zip),
-  for Claude's *Skills* menu, ChatGPT, Microsoft 365 Copilot and coding assistants.
+  for Claude's *Skills* menu, ChatGPT and coding assistants;
+- [faire-dataset-copilot.zip](https://github.com/FAIR-eDNA/FAIRe-Galaxy/releases/latest/download/faire-dataset-copilot.zip),
+  the same files with `SKILL.md` at the top of the zip, for Microsoft 365 Copilot.
 
-Each [release](https://github.com/FAIR-eDNA/FAIRe-Galaxy/releases) carries both, built from that
+Each [release](https://github.com/FAIR-eDNA/FAIRe-Galaxy/releases) carries all three, built from that
 release's code. Then follow the steps for your assistant below.
 
 ### Which assistants it works in
@@ -34,7 +36,7 @@ Trials so far:
 |---|---|
 | Claude (Max) | Works: added as a plugin, and run on the khapra beetle data |
 | ChatGPT (free plan) | Could not be added: the free plan does not allow skills |
-| Microsoft 365 Copilot | Not yet added: organisations can turn off skills or agent building |
+| Microsoft 365 Copilot (Premium) | Works so far: `faire-dataset-copilot.zip` (1.3.1 and later) uploads to an agent with Code interpreter on, and `setup` runs (Python 3.12, pandas 2.2.2, numpy 1.26). A full session not yet tried. Organisations can turn off skills or agent building |
 
 ### Claude (claude.ai, desktop and mobile apps)
 
@@ -62,7 +64,10 @@ Skills are added to a declarative agent, made in Agent Builder:
 1. Create an agent (for example *FAIRe dataset assistant*), with short instructions such as *"Help
    eDNA researchers make FAIRe datasets with the faire-dataset skill."*
 2. Turn on the *Code interpreter* capability.
-3. Add the skill: upload `faire-dataset.zip`.
+3. Add the skill: upload `faire-dataset-copilot.zip`. Copilot wants `SKILL.md` at the top of the zip,
+   no file more than three folders down, at most 350 files, only some file types (Python, Markdown,
+   text, TSV, Excel and the like), only scripts in `scripts/`, only `name` and `description` in the
+   frontmatter, and instructions under 20,000 characters; the build checks all of these.
 
 This needs a Microsoft 365 Copilot licence, and an organisation can turn off skills or agent
 building; ask your IT team if the options above are missing. Once it can be added, the first thing to
@@ -78,8 +83,8 @@ the conversation.
 
 ### Any other chat
 
-Attach `SKILL.md`, `references/advisor_mode.md`, `references/data_care.md` and
-`references/faire_rules.md`, and start with: *"Follow SKILL.md to help me make a FAIRe dataset. You
+Attach `SKILL.md`, `references/advisor-mode.md`, `references/data-care.md` and
+`references/faire-rules.md`, and start with: *"Follow SKILL.md to help me make a FAIRe dataset. You
 cannot run code, so use advisor mode."*
 
 ## How a session goes
@@ -98,14 +103,15 @@ cannot run code, so use advisor mode."*
 6. The mandatory terms still empty are asked about in plain words. Highly recommended terms that the
    methods answer are offered as one optional checklist.
 7. The workbook is built with the OTU tables or qPCR results, and checked with FAIRe-fier.
-8. The assistant offers to convert the checked workbook: a Darwin Core archive for GBIF or OBIS,
+8. Once every mandatory term is filled and FAIRe-fier finds no errors, the assistant offers to
+   convert the workbook: a Darwin Core archive for GBIF or OBIS,
    BioSample and SRA tables for NCBI, sample XML for ENA, or QIIME 2 metadata. It asks for what each
    needs (licence and contact, Webin centre name, metagenome) and goes through the converter's
    messages. FAIRe2MDT and edna2obis need R or web services, so they stay in the Shiny app and Galaxy.
-9. The researcher gets a zip of the workbook, review sheets, logs, converted files and a README of
-   provenance. Uploading stays with them.
+9. The researcher gets a zip of the workbook, a copy with FAIRe-fier's problem cells highlighted,
+   the review sheets, logs, converted files and a README of provenance. Uploading stays with them.
 
-If the assistant cannot run code, it follows `references/advisor_mode.md`: the researcher runs the
+If the assistant cannot run code, it follows `references/advisor-mode.md`: the researcher runs the
 tools in the Shiny app or Galaxy, and the assistant helps with each decision.
 
 ## What is in it
@@ -113,16 +119,24 @@ tools in the Shiny app or Galaxy, and the assistant helps with each decision.
 ```
 faire-dataset/
   SKILL.md                  the instructions the assistant follows, step by step
+  agents/ui_metadata.yaml   the display name, for Microsoft 365 Copilot
   references/
-    data_care.md            the notice on data sensitivity given before any file is shared
-    faire_rules.md          FAIRe conventions: missing values, local time, controls, runs, confused terms
-    faire_terms.md          the mandatory and highly recommended FAIRe terms (made from the checklist)
+    data-care.md            the notice on data sensitivity given before any file is shared
+    faire-rules.md          FAIRe conventions: missing values, local time, controls, runs, confused terms
+    faire-terms.md          the mandatory and highly recommended FAIRe terms (made from the checklist)
     commands.md             every command of faire_session.py
-    advisor_mode.md         how to help when the assistant cannot run code
+    converting.md           what each conversion needs from the researcher
+    advisor-mode.md         how to help when the assistant cannot run code
+    licences.md             the licences of the bundled tools and data
+    primer-table-sources.md the sources of the primer table and their terms
+    source-commit.txt       the FAIRe-Galaxy commit the tools were copied from
   scripts/
     faire_session.py        runs the tools one step at a time and keeps the session's decisions
-    tools/                  copies of the FAIRe mapper, FAIRe-fier and the Python converters from tools/,
-                            with their licences
+    faire_mapper/ ...       the code of the FAIRe mapper, FAIRe-fier and the Python converters
+  assets/
+    tool-layout.json        where each bundled file goes when the tools are put back together
+    envo-terms.tsv          every current ENVO class (label, branch, parents, synonyms, definition)
+    faire_mapper_checklist/ ...  the data the tools read: the FAIRe checklist, primer table, term lists
 ```
 
 The assistant never writes the workbook itself. `faire_session.py` runs FAIRe mapper (identify,
@@ -139,9 +153,12 @@ python skill/build_skill.py            # writes skill/dist/faire-dataset.zip and
 
 The build copies the current tools from `tools/faire_mapper`, `tools/fairefier` and the four Python
 converters (`tools/faire2dwc`, `faire2ncbi`, `faire2ena`, `faire2qiime`), makes
-`references/faire_terms.md` from the checklist, and records the commit in
-`scripts/tools/SOURCE_COMMIT`. Rebuild after any change to the tools, so the package and the Galaxy
-tools stay the same. The zip is about 1 MB.
+`references/faire-terms.md` from the checklist, and records the commit in
+`references/source-commit.txt`. It splits the tools the way skill packages expect: code in
+`scripts/`, the data it reads in `assets/`, documentation in `references/`, with
+`assets/tool-layout.json` saying where each file goes. `faire_session.py` puts the tools back together
+in a temporary folder on first use. Rebuild after any change to the tools, so the package and the
+Galaxy tools stay the same. The zip is about 1 MB.
 
 When a release is published on GitHub, the workflow `.github/workflows/skill_release.yaml` builds
 both zips from the release's code and attaches them to it, which is where *Download the skill*
@@ -162,14 +179,14 @@ sets through every step, with the researcher's answers written into the script:
   the site coordinates.
 
 The day-night test also converts the workbook for GBIF, ENA and QIIME 2, and checks that NCBI stops
-and names the replicate samples it cannot tell apart. The khapra test checks that conversion waits
-for a clean check, then writes a draft Darwin Core archive of presence and absence records.
+and names the replicate samples it cannot tell apart. The khapra test checks that conversion is refused
+while mandatory terms are empty, and that the refusal names them.
 
 ```
 bash skill/test_skill.sh OUTDIR          # PYTHON=... to use another Python
 ```
 
-All three pass with Python 3.10 and 3.13, pandas 2.2.3 and 3.0. This tests the machinery. How well
+All three pass with Python 3.10, 3.12 and 3.13, pandas 2.2.2, 2.2.3 and 3.0, and numpy 1.26 and 2. This tests the machinery. How well
 a given assistant follows SKILL.md in conversation still needs trying with real researchers and
 their data, in each of Claude, ChatGPT and Copilot.
 
@@ -178,8 +195,10 @@ their data, in each of Claude, ChatGPT and Copilot.
 - Assistants vary, and so does the same assistant from one model version to the next. The rules in
   SKILL.md (no invented values, every decision recorded, no check claimed that was not run) are the
   safeguards, and the handover README lets a reviewer see what was decided and by whom.
-- Chat workspaces usually cannot reach the internet. ENVO identifiers then come from the researcher,
-  or from the assistant's own web search if it has one; the tools cannot look them up.
+- ENVO terms come from the ENVO release bundled in `assets/envo-terms.tsv` (searched with `envo`, and
+  checked by `set`), so they need no internet. A term added to ENVO after that release needs the
+  researcher, or a newer release: run `python skill/make_envo_terms.py envo.obo` with the release's
+  `envo.obo`, then rebuild.
 - Chat tools limit the size of uploads. Very large OTU tables are better handled in the Shiny app or
   Galaxy.
 - If a workspace lacks pandas, openpyxl and numpy and cannot install them, the tools cannot run
@@ -188,7 +207,7 @@ their data, in each of Claude, ChatGPT and Copilot.
 ## Licences
 
 `SKILL.md`, `references/` and `faire_session.py` are MIT, as the rest of this repository. The bundled
-tools and data keep their own licences, listed in `scripts/tools/LICENSES.md`: the FAIRe checklist is
+tools and data keep their own licences, listed in `references/licences.md`: the FAIRe checklist is
 CC BY 4.0, FAIRe-fier is BSD 3-Clause, FAIRe2NCBI and faire2qiime are CC0 1.0, FAIRe2ENA is MIT, and
 most rows of the primer table come from Takahashi et al.
 2023 under CC BY-NC 4.0.

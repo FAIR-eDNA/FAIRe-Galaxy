@@ -6,6 +6,17 @@ folder). `COMMAND --help` lists the options.
 
 The script prints `STOPPED:` and the reason when something needs fixing, and exits with code 2.
 
+## Contents
+
+- Setting up
+- Files and the sample table
+- Methods and primers
+- Values the researcher gives
+- ENVO terms
+- Building and checking
+- Converting
+- The session folder
+
 ## Setting up
 
 | Command | What it does |
@@ -61,6 +72,17 @@ and listed in the handover.
 | `unset TERM [--assay NAME]` | Removes a value recorded with set. |
 | `gaps [--recommended]` | Mandatory terms still without a value. With `--recommended`, also the highly recommended terms still empty that can apply to the study, by section (no qPCR probe terms for metabarcoding, no precipitation terms when the samples were filtered). |
 
+## ENVO terms
+
+| Command | What it does |
+|---|---|
+| `envo WORDING [WORDING ...] [--term env_broad_scale\|env_local_scale\|env_medium] [--limit 15]` | Searches the bundled ENVO release (`assets/envo-terms.tsv`, every current ENVO class) for each wording: exact label or synonym first, then the wording as a phrase, then all its words in the label, synonyms or definition. With `--term`, the classes that suit that term rank first (biomes for env_broad_scale, places, features and constructions for env_local_scale, materials for env_medium). Shows each class's identifier, label, branch, parents, synonyms, definition and narrower terms. |
+| `envo --id ENVO:00002008 [...]` | Shows classes in full, with up to 12 narrower terms. |
+
+`set env_medium "dust [ENVO:00002008]"` checks the identifier against the same release: it stops if
+the identifier is not a current ENVO class or names another class (or a synonym of this one), and
+notes a class from a branch not usually used for that term.
+
 ## Building and checking
 
 `build` writes the workbook from the reviewed sample table, the method values and the values given.
@@ -99,13 +121,15 @@ build --otu PATH [assay=NAME] [run=RUN_ID] [stage=final|raw] [sequences=FASTA] [
 
 | Command | What it does |
 |---|---|
-| `check [--show N]` | Runs FAIRe-fier on the workbook and lists the errors and warnings, grouped. The full list is in `faire_work/check/`. |
+| `check [--show N]` | Runs FAIRe-fier on the workbook and lists the errors and warnings, grouped. The full list is in `faire_work/check/fairefier_issues.tsv`, and `fairefier_highlighted.xlsx` there is the workbook with each problem cell filled yellow (warning) or red (error) and a note giving the message. |
 | `summary` | Writes `faire_work/handover/` (workbook, review sheets, values, logs, FAIRe-fier results, converted files and a README of where every value came from) and a zip of it. |
 
 ## Converting
 
 `convert TARGET [options]` converts the checked workbook into `faire_work/convert/TARGET/`. It stops
-if the workbook has not been checked, or if FAIRe-fier found errors (add `--anyway` for a draft). It
+until the workbook has every mandatory FAIRe term (a value or a FAIRe missing-value term) and FAIRe-fier
+finds no errors, as GBIF, OBIS, NCBI and ENA need them all; it names the terms still empty. It also
+stops if the workbook was built again after the last check. It
 prints the files written, the converter's messages (a message repeated for many samples is shown
 once, with a count) and what to do with the files. Uploading stays with the researcher.
 

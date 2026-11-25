@@ -1690,7 +1690,8 @@ server <- function(input, output, session) {
       if (file.exists(res$outputs$issues %||% "")) tagList(
         tags$h6("Errors and warnings"),
         help_text("Errors must be fixed. Warnings are worth a look: an extra term, for example, may be a field you",
-                  "meant to name differently. The workbook below (fairefier_warn_error.xlsx) highlights the cells."),
+                  "meant to name differently. fairefier_highlighted.xlsx, below, is your workbook with each problem cell",
+                  "filled yellow (warning) or red (error) and a note on the cell giving the message."),
         DTOutput("fairefier_issues")),
       result_ui(res))
   })
