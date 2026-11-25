@@ -5,7 +5,8 @@
 # Usage: run_asvs.sh OUTDIR [GITHUB_DIR]     (GITHUB_DIR: the downloaded files; fetched if not given)
 #   1. fetch_github.sh, then prepare_asvs.py: the ASVs behind the published species, with their
 #      sequences, one table and one FASTA file for each year; prepare_table.py: the sample table, now
-#      with the controls and the 2019 dates; make_taxa.py: the taxon table
+#      with the controls and each site's date, and the collectors as recordedBy; make_taxa.py: the
+#      taxon table
 #   2. propose mapping, and the reviewer's decision
 #   3. apply mapping: each year's ASV table as otuFinal and taxaFinal, with its sequences, as its own
 #      sequencing batch (COI_2019, COI_2023)
@@ -27,7 +28,8 @@ echo "== 1. the ASV tables, the sample table and the taxon table"
 python -I "$here/prepare_asvs.py" "$gh" "$d/Final_ASVTable_withTaxonomy_Filtered.csv" "$out/mapper"
 python -I "$here/prepare_table.py" "$d/Final_ASVTable_withTaxonomy_Filtered.csv" "$d/Site_coordinates.csv" \
     "$out/mapper/samples.csv" "$out/mapper/eelgrass_2019_asvs.csv" "$out/mapper/eelgrass_2023_asvs.csv" \
-    "$gh/MAR_2019eDNASiteData.csv"
+    "$gh/Site_coordinates.csv"
+{ cat "$here/project_values_asvs.tsv"; tail -n +2 "$out/mapper/project_values_github.tsv"; } > "$out/mapper/project_values.tsv"
 python -I "$here/make_taxa.py" "$out/mapper/eelgrass_2019_asvs.csv" "$out/mapper/eelgrass_2023_asvs.csv" \
     "$out/mapper/taxa.tsv"
 
@@ -46,7 +48,7 @@ for y in 2019 2023; do
 done
 python "$tools/faire_mapper_apply.py" "$out/mapper/samples.csv" --crosswalk "$out/mapper/reviewed.sssom.tsv" \
     --checklist "$ck" --template "$tpl" --assay_type metabarcoding --sample_types Water \
-    --project_id NS_eelgrass_eDNA --assay_name LerayCOI --project_values "$here/project_values_asvs.tsv" \
+    --project_id NS_eelgrass_eDNA --assay_name LerayCOI --project_values "$out/mapper/project_values.tsv" \
     "${otu[@]}" --table_name eelgrass_samples.csv -o "$out/faire/eelgrass.xlsx" --log "$out/faire/eelgrass.log"
 
 echo "== 4. FAIRe-fier"
@@ -60,8 +62,8 @@ between July and September 2019, and seven sites (six in Cape Breton, one on the
 and October 2023, with three replicates at each site (two at Rose Bay). One record per sample and ASV, with the \
 ASV's sequence: the ASVs the COI RDP classifier v5.0.0 assigned to a species with a probability above 0.90, for \
 the species in the published table (Trask et al., Dryad doi:10.5061/dryad.gqnk98t0c; per-ASV files from the \
-authors' GitHub repository, dfo-mar-mpas/coastal-invertebrate-metabarcoding). Coordinates are those of each site; \
-2019 records have the date of the site visit, 2023 records the period of sampling. Raw reads: NCBI BioProject \
+authors' GitHub repository, dfo-mar-mpas/coastal-invertebrate-metabarcoding). Coordinates are those of each site, \
+and each record has the date of its site visit. Raw reads: NCBI BioProject \
 PRJNA1145319. Prepared with the FAIRe tools as a demonstration."
 python "$repo/tools/faire2dwc/faire2dwc.py" "$out/faire/eelgrass.xlsx" --taxa "$out/mapper/taxa.tsv" \
     --title "Invertebrate eDNA in eelgrass meadows across Nova Scotia, 2019 and 2023, with sequences (demonstration)" \

@@ -15,24 +15,28 @@ CAB-2 ...), and its sites are in Site_coordinates.csv. One row per sample:
     grass bed and coastal sea water. The 2019 samples were water samples (He et al. 2022); the
     Dryad files do not say for 2023, and the same is assumed.
 
-With the authors' per-ASV tables (prepare_asvs.py, from their GitHub repository), the table also
-has a row for each control, and each 2019 sample has its site's date from MAR_2019eDNASiteData.csv:
+With the authors' per-ASV tables (prepare_asvs.py) and the Site_coordinates.csv in their GitHub
+repository, which adds each site's date and collectors, the table also has a row for each control,
+and every sample has its site's date:
 
-  * controls: Category 'negative control', with no coordinates (a field control has its site's name,
-    country and province). Their codes are read as field
-    negatives (2019 FC and the 2023 site controls, C) and extraction negatives (2019 ENEG and the
-    2023 Extraction-C); the 2019 lab control (CON-LC) gets 'missing: not provided'. These readings
-    are ours, to confirm with the authors. A field control takes its site's date;
-  * the 2023 samples keep the period of sampling, as the files give no date for them.
+  * controls: Category 'negative control', with no coordinates (a control from a site has its site's
+    name, country and province). The codes, as the authors explained them (Nick Jeffery, 24 November
+    2026): FC (2019) and C (2023) are field controls, distilled water filtered in the field (field
+    negative); LC (2019) is a lab control, distilled water filtered in the lab (process negative);
+    ENEG (2019) and Extraction-C (2023) are extraction negatives. A field control takes its site's
+    date; lab and extraction controls have none;
+  * recordedBy: the collectors of all sites, written to project_values_github.tsv next to OUT.csv
+    for the apply step.
 
 The published tables are not changed.
 Usage: python prepare_table.py Final_ASVTable_withTaxonomy_Filtered.csv Site_coordinates.csv OUT.csv
-       python prepare_table.py ... OUT.csv eelgrass_2019_asvs.csv eelgrass_2023_asvs.csv MAR_2019eDNASiteData.csv
+       python prepare_table.py ... OUT.csv eelgrass_2019_asvs.csv eelgrass_2023_asvs.csv GITHUB_Site_coordinates.csv
 """
 
 import datetime as dt
 import re
 import sys
+from pathlib import Path
 
 import pandas as pd
 
@@ -40,7 +44,7 @@ YEAR_2019 = {'CAB', 'CON', 'FAI', 'FRK', 'MOS', 'PLS', 'RSE', 'TAE', 'TAW', 'WRK
 DATES = {2019: '2019-07/2019-09', 2023: '2023-06/2023-10'}
 SITE_CODE = {'WRK02': 'WRK'}
 CONTROL_TYPE = {'FC': 'field negative', 'C': 'field negative', 'ENEG': 'extraction negative',
-                'EXT': 'extraction negative', 'LC': 'missing: not provided'}
+                'EXT': 'extraction negative', 'LC': 'process negative'}
 ENV = {'env_broad_scale': 'marine biome [ENVO:00000447]',
        'env_local_scale': 'sea grass bed [ENVO:01000059]',
        'env_medium': 'coastal sea water [ENVO:00002150]'}
@@ -49,11 +53,16 @@ asv, coords, out = sys.argv[1:4]
 extra = sys.argv[4:7]
 sites = pd.read_csv(coords, encoding='utf-8-sig').set_index('Code')
 columns = list(pd.read_csv(asv, nrows=0).columns)
-dates_2019 = {}
+site_dates = {}
 if extra:
     columns = [c for t in extra[:2] for c in pd.read_csv(t, nrows=0).columns]
-    site_data = pd.read_csv(extra[2], encoding='latin-1')
-    dates_2019 = {r.ID: dt.datetime.strptime(r.date, '%d-%b-%y').date().isoformat() for r in site_data.itertuples()}
+    visits = pd.read_csv(extra[2], encoding='utf-8-sig')
+    site_dates = {r.Code: dt.datetime.strptime(r.Date, '%d-%b-%y').date().isoformat() for r in visits.itertuples()}
+    names = []
+    for people in visits['CollectedBy']:
+        names += [n.strip() for n in str(people).split(',') if n.strip() and n.strip() not in names]
+    values = Path(out).with_name('project_values_github.tsv')
+    pd.DataFrame([{'term': 'recordedBy', 'value': ' | '.join(names), 'assay': ''}]).to_csv(values, sep='\t', index=False)
 rows = []
 for col in columns:
     m = re.fullmatch(r'([A-Z]+\d*)-(\d+|FC|LC|C|\d{3})', col)
@@ -69,8 +78,10 @@ for col in columns:
         sys.exit(f'no coordinates for site {site_code} (column {col})')
     site = sites.loc[site_code]
     year = 2019 if site_code in YEAR_2019 else 2023
-    date = dates_2019.get(code, DATES[year]) if year == 2019 else DATES[year]
+    date = site_dates.get(site_code, DATES[year])
     if not rep.isdigit():
+        if rep == 'LC':
+            date = 'not applicable: control sample'
         rows.append({'Sample ID': col, 'Site code': site_code, 'Site': site['Site'], 'Date': date,
                      'Country': 'Canada', 'Province': 'Nova Scotia', 'Category': 'negative control',
                      'Negative control type': CONTROL_TYPE[rep]})
