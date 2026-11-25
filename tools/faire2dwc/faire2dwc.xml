@@ -2,7 +2,7 @@
     <description>presence and absence records for GBIF and OBIS</description>
     <macros>
         <token name="@TOOL_VERSION@">0.2.0</token>
-        <token name="@VERSION_SUFFIX@">0</token>
+        <token name="@VERSION_SUFFIX@">1</token>
         <token name="@NAMES_RE@">^[A-Za-z0-9_.+() ,-]*$</token>
         <token name="@TEXT_RE@">^[^'\\`$]*$</token>
         <import>faire_guide.xml</import>

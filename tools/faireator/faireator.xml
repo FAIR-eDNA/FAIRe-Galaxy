@@ -5,7 +5,7 @@
              commit (FAIR-eDNA/FAIRe-ator dcb9323). The bundled checklist is FAIRe v1.0.2
              (FAIR-eDNA/FAIRe_checklist 061d8b6). -->
         <token name="@TOOL_VERSION@">2026.09.24</token>
-        <token name="@VERSION_SUFFIX@">0</token>
+        <token name="@VERSION_SUFFIX@">1</token>
         <token name="@NAME_LIST_RE@">^\s*[A-Za-z0-9_-]+(\s*,\s*[A-Za-z0-9_-]+)*\s*$</token>
         <token name="@FIELD_LIST_RE@">^\s*([A-Za-z][A-Za-z0-9_]*(\s*,\s*[A-Za-z][A-Za-z0-9_]*)*)?\s*$</token>
         <import>faire_guide.xml</import>
