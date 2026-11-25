@@ -475,7 +475,7 @@ def from_text(t, text):
     found = {}
     cited_authors = set()
     for sentence in SENTENCE_END.split(text):
-        genes = {gene_of(g).lower() for g in re.findall(r'(?<![0-9])(\d\dS|COI|CO1|cox1|CytB|cyt b|ITS\d?|D-loop|ND\d)(?![a-z])', sentence, re.I)}
+        genes = {gene_of(g).lower() for g in re.findall(r'(?<![0-9])(\d\dS|COI|CO1|cox1|CytB|cyt b|(?-i:ITS)\d?|D-loop|ND\d)(?![a-z])', sentence, re.I)}
         for m in REF_IN_TEXT.finditer(sentence):
             ref = f'{m.group(1)} et al., {m.group(2)}'
             cands = [c for c in lookup(t, ref) if c['matched_by'] == 'reference'
@@ -640,7 +640,7 @@ def sequence_candidates(t, text):
 
 def _as_written(f, r, fname, rname, line):
     """A candidate pair as the text gives it, for sequences not in the primer table."""
-    genes = {gene_of(g) for g in re.findall(r'(?<![0-9])(\d\dS|COI|CO1|cox1|CytB|ITS\d?|ND\d)(?![a-z])', line, re.I)}
+    genes = {gene_of(g) for g in re.findall(r'(?<![0-9])(\d\dS|COI|CO1|cox1|CytB|(?-i:ITS)\d?|ND\d)(?![a-z])', line, re.I)}
     refs = [f'{m.group(1)} et al., {m.group(2)}' for m in REF_IN_TEXT.finditer(line)]
     row = {c: '' for c in COLUMNS}
     row.update({'primer_pair_id': pair_id(f, r), 'pcr_primer_forward': f, 'pcr_primer_reverse': r,
@@ -730,7 +730,11 @@ OUT_COLUMNS = ['query', 'matched_by', 'candidates_for_query'] + COLUMNS
 def write_candidates(path, rows):
     # pairs found in a methods text also say how likely each is (the last column)
     extra = ['how_likely'] if any('how_likely' in r for r in rows) else []
-    pd.DataFrame(rows, columns=OUT_COLUMNS + extra).to_csv(path, sep='\t', index=False)
+    # A line quoted from a table in the methods can hold tabs: written as spaces, so every row has one
+    # field per column for readers that take the file as plain tab-separated text (the Shiny app)
+    out = pd.DataFrame(rows, columns=OUT_COLUMNS + extra)
+    out = out.map(lambda v: re.sub(r'\s*[\t\r\n]+\s*', ' ', v) if isinstance(v, str) else v)
+    out.to_csv(path, sep='\t', index=False)
 
 
 def main(argv=None):

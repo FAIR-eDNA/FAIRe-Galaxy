@@ -13,8 +13,8 @@ presence and absence records that could go to GBIF.
 
 - `published/`: the three files as they are on Dryad.
 - `prepared/`: the same files with the columns a person adds before mapping (see *Doing the
-  preparation yourself*), plus the project values and a taxon table. The app's demonstration loads
-  these.
+  preparation yourself*), plus a taxon table and `khapra_notes.md` (details of the assays from the
+  paper that the README leaves out). The app's demonstration loads these.
 - `README.md`: the source and licence.
 
 [[COMMON]]
@@ -24,7 +24,7 @@ presence and absence records that could go to GBIF.
 1. On the app's **Start** page, choose **Khapra beetle** and press *Load the demonstration data*.
    (Or add the files in `prepared/` yourself with *Add files*.)
 2. **1. Make a workbook, FAIRe mapper, a. Your files**: run it. It should find a sample table, the
-   qPCR results, the project values, a taxon table and the README.
+   qPCR results, a taxon table, the README and the notes.
 3. **b. Propose a mapping**: run it on `khapra_samples_prepared.csv`, with the README as the data
    dictionary and *Targeted* as the assay type.
 4. **c. Review the mapping**. Decide the rows for review, then save the review. Suggested answers:
@@ -33,8 +33,12 @@ presence and absence records that could go to GBIF.
    - Change *Extraction technique* to nucl_acid_ext_kit.
 
    *Fill in the authors' answers* does this for you.
-5. **d. Methods and project values**: the project values are filled in. Look at what they hold for
-   each assay: primers, probe, cycling conditions, limit of detection.
+5. **d. Methods and project values**: the values for the whole project start empty, and each
+   assay needs its own. Run *Find primers* on the README and the notes, and add each pair for the
+   two assays that used it (type *OlsonViiA7, OlsonFranklin*, then *FuruiViiA7, FuruiFranklin*).
+   Run *Other method details* with *Targeted*: which cycling conditions belong to which machine? Which
+   values are the LAMP assay's, and so not for these data? Add the rest by hand from the notes: the
+   app lists the mandatory terms still to give, and the steps on the Start page give each value.
 6. **e. Write the workbook**: the qPCR results are filled in. Write the workbook and read its
    warnings.
 7. **2. Check**: run FAIRe-fier on the workbook.

@@ -10,8 +10,13 @@ the FAIRe mapper's guide describes, and a README with the source, the licence an
 | `eelgrass` | Nova Scotia eelgrass COI metabarcoding (Trask et al., Dryad), 50 samples at 17 sites | Metabarcoding with the least it needs: reads per species and sample, and site coordinates; no sample table, controls or sequences; to GBIF as presence | CC0 1.0 |
 | `khapra` | Khapra beetle qPCR (Trujillo-González et al. 2022), 90 samples and controls, 766 reactions | A targeted study with the least it needs: samples, assay details, a result for each reaction; to GBIF as presence and absence | CC0 1.0 |
 
+The demonstrations load no values for the whole project. You find them in each dataset's files with
+find primers and find method details, and type the rest, as you would with your own data. Where the
+published files leave out a detail the workbook needs, a notes file in the folder gives it, with its
+source.
+
 **These files are for trying the tools, not for ecological analysis.** Use the published records for
 that.
 
-For a workshop, `dev/workshop/make_packages.sh` makes a zip of each dataset, holding the published files
+For a workshop, `dev/workshop/make_packages.py` makes a zip of each dataset, holding the published files
 as downloaded, the same files prepared for the app, and a page of steps for participants.

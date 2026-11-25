@@ -203,7 +203,7 @@ server <- function(input, output, session) {
     if (!has_work()) return(load_demo(id))
     showModal(modalDialog(
       title = "Load the demonstration data?",
-      tags$p("It adds the demonstration's files to Your files (replacing any with the same names), replaces the",
+      tags$p("It adds the demonstration's files to Your files (replacing any with the same names), clears the",
              "values for the whole project, and fills in the forms with the demonstration's settings. Files from",
              "another demonstration stay in Your files: Remove all files first to start clean."),
       footer = tagList(modalButton("Cancel"), actionButton("load_demo_ok", "Load it", class = "btn-primary"))))
@@ -216,12 +216,10 @@ server <- function(input, output, session) {
       rv$files <- c(rv$files[names(rv$files) != basename(f)], add_to_library(file.path(sd, "files"), basename(f), f))
     }
     rv$demo <- id
-    pv <- read_tsv(demo_path(id, demo$project_values))
-    if (!is.null(pv)) {
-      if (!"assay" %in% names(pv)) pv$assay <- ""
-      pv$assay[is.na(pv$assay)] <- ""
-      rv$pv <- pv[, c("term", "value", "assay")]
-    }
+    # The values for the whole project start empty: the person finds them in the demonstration's files
+    # with find primers and find method details, and types the rest, as with their own data.
+    rv$pv <- rv$pv[0, , drop = FALSE]
+    rv$md_prov <- rv$md_prov[0, , drop = FALSE]
     rv$otu_n <- length(demo$otu); rv$lib_n <- length(demo$lib); rv$amp_n <- length(demo$amp)
     rv$block_version <- rv$block_version + 1
     updateCheckboxGroupInput(session, "map_sample_types", selected = demo$sample_types)
@@ -1222,9 +1220,10 @@ server <- function(input, output, session) {
     i <- input$primers_table_rows_selected
     if (!length(i)) return(notify_error("Choose a primer pair in the table first."))
     r <- primers_shown()[i, ]
-    assay <- trimws(input$pr_assay)
-    n <- add_pair(r, assay)
-    notify_info(sprintf("%d values added for %s.", n, if (nzchar(assay)) assay else "every assay"))
+    assays <- split_assays(input$pr_assay)
+    for (a in assays) n <- add_pair(r, a)
+    notify_info(sprintf("%d values added for %s.", n,
+                        if (all(nzchar(assays))) paste(assays, collapse = " and ") else "every assay"))
   })
 
   # The project terms of the chosen section of the checklist (PCR and primers first), or all of them
@@ -1263,7 +1262,7 @@ server <- function(input, output, session) {
   })
   observeEvent(input$pv_add, {
     if (blank(input$pv_term) || blank(input$pv_value)) return(notify_error("Choose a term and give a value.", "pv_term"))
-    rv$pv <- rbind(rv$pv, data.frame(term = input$pv_term, value = input$pv_value, assay = trimws(input$pv_assay)))
+    rv$pv <- rbind(rv$pv, data.frame(term = input$pv_term, value = input$pv_value, assay = split_assays(input$pv_assay)))
     updateTextInput(session, "pv_value", value = "")
   })
   output$pv_file_ui <- renderUI(selectInput("pv_file", NULL, c("Choose a file" = "", file_names("\\.(tsv|tab|txt|csv|xlsx)$", kinds = "project values"))))
@@ -1346,7 +1345,7 @@ server <- function(input, output, session) {
         help_text("Tick the values to keep, after checking each against its sentence (open a sentence to read all of",
                   "it). Correct a value in its box if it is nearly right. When a term has several values (two storage",
                   "temperatures, say), keep the one for your eDNA samples. Give the assay only for a value that",
-                  "holds for one assay."),
+                  "holds for some assays and not others; separate several with commas (Fish16S, MiFish)."),
         div(class = "md-list",
             if (length(rel)) tagList(div(class = "md-part md-part-reliable", paste0(
               "Found reliably (", length(rel), "): terms the tool has proposed reliably in published papers it was ",
@@ -1369,6 +1368,13 @@ server <- function(input, output, session) {
   md_pending <- reactiveVal(NULL)
   md_add_now <- function(vals) {
     vals[] <- lapply(vals, function(x) trimws(as.character(x)))
+    # one row for each assay of a value given for several
+    vals <- do.call(rbind, lapply(seq_len(nrow(vals)), function(j) {
+      a <- split_assays(vals$assay[j])
+      v <- vals[rep(j, length(a)), , drop = FALSE]
+      v$assay <- a
+      v
+    }))
     added <- !paste(vals$term, vals$assay) %in% paste(rv$pv$term, rv$pv$assay) & nzchar(vals$value)
     add_values(vals[, c("term", "value", "assay")])
     # where each value added came from, for the workbook's log: what the tool proposed and how reliable its term is
@@ -1384,7 +1390,8 @@ server <- function(input, output, session) {
     if (!length(keep)) return(notify_error("Tick the values to keep first."))
     tier <- if ("confidence" %in% names(d)) d$confidence else rep("check", nrow(d))
     assay <- vapply(keep, function(i) trimws(input[[paste0("md_assay_", i)]] %||% ""), character(1))
-    twice <- unique(d$term[keep][duplicated(paste(d$term[keep], assay))])
+    each <- unlist(lapply(seq_along(keep), function(j) paste(d$term[keep[j]], split_assays(assay[j]))))
+    twice <- unique(sub(" .*", "", each[duplicated(each)]))
     if (length(twice))
       return(notify_error(paste0("More than one value is ticked for ", paste(twice, collapse = ", "),
                                      ". Keep one value per term (or give each its assay).")))

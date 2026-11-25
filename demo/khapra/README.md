@@ -18,9 +18,10 @@ of khapra beetle environmental DNA using portable technologies in Australian bio
 *Frontiers in Insect Science* 2: 795379,
 [doi:10.3389/finsc.2022.795379](https://doi.org/10.3389/finsc.2022.795379), CC BY 4.0. It is not
 included here; the project values in `dev/faire_mapper_khapra/project_values.tsv` come from it and
-from the Dryad README.
+from the Dryad README. `khapra_notes.md` gives, in our words, the details of the assays from the
+paper that the README leaves out, so that the Shiny app's demonstration can find them in its files.
 
-The three files are as published, with the names Dryad gives them.
+The three files from Dryad are as published, with the names Dryad gives them.
 
 ## Files
 
@@ -29,6 +30,7 @@ The three files are as published, with the names Dryad gives them.
 | `Sample_metadata.csv` | 90 rows: 57 dust and air samples, 9 field controls, 15 extractions of a positive dust sample and 9 tissue samples. Sample ID, location, sample type, collection method, extraction technique and date (day first) |
 | `Amplification_data_khapra_05012022_dryad.csv` | 766 qPCR reactions: sample, location, Cq (or *Undetermined*), assay (Olson or Furui), collection method, extraction and machine (ViiA7 or Franklin) |
 | `Trujillo_Gonzalez_et_al_2022_README.txt` | The Dryad README: authors, file descriptions, primers, probes and cycling conditions. Used as the data dictionary and for the method details |
+| `khapra_notes.md` | Ours, not published: from the paper, where each assay comes from, its limit of detection, how a detection was called, why field controls amplified, and the licence |
 
 ## Running it
 
