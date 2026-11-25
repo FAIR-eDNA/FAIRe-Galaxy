@@ -10,7 +10,7 @@ The app runs the same scripts as the Galaxy wrappers in `../tools`, with the sam
 give the same results. Each tool's command line in `R/tools.R` follows the `<command>` block of its
 Galaxy XML file. Run through the app, the SEA-MES demonstration gives a workbook identical, sheet for
 sheet, to the one the same steps give from the command line (`dev/faire_mapper_seames/run.sh`), given
-the same files.
+the same files and the same values for the whole project.
 
 This version is a demonstration that runs on one computer. It is written so that it can later be
 hosted on a server (see *Hosting later*, below). It was first built in a private repository and moved
@@ -430,8 +430,11 @@ a dataset needs:
 
 Choosing one and pressing *Load the demonstration data* adds its files to *Your files* and fills in
 the forms for them, so you can follow each step through. Each tool still has to be run by pressing
-its button, and the review is done by hand, as a person would do it. The Start page lists the steps
-for the one loaded. edna2obis looks the names up in WoRMS or GBIF, so it needs internet
+its button, and the review is done by hand, as a person would do it. The values for the whole project
+start empty: you find them in the dataset's files with *find primers* and *find method details*, and
+type the rest, as you would with your own data. Where the published files leave out a detail, a notes
+file in the demonstration gives it, with its source. The Start page lists the steps for the one
+loaded, with the values to keep and to type. edna2obis looks the names up in WoRMS or GBIF, so it needs internet
 access, and its two steps were not run on the demonstration in testing; the Darwin Core build was
 tested through the app's code on edna2obis's own test data, with its stand-in mapping table.
 
@@ -442,6 +445,9 @@ samples and 58 FAIRe terms, plus 9 columns kept as their own terms, with the 16S
 and taxaRaw and the 48 curated fish taxa as otuFinal and taxaFinal. FAIRe-fier passes both sheets, with
 a warning for each of the 9 columns kept as their own terms, which the checklist does not list.
 FAIRe2NCBI writes 13 BioSamples and 13 SRA rows, and FAIRe2ENA 13 samples and 13 experiments and runs.
+On 25 November 2026, with the values for the whole project found and typed as the Start page's steps
+say (version 0.12.2), the workbook had 62 FAIRe terms, FAIRe-fier passed both sheets, FAIRe2ENA wrote
+the same experiments and runs, and FAIRe to Darwin Core wrote the same 108 records.
 (Tested 13 November 2026, up to the workbook through the app and the conversions from the command
 line with the app's settings. On 10 November, version 0.1.0 also ran FAIRe2MDT, which writes a
 workbook for Fish16S, and FAIRe2QIIME, which writes a metadata file and a manifest. On 23 November,
@@ -449,21 +455,22 @@ version 0.8.0 gave the same mapping, workbook and FAIRe-fier result through the 
 and FAIRe to Darwin Core wrote 108 presence records for the 11 samples, leaving out the 2 controls.)
 
 For the khapra beetle demonstration: *a. Your files* finds the sample table, the qPCR results, the
-project values, the taxon table and the README. *Fill in the authors' answers* rejects *sample
+taxon table, the README and the notes from the paper. *Fill in the authors' answers* rejects *sample
 type* (kept as the authors' own term) and changes *Category* to samp_category and *Extraction
 technique* to nucl_acid_ext_kit. The workbook has 90 rows (57 samples, 33 controls), ampData with the
 766 reactions, and detected_notDetected for each of the four assays (each assay on each machine). Apply
 mapping warns about a Cq of 0 and Cq values above the assays' cycle numbers, which are in the
 published data. FAIRe-fier passes both sheets. FAIRe to Darwin Core writes 162 records: 75 present and
 87 absent, with the controls left out. (Tested 23 November 2026 through the app's server code with
-`shiny::testServer`, in R 4.3 with shiny 1.8.)
+`shiny::testServer`, in R 4.3 with shiny 1.8; again on 25 November 2026, with the values for the whole
+project found and typed as the steps say.)
 
 For the eelgrass demonstration: the mapping accepts 11 of the sample table's 13 columns and sends
 *Replicate* for review, which the authors' answers reject. The workbook has 50 samples, with the
 species table as otuFinal and taxaFinal (138 taxa, each named by its seq_id). It lists seq_run_id
 among the mandatory terms with no value, and warns that dna_sequence is empty. FAIRe-fier passes
-both sheets. FAIRe to Darwin Core writes 869 presence records. (Tested the same way, 23 November
-2026.)
+both sheets. FAIRe to Darwin Core writes 869 presence records. (Tested the same way, 23 and 25
+November 2026.)
 
 ## How it works
 

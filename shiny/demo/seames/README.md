@@ -10,8 +10,8 @@ analysis**; use the published record for that.
 | `4_SEA-MES_16S_ASV_level_output_with_seq.csv` | The 16S fish ASV table, with sequences and preliminary taxonomy (written as otuRaw and taxaRaw) |
 | `5_SEA_MES_Fish16S_Tax_Feb_27_2025.csv` | The authors' curated fish taxa (written as otuFinal and taxaFinal) |
 | `filereport_read_run_PRJNA1263580.tsv` | ENA's run report for these samples' libraries (the library table) |
-| `methods.txt` | The methods from the project's NESP final report (for finding primers) |
-| `SEA-MES_project_values_Fish16S.tsv` | Values for the whole project, as the trial gave them (`dev/faire_mapper_seames/project_values.tsv`), with otu_final_description changed to describe file 5 |
+| `methods.txt` | The methods from the project's NESP final report, for find primers and find method details |
+| `SEA-MES_notes.md` | The data record's creator, project and licence, from its page on the CSIRO Data Access Portal, as the methods do not give them (`demo/seames/SEA-MES_notes.md`) |
 | `biosample_accessions.tsv`, `ena_sample_receipt.xml` | The samples' BioSample accessions and a stand-in ENA receipt, made from the run report by `dev/faire_mapper_seames/accessions.py`, as the samples are registered already |
 
 ## Source and licence

@@ -11,7 +11,7 @@ for that.
 | `eelgrass_samples_prepared.csv` | The sample table a person following the mapper's guide makes, as the study published none: one row per column of the species table (50 samples at 17 sites), with the site's coordinates, the period of sampling, the country and province, Category and ENVO terms (`dev/faire_mapper_eelgrass/prepare_table.py`) |
 | `Final_ASVTable_withTaxonomy_Filtered.csv` | The published table of reads per species and sample (138 taxa), as published |
 | `Dryad_README.md` | The Dryad README, as published: the data dictionary for propose mapping, and the methods |
-| `eelgrass_project_values.tsv` | Values for the whole project and the assay: the primers, target gene, pipeline, reference database, sequencing platform and location, licence and citation (`dev/faire_mapper_eelgrass/project_values.tsv`) |
+| `eelgrass_notes.md` | Details the README leaves out, with their sources: the primer sequences in the authors' QIIME 2 script, where and when the samples were sequenced (from the authors), the contact and the licence (`demo/eelgrass/eelgrass_notes.md`) |
 | `eelgrass_taxa.tsv` | The taxon table for FAIRe to Darwin Core: each name with kingdom Animalia and the authors' phylum and class (`dev/faire_mapper_eelgrass/make_taxa.py`) |
 
 ## Source and licence

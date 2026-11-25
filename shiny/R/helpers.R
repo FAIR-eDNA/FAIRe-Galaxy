@@ -7,6 +7,15 @@ read_tsv <- function(path, ...) {
            error = function(e) NULL)
 }
 
+# The assays typed in one box, separated by commas ("OlsonViiA7, OlsonFranklin"); "" (every assay) when
+# none is given. A value for several assays becomes one row of the project values for each.
+split_assays <- function(x) {
+  x <- as.character(x); x[is.na(x)] <- ""
+  a <- trimws(strsplit(paste(x, collapse = ","), ",", fixed = TRUE)[[1]])
+  a <- unique(a[nzchar(a)])
+  if (length(a)) a else ""
+}
+
 # Always UTF-8, whatever the computer's own character set: write.table's fileEncoding goes through the
 # native encoding, which turns ° and µ into <U+00B0> and <U+00B5> where that is not UTF-8.
 write_tsv <- function(df, path) {

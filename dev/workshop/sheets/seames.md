@@ -8,7 +8,7 @@ South-East Australian Marine Ecosystem Survey (Deagle et al. 2025, CSIRO Data Ac
 - a 16S fish ASV table with a sequence and preliminary taxonomy for each ASV;
 - the authors' curated fish taxa;
 - ENA's report of the sequencing runs;
-- the methods.
+- the methods, and notes on the record's contact and licence.
 
 This exercise fills every sheet of a FAIRe workbook and runs every conversion: NCBI, ENA, GBIF, OBIS
 and QIIME 2.
@@ -30,7 +30,10 @@ and QIIME 2.
    - Reject replicate, bioproject_accession and Location.
 
    *Fill in the authors' answers* does this for you.
-4. **d. Methods and project values**: find primers in `methods.txt`.
+4. **d. Methods and project values**: the values for the whole project start empty. Find primers in
+   `methods.txt` and the notes: two pairs match exactly. Which one goes with these data? Add it, and
+   check its ampliconSize. Run *Other method details*, tick the reliable values and add them, then
+   look through the others. Add the rest by hand: the app lists the mandatory terms still to give.
 5. **e. Write the workbook**: the ASV table goes in as raw, the curated taxa as final, and ENA's run
    report as the library table.
 6. **2. Check** with FAIRe-fier, then **3. Convert** to each destination.

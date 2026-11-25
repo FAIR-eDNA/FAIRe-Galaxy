@@ -20,6 +20,10 @@ NCBI BioProject PRJNA1145319.
 - The Dryad README is renamed `Dryad_README.md`, so it doesn't clash with this file.
 - The two FASTA files (8 MB) and `comp_data_raw.csv` (the comparison with other survey methods) are left out.
 - The two tables are as published.
+- `eelgrass_notes.md` is ours: details a FAIRe workbook needs that the Dryad README leaves out, each
+  with its source (the primer sequences in the authors' QIIME 2 script, where and when the samples
+  were sequenced, from the authors, the contact and the licence). The Shiny app's demonstration reads
+  it with the README, so the tools find these details in its files.
 
 ## Files
 
@@ -28,6 +32,7 @@ NCBI BioProject PRJNA1145319.
 | `Final_ASVTable_withTaxonomy_Filtered.csv` | Reads per species and sample. Each row has a phylum, class and species (with underscores; two are named only to the genus, with a BOLD BIN) and the RDP classifier's probability. Then come 50 sample columns, named by site and replicate (CAB-1, CAB-2 ...) |
 | `Site_coordinates.csv` | The 17 sites: name, latitude, longitude (WGS84) and code |
 | `Dryad_README.md` | The Dryad README: the files, the dates, the primers and the pipeline. Used as the data dictionary |
+| `eelgrass_notes.md` | Ours, not published: the details the README leaves out, with their sources |
 
 ## Running it
 
@@ -157,7 +162,8 @@ What the authors told us (Nick Jeffery, 24 November 2026):
   2019 sites came from). The Dryad files don't say for 2023, so the same is assumed.
 - **Primers.** The Dryad README names "the Leray et al. (2013) primer set". The bundled primer table
   has six pairs under that citation. The authors' published pipeline trims mlCOIintF and jgHCO2198,
-  so the project values give that pair.
+  so the project values give that pair. `eelgrass_notes.md` gives the two sequences from the
+  pipeline, which find primers matches to that pair exactly.
 - **Wreck Cove** is WRK in the coordinates and WRK02 in the ASV table (a second visit in 2019).
 - **No controls** are in the published table, so none could be described or left out.
 - **Rose Bay** has two replicates; every other site has three.

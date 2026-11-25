@@ -14,7 +14,9 @@
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 repo="$here/.."
-out=$(mkdir -p "${1:-$(mktemp -d)}" && cd "${1:-.}" && pwd)
+# With no OUTDIR, a new temporary folder (it used to be the current folder)
+out=${1:-$(mktemp -d)}
+out=$(mkdir -p "$out" && cd "$out" && pwd)
 py="${PYTHON:-python3}"
 "$py" "$here/build_skill.py" "$out/dist" > /dev/null
 pkg="$out/pkg"

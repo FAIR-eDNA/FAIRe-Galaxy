@@ -68,7 +68,8 @@ GLOSSARY <- c(
   primer_assay = paste("The name of the assay this primer pair was used for, such as Fish16S or Euk18S. It is filled in",
                        "from the reference table when you click a pair; change it if you call the assay something else.",
                        "e. Write the workbook offers the same names for the OTU tables and libraries. Leave it empty if",
-                       "the project has one assay."),
+                       "the project has one assay; for a pair used in several assays, give their names separated by",
+                       "commas."),
   project_values = paste("FAIRe terms with one value for the whole project, or for each assay: the primers, target gene,",
                          "extraction kit, sequencing platform, reference database and so on. They go in projectMetadata."),
   assay = paste("A name for one PCR assay, such as Fish16S or Euk18S. It links the project values, OTU tables and",
@@ -455,7 +456,7 @@ mapper_panel <- function() {
             layout_columns(
               col_widths = c(8, 4),
               textInput("pv_value", "Value", width = "100%"),
-              textInput("pv_assay", "Assay (optional)", width = "100%")),
+              textInput("pv_assay", "Assay (optional)", width = "100%", placeholder = "every assay, or names separated by commas")),
             actionButton("pv_add", "Add", icon = icon("plus"))),
               accordion_panel(
                 "Load a table of values", icon = icon("file-import"),

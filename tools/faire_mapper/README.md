@@ -50,6 +50,14 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   sentence. On the other methods texts in this repository the results are the same, except that the
   SEA-MES methods now also give the pairs of the two papers they cite this way (Leray et al. 2013;
   Berry et al. 2017), ten candidates in place of eight.
+  - Find primers writes a tab inside a field (a line quoted from a table in the methods) as a space,
+    so every row of its table has one field per column. The Shiny app could not read the khapra
+    README's candidates.
+  - The word "its" ("Its probe is ...") no longer gives a pair found in the text the gene ITS.
+  - Propose mapping puts a column of missing-value notes only ("missing: restricted access" in the
+    khapra Latitude and Longitude, where the authors withheld the locations) in the review sheet.
+    It left such columns out, so apply mapping kept them as the person's own terms and FAIRe-fier
+    found decimalLatitude and decimalLongitude empty.
 - New in 0.12.1 (25 November 2026): the workbook's README sheet opens with a summary: what to
   review before submitting (warnings in yellow, mandatory terms with no value in red), a table and
   a small bar chart of the reviewer's decisions, then the lines it had before.
