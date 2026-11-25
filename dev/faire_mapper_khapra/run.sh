@@ -56,7 +56,7 @@ stores in Canberra during Australian biosecurity responses between August and No
 Furui et al. 2019) on a benchtop (ViiA 7) and a portable (Franklin) thermocycler, in technical replicates. A record \
 is present when at least one replicate amplified. Field negative controls also amplified, and the Fyshwick samples \
 were collected with a vacuum cleaner used in an earlier khapra beetle response, so some detections may come from \
-contamination. The authors withheld the store locations; coordinates are the centre of the district or suburb. \
+contamination. The authors withheld the store locations, so the records give only the district or suburb. \
 Prepared with the FAIRe tools as a demonstration."
 python "$repo/tools/faire2dwc/faire2dwc.py" "$out/faire/khapra.xlsx" --taxa "$here/taxa_khapra.tsv" \
     --title "Khapra beetle environmental DNA in dust from Australian biosecurity responses (demonstration)" \
