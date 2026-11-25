@@ -26,7 +26,7 @@ model is used, as agreed; the tools are built so one can be added later (see bel
 
 ## Status
 
-- Version 0.12.0. `planemo lint`: passes with no warnings. `pyflakes`: clean.
+- Version 0.12.1. `planemo lint`: passes with no warnings. `pyflakes`: clean.
 - Goes to Galaxy Australia as an early version with the wrapped FAIRe tools (decided 6 November
   2026). Each tool's help starts with a note saying so, which asks users to check the results and
   send problems to the Galaxy Australia help desk (to confirm with Galaxy Australia, question 8).
@@ -43,6 +43,9 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   independent answer keys (`dev/faire_mapper_real_datasets/`, `dev/faire_mapper_australian_datasets/`,
   summarised below), and end to end on CSIRO's SEA-MES data (`dev/faire_mapper_seames/`). Not yet
   tried on datasets from Australian labs that already have a FAIRe version.
+- New in 0.12.1 (25 November 2026): the workbook's README sheet opens with a summary: what to
+  review before submitting (warnings in yellow, mandatory terms with no value in red), a table and
+  a small bar chart of the reviewer's decisions, then the lines it had before.
 - New in 0.12.0 (24 November 2026), for the eelgrass demonstration with sequences
   (`dev/faire_mapper_eelgrass/run_asvs.sh`): OTU tables of one assay from different sequencing runs
   stay separate. Each is written as otuFinal_<assay>_<run> and taxaFinal_<assay>_<run>, as FAIRe

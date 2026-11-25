@@ -39,7 +39,7 @@ from pathlib import Path
 
 import faire_mapper_text as ft
 
-__version__ = '0.12.0'
+__version__ = '0.12.1'
 
 HERE = Path(__file__).resolve().parent
 VOCABULARY = HERE / 'method_details' / 'vocabulary.tsv'
