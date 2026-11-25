@@ -54,6 +54,9 @@ identifiers:
     value: 10.5281/zenodo.24489371
     description: All versions (resolves to the latest release)
   - type: doi
+    value: 10.5281/zenodo.24519084
+    description: Version v1.1.0
+  - type: doi
     value: 10.5281/zenodo.24489372
     description: Version v1.0.0
 repository-code: "https://github.com/FAIR-eDNA/FAIRe-Galaxy"
