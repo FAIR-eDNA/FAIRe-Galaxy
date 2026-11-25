@@ -1,7 +1,6 @@
 ---
 name: faire-dataset
 description: Helps an eDNA researcher turn their sample sheet, methods and OTU or qPCR tables into a checked FAIRe (FAIR eDNA) workbook, in conversation, and convert it for GBIF, OBIS, NCBI or ENA.
-license: MIT; the bundled tools and data keep their own licences (references/licences.md)
 ---
 
 # Making a FAIRe eDNA dataset in conversation
@@ -10,9 +9,11 @@ You help an eDNA researcher turn the files they already have (a sample sheet, th
 or protocol, OTU or ASV tables, qPCR results, run reports) into a FAIRe metadata workbook. FAIRe is the
 FAIR eDNA metadata standard (https://fair-edna.github.io).
 
-The work is done by the FAIRe tools from the FAIRe-Galaxy project, bundled in the folders beside this
-file (`faire_mapper/`, `fairefier/` and the converters). `scripts/faire_session.py` runs them one
-step at a time, keeps the researcher's decisions, and prints what each step found. Your job is the conversation: explain, ask, record the answers, and keep the
+The work is done by the FAIRe tools from the FAIRe-Galaxy project (the FAIRe mapper, FAIRe-fier and
+the converters), bundled with their code in `scripts/` and their data in `assets/` (the FAIRe
+checklist, the primer table, the term lists; `assets/tool-layout.json` says where each goes). Run only
+`scripts/faire_session.py`: it puts the tools together on first use, runs them one step at a time,
+keeps the researcher's decisions, and prints what each step found. Licences: `references/licences.md`. Your job is the conversation: explain, ask, record the answers, and keep the
 researcher in charge of every decision.
 
 ## Ground rules
@@ -62,7 +63,7 @@ Researchers find it hard to answer several questions in one reply, so:
 ## Before you start: can you run code?
 
 If you can run Python and read uploaded files in a workspace, follow the steps below (agent mode).
-If you cannot, read `references/advisor_mode.md` and follow it instead.
+If you cannot, read `references/advisor-mode.md` and follow it instead.
 
 All commands below are `python3 ${CLAUDE_SKILL_DIR}/scripts/faire_session.py COMMAND ...`, run from
 a folder where the session can keep its files (it makes `faire_work/`). Where `${CLAUDE_SKILL_DIR}` is
@@ -103,7 +104,7 @@ has them; see "How to ask"):
 - **share everything**: the files are cleared to share, and the workbook is built here;
 - **share less**: only the column headings and a few rows of the sample sheet, and the methods. The
   decisions are recorded here, and the researcher builds the workbook on their own computer with the
-  FAIRe tools Shiny app or in Galaxy (Step 9 says how; `references/data_care.md` has the details);
+  FAIRe tools Shiny app or in Galaxy (Step 9 says how; `references/data-care.md` has the details);
 - **work offline**: use the FAIRe tools Shiny app on their own computer for the whole job
   (https://github.com/FAIR-eDNA/FAIRe-Galaxy, folder `shiny`).
 
@@ -216,8 +217,8 @@ two facts, such as 500 mL when half of a 1 L filter was extracted, is your sugge
 got it. Say the other terms can be added later, and do not ask about them one by one.
 
 Some values are judgement calls for the person entering the data (see "Judgement calls" in
-`references/faire_rules.md`): give the readings in a sentence, propose one, and take their choice.
-`references/faire_rules.md` also has the FAIRe conventions to follow (missing values, local time,
+`references/faire-rules.md`): give the readings in a sentence, propose one, and take their choice.
+`references/faire-rules.md` also has the FAIRe conventions to follow (missing values, local time,
 sample names, separate runs).
 
 ## Step 7. Build and check

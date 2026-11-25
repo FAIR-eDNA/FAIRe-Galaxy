@@ -4,6 +4,17 @@ These come from the FAIRe guidelines (https://fair-edna.github.io/guidelines.htm
 checklist v1.0.2 bundled with the tools, and what trials of the FAIRe tools on published datasets
 showed people most often get wrong.
 
+## Contents
+
+- Missing values
+- Dates and times
+- Samples, controls, assays and runs
+- Commonly confused terms
+- Values that must come from a source
+- Terms not in FAIRe
+- Judgement calls
+- Minimum or complete
+
 ## Missing values
 
 When a mandatory term has no value, FAIRe uses the INSDC missing-value terms, and recommends them
@@ -96,5 +107,5 @@ later uses of the data than the samples, dates, places, controls and taxa. Examp
 
 The mandatory terms (some only under conditions) make a minimum dataset. After them,
 `gaps --recommended` lists the highly recommended terms still empty that can apply to the study;
-`references/faire_terms.md` lists both. Offer only those the files or the researcher can answer, as
+`references/faire-terms.md` lists both. Offer only those the files or the researcher can answer, as
 one checklist; do not ask about every optional term.

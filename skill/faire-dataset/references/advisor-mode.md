@@ -5,7 +5,7 @@ themselves, in the FAIRe tools Shiny app on their own computer or in the Galaxy 
 help them make each decision. You never write the FAIRe workbook yourself, and you never say it has
 been checked: only FAIRe-fier, run by the researcher, checks it.
 
-The ground rules in SKILL.md apply unchanged, and so does the data notice in `data_care.md`.
+The ground rules in SKILL.md apply unchanged, and so does the data notice in `data-care.md`.
 
 ## Where the researcher runs the tools
 
@@ -26,7 +26,7 @@ values for the whole project, apply mapping, FAIRe-fier.
    the review sheet it writes (or paste its Review sheet). Go through it with them:
    - the rows the mapper accepted: a short list, asking if any look wrong;
    - the rows to review, one at a time: what the column holds, what the proposed term means, the
-     question for commonly confused terms (`faire_rules.md`), and the decision (Accept, Reject or
+     question for commonly confused terms (`faire-rules.md`), and the decision (Accept, Reject or
      Change with the replacement term). The researcher enters each decision in the sheet's
      *Reviewer's decision* and *Replacement FAIRe term* columns;
    - the *Additional checks to make* sheet: the corrections to make in their table, after which they
@@ -52,7 +52,7 @@ values for the whole project, apply mapping, FAIRe-fier.
 
    Give it in a code block so it can be copied exactly, and say where each value came from (the
    researcher's answer, their methods, the primer reference table). Check each term and its allowed
-   values against `faire_terms.md` or the checklist. Only the researcher's answers and their files
+   values against `faire-terms.md` or the checklist. Only the researcher's answers and their files
    are sources; take nothing from your own memory.
 6. **Build and check.** The researcher runs *apply mapping* with the reviewed sheets, the values and
    their OTU or qPCR tables, then *FAIRe-fier*. Ask them to share the log and FAIRe-fier's report, and

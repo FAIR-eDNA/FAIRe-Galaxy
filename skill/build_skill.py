@@ -3,7 +3,7 @@
 
 The skill's own files (SKILL.md, references/, scripts/faire_session.py, references/licences.md) live
 in skill/faire-dataset/. The FAIRe tools it runs are copied in from tools/ at build time, so the
-package always carries the repository's current tools, and references/faire_terms.md is made from the
+package always carries the repository's current tools, and references/faire-terms.md is made from the
 bundled FAIRe checklist.
 
 Usage: python skill/build_skill.py [OUTDIR]     (default: skill/dist)
@@ -11,6 +11,7 @@ Writes OUTDIR/faire-dataset/ and OUTDIR/faire-dataset.zip (one top-level folder,
 and Microsoft 365 Copilot expect for an uploaded skill), and OUTDIR/faire-dataset-plugin.zip, the same
 skill as a plugin for claude.ai's Customize > Plugins > Add > Upload plugin.
 """
+import hashlib
 import json
 import re
 import shutil
@@ -48,7 +49,7 @@ CONVERTERS = {
 
 
 def terms_reference(checklist, out):
-    """references/faire_terms.md: the mandatory and highly recommended terms of the checklist."""
+    """references/faire-terms.md: the mandatory and highly recommended terms of the checklist."""
     import pandas as pd
     ck = pd.read_excel(checklist, sheet_name='checklist', dtype=str).fillna('')
     sel = ck[ck.requirement_level.isin(['Mandatory', 'Highly recommended'])]
@@ -57,8 +58,12 @@ def terms_reference(checklist, out):
         return re.sub(r'\s+', ' ', x).strip()
 
     lines = ['# FAIRe terms: mandatory and highly recommended', '',
-             f'From the FAIRe checklist ({Path(checklist).name}, CC BY 4.0), bundled at '
-             '`scripts/tools/faire_mapper/checklist/`.',
+             f'From the FAIRe checklist ({Path(checklist).name}, CC BY 4.0), bundled in '
+             '`assets/faire_mapper_checklist/`.', '']
+    toc = ['## Contents', '']
+    for level in ('Mandatory', 'Highly recommended'):
+        toc.append(f'- {level}: ' + ', '.join(sel[sel.requirement_level == level].section.drop_duplicates()))
+    lines += toc + ['',
              f'The checklist has {len(ck)} terms; these are its {len(sel)} mandatory and highly recommended ones. '
              'The sheets in brackets are where each term goes in the workbook. Allowed values are given where the '
              'checklist fixes them (`other:` means free text may follow `other: `).', '']
@@ -95,12 +100,19 @@ def main(outdir=None):
     if pkg.exists():
         shutil.rmtree(pkg)
     shutil.copytree(SRC, pkg, ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
-    # The tool folders sit at the top of the skill (faire_mapper/, fairefier/, faire2dwc/ ...), so that no
-    # file is more than two folders down: Microsoft 365 Copilot refuses packages more than three folders
-    # deep. Copilot also accepts only some file types, so LICENSE files get a .txt ending.
-    tools = pkg
-    (tools / 'faire_mapper').mkdir(parents=True, exist_ok=True)
-    (tools / 'fairefier' / 'checklist').mkdir(parents=True, exist_ok=True)
+    for d in sorted(pkg.rglob('*'), reverse=True):  # no empty folders
+        if d.is_dir() and not any(d.iterdir()):
+            d.rmdir()
+    # The tools are copied in their usual layout to a staging folder, then split the way skill packages
+    # expect (and Microsoft 365 Copilot requires): Python code in scripts/, the data the code reads in
+    # assets/, documentation in references/. assets/tool-layout.json records where each file goes, and
+    # faire_session.py puts the tools back together in a temporary folder on first use. No file is more
+    # than two folders down, and LICENSE files get a .txt ending, as Copilot accepts only some file types.
+    tools = out / '_tools'
+    if tools.exists():
+        shutil.rmtree(tools)
+    (tools / 'faire_mapper').mkdir(parents=True)
+    (tools / 'fairefier' / 'checklist').mkdir(parents=True)
     for f in MAPPER_FILES:
         shutil.copy(REPO / 'tools' / 'faire_mapper' / f, tools / 'faire_mapper' / f)
     for d in MAPPER_DIRS:
@@ -117,9 +129,31 @@ def main(outdir=None):
                 shutil.copytree(src, tools / tool / f, ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
             else:
                 shutil.copy(src, tools / tool / f)
-    for f in list(pkg.rglob('LICENSE*')):
-        if f.name in ('LICENSE', 'LICENSE.upstream'):
-            f.rename(f.with_name(f.name.replace('.', '_') + '.txt'))
+    layout, by_hash = {}, {}
+    for f in sorted(tools.rglob('*')):
+        if not f.is_file():
+            continue
+        rel = f.relative_to(tools)
+        folder = '_'.join(rel.parts[:-1])
+        name = {'LICENSE': 'LICENSE.txt', 'LICENSE.upstream': 'LICENSE_upstream.txt'}.get(rel.name, rel.name)
+        digest = hashlib.sha1(f.read_bytes()).hexdigest()
+        if rel.as_posix() == 'faire_mapper/primers/README.md':
+            dest = 'references/primer-table-sources.md'
+        elif f.suffix == '.py':
+            dest = f'scripts/{folder}/{name}'
+        else:
+            # one copy of identical data files (the checklist is used by two tools)
+            dest = (by_hash.get(digest) if f.suffix in ('.xlsx', '.tsv') else None) or f'assets/{folder}/{name}'
+        by_hash.setdefault(digest, dest)
+        if dest not in layout:
+            (pkg / dest).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(f, pkg / dest)
+            layout[dest] = {'sha1': digest, 'to': []}
+        layout[dest]['to'].append(rel.as_posix())
+    (pkg / 'assets').mkdir(exist_ok=True)
+    (pkg / 'assets' / 'tool-layout.json').write_text(json.dumps(
+        {'about': 'Where each bundled file goes when faire_session.py puts the FAIRe tools back together',
+         'files': layout}, indent=1) + '\n', encoding='utf-8')
     try:
         commit = subprocess.run(['git', '-C', str(REPO), 'log', '-1', '--format=%H %cs'], capture_output=True,
                                 text=True, check=True).stdout.strip()
@@ -129,9 +163,13 @@ def main(outdir=None):
             commit += ' (with uncommitted changes)'
     except (subprocess.CalledProcessError, FileNotFoundError):
         commit = 'unknown'
-    (pkg / 'references' / 'source_commit.txt').write_text(commit + '\n', encoding='utf-8')
+    (pkg / 'references' / 'source-commit.txt').write_text(commit + '\n', encoding='utf-8')
     terms_reference(tools / 'faire_mapper' / 'checklist' / 'FAIRe_checklist_v1.0.2.xlsx',
-                    pkg / 'references' / 'faire_terms.md')
+                    pkg / 'references' / 'faire-terms.md')
+    shutil.rmtree(tools)
+    missing = [m for m in re.findall(r'`((?:scripts|references|assets|agents)/[^`* ]+)`',
+                                     (pkg / 'SKILL.md').read_text(encoding='utf-8')) if not (pkg / m).exists()]
+    assert not missing, f'SKILL.md names files that are not in the package: {missing}'
     files = [f for f in pkg.rglob('*') if f.is_file()]
     deepest = max(len(f.relative_to(pkg).parts) - 1 for f in files)
     assert deepest <= 2, f'a file in the package is {deepest} folders down'
@@ -140,6 +178,9 @@ def main(outdir=None):
             if f.is_file() and f.suffix.lower() not in SCRIPT_TYPES]  # Copilot: scripts/ holds scripts only
     assert not odd, f'file types Microsoft 365 Copilot does not accept: {odd}'
     assert len(files) <= 350, f'{len(files)} files; Copilot takes at most 350'
+    head = (pkg / 'SKILL.md').read_text(encoding='utf-8').split('---')[1]
+    keys = [ln.split(':')[0] for ln in head.strip().splitlines()]
+    assert keys == ['name', 'description'], f'SKILL.md frontmatter has {keys}; Copilot wants name and description only'
     n = len((pkg / 'SKILL.md').read_text(encoding='utf-8'))
     assert n < 20000, f'SKILL.md has {n} characters; Copilot takes fewer than 20,000'
     z = out / 'faire-dataset.zip'

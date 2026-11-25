@@ -6,6 +6,16 @@ folder). `COMMAND --help` lists the options.
 
 The script prints `STOPPED:` and the reason when something needs fixing, and exits with code 2.
 
+## Contents
+
+- Setting up
+- Files and the sample table
+- Methods and primers
+- Values the researcher gives
+- Building and checking
+- Converting
+- The session folder
+
 ## Setting up
 
 | Command | What it does |

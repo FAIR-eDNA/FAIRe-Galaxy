@@ -66,8 +66,8 @@ Skills are added to a declarative agent, made in Agent Builder:
 2. Turn on the *Code interpreter* capability.
 3. Add the skill: upload `faire-dataset-copilot.zip`. Copilot wants `SKILL.md` at the top of the zip,
    no file more than three folders down, at most 350 files, only some file types (Python, Markdown,
-   text, TSV, Excel and the like) and instructions under 20,000 characters; the build checks all of
-   these.
+   text, TSV, Excel and the like), only scripts in `scripts/`, only `name` and `description` in the
+   frontmatter, and instructions under 20,000 characters; the build checks all of these.
 
 This needs a Microsoft 365 Copilot licence, and an organisation can turn off skills or agent
 building; ask your IT team if the options above are missing. Once it can be added, the first thing to
@@ -83,8 +83,8 @@ the conversation.
 
 ### Any other chat
 
-Attach `SKILL.md`, `references/advisor_mode.md`, `references/data_care.md` and
-`references/faire_rules.md`, and start with: *"Follow SKILL.md to help me make a FAIRe dataset. You
+Attach `SKILL.md`, `references/advisor-mode.md`, `references/data-care.md` and
+`references/faire-rules.md`, and start with: *"Follow SKILL.md to help me make a FAIRe dataset. You
 cannot run code, so use advisor mode."*
 
 ## How a session goes
@@ -110,7 +110,7 @@ cannot run code, so use advisor mode."*
 9. The researcher gets a zip of the workbook, review sheets, logs, converted files and a README of
    provenance. Uploading stays with them.
 
-If the assistant cannot run code, it follows `references/advisor_mode.md`: the researcher runs the
+If the assistant cannot run code, it follows `references/advisor-mode.md`: the researcher runs the
 tools in the Shiny app or Galaxy, and the assistant helps with each decision.
 
 ## What is in it
@@ -118,19 +118,23 @@ tools in the Shiny app or Galaxy, and the assistant helps with each decision.
 ```
 faire-dataset/
   SKILL.md                  the instructions the assistant follows, step by step
+  agents/ui_metadata.yaml   the display name, for Microsoft 365 Copilot
   references/
-    data_care.md            the notice on data sensitivity given before any file is shared
-    faire_rules.md          FAIRe conventions: missing values, local time, controls, runs, confused terms
-    faire_terms.md          the mandatory and highly recommended FAIRe terms (made from the checklist)
+    data-care.md            the notice on data sensitivity given before any file is shared
+    faire-rules.md          FAIRe conventions: missing values, local time, controls, runs, confused terms
+    faire-terms.md          the mandatory and highly recommended FAIRe terms (made from the checklist)
     commands.md             every command of faire_session.py
-    advisor_mode.md         how to help when the assistant cannot run code
     converting.md           what each conversion needs from the researcher
+    advisor-mode.md         how to help when the assistant cannot run code
     licences.md             the licences of the bundled tools and data
-    source_commit.txt       the FAIRe-Galaxy commit the tools were copied from
+    primer-table-sources.md the sources of the primer table and their terms
+    source-commit.txt       the FAIRe-Galaxy commit the tools were copied from
   scripts/
     faire_session.py        runs the tools one step at a time and keeps the session's decisions
-  faire_mapper/, fairefier/, faire2dwc/, faire2ncbi/, faire2ena/, faire2qiime/
-                            copies of the FAIRe mapper, FAIRe-fier and the Python converters from tools/
+    faire_mapper/ ...       the code of the FAIRe mapper, FAIRe-fier and the Python converters
+  assets/
+    tool-layout.json        where each bundled file goes when the tools are put back together
+    faire_mapper_checklist/ ...  the data the tools read: the FAIRe checklist, primer table, term lists
 ```
 
 The assistant never writes the workbook itself. `faire_session.py` runs FAIRe mapper (identify,
@@ -147,11 +151,12 @@ python skill/build_skill.py            # writes skill/dist/faire-dataset.zip and
 
 The build copies the current tools from `tools/faire_mapper`, `tools/fairefier` and the four Python
 converters (`tools/faire2dwc`, `faire2ncbi`, `faire2ena`, `faire2qiime`), makes
-`references/faire_terms.md` from the checklist, and records the commit in `references/source_commit.txt`. The
-tool folders sit at the top of the skill, and each `LICENSE` file gets a `.txt` ending, to meet
-Microsoft 365 Copilot's limits on folder depth and file types (`scripts/` may hold only scripts). Rebuild after any change to the tools,
-so the package and the Galaxy
-tools stay the same. The zip is about 1 MB.
+`references/faire-terms.md` from the checklist, and records the commit in
+`references/source-commit.txt`. It splits the tools the way skill packages expect: code in
+`scripts/`, the data it reads in `assets/`, documentation in `references/`, with
+`assets/tool-layout.json` saying where each file goes. `faire_session.py` puts the tools back together
+in a temporary folder on first use. Rebuild after any change to the tools, so the package and the
+Galaxy tools stay the same. The zip is about 1 MB.
 
 When a release is published on GitHub, the workflow `.github/workflows/skill_release.yaml` builds
 both zips from the release's code and attaches them to it, which is where *Download the skill*

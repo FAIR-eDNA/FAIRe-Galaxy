@@ -47,8 +47,46 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 
 
-# The bundled tools sit at the top of the skill, beside SKILL.md (faire_mapper/, fairefier/, faire2dwc/ ...)
-TOOLS = HERE.parent
+SKILL = HERE.parent
+
+
+def tools_dir():
+    """The FAIRe tools, in their usual layout. The skill package keeps their code in scripts/ and their data
+    in assets/, as skill packages expect; assets/tool-layout.json says where each file goes. They are put
+    back together once, in a folder the workspace can write to, and found there on later calls."""
+    import hashlib
+    import tempfile
+    lay = SKILL / 'assets' / 'tool-layout.json'
+    if not lay.exists():
+        sys.exit('assets/tool-layout.json is missing: this copy of the skill is incomplete.')
+    tag = hashlib.sha1(lay.read_bytes()).hexdigest()[:12]
+    files = json.loads(lay.read_text(encoding='utf-8'))['files']
+    user = getattr(os, 'getuid', lambda: 0)()
+    for base in (Path(tempfile.gettempdir()), Path.home() / '.cache'):
+        dest = base / f'faire_tools_{user}_{tag}'
+        try:
+            if (dest / '.complete').exists():
+                return dest
+            base.mkdir(parents=True, exist_ok=True)
+            tmp = Path(tempfile.mkdtemp(prefix='faire_tools_tmp_', dir=base))
+            for src, info in files.items():
+                for to in info['to']:
+                    (tmp / to).parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy(SKILL / src, tmp / to)
+            (tmp / '.complete').write_text(tag + '\n', encoding='utf-8')
+            try:
+                tmp.rename(dest)
+            except OSError:  # put together at the same moment by another call
+                shutil.rmtree(tmp, ignore_errors=True)
+            if (dest / '.complete').exists():
+                return dest
+        except OSError:
+            continue
+    sys.exit('Could not put the FAIRe tools together: no folder in this workspace can be written to. '
+             'Use advisor mode (references/advisor-mode.md).')
+
+
+TOOLS = tools_dir()
 MAPPER = TOOLS / 'faire_mapper'
 FAIREFIER = TOOLS / 'fairefier'
 CHECKLIST = MAPPER / 'checklist' / 'FAIRe_checklist_v1.0.2.xlsx'
@@ -154,12 +192,12 @@ def cmd_setup(args):
     if missing and not args.install:
         print('Install with:  pip install ' + ' '.join(m for m, _ in missing)
               + '   (or run setup --install; add --break-system-packages if pip refuses the system Python)')
-    commit = HERE.parent / 'references' / 'source_commit.txt'
+    commit = SKILL / 'references' / 'source-commit.txt'
     print(f'FAIRe tools: FAIRe-Galaxy commit {commit.read_text().split()[0][:7] if commit.exists() else "unknown"}'
           f'; tested with {TESTED}.')
     if essential:
         print('Not ready: the tools cannot run without ' + ', '.join(essential) + '. If they cannot be installed '
-              'here, use advisor mode (references/advisor_mode.md).')
+              'here, use advisor mode (references/advisor-mode.md).')
         return 1
     print('Ready.' if not missing else 'Ready, except for the steps named above.')
     return 0
