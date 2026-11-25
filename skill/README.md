@@ -125,10 +125,10 @@ faire-dataset/
     commands.md             every command of faire_session.py
     advisor_mode.md         how to help when the assistant cannot run code
     converting.md           what each conversion needs from the researcher
+    licences.md             the licences of the bundled tools and data
+    source_commit.txt       the FAIRe-Galaxy commit the tools were copied from
   scripts/
     faire_session.py        runs the tools one step at a time and keeps the session's decisions
-    LICENSES.md             the licences of the bundled tools and data
-    SOURCE_COMMIT.txt       the FAIRe-Galaxy commit the tools were copied from
   faire_mapper/, fairefier/, faire2dwc/, faire2ncbi/, faire2ena/, faire2qiime/
                             copies of the FAIRe mapper, FAIRe-fier and the Python converters from tools/
 ```
@@ -147,9 +147,9 @@ python skill/build_skill.py            # writes skill/dist/faire-dataset.zip and
 
 The build copies the current tools from `tools/faire_mapper`, `tools/fairefier` and the four Python
 converters (`tools/faire2dwc`, `faire2ncbi`, `faire2ena`, `faire2qiime`), makes
-`references/faire_terms.md` from the checklist, and records the commit in `SOURCE_COMMIT.txt`. The
+`references/faire_terms.md` from the checklist, and records the commit in `references/source_commit.txt`. The
 tool folders sit at the top of the skill, and each `LICENSE` file gets a `.txt` ending, to meet
-Microsoft 365 Copilot's limits on folder depth and file types. Rebuild after any change to the tools,
+Microsoft 365 Copilot's limits on folder depth and file types (`scripts/` may hold only scripts). Rebuild after any change to the tools,
 so the package and the Galaxy
 tools stay the same. The zip is about 1 MB.
 
@@ -198,7 +198,7 @@ their data, in each of Claude, ChatGPT and Copilot.
 ## Licences
 
 `SKILL.md`, `references/` and `faire_session.py` are MIT, as the rest of this repository. The bundled
-tools and data keep their own licences, listed in `scripts/LICENSES.md`: the FAIRe checklist is
+tools and data keep their own licences, listed in `references/licences.md`: the FAIRe checklist is
 CC BY 4.0, FAIRe-fier is BSD 3-Clause, FAIRe2NCBI and faire2qiime are CC0 1.0, FAIRe2ENA is MIT, and
 most rows of the primer table come from Takahashi et al.
 2023 under CC BY-NC 4.0.

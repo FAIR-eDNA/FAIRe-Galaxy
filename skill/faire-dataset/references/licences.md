@@ -2,7 +2,7 @@
 
 The tool folders at the top of the skill (`faire_mapper/`, `fairefier/`, `faire2dwc/`, `faire2ncbi/`,
 `faire2ena/`, `faire2qiime/`) are copies of the FAIRe tools from the FAIRe-Galaxy project,
-https://github.com/FAIR-eDNA/FAIRe-Galaxy, at the commit named in `scripts/SOURCE_COMMIT.txt`. They
+https://github.com/FAIR-eDNA/FAIRe-Galaxy, at the commit named in `references/source_commit.txt`. They
 are bundled unchanged so the skill works without downloading anything, except that each `LICENSE`
 file is renamed `LICENSE.txt` (and `LICENSE.upstream` to `LICENSE_upstream.txt`), as some assistants
 accept only files with known endings.
@@ -25,4 +25,4 @@ accept only files with known endings.
 FAIRe-Galaxy project.
 
 To update the tools, run `skill/build_skill.py` in a newer copy of the FAIRe-Galaxy repository: it
-copies the same files and writes `SOURCE_COMMIT`.
+copies the same files and writes `references/source_commit.txt`.

@@ -154,7 +154,7 @@ def cmd_setup(args):
     if missing and not args.install:
         print('Install with:  pip install ' + ' '.join(m for m, _ in missing)
               + '   (or run setup --install; add --break-system-packages if pip refuses the system Python)')
-    commit = HERE / 'SOURCE_COMMIT.txt'
+    commit = HERE.parent / 'references' / 'source_commit.txt'
     print(f'FAIRe tools: FAIRe-Galaxy commit {commit.read_text().split()[0][:7] if commit.exists() else "unknown"}'
           f'; tested with {TESTED}.')
     if essential:

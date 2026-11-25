@@ -1,7 +1,7 @@
 ---
 name: faire-dataset
 description: Helps an eDNA researcher turn their sample sheet, methods and OTU or qPCR tables into a checked FAIRe (FAIR eDNA) workbook, in conversation, and convert it for GBIF, OBIS, NCBI or ENA.
-license: MIT; the bundled tools and data keep their own licences (scripts/LICENSES.md)
+license: MIT; the bundled tools and data keep their own licences (references/licences.md)
 ---
 
 # Making a FAIRe eDNA dataset in conversation

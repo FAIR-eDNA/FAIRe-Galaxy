@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build the faire-dataset skill package from this repository.
 
-The skill's own files (SKILL.md, references/, scripts/faire_session.py, scripts/LICENSES.md) live
+The skill's own files (SKILL.md, references/, scripts/faire_session.py, references/licences.md) live
 in skill/faire-dataset/. The FAIRe tools it runs are copied in from tools/ at build time, so the
 package always carries the repository's current tools, and references/faire_terms.md is made from the
 bundled FAIRe checklist.
@@ -34,6 +34,7 @@ COPILOT_TYPES = {'.json', '.xml', '.yaml', '.yml', '.ini', '.config', '.utf8', '
                  '.txt', '.rtf', '.md', '.ppt', '.pptx', '.ppsm', '.xlsx', '.xls', '.xlsm', '.csv', '.tsv', '.html',
                  '.htm', '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.log', '.py', '.js', '.mjs', '.cjs', '.ts', '.mts',
                  '.sh', '.bash'}
+SCRIPT_TYPES = {'.py', '.js', '.mjs', '.cjs', '.ts', '.mts', '.sh', '.bash'}
 FAIREFIER_CHECKLISTS = ['FAIRe_checklist_v1.0.2.xlsx', 'FAIRe_checklist_v1.0.xlsx', 'LICENSE']
 # The converters the skill can run in a chat workspace: Python only, and no web services
 # (edna2obis needs WoRMS or GBIF, and FAIRe2MDT needs R, so they stay in the Shiny app and Galaxy).
@@ -128,13 +129,15 @@ def main(outdir=None):
             commit += ' (with uncommitted changes)'
     except (subprocess.CalledProcessError, FileNotFoundError):
         commit = 'unknown'
-    (pkg / 'scripts' / 'SOURCE_COMMIT.txt').write_text(commit + '\n', encoding='utf-8')
+    (pkg / 'references' / 'source_commit.txt').write_text(commit + '\n', encoding='utf-8')
     terms_reference(tools / 'faire_mapper' / 'checklist' / 'FAIRe_checklist_v1.0.2.xlsx',
                     pkg / 'references' / 'faire_terms.md')
     files = [f for f in pkg.rglob('*') if f.is_file()]
     deepest = max(len(f.relative_to(pkg).parts) - 1 for f in files)
     assert deepest <= 2, f'a file in the package is {deepest} folders down'
     odd = [str(f.relative_to(pkg)) for f in files if f.suffix.lower() not in COPILOT_TYPES]
+    odd += [str(f.relative_to(pkg)) for f in (pkg / 'scripts').rglob('*')
+            if f.is_file() and f.suffix.lower() not in SCRIPT_TYPES]  # Copilot: scripts/ holds scripts only
     assert not odd, f'file types Microsoft 365 Copilot does not accept: {odd}'
     assert len(files) <= 350, f'{len(files)} files; Copilot takes at most 350'
     n = len((pkg / 'SKILL.md').read_text(encoding='utf-8'))
