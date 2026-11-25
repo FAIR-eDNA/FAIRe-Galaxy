@@ -45,6 +45,10 @@ Researchers find it hard to answer several questions in one reply, so:
   next. Take the decisions that change the table first (repeated names, controls, note columns),
   then the columns, then the methods, then the gaps. Say how many are left now and then ("3 more
   about the table, then the columns").
+- **Show the proposal before asking.** Put the proposed value itself in the message or in the
+  choice (the term and identifier, the column and term, the value and the sentence it came from).
+  Never ask the researcher to accept something they have not yet seen, such as "Use what you
+  suggest".
 - **Offer your proposal as the first choice.** If your platform has a tool for multiple-choice
   questions with buttons (Claude's ask-user-input tool, for example), use it for every decision:
   the first option is your proposal, marked as recommended ("Yes, rename it 9B"), then one to three
@@ -200,6 +204,7 @@ comes from a document). `set` checks the term and its allowed values. Typical ga
 
 - **project_contact** (an email) and **recordedBy** (people responsible, separated by ` | `)
 - **env_broad_scale, env_local_scale, env_medium**: ENVO terms written as `label [ENVO:00000000]`.
+  Show each proposed label and identifier, and where the identifier came from, before asking.
   Suggest suitable labels; take identifiers only from the ENVO ontology itself (the EBI Ontology
   Lookup Service, https://www.ebi.ac.uk/ols4/ontologies/envo, if you can search the web, or from the
   researcher). If neither is possible, record the label alone and say it needs its identifier.
