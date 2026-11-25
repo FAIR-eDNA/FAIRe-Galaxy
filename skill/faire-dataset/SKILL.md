@@ -204,10 +204,10 @@ comes from a document). `set` checks the term and its allowed values. Typical ga
 
 - **project_contact** (an email) and **recordedBy** (people responsible, separated by ` | `)
 - **env_broad_scale, env_local_scale, env_medium**: ENVO terms written as `label [ENVO:00000000]`.
-  Show each proposed label and identifier, and where the identifier came from, before asking.
-  Suggest suitable labels; take identifiers only from the ENVO ontology itself (the EBI Ontology
-  Lookup Service, https://www.ebi.ac.uk/ols4/ontologies/envo, if you can search the web, or from the
-  researcher). If neither is possible, record the label alone and say it needs its identifier.
+  Search the bundled ENVO before proposing: `envo WORDING ... --term env_medium`, with several
+  wordings (the material, the place, synonyms, a broader word: `envo dust "house dust" particulate`).
+  Show the closest few with their definitions and narrower terms, and propose the most specific class
+  the study supports. `set` checks each identifier against ENVO; never take one from memory.
 - **targetTaxonomicAssay** (what the primers amplify) for each assay; it is often confused with
   targetTaxonomicScope (what the study set out to detect): ask which is meant.
 - **controls**: neg_cont_0_1 and pos_cont_0_1 (1 or 0), and the control type of each control.

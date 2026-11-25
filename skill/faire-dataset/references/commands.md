@@ -12,6 +12,7 @@ The script prints `STOPPED:` and the reason when something needs fixing, and exi
 - Files and the sample table
 - Methods and primers
 - Values the researcher gives
+- ENVO terms
 - Building and checking
 - Converting
 - The session folder
@@ -70,6 +71,17 @@ and listed in the handover.
 | `set TERM VALUE [--assay NAME] [--source TEXT]` | Records a value for the whole study, or for one assay. Checks that the term exists and the value is allowed (`--force` keeps a value that is not). Says when the term is a commonly confused one, and when the value differs from what the methods give (the method details found, amplicon sizes in bp, and primer and probe sequences written in the methods). Project terms go to projectMetadata; sample terms are written for every sample unless a column of the table gives them. |
 | `unset TERM [--assay NAME]` | Removes a value recorded with set. |
 | `gaps [--recommended]` | Mandatory terms still without a value. With `--recommended`, also the highly recommended terms still empty that can apply to the study, by section (no qPCR probe terms for metabarcoding, no precipitation terms when the samples were filtered). |
+
+## ENVO terms
+
+| Command | What it does |
+|---|---|
+| `envo WORDING [WORDING ...] [--term env_broad_scale\|env_local_scale\|env_medium] [--limit 15]` | Searches the bundled ENVO release (`assets/envo-terms.tsv`, every current ENVO class) for each wording: exact label or synonym first, then the wording as a phrase, then all its words in the label, synonyms or definition. With `--term`, the classes that suit that term rank first (biomes for env_broad_scale, places, features and constructions for env_local_scale, materials for env_medium). Shows each class's identifier, label, branch, parents, synonyms, definition and narrower terms. |
+| `envo --id ENVO:00002008 [...]` | Shows classes in full, with up to 12 narrower terms. |
+
+`set env_medium "dust [ENVO:00002008]"` checks the identifier against the same release: it stops if
+the identifier is not a current ENVO class or names another class (or a synonym of this one), and
+notes a class from a branch not usually used for that term.
 
 ## Building and checking
 

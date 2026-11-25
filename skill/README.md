@@ -134,6 +134,7 @@ faire-dataset/
     faire_mapper/ ...       the code of the FAIRe mapper, FAIRe-fier and the Python converters
   assets/
     tool-layout.json        where each bundled file goes when the tools are put back together
+    envo-terms.tsv          every current ENVO class (label, branch, parents, synonyms, definition)
     faire_mapper_checklist/ ...  the data the tools read: the FAIRe checklist, primer table, term lists
 ```
 
@@ -193,8 +194,10 @@ their data, in each of Claude, ChatGPT and Copilot.
 - Assistants vary, and so does the same assistant from one model version to the next. The rules in
   SKILL.md (no invented values, every decision recorded, no check claimed that was not run) are the
   safeguards, and the handover README lets a reviewer see what was decided and by whom.
-- Chat workspaces usually cannot reach the internet. ENVO identifiers then come from the researcher,
-  or from the assistant's own web search if it has one; the tools cannot look them up.
+- ENVO terms come from the ENVO release bundled in `assets/envo-terms.tsv` (searched with `envo`, and
+  checked by `set`), so they need no internet. A term added to ENVO after that release needs the
+  researcher, or a newer release: run `python skill/make_envo_terms.py envo.obo` with the release's
+  `envo.obo`, then rebuild.
 - Chat tools limit the size of uploads. Very large OTU tables are better handled in the Shiny app or
   Galaxy.
 - If a workspace lacks pandas, openpyxl and numpy and cannot install them, the tools cannot run

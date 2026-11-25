@@ -24,6 +24,9 @@ some assistants accept only files with known endings, and the primer table's REA
 | `faire2qiime/faire2qiime.py` (faire2qiime, NOAA 'Omics, https://github.com/aomlomics/faire2qiime) | CC0 1.0 (`faire2qiime/LICENSE_upstream.txt`) |
 | `faire2dwc/` (FAIRe to Darwin Core), and the drivers `faire2ncbi_galaxy.py`, `faire2ena_galaxy.py`, `faire2qiime_by_assay.py`, `faire2qiime_run.py` and `normalise_faire.py` | MIT (`LICENSE.txt` in each folder) |
 
+`assets/envo-terms.tsv` is made from the Environment Ontology (ENVO,
+https://github.com/EnvironmentOntology/envo), CC0 1.0; its first line names the release.
+
 `scripts/faire_session.py` and the skill's instructions (`SKILL.md`, `references/`) are MIT, as the
 FAIRe-Galaxy project.
 

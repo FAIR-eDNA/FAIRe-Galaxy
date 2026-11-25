@@ -27,6 +27,7 @@ Steps, in order (python faire_session.py STEP --help for each):
   gaps           list the mandatory FAIRe terms still without a value
   build          write the FAIRe workbook
   check          check the workbook with FAIRe-fier
+  envo           search the bundled ENVO for env_broad_scale, env_local_scale and env_medium
   convert        convert the checked workbook for NCBI, ENA, GBIF or OBIS, or QIIME 2
   summary        write the handover folder: the files, and where every value came from
   status         what has been done so far, and what is next
@@ -1212,6 +1213,155 @@ def methods_conflicts(w, s, term, value, assay):
     return out[:3]
 
 
+# ---------------------------------------------------------------- ENVO
+
+ENVO_TABLE = SKILL / 'assets' / 'envo-terms.tsv'
+# Which ENVO branches suit each habitat term (MIxS and FAIRe guidance)
+ENVO_FITS = {'env_broad_scale': ('biome',),
+             'env_local_scale': ('astronomical body part', 'construction', 'environmental system',
+                                 'other material entity'),
+             'env_medium': ('environmental material',)}
+_ENVO = {}
+
+
+def envo_terms():
+    """The bundled ENVO release: {id: row}, the release name, and the narrower terms of each label."""
+    if not _ENVO:
+        if not ENVO_TABLE.exists():
+            raise Stop('assets/envo-terms.tsv is missing: this copy of the skill is incomplete.')
+        lines = ENVO_TABLE.read_text(encoding='utf-8').splitlines()
+        _ENVO['release'] = re.sub(r'^# (ENVO [^;]+);.*', r'\1', lines[0]).replace('releases/', '')
+        rows = list(csv.DictReader(lines[1:], delimiter='\t', quoting=csv.QUOTE_NONE))
+        _ENVO['rows'] = {r['id']: r for r in rows}
+        kids = {}
+        for r in rows:
+            for p in filter(None, r['parents'].split('; ')):
+                kids.setdefault(p, []).append(r['label'])
+        _ENVO['kids'] = kids
+    return _ENVO
+
+
+def envo_fits(branch, term):
+    if term not in ENVO_FITS:
+        return ''
+    return 'fits' if any(b in branch for b in ENVO_FITS[term]) else 'not usually for'
+
+
+def envo_words(x):
+    return re.findall(r'[a-z0-9]+', x.lower())
+
+
+def envo_search(queries, term=None, limit=15):
+    """Rank ENVO classes for one or more wordings: exact label or synonym first, then the wording as a
+    phrase, then all its words, in the label, synonyms or definition. Classes that suit the term rank higher."""
+    e = envo_terms()
+    best = {}
+    for q in queries:
+        qw = envo_words(q)
+        if not qw:
+            continue
+        phrase = ' '.join(qw)
+        for r in e['rows'].values():
+            lab = ' '.join(envo_words(r['label']))
+            syns = [' '.join(envo_words(x)) for x in r['synonyms'].split(' | ') if x]
+            text = set(envo_words(r['label'] + ' ' + r['synonyms']))
+            if lab == phrase:
+                sc = 100
+            elif phrase in syns:
+                sc = 90
+            elif re.search(rf'\b{re.escape(phrase)}\b', lab):
+                sc = 70
+            elif any(re.search(rf'\b{re.escape(phrase)}\b', x) for x in syns):
+                sc = 60
+            elif set(qw) <= set(lab.split()):
+                sc = 50
+            elif set(qw) <= text:
+                sc = 40
+            elif set(qw) <= text | set(envo_words(r['definition'])):
+                sc = 15
+            else:
+                continue
+            sc -= min(len(lab.split()) - len(qw), 8)  # nearer wordings first
+            if term and envo_fits(r['branch'], term) == 'fits':
+                sc += 12
+            elif term and 'not for' in r['branch']:
+                sc -= 30
+            if sc > best.get(r['id'], (-99,))[0]:
+                best[r['id']] = (sc, q)
+    order = sorted(best, key=lambda i: (-best[i][0], e['rows'][i]['label']))
+    return [(e['rows'][i], best[i][1]) for i in order[:limit]], len(order)
+
+
+def envo_print(r, term=None, full=False):
+    e = envo_terms()
+    fit = envo_fits(r['branch'], term) if term else ''
+    print(f"{r['id']}  {r['label']}   [{r['branch']}{'; ' + fit + ' ' + term if fit else ''}]")
+    print(f"    is a: {r['parents'] or '-'}" + (f"; also called: {short(r['synonyms'], 150)}" if r['synonyms'] else ''))
+    if r['definition']:
+        print(f"    {short(r['definition'], 400 if full else 200)}")
+    kids = sorted(e['kids'].get(r['label'], []))
+    if kids:
+        print(f"    narrower: {', '.join(kids[:12 if full else 6])}" + (f' (and {len(kids) - (12 if full else 6)} more)'
+                                                                       if len(kids) > (12 if full else 6) else ''))
+
+
+def cmd_envo(args):
+    e = envo_terms()
+    if args.id:
+        for i in args.id:
+            i = i.strip().replace('_', ':')
+            r = e['rows'].get(i)
+            if r is None:
+                print(f'{i}: not a current ENVO class in {e["release"]} (obsolete, mistyped, or not ENVO).')
+            else:
+                envo_print(r, args.term, full=True)
+        return 0
+    if not args.query:
+        raise Stop('Give one or more wordings to search for, such as: envo dust "house dust" --term env_medium')
+    found, n = envo_search(args.query, args.term, args.limit)
+    print(f'{e["release"]} (bundled): {n} class(es) match ' + ', '.join(f'"{q}"' for q in args.query)
+          + (f'; ranked for {args.term}' if args.term else '') + '.')
+    for r, _ in found:
+        envo_print(r, args.term)
+    if not found:
+        print('Nothing matched. Try other wordings: a broader word, a synonym, the material or the place.')
+    else:
+        print('Show the researcher the closest few, with their definitions, and the narrower terms where one may '
+              'fit better. envo --id ID shows a class in full.')
+    return 0
+
+
+def envo_check(term, value):
+    """Check ENVO identifiers in a habitat value against the bundled ENVO. Returns (problems, notes)."""
+    if term not in ENVO_FITS:
+        return [], []
+    e = envo_terms()
+    problems, notes = [], []
+    for part in [p.strip() for p in value.split('|') if p.strip()]:
+        if part.lower().startswith(('not applicable', 'missing', 'not provided', 'not collected', 'restricted')):
+            continue
+        m = re.fullmatch(r'(.*?)\s*\[(ENVO[:_]\d{8})\]', part)
+        if not m:
+            notes.append(f"'{part}' has no ENVO identifier: find one with envo \"{part}\" --term {term}, or keep the "
+                         f"label alone and say it needs its identifier.")
+            continue
+        label, i = m.group(1).strip(), m.group(2).replace('_', ':')
+        r = e['rows'].get(i)
+        if r is None:
+            problems.append(f'{i} is not a current ENVO class in {e["release"]} (obsolete, mistyped or invented). '
+                            f'Search with envo "{label}" --term {term}.')
+            continue
+        names = [r['label'].lower()] + [x.lower() for x in r['synonyms'].split(' | ') if x]
+        if label.lower() != r['label'].lower():
+            problems.append(f"{i} is '{r['label']}' in ENVO, not '{label}'"
+                            + (' (a synonym; FAIRe takes the ENVO label)' if label.lower() in names else '')
+                            + f". Use '{r['label']} [{i}]', or search again.")
+        elif envo_fits(r['branch'], term) != 'fits':
+            notes.append(f"'{r['label']}' is in ENVO's {r['branch']} branch, not usually used for {term} "
+                         f"(which takes {' or '.join(ENVO_FITS[term])} classes). Confirm with the researcher.")
+    return problems, notes
+
+
 def cmd_set(args):
     w = work_dir(args)
     s = load_state(w)
@@ -1241,8 +1391,10 @@ def cmd_set(args):
                            f"(such as 'not applicable' or 'missing: not collected') if the value is not known.")
             notes.append('kept as given (--force), although it is not one of the allowed values.')
         value = ' | '.join(fixed)
-    if 'ENVO' in (t.description + t.example) and args.term.startswith('env_') and not re.search(r'\[ENVO:\d+\]', value):
-        notes.append("habitat terms take ENVO terms written as 'label [ENVO:00000000]'.")
+    problems, envo_notes = envo_check(args.term, value)
+    if problems and not args.force:
+        raise Stop(' '.join(problems))
+    notes += problems + envo_notes
     if args.assay and s.get('assays') and args.assay not in s['assays']:
         raise Stop(f"'{args.assay}' is not one of the study's assays ({', '.join(s['assays'])}).")
     put_value(w, args.term, value, args.assay or '', args.source or 'given by the researcher in conversation')
@@ -2076,6 +2228,13 @@ def main(argv=None):
     p.add_argument('--sample_name_column', default='lib_id', help='qiime: the column that names the samples')
     p.add_argument('--sequences_folder', default='/path/to/sequences', help='qiime: where the fastq files are')
     p.set_defaults(fn=cmd_convert)
+
+    p = sub.add_parser('envo', help='search the bundled ENVO for habitat terms, or show a class')
+    p.add_argument('query', nargs='*', help='one or more wordings, each searched for ("dust" "house dust" shop)')
+    p.add_argument('--term', choices=sorted(ENVO_FITS), help='rank the classes that suit this FAIRe term first')
+    p.add_argument('--id', nargs='+', help='show these ENVO classes in full, with their narrower terms')
+    p.add_argument('--limit', type=int, default=15, help='how many classes to show (default 15)')
+    p.set_defaults(fn=cmd_envo)
 
     p = sub.add_parser('summary', help='write the handover folder and zip')
     p.set_defaults(fn=cmd_summary)

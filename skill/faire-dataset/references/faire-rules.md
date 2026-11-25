@@ -74,9 +74,13 @@ Always ask the question that tells these apart, however strong the match:
   (`methods`, `primers-lookup`, `primers-use`), or as the researcher gives them.
 - **Instruments**: the methods tool adds OBI identifiers from its vocabulary. Do not add others from
   memory.
-- **ENVO terms** (env_broad_scale, env_local_scale, env_medium): `label [ENVO:00000000]`, with the
-  identifier checked in the ENVO ontology (https://www.ebi.ac.uk/ols4/ontologies/envo) or given by
-  the researcher.
+- **ENVO terms** (env_broad_scale, env_local_scale, env_medium): `label [ENVO:00000000]`, with
+  ENVO's own label (not a synonym), found with `envo` in the bundled ENVO release
+  (`assets/envo-terms.tsv`) or given by the researcher. env_broad_scale takes a biome, env_local_scale
+  a place, feature or construction near the sample (a reef, a river, a shop), and env_medium the
+  material sampled (water, soil, dust). `set` stops on an identifier that is not in ENVO or does not
+  match its label, and notes a class from an unusual branch. A newer ENVO release may have terms the
+  bundled one lacks; the researcher can check https://www.ebi.ac.uk/ols4/ontologies/envo.
 - **People and contacts**: only as the researcher gives them. recordedBy lists names separated by
   ` | `; project_contact is an email.
 

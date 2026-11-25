@@ -61,6 +61,12 @@ $S --work "$W" set recordedBy "Tyson Jones | Olivia Johnson | Ella Clausius" > /
 $S --work "$W" set env_broad_scale "marine biome [ENVO:00000447]" > /dev/null
 $S --work "$W" set env_local_scale "marine subtidal rocky reef [ENVO:01000150]" > /dev/null
 $S --work "$W" set env_medium "ocean water [ENVO:00002149]" > /dev/null
+# ENVO: the search finds dust first for env_medium, and set refuses an identifier that names another class
+$S --work "$W" envo dust --term env_medium --limit 3 | sed -n 2p | grep -q "^ENVO:00002008  dust " \
+    || { echo "FAIL day-night: envo search"; fail=1; }
+if $S --work "$W" set env_medium "dust [ENVO:00002221]" > /dev/null 2>&1; then
+    echo "FAIL day-night: set took a mismatched ENVO identifier"; fail=1
+fi
 $S --work "$W" set targetTaxonomicAssay Actinopterygii --assay 16S_Fish > /dev/null
 $S --work "$W" set targetTaxonomicAssay Metazoa --assay COI_Leray > /dev/null
 $S --work "$W" set neg_cont_0_1 1 > /dev/null
