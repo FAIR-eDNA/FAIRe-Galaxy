@@ -10,7 +10,7 @@
 # Each ends with FAIRe-fier and the handover. The test checks that each workbook is written and that
 # FAIRe-fier ran; the day-night workbook must pass.
 # Usage: bash skill/test_skill.sh [OUTDIR]      (builds the package first; needs pandas, openpyxl,
-#        pypdf, pydantic, numpy and jinja2; PYTHON=... to use another Python)
+#        pypdf, pydantic, numpy, jinja2 and pyyaml; PYTHON=... to use another Python)
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 repo="$here/.."
