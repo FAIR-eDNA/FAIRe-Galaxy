@@ -661,6 +661,8 @@ python '$__tool_directory__/edna2obis_galaxy.py' build
     <help><![CDATA[
 @CHECK_BEFORE_UPLOAD@
 
+@HELP_BEFORE_CONVERTING@
+
 **What it does**
 
 This tool turns eDNA metabarcoding results into the Darwin Core tables that OBIS and GBIF publish,

@@ -3,7 +3,7 @@
     <macros>
         <!-- FAIRe2MDT.R script version 1.1.0 (16 Jul 2025), FAIR-eDNA/FAIRe2MDT commit 13d1fcc -->
         <token name="@TOOL_VERSION@">1.1.0</token>
-        <token name="@VERSION_SUFFIX@">0</token>
+        <token name="@VERSION_SUFFIX@">1</token>
         <token name="@NAME_RE@">^\s*[A-Za-z0-9_.+() -]+\s*$</token>
         <token name="@SHEET_RE@">^[A-Za-z0-9 _.,+()#-]{1,31}$</token>
         <import>faire_guide.xml</import>
@@ -223,6 +223,8 @@ Rscript --vanilla '$__tool_directory__/faire2mdt_galaxy.R'
         </test>
     </tests>
     <help><![CDATA[
+@HELP_BEFORE_CONVERTING@
+
 **What it does**
 
 This tool converts FAIR eDNA (`FAIRe <https://fair-edna.github.io/>`_) metabarcoding data for one

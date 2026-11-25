@@ -298,6 +298,8 @@ python '$__tool_directory__/faire2ncbi_galaxy.py' biosample
     <help><![CDATA[
 @CHECK_BEFORE_UPLOAD@
 
+@HELP_BEFORE_CONVERTING@
+
 **What it does**
 
 This tool turns the **sampleMetadata** sheet of a FAIRe workbook into a BioSample table for the

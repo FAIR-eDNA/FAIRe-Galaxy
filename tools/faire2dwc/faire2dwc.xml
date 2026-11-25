@@ -2,7 +2,7 @@
     <description>presence and absence records for GBIF and OBIS</description>
     <macros>
         <token name="@TOOL_VERSION@">0.2.0</token>
-        <token name="@VERSION_SUFFIX@">0</token>
+        <token name="@VERSION_SUFFIX@">1</token>
         <token name="@NAMES_RE@">^[A-Za-z0-9_.+() ,-]*$</token>
         <token name="@TEXT_RE@">^[^'\\`$]*$</token>
         <import>faire_guide.xml</import>
@@ -253,6 +253,8 @@ python '$__tool_directory__/faire2dwc.py' '$workbook'
         </test>
     </tests>
     <help><![CDATA[
+@HELP_BEFORE_CONVERTING@
+
 **What it does**
 
 This tool turns a FAIR eDNA (`FAIRe <https://fair-edna.github.io/>`_) workbook into a Darwin Core

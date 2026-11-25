@@ -32,6 +32,8 @@ on what you already have:
 
 2. **Check the workbook with FAIRe-fier.** It lists missing mandatory fields and values in the
    wrong format, and suggests corrections. Fix the workbook and check it again until it passes.
+   GBIF, OBIS, NCBI and ENA accept a dataset only when every mandatory term has a value, or a FAIRe
+   missing-value term where it is truly unknown (such as *missing: not collected*).
 3. **Convert the checked workbook** to a format that suits where your data are going: a sequence
    archive (NCBI or ENA), a biodiversity database (GBIF or OBIS), or an analysis in QIIME 2. Each
    destination has its own tool, as the table under *Which tool for which destination* below
@@ -141,4 +143,13 @@ qPCR or ddPCR results: FAIRe to Darwin Core does, and also metabarcoding data wi
   original scripts work and how to run them outside Galaxy.
 - **The FAIRe standard and checklist** are at `fair-edna.github.io <https://fair-edna.github.io/>`_.
     ]]></token>
+    <!-- At the top of each converter's help -->
+    <token name="@HELP_BEFORE_CONVERTING@"><![CDATA[
+.. class:: warningmark
+
+**Before you convert:** GBIF, OBIS, NCBI and ENA accept a dataset only when every mandatory FAIRe
+term has a value, or a FAIRe missing-value term where it is truly unknown (such as *missing: not
+collected* or *not applicable*). Check the workbook with **FAIRe-fier** first, and fix its errors
+and any mandatory term with no value, or the files this tool writes are likely to be refused.
+]]></token>
 </macros>

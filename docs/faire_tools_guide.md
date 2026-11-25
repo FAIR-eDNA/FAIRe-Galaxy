@@ -15,7 +15,7 @@ Each FAIRe tool in Galaxy does one step of the job: it makes the metadata workbo
 1. **Make the FAIRe workbook**, in one of two ways:
    - **FAIRe-ator** makes a blank Excel template for your study, from the project ID, assay names and sample types you give it. You fill it in outside Galaxy and upload it.
    - The **FAIRe mapper** tools build a FAIRe workbook from your own sample table, with optional help from a language model, and add your OTU and taxonomy tables, or your qPCR results. FAIRe mapper has its own guide to the files it can work with.
-2. **Check the workbook with FAIRe-fier.** It lists missing mandatory fields and values in the wrong format, and suggests corrections. Fix the workbook and check it again until it passes.
+2. **Check the workbook with FAIRe-fier.** It lists missing mandatory fields and values in the wrong format, and suggests corrections. Fix the workbook and check it again until it passes. GBIF, OBIS, NCBI and ENA accept a dataset only when every mandatory term has a value, or a FAIRe missing-value term where it is truly unknown (such as *missing: not collected*).
 3. **Convert the checked workbook** to a format that suits where your data are going: a sequence archive (NCBI or ENA), a biodiversity database (GBIF or OBIS), or an analysis in QIIME 2. Each destination has its own tool, as the table under *Which tool for which destination* below shows.
 
 The tools are named here as they appear in Galaxy's tool panel. Search the panel for *FAIRe* or *edna2obis* to find them.

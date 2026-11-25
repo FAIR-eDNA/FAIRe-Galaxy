@@ -358,6 +358,8 @@ python '$__tool_directory__/faire2ncbi_galaxy.py' sra
     <help><![CDATA[
 @CHECK_BEFORE_UPLOAD@
 
+@HELP_BEFORE_CONVERTING@
+
 **What it does**
 
 This tool turns the **experimentRunMetadata** sheet of a FAIRe workbook into an SRA metadata table
