@@ -180,6 +180,7 @@ start_page <- function() {
       col_widths = c(7, 5),
       card(
         card_header("The FAIRe tools"),
+        uiOutput("update_notice"),
         div(class = "start-hero",
             tags$img(src = "logo_large.png", alt = "", class = "start-logo"),
             tags$p("This app brings together the tools for making environmental DNA (eDNA) data FAIR: Findable,",

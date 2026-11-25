@@ -26,6 +26,11 @@ Download the zip for your assistant from the latest release of this repository:
 Each [release](https://github.com/FAIR-eDNA/FAIRe-Galaxy/releases) carries all three, built from that
 release's code. Then follow the steps for your assistant below.
 
+The skill does not update itself. When a session starts, it checks GitHub for a newer release, and the
+assistant tells you if there is one: download it here and replace the skill you added. Many chat
+workspaces have no internet access, so the check often cannot run: look at the releases page now and
+then.
+
 ### Which assistants it works in
 
 So far the skill has been tested only in Claude, on paid plans. Whether you can add it to an

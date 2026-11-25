@@ -53,6 +53,10 @@ the app, sets it up and opens it in your web browser:
 source("https://raw.githubusercontent.com/FAIR-eDNA/FAIRe-Galaxy/main/shiny/start.R")
 ```
 
+Use this line each time you start the app: it checks for a newer version and updates itself.
+Starting the app another way (*Run App* in RStudio, or `run_app.R`) uses the copy you have, though its
+*Start* page tells you when a newer version is out.
+
 The first time takes about 15 minutes, most of it downloading packages. To try the app before using
 your own data, load one of the demonstration datasets on its *Start* page. The app's README has
 [more on setting it up](shiny/README.md#downloading-and-running-it), including what to do if you
