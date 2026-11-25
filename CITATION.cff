@@ -48,6 +48,14 @@ authors:
     given-names: Suk Yee
     affiliation: CSIRO
     orcid: "https://orcid.org/0000-0002-5204-2902"
+  - family-names: Jeppesen
+    given-names: Thomas Stjernegaard
+    affiliation: Global Biodiversity Information Facility
+    orcid: "https://orcid.org/0000-0003-1691-239X"
+  - family-names: Frøslev
+    given-names: Tobias Guldberg
+    affiliation: "Global Biodiversity Information Facility; University of Copenhagen"
+    orcid: "https://orcid.org/0000-0002-3530-013X"
 doi: 10.5281/zenodo.24489371
 identifiers:
   - type: doi
