@@ -18,6 +18,15 @@ With the tools you can:
 - **convert** it for a sequence archive (NCBI or ENA), a biodiversity database (GBIF or OBIS), or an
   analysis in QIIME 2.
 
+<details>
+<summary><b>Want to understand where building shareable datasets fits into the eDNA workflow?</b></summary>
+
+<br>
+
+<img src="docs/images/faire_workflow_overview.png" alt="Flow chart in three panels. Before: data generation and bioinformatics produce the field, lab and analysis files you bring to FAIRe. FAIRe, run in Galaxy, the Shiny app or an AI assistant: start a FAIRe template, map your columns, validate, then convert the checked FAIRe workbook. A template-first route takes a blank template back to field and lab work and returns the filled template straight to validation. After: the workbook is converted for DNA data repositories (NCBI SRA, ENA) and biodiversity data repositories (GBIF, OBIS), where the data can be reused.">
+
+</details>
+
 ## Three ways to use the tools
 
 The same tools run in three places. Choose the one that suits you, and select its card or its link
