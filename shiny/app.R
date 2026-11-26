@@ -1497,6 +1497,28 @@ server <- function(input, output, session) {
       ap_assay_auto(a)
     }
   })
+  # The sheets of a file chosen in an OTU table block, for its Excel sheet drop-downs. The first choice
+  # (empty) uses the first sheet, as the tools do when no sheet is given.
+  sheet_choices <- function(file) {
+    p <- fpath(file)
+    sh <- if (!is.null(p) && galaxy_ext(p) == "xlsx") xlsx_sheets(p) else character()
+    c(stats::setNames("", if (length(sh)) "First sheet" else "Not an Excel workbook"), sh)
+  }
+  # When a block's OTU table or taxonomy table changes, its sheet list follows: a sheet the new file
+  # does not have goes back to the first sheet.
+  observe({
+    for (i in seq_len(rv$otu_n)) {
+      for (pair in list(c("file", "sheet"), c("taxa", "taxa_sheet"))) {
+        f <- input[[bid("otu", i, pair[1])]]
+        if (is.null(f)) next
+        id <- bid("otu", i, pair[2])
+        ch <- sheet_choices(f)
+        cur <- isolate(input[[id]]) %||% ""
+        updateSelectInput(session, id, choices = ch, selected = if (cur %in% ch) cur else "")
+      }
+    }
+  })
+
   output$otu_blocks <- renderUI({
     n <- rv$otu_n
     if (!n) return(help_text("No OTU tables. The workbook will hold the sample and project metadata only."))
@@ -1529,20 +1551,25 @@ server <- function(input, output, session) {
                       "file if the table names its sequences (ASV_1, ASV_2 and so on) without holding the DNA",
                       "sequences, as an LCA output does; the names in the FASTA file must match those in the table.",
                       "Both files must first be added in a. Your files."),
-            help_text("If the OTU table or the taxonomy table is an Excel workbook with more than one sheet, type the",
-                      "name of the sheet that holds it, as it appears on the sheet's tab in Excel (for example",
-                      "Sheet1). Leave the box empty to use the first sheet."),
+            help_text("If the OTU table or the taxonomy table is an Excel workbook with more than one sheet,",
+                      "choose the sheet that holds it. The lists show the sheets of the files chosen above, and",
+                      "the first sheet is used if you leave them as they are."),
             layout_columns(
               col_widths = c(6, 6),
-              textInput(b("sheet"), "Excel sheet name (OTU table)", bval("otu", i, "sheet")),
-              textInput(b("taxa_sheet"), "Excel sheet name (taxonomy table)", bval("otu", i, "taxa_sheet"))),
+              selectInput(b("sheet"), "Excel sheet (OTU table)",
+                          sheet_choices(bval("otu", i, "file")), selected = bval("otu", i, "sheet"), selectize = FALSE),
+              selectInput(b("taxa_sheet"), "Excel sheet (taxonomy table)",
+                          sheet_choices(bval("otu", i, "taxa")), selected = bval("otu", i, "taxa_sheet"), selectize = FALSE)),
             selectInput(b("layout"), term_label("Layout", "layout"), c("Work it out" = "detect", "Samples as columns" = "columns",
                                                  "Samples as rows" = "rows", "Long (one row per sample and OTU)" = "long"),
                         selected = bval("otu", i, "layout", "detect")),
-            help_text("The last three boxes name columns of the OTU table. If one table holds the reads of several",
-                      "assays, give the column that says which assay each row belongs to. If the table has a column of",
-                      "names you curated yourself, or more than one lineage column (from SILVA and PR2, say), give the",
-                      "one to use."),
+            help_text("The last three boxes name columns of the OTU table, and are needed only for some tables. If one",
+                      "table holds the reads of several assays, give the column that says which assay each row",
+                      "belongs to. If the table has a column giving each ASV's taxon name after your own checking",
+                      "and curation (which can differ from the name the classifier assigned), give that column: the",
+                      "app keeps every ASV in the raw tables, and builds the final tables from the ASVs that have a",
+                      "curated name. If the table has more than one lineage column (from SILVA and PR2, say), give",
+                      "the one to use."),
             layout_columns(
               col_widths = c(4, 4, 4),
               textInput(b("assay_column"), "Column that gives each row's assay", bval("otu", i, "assay_column")),
