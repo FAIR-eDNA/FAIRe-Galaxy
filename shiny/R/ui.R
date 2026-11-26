@@ -161,10 +161,11 @@ KIND_PLACE <- c(
   "not recognised" = "Check the file: its column names may be below a title (set the header row) or on another sheet.")
 
 # A label with a question mark beside it that explains the term on hover or focus.
-term_label <- function(label, key) {
+# `extra` adds a sentence to the glossary's note, such as a demonstration's note on its own value
+term_label <- function(label, key, extra = NULL) {
   tags$span(label, " ", bslib::tooltip(
     tags$span(class = "term-help", tabindex = "0", role = "button", `aria-label` = paste("What is", label), icon("circle-question")),
-    GLOSSARY[[key]], placement = "right"))
+    paste(c(GLOSSARY[[key]], extra), collapse = " "), placement = "right"))
 }
 
 # The sample types to tick, ending with Other (all the sample-type-specific fields), as in FAIRe-ator.

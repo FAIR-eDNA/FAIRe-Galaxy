@@ -1501,8 +1501,9 @@ server <- function(input, output, session) {
     n <- rv$otu_n
     if (!n) return(help_text("No OTU tables. The workbook will hold the sample and project metadata only."))
     ch <- c("Choose a file" = "", file_names("\\.(csv|tsv|tab|txt|xlsx)$", kinds = "OTU or ASV table"))
+    # A demonstration can add a sentence to the run ID's note, saying where its run ID came from
     run_note <- if (nzchar(rv$demo)) DEMOS[[rv$demo]]$run_note
-    blocks <- lapply(seq_len(n), function(i) {
+    lapply(seq_len(n), function(i) {
       b <- function(field) bid("otu", i, field)
       div(class = "block",
           tags$h6(paste("OTU table", i)),
@@ -1511,7 +1512,7 @@ server <- function(input, output, session) {
             col_widths = c(4, 4, 4),
             assay_input(b("assay"), term_label("Assay", "assay"),
                         bval("otu", i, "assay", if (length(pv_assays()) == 1) pv_assays() else "")),
-            textInput(b("run"), term_label("Sequencing run ID", "run_id"), bval("otu", i, "run")),
+            textInput(b("run"), term_label("Sequencing run ID", "run_id", run_note), bval("otu", i, "run")),
             selectInput(b("stage"), term_label("Write as", "stage"), c("final (otuFinal, taxaFinal)" = "final", "raw (otuRaw, taxaRaw)" = "raw"),
                         selected = bval("otu", i, "stage", "final"))),
           accordion(open = FALSE, accordion_panel(
@@ -1548,7 +1549,6 @@ server <- function(input, output, session) {
               textInput(b("curated_column"), term_label("Column of curated names", "curated_column"), bval("otu", i, "curated_column")),
               textInput(b("lineage"), term_label("Lineage column to use", "lineage"), bval("otu", i, "lineage"))))))
     })
-    tagList(if (!is.null(run_note)) help_text(run_note), blocks)
   })
 
   output$lib_blocks <- renderUI({
