@@ -1545,7 +1545,8 @@ server <- function(input, output, session) {
                         c("In the OTU table" = "", file_names("\\.(csv|tsv|tab|txt|xlsx)$", kinds = "taxonomy table")),
                         selected = bval("otu", i, "taxa"), selectize = FALSE),
             selectInput(b("sequences"), term_label("Sequences of this table (FASTA, optional)", "sequences"),
-                        c("In the OTU table" = "", file_names("\\.(fa|fasta|fna|fas|txt)$", kinds = "sequences (FASTA)")),
+                        # FASTA files by name, or a .txt file only when a. Your files found it holds sequences
+                        c("In the OTU table" = "", file_names("\\.(fa|fasta|fna|fas)$", kinds = "sequences (FASTA)")),
                         selected = bval("otu", i, "sequences"), selectize = FALSE),
             help_text("Choose a taxonomy table if this OTU table does not hold the taxonomy itself. Choose a FASTA",
                       "file if the table names its sequences (ASV_1, ASV_2 and so on) without holding the DNA",
