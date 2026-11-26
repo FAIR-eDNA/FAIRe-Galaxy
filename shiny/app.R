@@ -1501,7 +1501,8 @@ server <- function(input, output, session) {
     n <- rv$otu_n
     if (!n) return(help_text("No OTU tables. The workbook will hold the sample and project metadata only."))
     ch <- c("Choose a file" = "", file_names("\\.(csv|tsv|tab|txt|xlsx)$", kinds = "OTU or ASV table"))
-    lapply(seq_len(n), function(i) {
+    run_note <- if (nzchar(rv$demo)) DEMOS[[rv$demo]]$run_note
+    blocks <- lapply(seq_len(n), function(i) {
       b <- function(field) bid("otu", i, field)
       div(class = "block",
           tags$h6(paste("OTU table", i)),
@@ -1547,6 +1548,7 @@ server <- function(input, output, session) {
               textInput(b("curated_column"), term_label("Column of curated names", "curated_column"), bval("otu", i, "curated_column")),
               textInput(b("lineage"), term_label("Lineage column to use", "lineage"), bval("otu", i, "lineage"))))))
     })
+    tagList(if (!is.null(run_note)) help_text(run_note), blocks)
   })
 
   output$lib_blocks <- renderUI({
