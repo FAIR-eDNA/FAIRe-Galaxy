@@ -120,9 +120,10 @@ GLOSSARY <- c(
   date_order = paste("Dates such as 06/09/2017 can be read as 6 September or June 9. Tell the app which way round",
                      "your table writes them. Dates with the year first (2017-09-06 or 2017/09/06), and columns with a",
                      "day above 12, can only be read one way and are read without asking."),
-  more_for_table = paste("Settings you only need when the app cannot work them out: a separate taxonomy table or",
-                         "FASTA file, the Excel sheets, the layout of the read counts, and the columns that give each",
-                         "row's assay, curated names or lineage."),
+  more_for_table = paste("Most OTU tables need nothing here, because the app works these settings out from the table",
+                         "itself. Use them when it could not, for example when the taxonomy or the sequences are kept in a",
+                         "separate file, when the table is an Excel workbook with several sheets, or when the app",
+                         "misread how the read counts are laid out."),
   file_kind = paste("What the file seems to be, from its layout, column names and values. If it is wrong, choose the",
                     "right kind: the app then offers the file in the right places."),
   req_levels = paste("FAIRe gives each term a requirement level: Mandatory (M), Highly recommended (HR), Recommended (R)",
@@ -287,6 +288,8 @@ faireator_panel <- function() {
                   placeholder = "for example funder"),
         textInput("fa_sample_fields", term_label("User-defined sampleMetadata fields (optional)", "user_fields_sample"),
                   placeholder = "for example plot_id, burn_age"),
+        help_text("You can add several fields to each box by separating their names with commas, for example",
+                  "plot_id, burn_age."),
         run_button("run_faireator", "Make the template")
       ),
       card(card_header("Result"), uiOutput("faireator_result"))

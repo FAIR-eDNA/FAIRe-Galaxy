@@ -21,8 +21,9 @@ DEMOS <- list(
     country = "Australia",
     date_order = "stop",
     otu = list(
-      list(file = "4_SEA-MES_16S_ASV_level_output_with_seq.csv", assay = "Fish16S", run = "AGRF_2024-12", stage = "raw"),
-      list(file = "5_SEA_MES_Fish16S_Tax_Feb_27_2025.csv", assay = "Fish16S", run = "AGRF_2024-12", stage = "final")),
+      # No sequencing run ID: the data record does not give one, so the person enters it
+      list(file = "4_SEA-MES_16S_ASV_level_output_with_seq.csv", assay = "Fish16S", stage = "raw"),
+      list(file = "5_SEA_MES_Fish16S_Tax_Feb_27_2025.csv", assay = "Fish16S", stage = "final")),
     lib = list(list(file = "filereport_read_run_PRJNA1263580.tsv", assay = "Fish16S", filter = "16SFish")),
     amp = list(),
     # The authors' answers for the 10 L table (dev/faire_mapper_seames/reviewer_decisions.tsv)

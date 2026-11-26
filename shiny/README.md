@@ -107,7 +107,9 @@ A few things that help along the way:
   first, then library preparation and sequencing, bioinformatics and so on, or all of them.
 - **Tables as CSV.** Each table a tool writes as TSV (tab-separated) is also offered as CSV, which
   Excel opens directly. The table of values on the right of *d* downloads as CSV too.
-- **Other**, among the sample types, includes all the sample-type-specific fields, as in FAIRe-ator.
+- **Other**, among the sample types, includes all the sample-type-specific fields, as in FAIRe-ator,
+  so it is ticked on its own: ticking Other clears the other sample types, and ticking another clears
+  Other.
 - **A question mark** beside a label explains the term (*data dictionary*, *assay*, *raw* and
   *final* and so on) when the pointer rests on it, or when you move to it with the Tab key.
 - **Optional fields**, such as the data dictionary, can be set back to *None* after choosing a file.
