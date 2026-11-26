@@ -23,7 +23,7 @@ checklist <- function(tool = "faire_mapper") tool_path(tool, "checklist", "FAIRe
 # ---------------------------------------------------------------- FAIRe-ator
 
 run_faireator <- function(session_dir, project_id, assay_type, assay_name, sample_type, req_lev,
-                          project_fields = "", sample_fields = "") {
+                          project_fields = "", sample_fields = "", run_fields = "") {
   d <- new_run_dir(session_dir, "faireator")
   for (f in c("FAIRe_checklist_v1.0.2.xlsx", "FAIRe_checklist_v1.0.2_FULLtemplate.xlsx"))
     file.copy(tool_path("faireator", "checklist", f), d)
@@ -42,6 +42,9 @@ run_faireator <- function(session_dir, project_id, assay_type, assay_name, sampl
     sprintf("  assay_name = %s", rvec(split_list(assay_name))),
     if (!blank(project_fields)) sprintf("  , projectMetadata_user = %s", rvec(split_list(project_fields))),
     if (!blank(sample_fields)) sprintf("  , sampleMetadata_user = %s", rvec(split_list(sample_fields))),
+    # As the wrapper: experimentRunMetadata is made only for metabarcoding
+    if (assay_type == "metabarcoding" && !blank(run_fields))
+      sprintf("  , experimentRunMetadata_user = %s", rvec(split_list(run_fields))),
     "))")
   writeLines(call, file.path(d, "faireator_call.R"))
   s <- run_rscript("faireator_call.R", character(), d)

@@ -121,6 +121,10 @@ GLOSSARY <- c(
   user_fields_sample = paste("Names of fields you would like in sampleMetadata that are not in the FAIRe checklist.",
                              "They are added at the end of sampleMetadata. You can add several fields by separating",
                              "their names with commas, for example plot_id, burn_age."),
+  user_fields_run = paste("Names of fields you would like in experimentRunMetadata that are not in the FAIRe checklist.",
+                          "They are added at the end of experimentRunMetadata. You can add several fields by separating",
+                          "their names with commas, for example flowcell_lot, operator. Only metabarcoding templates",
+                          "have an experimentRunMetadata."),
   geo_loc_name = paste("The geographical origin of the sample: the country or sea name, followed by regions and",
                        "localities, in the form <country or sea>: <region>, <locality>. For example \"USA: Maryland,",
                        "Bethesda\" or \"Atlantic Ocean: Charlie Gibbs Fracture Zone\". Country and sea names come from",
@@ -297,6 +301,9 @@ faireator_panel <- function() {
                   placeholder = "for example funder"),
         textInput("fa_sample_fields", term_label("User-defined sampleMetadata fields (optional)", "user_fields_sample"),
                   placeholder = "for example plot_id, burn_age"),
+        conditionalPanel("input.fa_assay_type == 'metabarcoding'",
+          textInput("fa_run_fields", term_label("User-defined experimentRunMetadata fields (optional)", "user_fields_run"),
+                    placeholder = "for example flowcell_lot, operator")),
         run_button("run_faireator", "Make the template")
       ),
       card(card_header("Result"), uiOutput("faireator_result"))

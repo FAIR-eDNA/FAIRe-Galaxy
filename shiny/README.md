@@ -35,6 +35,8 @@ the SEA-MES demonstration: clearer labels and notes (Other among the sample type
 fields, projectMetadata in step d, dates, geo_loc_name and the sequencing run ID), the mapper's
 calls in the review coloured as in the counts above it, one link to the review sheet in place of
 two, and CSV copies of the tools' tables for opening in Excel.
+Version 0.8.2 (26 November 2026) adds user-defined experimentRunMetadata fields to the blank
+template (metabarcoding only), from FAIRe-ator's new `experimentRunMetadata_user`.
 
 ## What it covers
 

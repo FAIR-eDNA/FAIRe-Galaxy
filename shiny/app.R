@@ -16,7 +16,7 @@ for (f in c("runner.R", "tools.R", "helpers.R", "demos.R", "ui.R"))
 
 options(shiny.maxRequestSize = 500 * 1024^2, DT.fillContainer = FALSE)
 
-APP_VERSION <- "0.8.1"
+APP_VERSION <- "0.8.2"
 
 # Colours from the logo: petrol, teal, navy, red, orange and yellow (darkened where white text sits
 # on them, to keep it readable).
@@ -506,7 +506,7 @@ server <- function(input, output, session) {
     if (!length(input$fa_sample_type)) return(notify_error("Choose at least one sample type.", "fa_sample_type"))
     rv$res$faireator <- with_run("Making the template", run_faireator(
       sd, pid, input$fa_assay_type, input$fa_assay_name, input$fa_sample_type, input$fa_req_lev,
-      input$fa_project_fields, input$fa_sample_fields))
+      input$fa_project_fields, input$fa_sample_fields, input$fa_run_fields %||% ""))
   })
   output$faireator_result <- renderUI({
     res <- rv$res$faireator
