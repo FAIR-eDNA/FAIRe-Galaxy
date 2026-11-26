@@ -18,5 +18,5 @@ source.
 **These files are for trying the tools, not for ecological analysis.** Use the published records for
 that.
 
-For a workshop, `dev/workshop/make_packages.py` makes a zip of each dataset, holding the published files
-as downloaded, the same files prepared for the app, and a page of steps for participants.
+For a workshop, [`dev/workshop`](../../dev/workshop) has a page of steps for participants for each
+dataset, and a script that makes a zip of each if handouts are wanted.
