@@ -23,6 +23,11 @@ DEMOS <- list(
     otu = list(
       list(file = "4_SEA-MES_16S_ASV_level_output_with_seq.csv", assay = "Fish16S", run = "AGRF_2024-12", stage = "raw"),
       list(file = "5_SEA_MES_Fish16S_Tax_Feb_27_2025.csv", assay = "Fish16S", run = "AGRF_2024-12", stage = "final")),
+    # Added to the run ID's ? note while this demonstration is loaded, saying where its run ID came from
+    run_note = paste("In this demonstration, AGRF_2024-12 is a suggested sequencing run ID. The SEA-MES data record",
+                     "does not name the run, so it was made from the sequencing facility and the month: the data",
+                     "record's description says the reads come from AGRF (Australian Genome Research Facility)",
+                     "Illumina sequencing in December 2024."),
     lib = list(list(file = "filereport_read_run_PRJNA1263580.tsv", assay = "Fish16S", filter = "16SFish")),
     amp = list(),
     # The authors' answers for the 10 L table (dev/faire_mapper_seames/reviewer_decisions.tsv)

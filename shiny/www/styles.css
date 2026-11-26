@@ -59,6 +59,7 @@ ul.lib .kind { display: table; margin-top: 0.1rem; font-size: 0.72rem; backgroun
 ul.file-out { list-style: none; padding-left: 0; margin: 0.4rem 0; }
 ul.file-out li { padding: 0.15rem 0; }
 ul.file-out .size { color: #5f6b72; font-size: 0.8rem; margin-left: 0.4rem; }
+ul.file-out .csv-copy { font-size: 0.8rem; margin-left: 0.4rem; }
 pre.log { max-height: 320px; overflow: auto; font-size: 0.78rem; background: #fbfbfb; border: 1px solid #e3e6e8; padding: 0.5rem; white-space: pre-wrap; }
 details > summary { cursor: pointer; color: var(--faire-teal); font-size: 0.88rem; margin: 0.3rem 0; }
 
@@ -73,8 +74,6 @@ details > summary { cursor: pointer; color: var(--faire-teal); font-size: 0.88re
           background: white; }
 .rv-row.rv-head { background: var(--faire-sand); font-weight: 600; font-size: 0.82rem; }
 /* rows for review are shaded across the whole row, as in the review sheet */
-.rv-row.call-review { background: #fff3d6; }
-.rv-row.call-no-match { background: #fafafa; }
 .rv-row .examples { color: #525c62; font-size: 0.78rem; word-break: break-word; }
 .rv-row .rv-proposed { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.82rem; word-break: break-word; }
 .rv-row .score { color: #525c62; font-family: inherit; }
@@ -86,10 +85,6 @@ details > summary { cursor: pointer; color: var(--faire-teal); font-size: 0.88re
 #review-grid.hide-accepted .rv-row.call-accept { display: none; }
 .review-files { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: center; margin: 0.4rem 0; }
 .review-files .shiny-input-container { margin-bottom: 0; }
-.pill { display: inline-block; border-radius: 10px; padding: 0 0.5rem; font-size: 0.75rem; }
-.pill.accept { background: #e2f1e6; color: #1f5a33; }
-.pill.review { background: #fdf0cf; color: #7a5600; }
-.pill.no-match { background: #eceff1; color: #4f5b62; }
 @media (max-width: 900px) { .rv-row { grid-template-columns: 1fr; } .rv-row.rv-head { display: none; } }
 
 /* blocks for OTU, library and assay tables */

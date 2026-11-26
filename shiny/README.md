@@ -30,6 +30,11 @@ mapping can be run again with your earlier review, and only what is new needs re
 *Mapping in rounds*, below). Version 0.8.0 (23 November 2026) takes qPCR and ddPCR results, adds
 *FAIRe to Darwin Core* for presence and absence records, and offers a choice of demonstrations,
 for a workshop on making FAIR eDNA datasets (see *Trying it with the demonstration data*, below).
+Version 0.8.1 (26 November 2026) has the first changes from Miwa Takahashi's and Oliver's trial with
+the SEA-MES demonstration: clearer labels and notes (Other among the sample types, user-defined
+fields, projectMetadata in step d, dates, geo_loc_name and the sequencing run ID), the mapper's
+calls in the review coloured as in the counts above it, one link to the review sheet in place of
+two, and CSV copies of the tools' tables for opening in Excel.
 
 ## What it covers
 
@@ -78,7 +83,7 @@ A few things that help along the way:
   literature and catches typos in sequences. If your primers are not in it, add your own table.
   Pairs whose two sequences in your methods match the reference table exactly come first, marked
   *exact match* in green, and *Add the exact matches* adds them all with one click, each with its assay name, for
-  you to check in the project values. Pairs found only from a primer name, for a gene whose sequences
+  you to check in projectMetadata, on the right. Pairs found only from a primer name, for a gene whose sequences
   the methods already give, are less likely (one name can belong to several published pairs) and
   are hidden unless you ask for them. Clicking a pair fills in its assay name from the reference
   table, which you can change. *e. Write the workbook* then
@@ -90,7 +95,7 @@ A few things that help along the way:
   FAIRe requirement level and its term's record in papers tested. Values for terms found reliably come
   first and the rest are listed as values to check; *Tick all reliable values* ticks only the
   first group, so each of the others takes its own tick. Tick the ones to keep (correcting any
-  that are nearly right) and add them to the values for the whole project. If any ticked values
+  that are nearly right) and add them to projectMetadata. If any ticked values
   are values to check, the app lists them with their sentences and asks you to confirm that you
   have checked them before it adds them. Keep one value per term: if two are ticked for the same
   term (two sample volumes, say), the app asks you to choose one. Choose *Targeted (qPCR, ddPCR)*
@@ -100,6 +105,11 @@ A few things that help along the way:
   method terms not found, can be downloaded, filled in with Excel and loaded back on the right.
 - **Adding a value** offers the FAIRe terms for one part of the checklist at a time, PCR and primers
   first, then library preparation and sequencing, bioinformatics and so on, or all of them.
+- **Tables as CSV.** Each table a tool writes as TSV (tab-separated) is also offered as CSV, which
+  Excel opens directly. The table of values on the right of *d* downloads as CSV too.
+- **Other**, among the sample types, includes all the sample-type-specific fields, as in FAIRe-ator,
+  so it is ticked on its own: ticking Other clears the other sample types, and ticking another clears
+  Other.
 - **A question mark** beside a label explains the term (*data dictionary*, *assay*, *raw* and
   *final* and so on) when the pointer rests on it, or when you move to it with the Tab key.
 - **Optional fields**, such as the data dictionary, can be set back to *None* after choosing a file.

@@ -16,7 +16,7 @@ for (f in c("runner.R", "tools.R", "helpers.R", "demos.R", "ui.R"))
 
 options(shiny.maxRequestSize = 500 * 1024^2, DT.fillContainer = FALSE)
 
-APP_VERSION <- "0.8.0"
+APP_VERSION <- "0.8.1"
 
 # Colours from the logo: petrol, teal, navy, red, orange and yellow (darkened where white text sits
 # on them, to keep it readable).
@@ -137,7 +137,9 @@ server <- function(input, output, session) {
     if (show_files && length(res$outputs)) {
       files <- tags$ul(class = "file-out", lapply(names(res$outputs), function(nm) {
         p <- res$outputs[[nm]]
-        tags$li(icon("file"), file_link(p), tags$span(class = "size", fmt_bytes(file.size(p))))
+        csv <- csv_copy(p)
+        tags$li(icon("file"), file_link(p), tags$span(class = "size", fmt_bytes(file.size(p))),
+                if (!is.null(csv)) tags$span(class = "csv-copy", "(", file_link(csv, "as CSV, for Excel"), ")"))
       }))
     }
     warn_ui <- if (length(warn)) div(class = "res-warn", icon("triangle-exclamation"),
@@ -653,7 +655,9 @@ server <- function(input, output, session) {
     }
     sheet <- if (galaxy_ext(tab) == "xlsx") input$map_sheet %||% "" else ""
     args <- list(table = tab, table_name = input$map_table, sheet = sheet, header_row = input$map_header_row %||% 1,
-                 assay_type = input$map_assay_type, sample_types = input$map_sample_types %||% character(),
+                 assay_type = input$map_assay_type,
+                 # Other means every sample type's fields, which the tools take as no sample types given
+                 sample_types = if ("other" %in% input$map_sample_types) character() else input$map_sample_types %||% character(),
                  dictionary = fpath(input$map_dictionary))
     withProgress(message = "Proposing a mapping", value = 0.3, {
       prof <- record(run_profile(sd, tab, sheet, args$header_row))
@@ -829,7 +833,7 @@ server <- function(input, output, session) {
           if (nzchar(rv$demo) && identical(rv$map_args$table_name, DEMOS[[rv$demo]]$sample_table))
             actionButton("demo_answers", "Fill in the authors' answers", icon = icon("flask"), class = "btn-sm"),
           actionButton("save_review", "Save the review", icon = icon("floppy-disk"), class = "btn-primary btn-sm")),
-      help_text("The decisions in use: ", file_link(rv$crosswalk), paste0(" (", rv$crosswalk_from, ").")),
+      help_text(paste0("The decisions in use: ", rv$crosswalk_from, ".")),
       div(class = "review-excel",
           tags$h6("Or do the review in Excel"),
           help_text("If you would rather do the review in Excel, download the review sheet, fill in the decisions",
@@ -841,6 +845,8 @@ server <- function(input, output, session) {
                         placeholder = "Excel (.xlsx)", width = "440px"))))
   })
 
+  # The mapper's call in each row, coloured as in the counts above the review
+  call_badge <- c(review = "text-bg-warning", "no-match" = "text-bg-secondary", accept = "text-bg-success")
   output$review_table <- renderUI({
     s <- review()
     r <- s$rows
@@ -870,7 +876,7 @@ server <- function(input, output, session) {
         div(class = "rv-col", tags$b(x$input), tags$div(class = "examples", x$examples)),
         div(class = "rv-proposed", if (has_term) x$proposed else tags$span(class = "muted", "none"),
             if (nzchar(x$score)) tags$small(class = "score", paste0(" ", x$score))),
-        div(class = "rv-status", tags$span(class = paste("pill", x$kind), x$call),
+        div(class = "rv-status", tags$span(class = paste("badge", if (x$kind %in% names(call_badge)) call_badge[[x$kind]] else "text-bg-secondary"), x$call),
             if (nzchar(x$earlier_kind)) tags$span(
               class = paste("earlier", x$earlier_kind), title = x$earlier,
               switch(x$earlier_kind, carried = "carried over", check = "check again",
@@ -1134,7 +1140,7 @@ server <- function(input, output, session) {
                       "them if a pair you used is missing."),
               tags$li("Click the row of a pair you used, and check it against the paper it cites. Its assay name is",
                       "filled in below from the reference table; change it if you call the assay something else."),
-              tags$li("Press Add this pair to the project values. The pair's names, sequences, gene, target taxon and",
+              tags$li("Press Add this pair to the projectMetadata. The pair's names, sequences, gene, target taxon and",
                       "references go into the table on the right: check them there, and change any that do not fit",
                       "your study."),
               tags$li("Do the same for each of your other assays (say COI as well as 16S). The assay names you give",
@@ -1146,7 +1152,7 @@ server <- function(input, output, session) {
         layout_columns(col_widths = c(6, 6),
                        textInput("pr_assay", term_label("Assay this pair was used for", "primer_assay"),
                                  value = if (nzchar(rv$demo)) DEMOS[[rv$demo]]$primer_assay else "", placeholder = "for example Fish16S"),
-                       div(class = "pt-4", actionButton("pr_add", "Add this pair to the project values", icon = icon("arrow-right"))))))
+                       div(class = "pt-4", actionButton("pr_add", "Add this pair to the projectMetadata", icon = icon("arrow-right"))))))
   })
   # Pairs from a methods text say how likely each is; the less likely ones are hidden unless asked for.
   less_likely <- function(d) {
@@ -1168,7 +1174,7 @@ server <- function(input, output, session) {
   }
   output$pr_exact_ui <- renderUI({
     n <- length(exact_rows(rv$primers))
-    if (n) actionButton("pr_add_exact", sprintf("Add the exact %s (%d) to the project values",
+    if (n) actionButton("pr_add_exact", sprintf("Add the exact %s (%d) to the projectMetadata",
                                                 if (n == 1) "match" else "matches", n),
                         icon = icon("check-double"), class = "btn-primary btn-sm mb-2")
   })
@@ -1282,7 +1288,7 @@ server <- function(input, output, session) {
         return(notify_error("This workbook is not a review sheet from find method details."))
       d <- read_method_review(p)
     } else {
-      d <- if (galaxy_ext(p) == "csv") utils::read.csv(p, colClasses = "character", check.names = FALSE) else read_tsv(p)
+      d <- if (galaxy_ext(p) == "csv") read_csv(p) else read_tsv(p)
       if (is.null(d) || !all(c("term", "value") %in% names(d)))
         return(notify_error("The table needs columns named term and value."))
       if (!"assay" %in% names(d)) d$assay <- ""
@@ -1363,7 +1369,7 @@ server <- function(input, output, session) {
               "Also found in the methods (", length(chk), "): check each against its sentence before you tick it. ",
               "These terms are less reliable, or a check found a problem")), lapply(chk, item))),
         div(class = "btn-row",
-            actionButton("md_add", "Add the ticked values to the project values", icon = icon("arrow-right")),
+            actionButton("md_add", "Add the ticked values to the projectMetadata", icon = icon("arrow-right")),
             if (length(rel)) actionLink("md_all", "Tick all reliable values"), actionLink("md_none", "Untick all")),
         help_text("Or download the review sheet, fill it in with Excel and load it on the right; it also lists the",
                   "method terms not found, to fill in."))
@@ -1445,7 +1451,7 @@ server <- function(input, output, session) {
         tags$b("Mandatory terms still to give"), " (from b. Propose a mapping):",
         tags$div(lapply(left, function(t) tags$span(class = "term-chip", title = m$description[m$term == t][1], t))))
   })
-  output$pv_download <- downloadHandler("project_values.tsv", function(file) write_tsv(rv$pv, file))
+  output$pv_download <- downloadHandler("project_values.csv", function(file) write_csv(rv$pv, file))
 
   # ------------------------------------------------------------ mapper e: write the workbook
   output$apply_inputs_summary <- renderUI({
@@ -1491,10 +1497,34 @@ server <- function(input, output, session) {
       ap_assay_auto(a)
     }
   })
+  # The sheets of a file chosen in an OTU table block, for its Excel sheet drop-downs. The first choice
+  # (empty) uses the first sheet, as the tools do when no sheet is given.
+  sheet_choices <- function(file) {
+    p <- fpath(file)
+    sh <- if (!is.null(p) && galaxy_ext(p) == "xlsx") xlsx_sheets(p) else character()
+    c(stats::setNames("", if (length(sh)) "First sheet" else "Not an Excel workbook"), sh)
+  }
+  # When a block's OTU table or taxonomy table changes, its sheet list follows: a sheet the new file
+  # does not have goes back to the first sheet.
+  observe({
+    for (i in seq_len(rv$otu_n)) {
+      for (pair in list(c("file", "sheet"), c("taxa", "taxa_sheet"))) {
+        f <- input[[bid("otu", i, pair[1])]]
+        if (is.null(f)) next
+        id <- bid("otu", i, pair[2])
+        ch <- sheet_choices(f)
+        cur <- isolate(input[[id]]) %||% ""
+        updateSelectInput(session, id, choices = ch, selected = if (cur %in% ch) cur else "")
+      }
+    }
+  })
+
   output$otu_blocks <- renderUI({
     n <- rv$otu_n
     if (!n) return(help_text("No OTU tables. The workbook will hold the sample and project metadata only."))
     ch <- c("Choose a file" = "", file_names("\\.(csv|tsv|tab|txt|xlsx)$", kinds = "OTU or ASV table"))
+    # A demonstration can add a sentence to the run ID's note, saying where its run ID came from
+    run_note <- if (nzchar(rv$demo)) DEMOS[[rv$demo]]$run_note
     lapply(seq_len(n), function(i) {
       b <- function(field) bid("otu", i, field)
       div(class = "block",
@@ -1504,27 +1534,43 @@ server <- function(input, output, session) {
             col_widths = c(4, 4, 4),
             assay_input(b("assay"), term_label("Assay", "assay"),
                         bval("otu", i, "assay", if (length(pv_assays()) == 1) pv_assays() else "")),
-            textInput(b("run"), term_label("Sequencing run ID", "run_id"), bval("otu", i, "run")),
+            textInput(b("run"), term_label("Sequencing run ID", "run_id", run_note), bval("otu", i, "run")),
             selectInput(b("stage"), term_label("Write as", "stage"), c("final (otuFinal, taxaFinal)" = "final", "raw (otuRaw, taxaRaw)" = "raw"),
                         selected = bval("otu", i, "stage", "final"))),
           accordion(open = FALSE, accordion_panel(
-            "More for this table",
+            "More settings for this table (optional)",
+            help_text(GLOSSARY[["more_for_table"]]),
             # plain drop-downs, so 'In the OTU table' can be chosen again after a file
             selectInput(b("taxa"), term_label("Taxonomy table (optional)", "taxonomy_table"),
                         c("In the OTU table" = "", file_names("\\.(csv|tsv|tab|txt|xlsx)$", kinds = "taxonomy table")),
                         selected = bval("otu", i, "taxa"), selectize = FALSE),
             selectInput(b("sequences"), term_label("Sequences of this table (FASTA, optional)", "sequences"),
-                        c("In the OTU table" = "", file_names("\\.(fa|fasta|fna|fas|txt)$", kinds = "sequences (FASTA)")),
+                        # FASTA files by name, or a .txt file only when a. Your files found it holds sequences
+                        c("In the OTU table" = "", file_names("\\.(fa|fasta|fna|fas)$", kinds = "sequences (FASTA)")),
                         selected = bval("otu", i, "sequences"), selectize = FALSE),
-            help_text("For a table that names its sequences (ASV_1, ASV_2 ...) but does not hold them, such as an",
-                      "LCA output: a FASTA file whose headers are those names."),
+            help_text("Choose a taxonomy table if this OTU table does not hold the taxonomy itself. Choose a FASTA",
+                      "file if the table names its sequences (ASV_1, ASV_2 and so on) without holding the DNA",
+                      "sequences; the names in the FASTA file must match those in the table.",
+                      "Both files must first be added in a. Your files."),
+            help_text("If the OTU table or the taxonomy table is an Excel workbook with more than one sheet,",
+                      "choose the sheet that holds it. The lists show the sheets of the files chosen above, and",
+                      "the first sheet is used if you leave them as they are."),
             layout_columns(
               col_widths = c(6, 6),
-              textInput(b("sheet"), "Excel sheet (OTU table)", bval("otu", i, "sheet")),
-              textInput(b("taxa_sheet"), "Excel sheet (taxonomy table)", bval("otu", i, "taxa_sheet"))),
+              selectInput(b("sheet"), "Excel sheet (OTU table)",
+                          sheet_choices(bval("otu", i, "file")), selected = bval("otu", i, "sheet"), selectize = FALSE),
+              selectInput(b("taxa_sheet"), "Excel sheet (taxonomy table)",
+                          sheet_choices(bval("otu", i, "taxa")), selected = bval("otu", i, "taxa_sheet"), selectize = FALSE)),
             selectInput(b("layout"), term_label("Layout", "layout"), c("Work it out" = "detect", "Samples as columns" = "columns",
-                                                 "Samples as rows" = "rows", "Long (one row per sample and sequence)" = "long"),
+                                                 "Samples as rows" = "rows", "Long (one row per sample and OTU)" = "long"),
                         selected = bval("otu", i, "layout", "detect")),
+            help_text("The last three boxes name columns of the OTU table, and are needed only for some tables. If one",
+                      "table holds the reads of several assays, give the column that says which assay each row",
+                      "belongs to. If the table has a column giving each ASV's taxon name after your own checking",
+                      "and curation (which can differ from the name the classifier assigned), give that column: the",
+                      "app keeps every ASV in the raw tables, and builds the final tables from the ASVs that have a",
+                      "curated name. If the table has more than one lineage column (from SILVA and PR2, say), give",
+                      "the one to use."),
             layout_columns(
               col_widths = c(4, 4, 4),
               textInput(b("assay_column"), "Column that gives each row's assay", bval("otu", i, "assay_column")),
@@ -1546,7 +1592,7 @@ server <- function(input, output, session) {
             col_widths = c(4, 4, 4),
             textInput(b("assay"), "Assays of these libraries", bval("lib", i, "assay", paste(pv_assays(), collapse = ", "))),
             textInput(b("filter"), "Only libraries whose name holds", bval("lib", i, "filter")),
-            textInput(b("run"), "Sequencing run ID", bval("lib", i, "run"))),
+            textInput(b("run"), term_label("Sequencing run ID", "run_id"), bval("lib", i, "run"))),
           textInput(b("sheet"), "Excel sheet (optional)", bval("lib", i, "sheet")))
     })
   })
@@ -2028,7 +2074,7 @@ server <- function(input, output, session) {
                tags$thead(tags$tr(tags$th("Time"), tags$th("Tool"), tags$th("Result"), tags$th("Files"))),
                tags$tbody(lapply(rows, function(r) tags$tr(
                  tags$td(r$time), tags$td(r$label),
-                 tags$td(if (r$ok) tags$span(class = "pill accepted", "finished") else tags$span(class = "pill for-review", "stopped")),
+                 tags$td(if (r$ok) tags$span(class = "badge text-bg-success", "finished") else tags$span(class = "badge text-bg-danger", "stopped")),
                  tags$td(lapply(c(r$outputs, list(log = file.path(r$dir, "run_log.txt"))), function(p)
                    tags$span(class = "out-link", file_link(p))))))))
   })

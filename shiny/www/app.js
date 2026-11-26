@@ -124,3 +124,22 @@
     });
   }
 })();
+
+// Sample types: Other already includes every sample type's fields, so it is ticked on its own. Ticking Other
+// clears the other boxes, and ticking another box clears Other. Shiny reads the boxes when the clicked box
+// changes, so a change event is sent again once the boxes are set.
+(function () {
+  var groups = ['fa_sample_type', 'map_sample_types'];
+  document.addEventListener('change', function (e) {
+    var box = e.target;
+    if (!box || box.type !== 'checkbox' || !box.checked) return;
+    var group = box.closest('.shiny-input-checkboxgroup');
+    if (!group || groups.indexOf(group.id) < 0) return;
+    var cleared = false;
+    group.querySelectorAll('input[type=checkbox]').forEach(function (other) {
+      if (other === box || !other.checked) return;
+      if (box.value === 'other' || other.value === 'other') { other.checked = false; cleared = true; }
+    });
+    if (cleared && window.jQuery) window.jQuery(box).trigger('change');
+  });
+})();
