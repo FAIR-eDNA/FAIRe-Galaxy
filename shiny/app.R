@@ -1550,7 +1550,7 @@ server <- function(input, output, session) {
                         selected = bval("otu", i, "sequences"), selectize = FALSE),
             help_text("Choose a taxonomy table if this OTU table does not hold the taxonomy itself. Choose a FASTA",
                       "file if the table names its sequences (ASV_1, ASV_2 and so on) without holding the DNA",
-                      "sequences, as an LCA output does; the names in the FASTA file must match those in the table.",
+                      "sequences; the names in the FASTA file must match those in the table.",
                       "Both files must first be added in a. Your files."),
             help_text("If the OTU table or the taxonomy table is an Excel workbook with more than one sheet,",
                       "choose the sheet that holds it. The lists show the sheets of the files chosen above, and",

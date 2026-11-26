@@ -79,7 +79,7 @@ GLOSSARY <- c(
   taxonomy_table = "A table of each sequence's taxonomy (kingdom to species, or a lineage), when it is separate from the read counts.",
   sequences = paste("A FASTA file of the sequence of each OTU or ASV, with a header line starting with > before each",
                     "sequence. Choose your FASTA file here if your OTU table gives the OTU or ASV names (ASV_1, ASV_2",
-                    "and so on) but not their sequences, as LCA outputs do. The names in the FASTA file must match those",
+                    "and so on) but not their sequences. The names in the FASTA file must match those",
                     "in the OTU table. The list shows every file named as FASTA (such as .fa or .fasta). If your FASTA",
                     "file has another ending (such as .txt) and is not listed, go back to a. Your files and set its Kind",
                     "to sequences (FASTA)."),
