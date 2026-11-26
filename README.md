@@ -5,9 +5,10 @@ them. The FAIR eDNA (FAIRe) metadata standard describes how to record an eDNA st
 data are Findable, Accessible, Interoperable and Reusable, and the eDNA community has written a set
 of tools for creating FAIRe metadata and sharing it with the places where data are kept.
 
-This project brings those tools into Galaxy, a free platform for data analysis that runs in a web
-browser, so researchers can use them without installing software or writing code. It is built for
-the Galaxy Australia eDNA Lab, in collaboration with Galaxy Australia and Bioplatforms Australia.
+This project brings those tools together so researchers can use them without writing code, in three
+ways: in Galaxy, a free platform for data analysis that runs in a web browser; in an app on their own
+computer; or in a chat with an AI assistant. The Galaxy tools are built for the Galaxy Australia eDNA
+Lab, in collaboration with Galaxy Australia and Bioplatforms Australia.
 
 With the tools you can:
 
