@@ -5,9 +5,10 @@ them. The FAIR eDNA (FAIRe) metadata standard describes how to record an eDNA st
 data are Findable, Accessible, Interoperable and Reusable, and the eDNA community has written a set
 of tools for creating FAIRe metadata and sharing it with the places where data are kept.
 
-This project brings those tools into Galaxy, a free platform for data analysis that runs in a web
-browser, so researchers can use them without installing software or writing code. It is built for
-the Galaxy Australia eDNA Lab, in collaboration with Galaxy Australia and Bioplatforms Australia.
+This project brings those tools together so researchers can use them without writing code, in three
+ways: in Galaxy, a free platform for data analysis that runs in a web browser; in an app on their own
+computer; or in a chat with an AI assistant. The Galaxy tools are built for the Galaxy Australia eDNA
+Lab, in collaboration with Galaxy Australia and Bioplatforms Australia.
 
 With the tools you can:
 
@@ -16,6 +17,15 @@ With the tools you can:
 - **check** the workbook against the FAIRe checklist;
 - **convert** it for a sequence archive (NCBI or ENA), a biodiversity database (GBIF or OBIS), or an
   analysis in QIIME 2.
+
+<details>
+<summary><b>Want to understand where building shareable datasets fits into the eDNA workflow?</b></summary>
+
+<br>
+
+<img src="docs/images/faire_workflow_overview.png" alt="Flow chart in three panels. Before: data generation and bioinformatics produce the field, lab and analysis files you bring to FAIRe. FAIRe, run in Galaxy, the Shiny app or an AI assistant: start a FAIRe template, map your columns, validate, then convert the checked FAIRe workbook. A template-first route takes a blank template back to field and lab work and returns the filled template straight to validation. After: the workbook is converted for DNA data repositories (NCBI SRA, ENA) and biodiversity data repositories (GBIF, OBIS), where the data can be reused.">
+
+</details>
 
 ## Three ways to use the tools
 
@@ -127,7 +137,13 @@ The tools themselves do not use AI, with two exceptions that the user chooses: t
 language model* step of the FAIRe mapper, and the AI assistant skill in `skill/`. Both send data to
 the AI service the user picks, and say so before they do.
 
-## Evaluating the tools
+## For evaluators and developers
+
+You don't need the sections below to use the tools. They are notes for Galaxy Australia, developers
+and anyone checking how the tools were built and tested. Select a heading to open it.
+
+<details>
+<summary><b>Evaluating the tools</b></summary>
 
 Notes for Galaxy Australia and other evaluators.
 
@@ -191,7 +207,10 @@ Notes for Galaxy Australia and other evaluators.
   loading edna2obis's output into an IPT. Each
   tool's README lists its remaining steps.
 
-## Layout
+</details>
+
+<details>
+<summary><b>Layout</b></summary>
 
 ```
 tools/
@@ -253,7 +272,10 @@ call written by `faireator.xml` and the FAIRe-fier command line (`fairefier_cli.
 around the upstream code. The upstream files are not edited. The FAIRe2MDT and edna2obis drivers
 replace functions inside the upstream code while it runs; their READMEs say which and why.
 
-## Decisions
+</details>
+
+<details>
+<summary><b>Decisions</b></summary>
 
 - **Standard FAIRe layout** (3 November 2026). Tools should read and write the FAIRe layout that
   FAIRe-ator produces (assay-specific projectMetadata columns headed `assay1`, `assay2` ..., or
@@ -309,7 +331,10 @@ replace functions inside the upstream code while it runs; their READMEs say whic
   credits both, and its `<creator>` block names him and Miwa Takahashi, the maintainers (see
   ToolShed owner and maintainers above). Each upstream tool stays with its own developers.
 
-## Steps common to all tools
+</details>
+
+<details>
+<summary><b>Steps common to all tools</b></summary>
 
 `docs/faire_tools_guide.md`
 (the guide to all the tools) and `docs/faire_mapper_inputs.md` (the guide to the FAIRe mapper's
@@ -337,7 +362,10 @@ data to ENA from inside Galaxy.
 6. Longer term: bioconda packages for the upstream code (or one consolidated FAIRe package), so the
    wrappers no longer bundle scripts.
 
-## Running the checks
+</details>
+
+<details>
+<summary><b>Running the checks</b></summary>
 
 ```bash
 pip install planemo
@@ -391,3 +419,5 @@ README). After the fixes all 11 edna2obis tests passed there, including both mat
 
 Galaxy job scripts set `PYTHONWARNINGS=ignore`. Any tool that reports problems through Python's
 warnings module needs to undo that (FAIRe-fier does); check this when wrapping the next tools.
+
+</details>
