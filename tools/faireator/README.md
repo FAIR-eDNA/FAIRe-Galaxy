@@ -4,8 +4,9 @@ One Galaxy tool (`faireator`) that makes a blank FAIRe metadata template (.xlsx)
 study's project ID, assay type, assay names, sample types and requirement levels. It has no input
 datasets; everything comes from the tool form.
 
-Upstream: [FAIR-eDNA/FAIRe-ator](https://github.com/FAIR-eDNA/FAIRe-ator) at commit `dcb9323`
-(24 Sep 2026, the latest on `main` as of 3 Nov 2026). Bundled checklist: FAIRe v1.0.2 from
+Upstream: [FAIR-eDNA/FAIRe-ator](https://github.com/FAIR-eDNA/FAIRe-ator) at commit `95753b2`
+(26 Nov 2026, FAIRe-ator pull request #15, which adds `experimentRunMetadata_user`, user-defined
+fields for experimentRunMetadata; earlier pin `dcb9323` of 24 Sep 2026). Bundled checklist: FAIRe v1.0.2 from
 [FAIR-eDNA/FAIRe_checklist](https://github.com/FAIR-eDNA/FAIRe_checklist) at commit `061d8b6`.
 Both are CC BY 4.0: the licence files were added upstream on 11 November 2026 (FAIRe-ator
 `5f523a1`, FAIRe_checklist `70fd1ea`, which change nothing else) and are copied in here as
@@ -48,12 +49,14 @@ Choices made in the wrapper:
 3. **All R packages come from conda,** including `here`, which the function loads but does not use.
    If any package were missing, the function would try `install.packages()` at run time, which
    fails on servers without internet access.
-4. **"All sample types" is passed as the full list of seven types.** Upstream's own option for this
+4. **"Other" (all sample types) is passed as the full list of seven types.** Upstream's own option for this
    ("other") crashes when combined with a targeted assay type and more than one assay. Listing the
    seven types gives exactly the same fields (checked: 141 sampleMetadata fields, same order), and
    also keeps the pre-filled assay_name row that "other" leaves out.
-5. **Names are checked on the form.** Project ID, assay names and extra field names must be
-   letters, digits, `_` or `-`, as FAIRe asks.
+5. **Names are checked on the form.** Project ID, assay names and user-defined field names must
+   be letters, digits, `_` or `-`, as FAIRe asks.
+6. **User-defined experimentRunMetadata fields are passed only for metabarcoding.** Upstream
+   ignores them for a targeted template, with a message; the wrapper does not pass them at all.
 
 ## Upstream issues to report
 
@@ -70,7 +73,7 @@ Choices made in the wrapper:
   at the foot of sampleMetadata. The wrapper avoids this (item 4 above).
 - The checklist version (v1.0.2) is fixed in the code, so a new checklist release needs a code
   change as well as new files.
-- No tagged releases. The tool version is the commit date (`2026.09.24`).
+- No tagged releases. The tool version is the commit date (`2026.11.26`).
 
 ## Before deployment on Galaxy Australia
 
@@ -117,10 +120,12 @@ planemo test faireator/
 
 Run on 3 November 2026 with planemo 0.75.47 against Galaxy `release_25.0`, with dependencies
 resolved through conda (r-base 4.4.3, r-readxl 1.6.0, r-openxlsx 4.2.9, r-dplyr 1.2.1,
-r-rcolorbrewer 1.1_3, r-here 1.0.2). All tests passed.
+r-rcolorbrewer 1.1_3, r-here 1.0.2). All tests passed. Tests 1 and 2 gained the user-defined
+experimentRunMetadata fields on 26 November 2026 with the new pin; they run in CI on Galaxy
+release_26.1.
 
 | Test | Checks | Result |
 |---|---|---|
-| 1 | Metabarcoding, water and sediment, two assays, all levels: metabarcoding sheets, assay1 column, assay names, README settings | passed |
-| 2 | Targeted, soil, one assay, mandatory and highly recommended only, extra fields: targeted sheets, no assay columns, extra fields present | passed |
+| 1 | Metabarcoding, water and sediment, two assays, all levels, user-defined experimentRunMetadata fields: metabarcoding sheets, assay1 column, assay names, README settings, the user-defined fields | passed |
+| 2 | Targeted, soil, one assay, mandatory and highly recommended only, user-defined fields: targeted sheets, no assay columns, project and sample fields present, experimentRunMetadata fields not used | passed |
 | 3 | All sample types with two targeted assays (the case that crashes upstream): one detection column per assay | passed |
