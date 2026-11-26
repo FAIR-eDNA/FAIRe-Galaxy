@@ -1,8 +1,40 @@
-<!-- The same text is in every tool's help in Galaxy (@HELP_FAIRE_GUIDE@ in each tool folder's
-faire_guide.xml, copied from dev/faire_guide/faire_guide.xml by dev/faire_guide/sync.py). Edit
-both together. Reviewed by Oliver Berry, 4 November 2026; reworded in fuller sentences, 7 November 2026. -->
+<!-- Everything under *Full guide* is the same text as the help in every tool in Galaxy
+(@HELP_FAIRE_GUIDE@ in each tool folder's faire_guide.xml, copied from dev/faire_guide/faire_guide.xml
+by dev/faire_guide/sync.py). Edit both together. The quick start above it is for this page only.
+Reviewed by Oliver Berry, 4 November 2026; reworded in fuller sentences, 7 November 2026;
+quick start added, 26 November 2026. -->
 
 # Using the FAIRe tools in Galaxy
+
+The FAIRe tools guide you through each step. Every form explains its fields, and each result tells
+you what to do next. You don't need to read this whole page to get started: the quick start below is
+enough.
+
+## Quick start
+
+<p align="center">
+<img src="images/faire_quick_start.svg" width="100%" alt="Four steps from left to right. 1, You bring: your sample table, methods text, and OTU and taxonomy tables or qPCR results, or nothing yet if you start from a blank template. 2, The tools guide you: help on every form, suggested matches for you to review, problems listed and highlighted, fix then check again. 3, You get: a checked FAIRe workbook and files formatted for each repository. 4, Then you upload to NCBI or ENA for sequence data, to GBIF or OBIS for species records, or analyse in QIIME 2.">
+</p>
+
+### Where to start
+
+| What you have | Start with | What it does |
+| --- | --- | --- |
+| No metadata yet, or you are planning a study | **FAIRe-ator** | Makes a blank template for you to fill in |
+| Your own sample table, with OTU and taxonomy tables or qPCR results | **FAIRe mapper** | Builds the FAIRe workbook from your files |
+| A FAIRe workbook | **FAIRe-fier** | Checks it and shows you what to fix |
+
+Search Galaxy's tool panel for *FAIRe* or *edna2obis* to find the tools. Once your workbook passes
+FAIRe-fier, choose the conversion tool for where your data are going (see *Which tool for which
+destination* below). The tools write the files, and you upload them yourself.
+
+## Full guide
+
+The sections below give the detail for each tool. The same text is in the help below every tool's
+form in Galaxy, so you can also read it there when you need it. Select a heading to open it.
+
+<details>
+<summary><b>Where to start, in more detail</b></summary>
 
 Each FAIRe tool in Galaxy does one step of the job: it makes the metadata workbook, checks it, or converts it into a format that suits where you are depositing your data. Where you start depends on what you already have:
 
@@ -10,7 +42,10 @@ Each FAIRe tool in Galaxy does one step of the job: it makes the metadata workbo
 - **If you have a sample table in your own format**, start with the **FAIRe mapper** tools, which build the workbook from it. A sample table is the spreadsheet you keep for your samples, with one row per sample or filter and columns such as site, date, coordinates, depth, volume filtered and which samples are controls. Your reads per ASV or taxon, and your taxon assignments, go to the mapper as separate OTU and taxonomy tables, even if you keep them in the same spreadsheet.
 - **If you already have a FAIRe workbook**, start with **FAIRe-fier**, which checks it.
 
-## The steps, in order
+</details>
+
+<details>
+<summary><b>The steps, in order</b></summary>
 
 1. **Make the FAIRe workbook**, in one of two ways:
    - **FAIRe-ator** makes a blank Excel template for your study, from the project ID, assay names and sample types you give it. You fill it in outside Galaxy and upload it.
@@ -20,7 +55,10 @@ Each FAIRe tool in Galaxy does one step of the job: it makes the metadata workbo
 
 The tools are named here as they appear in Galaxy's tool panel. Search the panel for *FAIRe* or *edna2obis* to find them.
 
-## What inputs each tool needs
+</details>
+
+<details>
+<summary><b>What inputs each tool needs</b></summary>
 
 FAIRe-fier and the conversion tools all take the FAIRe workbook (.xlsx), except edna2obis: match taxa, which needs only taxonomy tables. The entries below say what else each tool needs. Names such as sampleMetadata, otuFinal and taxaFinal are FAIRe's names for the sheets and tables of a FAIRe dataset, and names such as samp_name and lib_id are FAIRe fields (terms) within them.
 
@@ -50,7 +88,10 @@ FAIRe-fier and the conversion tools all take the FAIRe workbook (.xlsx), except 
 
 - **FAIRe2QIIME** needs target_gene for each assay in projectMetadata. To write manifests, it also needs the fastq file names in experimentRunMetadata, and the folder that holds the sequencing run folders on the computer where QIIME 2 runs.
 
-## Which tool for which destination
+</details>
+
+<details>
+<summary><b>Which tool for which destination</b></summary>
 
 The tools write the files, and you then upload them to the archive or database yourself, outside Galaxy.
 
@@ -64,6 +105,8 @@ The tools write the files, and you then upload them to the archive or database y
 | QIIME 2 analysis | FAIRe2QIIME | Sample metadata and manifests | QIIME 2 (qiime tools import) |
 
 GBIF can take the same metabarcoding data by either route. MDT turns its own workbook into Darwin Core, while edna2obis writes the Darwin Core in Galaxy, and its output also suits OBIS. Neither takes qPCR or ddPCR results: FAIRe to Darwin Core does, and also metabarcoding data with no read counts.
+
+</details>
 
 ## Where to find more
 
