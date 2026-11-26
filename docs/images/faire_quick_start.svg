@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060 270" width="1060" height="270" font-family="Helvetica, Arial, sans-serif">
+  <!-- Quick start strip for docs/faire_tools_guide.md -->
+  <g transform="translate(4,4)">
+    <rect width="230" height="262" rx="12" fill="#ffffff" stroke="#0F6E63" stroke-width="2"/>
+    <rect width="230" height="52" rx="12" fill="#0F6E63"/><rect y="40" width="230" height="12" fill="#0F6E63"/>
+    <circle cx="28" cy="26" r="13" fill="#ffffff"/><text x="28" y="31" text-anchor="middle" font-size="15" font-weight="bold" fill="#0F6E63">1</text>
+    <text x="50" y="32" font-size="17" font-weight="bold" fill="#ffffff">You bring</text>
+    <circle cx="22" cy="79" r="3" fill="#0F6E63"/>
+    <text x="34" y="84" font-size="14" fill="#222222">Your sample table</text>
+    <circle cx="22" cy="112" r="3" fill="#0F6E63"/>
+    <text x="34" y="117" font-size="14" fill="#222222">Methods text</text>
+    <circle cx="22" cy="145" r="3" fill="#0F6E63"/>
+    <text x="34" y="150" font-size="14" fill="#222222">OTU and taxonomy tables,</text>
+    <text x="34" y="169" font-size="14" fill="#222222">or qPCR results</text>
+    <circle cx="22" cy="197" r="3" fill="#0F6E63"/>
+    <text x="34" y="202" font-size="14" font-style="italic" fill="#4F5D59">Or nothing yet: start</text>
+    <text x="34" y="221" font-size="14" font-style="italic" fill="#4F5D59">from a blank template</text>
+  </g>
+  <path d="M 242 135.0 h 24" stroke="#0F6E63" stroke-width="2.5" fill="none"/>
+  <path d="M 266 129.0 l 9 6 l -9 6 z" fill="#0F6E63"/>
+  <g transform="translate(278,4)">
+    <rect width="230" height="262" rx="12" fill="#ffffff" stroke="#0F6E63" stroke-width="2"/>
+    <rect width="230" height="52" rx="12" fill="#0F6E63"/><rect y="40" width="230" height="12" fill="#0F6E63"/>
+    <circle cx="28" cy="26" r="13" fill="#ffffff"/><text x="28" y="31" text-anchor="middle" font-size="15" font-weight="bold" fill="#0F6E63">2</text>
+    <text x="50" y="32" font-size="17" font-weight="bold" fill="#ffffff">The tools guide you</text>
+    <circle cx="22" cy="79" r="3" fill="#0F6E63"/>
+    <text x="34" y="84" font-size="14" fill="#222222">Help on every form</text>
+    <circle cx="22" cy="112" r="3" fill="#0F6E63"/>
+    <text x="34" y="117" font-size="14" fill="#222222">Suggested matches</text>
+    <text x="34" y="136" font-size="14" fill="#222222">for you to review</text>
+    <circle cx="22" cy="164" r="3" fill="#0F6E63"/>
+    <text x="34" y="169" font-size="14" fill="#222222">Problems listed</text>
+    <text x="34" y="188" font-size="14" fill="#222222">and highlighted</text>
+    <circle cx="22" cy="216" r="3" fill="#0F6E63"/>
+    <text x="34" y="221" font-size="14" fill="#222222">Fix, then check again</text>
+  </g>
+  <path d="M 516 135.0 h 24" stroke="#0F6E63" stroke-width="2.5" fill="none"/>
+  <path d="M 540 129.0 l 9 6 l -9 6 z" fill="#0F6E63"/>
+  <g transform="translate(552,4)">
+    <rect width="230" height="262" rx="12" fill="#d9eeea" stroke="#0F6E63" stroke-width="2"/>
+    <rect width="230" height="52" rx="12" fill="#0F6E63"/><rect y="40" width="230" height="12" fill="#0F6E63"/>
+    <circle cx="28" cy="26" r="13" fill="#ffffff"/><text x="28" y="31" text-anchor="middle" font-size="15" font-weight="bold" fill="#0F6E63">3</text>
+    <text x="50" y="32" font-size="17" font-weight="bold" fill="#ffffff">You get</text>
+    <circle cx="22" cy="79" r="3" fill="#0F6E63"/>
+    <text x="34" y="84" font-size="14" fill="#222222">A checked FAIRe</text>
+    <text x="34" y="103" font-size="14" fill="#222222">workbook (.xlsx)</text>
+    <circle cx="22" cy="131" r="3" fill="#0F6E63"/>
+    <text x="34" y="136" font-size="14" fill="#222222">Files formatted for</text>
+    <text x="34" y="155" font-size="14" fill="#222222">each repository</text>
+  </g>
+  <path d="M 790 135.0 h 24" stroke="#0F6E63" stroke-width="2.5" fill="none"/>
+  <path d="M 814 129.0 l 9 6 l -9 6 z" fill="#0F6E63"/>
+  <g transform="translate(826,4)">
+    <rect width="230" height="262" rx="12" fill="#ffffff" stroke="#0F6E63" stroke-width="2"/>
+    <rect width="230" height="52" rx="12" fill="#0F6E63"/><rect y="40" width="230" height="12" fill="#0F6E63"/>
+    <circle cx="28" cy="26" r="13" fill="#ffffff"/><text x="28" y="31" text-anchor="middle" font-size="15" font-weight="bold" fill="#0F6E63">4</text>
+    <text x="50" y="32" font-size="17" font-weight="bold" fill="#ffffff">Then you</text>
+    <circle cx="22" cy="79" r="3" fill="#0F6E63"/>
+    <text x="34" y="84" font-size="14" fill="#222222">Upload to NCBI or ENA</text>
+    <text x="34" y="103" font-size="14" fill="#222222">(sequence data)</text>
+    <circle cx="22" cy="131" r="3" fill="#0F6E63"/>
+    <text x="34" y="136" font-size="14" fill="#222222">Upload to GBIF or OBIS</text>
+    <text x="34" y="155" font-size="14" fill="#222222">(species records)</text>
+    <circle cx="22" cy="183" r="3" fill="#0F6E63"/>
+    <text x="34" y="188" font-size="14" fill="#222222">Or analyse in QIIME 2</text>
+  </g>
+</svg>
