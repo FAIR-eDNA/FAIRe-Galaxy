@@ -59,7 +59,7 @@ here as `LICENSE.upstream`.
 | `faire_guide.xml` | The guide shown at the end of every FAIRe tool's help (`@HELP_FAIRE_GUIDE@`); a copy of `dev/faire_guide/faire_guide.xml`, updated by `dev/faire_guide/sync.py` |
 | `LICENSE` | MIT licence for the wrapper code in this folder (upstream files keep their own licence) |
 | `LICENSE.upstream` | FAIRe2MDT's CC BY 4.0 licence |
-| `.shed.yml` | ToolShed metadata (owner still to fill in) |
+| `.shed.yml` | ToolShed metadata (owner `fair-edna`) |
 
 ## How the wrapper works
 
@@ -210,7 +210,7 @@ show whether the site has the FAIRe format, and what this tool still adds.
    openxlsx also writes references to drawing parts it leaves out of the file; MDT and pandas read
    such files, but openpyxl cannot open them in full (as with FAIRe-ator's templates), so check
    Excel too.
-3. **Fill in `.shed.yml`** (owner) and add the wrapper maintainers to `<creator>`.
+3. **ToolShed owner and maintainers** (done, 23 November 2026): `owner` is `fair-edna` in `.shed.yml`, and Oliver Berry and Miwa Takahashi are the maintainers in `<creator>`.
 
 ### Should do
 

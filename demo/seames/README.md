@@ -61,6 +61,7 @@ of the repository; the trial then takes the final 16S tables from it, and from f
 | `filereport_read_run_PRJNA1263580.tsv` | ENA's run report rows for these samples' 35 libraries and the six 18S control libraries | The library table: file names, checksums and accessions; each 16S library also holds the unused COI amplicons |
 | `ReadMe_Description.md`, `dublincore-000065684v002.xml` | The record's ReadMe and metadata, unchanged | Values for the whole project (assays, primers, sequencing runs) |
 | `methods.txt`, `methods_consolidated.txt` | The report's methods, unchanged | Find primers and the methods step |
+| `SEA-MES_notes.md` | Ours, not published: the record's creator, project and licence, from its page, as the methods do not give them | The contact and licence in the Shiny app's demonstration |
 
 ## Running it
 

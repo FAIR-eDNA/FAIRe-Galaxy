@@ -1,4 +1,4 @@
-# FAIRe-Galaxy
+# FAIRe-Galaxy - making it easy to share your eDNA data
 
 Environmental DNA (eDNA) data are most valuable when other people can find, understand and reuse
 them. The FAIR eDNA (FAIRe) metadata standard describes how to record an eDNA study so that its
@@ -17,13 +17,50 @@ With the tools you can:
 - **convert** it for a sequence archive (NCBI or ENA), a biodiversity database (GBIF or OBIS), or an
   analysis in QIIME 2.
 
-The same tools also run on your own computer in a small R Shiny app (`shiny/`), a good way to try
-them on your data before you submit anything. With R and Python installed, this line in R downloads
-the app, sets it up and starts it (`shiny/README.md` has the details):
+## Three ways to use the tools
+
+The same tools run in three places. Choose the one that suits you, and select its card or its link
+under *Start here* to get going:
+
+<p align="center">
+<a href="#start-with-galaxy"><img src="docs/images/way_galaxy.svg" width="250" alt="Galaxy, in your web browser: nothing to install, a record of every step, joins your analysis workflows. Galaxy Australia eDNA Lab. Select to start with Galaxy."></a>
+<a href="#start-with-the-shiny-app"><img src="docs/images/way_shiny.svg" width="250" alt="Shiny app, on your own computer: data stay with you, works offline, good for a first try. Needs R and Python. Select to start with the Shiny app."></a>
+<a href="skill/README.md#setting-it-up"><img src="docs/images/way_ai.svg" width="250" alt="AI assistant, in a chat with Claude, ChatGPT or Microsoft 365 Copilot: talks you through each decision, copes with untidy files. Your files go to the AI company. Select to set up the AI assistant."></a>
+</p>
+
+| | Where it runs | Choose it if | Start here |
+|---|---|---|---|
+| 🟦 **Galaxy** | In your web browser, on Galaxy Australia's servers | you want nothing to install, a record of every step, or to join the FAIRe steps to your analysis workflows | [Start with Galaxy](#start-with-galaxy), below |
+| 🟩 **Shiny app** | On your own computer; needs R and Python | your data must stay with you, you want to work offline, or you'd like a first try | [Start with the Shiny app](#start-with-the-shiny-app), below |
+| 🟧 **AI assistant** | In a chat with Claude, ChatGPT or Microsoft 365 Copilot; your files go to the AI company | you'd like to be talked through each decision, or your files are untidy or unusual | [Setting up the AI assistant](skill/README.md#setting-it-up), in the skill's README |
+
+All three use the same review sheets, so you can start in one and finish in another.
+
+### Start with Galaxy
+
+The tools will be in the [Galaxy Australia eDNA Lab](https://edna.dev.gvl.org.au), which is being
+set up. Once they are there, open the Lab in your web browser and follow
+[the guide to the tools](docs/faire_tools_guide.md). It says which tool to start with, depending on
+what you already have, and the same guide is in each tool's help. Until then, the Shiny app and the
+AI assistant run the same tools.
+
+### Start with the Shiny app
+
+With R (4.1 or later) and Python (3.10 to 3.13) on your computer, run this line in R. It downloads
+the app, sets it up and opens it in your web browser:
 
 ```r
 source("https://raw.githubusercontent.com/FAIR-eDNA/FAIRe-Galaxy/main/shiny/start.R")
 ```
+
+Use this line each time you start the app: it checks for a newer version and updates itself.
+Starting the app another way (*Run App* in RStudio, or `run_app.R`) uses the copy you have, though its
+*Start* page tells you when a newer version is out.
+
+The first time takes about 15 minutes, most of it downloading packages. To try the app before using
+your own data, load one of the demonstration datasets on its *Start* page. The app's README has
+[more on setting it up](shiny/README.md#downloading-and-running-it), including what to do if you
+don't have Python yet, and [the demonstration datasets](shiny/README.md#trying-it-with-the-demonstration-data).
 
 ## The tools
 
@@ -34,16 +71,61 @@ order you would use them: make a workbook, check it, then convert it for where y
 | Directory | Tools | What it does | Upstream | Status |
 |---|---|---|---|---|
 | `tools/faireator` | FAIRe-ator | **Make.** Makes a blank FAIRe metadata workbook, an Excel template set up for your study's assays and sample types, ready to fill in. | [FAIR-eDNA/FAIRe-ator](https://github.com/FAIR-eDNA/FAIRe-ator) | Lint clean; 3/3 tests pass; CC BY 4.0 licence copied in (`LICENSE.upstream`); templates open cleanly in Excel, LibreOffice and Google Sheets |
-| `tools/faire_mapper` | FAIRe mapper: identify your files; profile columns; propose mapping; find primers; find method details; build primer table; apply mapping; ask a language model (optional) | **Make.** Builds a FAIRe workbook from the tables you already have. It works out what each file is, proposes which FAIRe term each column of your sample table matches (for you to review), finds the primers and other method details in your methods text, and writes the workbook. | New code, from the project's `faire_mapper` prototype; bundled primer table from Takahashi et al. 2023 and a bacteria and archaea register | Lint clean; 78/78 tests pass (Galaxy 26.1); benchmarked, tried on four Dryad datasets, two Australian datasets, the SEA-MES record (16S, COI, 18S and Wilderlab), the day-night study of West et al. 2024 (16S and COI, `dev/faire_mapper_daynight/`) and nine FAIRe examples; model step not yet run against the API |
+| `tools/faire_mapper` | FAIRe mapper: identify your files; profile columns; propose mapping; find primers; find method details; build primer table; apply mapping; ask a language model (optional) | **Make.** Builds a FAIRe workbook from the tables you already have. It works out what each file is, proposes which FAIRe term each column of your sample table matches (for you to review), finds the primers and other method details in your methods text, and writes the workbook. | New code, from the project's `faire_mapper` prototype; bundled primer table from Takahashi et al. 2023 and a bacteria and archaea register | Lint clean; 85/85 tests pass (Galaxy 26.1); benchmarked, tried on four Dryad datasets, two Australian datasets, the SEA-MES record (16S, COI, 18S and Wilderlab), the day-night study of West et al. 2024 (16S and COI, `dev/faire_mapper_daynight/`) and nine FAIRe examples; model step not yet run against the API |
 | `tools/fairefier` | FAIRe-fier (with a new command-line version) | **Check.** Checks a FAIRe workbook against the FAIRe checklist and reports values that are missing or not in the expected form, so you can fix them before sharing. | [csiro/FAIRe-fier](https://github.com/csiro/FAIRe-fier) | Lint clean; 6/6 tests pass; outputs identical to the web app; offer the command line upstream |
 | `tools/faire2ena` | FAIRe2ENA: samples; FAIRe2ENA: experiments and runs | **Convert.** Turns the workbook into the files the European Nucleotide Archive (ENA) needs to register your samples, study, experiments and sequencing runs. | [FAIR-eDNA/FAIRe2ENA](https://github.com/FAIR-eDNA/FAIRe2ENA) | Lint clean; 13/13 tests pass; runs can be chosen by assay or sequencing run, and a library holding several assays gets one run; adds the units ENA's checklist asks for, and the size-fraction fields the right way round; paired-end and single-end runs; ENA's test server accepted samples, study, experiments and runs for three SEA-MES 18S samples |
 | `tools/faire2ncbi` | FAIRe2NCBI: BioSample; FAIRe2NCBI: SRA | **Convert.** Turns the workbook into the tables the NCBI Submission Portal needs to register your samples (BioSample) and sequence reads (SRA). | [aomlomics/FAIRe2NCBI](https://github.com/aomlomics/FAIRe2NCBI) | Lint clean; 20/20 tests pass; a library holding several assays gets one SRA row; needs a trial in the NCBI Submission Portal |
 | `tools/faire2qiime` | FAIRe2QIIME | **Convert.** Turns the workbook into QIIME 2 sample metadata and, if you like, manifests for importing your reads, ready for analysis in QIIME 2. | [aomlomics/faire2qiime](https://github.com/aomlomics/faire2qiime) | Lint clean; 8/8 tests pass; needs a trial importing its files into QIIME 2 |
 | `tools/faire2mdt` | FAIRe2MDT | **Convert.** Turns the workbook and an OTU table into the spreadsheet taken by GBIF's Metabarcoding Data Toolkit, which publishes eDNA records to GBIF. | [FAIR-eDNA/FAIRe2MDT](https://github.com/FAIR-eDNA/FAIRe2MDT) | Lint clean; 6/6 tests pass; leaves out control samples, as GBIF asks; ran on 11 assay and run combinations of the FAIRe examples; MDT trial reached an archive GBIF can index; CC BY 4.0 licence copied in (`LICENSE.upstream`) |
 | `tools/edna2obis` | edna2obis: match taxa; edna2obis: build Darwin Core tables | **Convert.** Matches your taxa to accepted names in WoRMS and GBIF, then builds the Darwin Core tables OBIS and GBIF use to publish species occurrence records. | [aomlomics/edna2obis](https://github.com/aomlomics/edna2obis) | Lint clean; 14/14 tests pass (Galaxy 26.1, with internet access); one request at a time to WoRMS and GBIF by default, at most 4; needs a trial on Galaxy Australia and an IPT |
+| `tools/faire2dwc` | FAIRe to Darwin Core | **Convert.** Turns the workbook into a Darwin Core archive of presence and absence records for GBIF and OBIS: qPCR and ddPCR results, or metabarcoding data published as presence. | New code (no upstream tool publishes qPCR results) | Lint clean; 5/5 tests pass (Galaxy 26.1); 162 records from the khapra beetle data (`demo/khapra`) and 1,046 with sequences from the eelgrass data; needs a trial in an IPT |
 
 Each tool directory has its own README with what the wrapper adds, upstream issues found, and the
 steps still needed before deployment.
+
+## How to cite
+
+If you use these tools, please cite three things:
+
+- **This collection**: Berry O, Takahashi M, Bayer P, Coclet C, Formel S, Silliman K, Thompson LR,
+  Willms B, Yong SY, Jeppesen TS, Frøslev TG (2026). FAIRe-Galaxy: tools for making, checking and
+  sharing FAIR eDNA (FAIRe) datasets. https://github.com/FAIR-eDNA/FAIRe-Galaxy
+- **The FAIRe checklist paper**: Takahashi M, Frøslev TG, Paupério J, et al. (2025). A metadata
+  checklist and data formatting guidelines to make eDNA FAIR (Findable, Accessible, Interoperable,
+  and Reusable). *Environmental DNA* 7(3): e70100. https://doi.org/10.1002/edn3.70100
+- **The tools you ran**, as their authors ask: FAIRe-fier (Yong 2026,
+  http://hdl.handle.net/102.100.100/734538), edna2obis (Willms and Silliman 2026,
+  https://doi.org/10.5281/zenodo.23667395), and the repositories of FAIRe-ator, FAIRe2MDT,
+  FAIRe2ENA, FAIRe2NCBI and FAIRe2QIIME, all listed in `CITATION.cff`. Galaxy shows each tool's
+  citations on its page.
+
+GitHub's *Cite this repository* button, on the right of the repository's front page, gives the
+citation in other formats.
+
+The collection's authors are the people who wrote the tools it brings together:
+
+- Oliver Berry (CSIRO): the Galaxy wrappers, the FAIRe mapper, FAIRe to Darwin Core, the Shiny app
+  and the AI assistant skill;
+- Miwa Takahashi (CSIRO): FAIRe-ator (with Stephen Formel, The Data Patch) and FAIRe2MDT;
+  she leads the FAIRe checklist and maintains these tools with Oliver Berry;
+- Suk Yee Yong (CSIRO): FAIRe-fier;
+- Philipp Bayer (Minderoo OceanOmics Centre at UWA): FAIRe2ENA;
+- Clement Coclet, Luke Thompson, Katherine Silliman and Bayden Willms (NOAA 'Omics, AOML):
+  FAIRe2NCBI, FAIRe2QIIME and edna2obis.
+
+## Use of AI
+
+Much of the new code and documentation in this repository (the Galaxy wrappers, the FAIRe mapper,
+FAIRe to Darwin Core, the Shiny app and the AI assistant skill) was written with Claude, an AI model
+made by Anthropic. Oliver Berry directed the work, reviewed the changes and tested the tools on
+benchmark tables, published datasets and the demonstration sets in `demo/`, and the authors take
+responsibility for the content. Claude is not listed as an author, as AI tools cannot take
+responsibility for their work. The upstream tools wrapped here (FAIRe-ator, FAIRe-fier, FAIRe2MDT,
+FAIRe2ENA, FAIRe2NCBI, FAIRe2QIIME and edna2obis) are their authors' own work.
+
+The tools themselves do not use AI, with two exceptions that the user chooses: the optional *ask a
+language model* step of the FAIRe mapper, and the AI assistant skill in `skill/`. Both send data to
+the AI service the user picks, and say so before they do.
 
 ## Evaluating the tools
 
@@ -54,8 +136,9 @@ Notes for Galaxy Australia and other evaluators.
   shown at the end of every tool's help: where to start, the steps in order, and which tool serves
   which repository.
 - **Installing.** Each folder under `tools/` is one ToolShed repository with its own tests
-  (`planemo test tools/FOLDER`). The tools are not on the ToolShed yet, as the owner account is still
-  to be chosen. Dependencies come from conda (conda-forge and bioconda) or containers. All 148 tool
+  (`planemo test tools/FOLDER`). The tools are not on the ToolShed yet. They will be published under
+  the ToolShed account `fair-edna`, which is still to be registered. Dependencies come from conda
+  (conda-forge and bioconda) or containers. All 160 tool
   tests pass on Galaxy release_26.1 in this repository's checks; the tools were also tested on
   release_25.0. Tools use profile 23.0, except *FAIRe mapper: ask a language model* (25.1, for
   Galaxy's credentials).
@@ -70,14 +153,29 @@ Notes for Galaxy Australia and other evaluators.
   authors' own formats: an eDNAFlow LCA output and a FASTA file per assay, a sample sheet with the
   time in its own column, and the portal's list of the fastq files. `DATA=demo/daynight dev/faire_mapper_daynight/run.sh OUTDIR` runs the FAIRe
   mapper, FAIRe-fier, FAIRe2ENA, FAIRe2NCBI and FAIRe2QIIME on it.
+- **A targeted (qPCR) dataset.** `demo/khapra` holds the published files of a khapra beetle eDNA
+  study (Trujillo-González et al. 2022, CC0): a sample table, 766 qPCR reactions and the Dryad
+  README. `dev/faire_mapper_khapra/run.sh OUTDIR` runs the FAIRe mapper (with the qPCR results as
+  ampData), FAIRe-fier and FAIRe to Darwin Core, to an archive of 162 presence and absence records
+  for GBIF.
+- **A minimal metabarcoding dataset.** `demo/eelgrass` holds the published files of a COI study of
+  invertebrates in Nova Scotia eelgrass meadows (Trask et al., Dryad, CC0): reads per species and
+  sample, and the site coordinates, with no sample table, controls or sequences.
+  `dev/faire_mapper_eelgrass/run.sh OUTDIR` makes the sample table, then runs the FAIRe mapper,
+  FAIRe-fier and FAIRe to Darwin Core, to 869 presence records for GBIF.
+  `dev/faire_mapper_eelgrass/run_asvs.sh OUTDIR` adds the authors' per-ASV files from their GitHub
+  repository (downloaded at run time): 1,046 records, each with the sequence behind it, and the
+  controls.
 - **Worked example.** `docs/walkthroughs/seames_18s_to_ena.md` follows three SEA-MES 18S samples
   from the lab's spreadsheet, through the FAIRe mapper, FAIRe-fier and FAIRe2ENA, to a submission
   that ENA's test service accepted. It ran the scripts the Galaxy tools wrap from the command line,
   so it shows the steps and their outputs, not Galaxy itself.
 - **Without Galaxy.** `shiny/` is a Shiny app that runs the same tools on a person's own computer, in
   a web browser, with the same command lines (`shiny/README.md`). Its review screen is the FAIRe
-  mapper's review sheet, and it can take a review sheet filled in with Excel. It has a button that
-  loads a 16S demonstration from `demo/seames`.
+  mapper's review sheet, and it can take a review sheet filled in with Excel. Its Start page offers
+  demonstrations to load: SEA-MES (16S metabarcoding, the full dataset), the khapra beetle (qPCR) and
+  Nova Scotia eelgrass (COI metabarcoding, the least a dataset needs), the last two to presence and
+  absence records for GBIF.
 - **Network.** Only *edna2obis: match taxa* needs the internet, to look up names in WoRMS and GBIF.
   It sends one request at a time by default, and at most 4.
 - **Language model (optional).** *FAIRe mapper: ask a language model* needs a model service: one
@@ -104,6 +202,7 @@ tools/
   faire2qiime/    one ToolShed repository
   faire2mdt/      one ToolShed repository
   edna2obis/      one ToolShed repository (two tools sharing macros.xml)
+  faire2dwc/      one ToolShed repository (new: presence and absence records for GBIF and OBIS)
   faire_mapper/   one ToolShed repository (eight tools sharing macros.xml; bundles the checklist v1.0.2, its full template and a primer table)
 workflows/faire/  three Galaxy workflows that chain the tools, each with its tests and test data
 shiny/            a Shiny app that runs the tools on a person's own computer, without Galaxy
@@ -128,8 +227,7 @@ folders installed locally; once the tools are on the ToolShed, the IDs become To
 release_26.1 (as the IUC uses; current planemo cannot set up release_25.0 there), a manual trigger
 that tests every tool, `dev/` ignored, no R lint, and the ToolShed deploy off until the repository variable
 `TOOLSHED_DEPLOY` is `true` (after the owners in each `.shed.yml` and the secrets `TTS_API_KEY` and
-`TS_API_KEY` are set). Its lint step fails on warnings, so the placeholder owners in `.shed.yml`
-will fail it until they are filled in.
+`TS_API_KEY` are set). The owner in each `.shed.yml` is `fair-edna`.
 
 `dev/` holds work that is not published to the ToolShed: `fairefier_equivalence/` checks that the
 FAIRe-fier command line gives the same outputs as the web app; `faire_mapper_benchmark/` scores the
@@ -193,13 +291,23 @@ replace functions inside the upstream code while it runs; their READMEs say whic
 - **GitHub home** (3 and 11 November 2026). The repository is
   [FAIR-eDNA/FAIRe-Galaxy](https://github.com/FAIR-eDNA/FAIRe-Galaxy). Galaxy Australia advises
   that the tools go to the IUC, or stay with maintainers who publish them from their own ToolShed
-  account. Which of these, and who maintains them, is still to be decided.
+  account. Galaxy Australia does not want to manage the tools, as it lacks the domain knowledge.
+- **ToolShed owner and maintainers** (23 November 2026). The tools are published under a FAIR-eDNA
+  account on the ToolShed, `fair-edna`, and maintained by Oliver Berry and Miwa Takahashi (CSIRO),
+  with the FAIRe committee that Miwa chairs. The FAIRe team looks after the checklist and several of
+  the upstream scripts, so it holds the knowledge the tools need. Maintenance happens in this
+  repository: a change merged to `main` is published to the ToolShed by the continuous
+  integration. Galaxy Australia installs the tools on the eDNA Lab and updates them when the
+  maintainers ask. On 24 November 2026 Oliver Berry and Miwa Takahashi agreed to be the custodians
+  of the account. `fair-edna` is registered with Oliver Berry's CSIRO email, and Miwa Takahashi has
+  her own ToolShed account, registered with her CSIRO email, with write access to every
+  repository.
 - **Language model optional.** Every tool works without one. A model's answers are marked as
   such, and only a person's answers count as confirmed.
 - **Credit and ownership** (7 November 2026). Oliver Berry (CSIRO) wrote the Galaxy tools for the
-  upstream FAIRe tools and developed the FAIRe mapper, with Claude (Anthropic). Each tool's
-  `<creator>` block names him, and its help credits both. Each upstream tool stays with its own
-  developers. Future maintenance is to be decided (see GitHub home above).
+  upstream FAIRe tools and developed the FAIRe mapper, with Claude (Anthropic). Each tool's help
+  credits both, and its `<creator>` block names him and Miwa Takahashi, the maintainers (see
+  ToolShed owner and maintainers above). Each upstream tool stays with its own developers.
 
 ## Steps common to all tools
 
@@ -214,8 +322,12 @@ data to ENA from inside Galaxy.
    were posted on 17 November 2026; the others are still to report. (All the upstream repositories
    now have licence files: FAIRe-ator, the FAIRe checklist and FAIRe2MDT added theirs on 11
    November 2026.)
-2. Choose a ToolShed owner account (the GitHub home is FAIR-eDNA/FAIRe-Galaxy). Fill in `owner`
-   in each `.shed.yml`, and add maintainers to each `<creator>` block.
+2. ToolShed owner `fair-edna` (decided 23 November 2026; filled in each `.shed.yml`, with Oliver
+   Berry and Miwa Takahashi in each `<creator>` block; custodians and emails agreed 24 November
+   2026). Still to do: register `fair-edna` on the main ToolShed and the Test ToolShed with Oliver
+   Berry's CSIRO email; add their API keys as the repository secrets `TS_API_KEY` and
+   `TTS_API_KEY`; set the repository variable `TOOLSHED_DEPLOY` to `true`; and, once the
+   repositories exist, give Miwa Takahashi's ToolShed account write access to each one.
 3. Continuous integration (done, `.github/workflows/pr.yaml`). The IUC's planemo-ci GitHub Actions workflow runs lint and tests on
    every pull request and can publish to the ToolShed on merge.
 4. Publish to the Test ToolShed, check the tools install on a test Galaxy, then publish to the main

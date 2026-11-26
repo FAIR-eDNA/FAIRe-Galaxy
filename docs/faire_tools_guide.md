@@ -14,8 +14,8 @@ Each FAIRe tool in Galaxy does one step of the job: it makes the metadata workbo
 
 1. **Make the FAIRe workbook**, in one of two ways:
    - **FAIRe-ator** makes a blank Excel template for your study, from the project ID, assay names and sample types you give it. You fill it in outside Galaxy and upload it.
-   - The **FAIRe mapper** tools build a FAIRe workbook from your own sample table, with optional help from a language model, and add your OTU and taxonomy tables. FAIRe mapper has its own guide to the files it can work with.
-2. **Check the workbook with FAIRe-fier.** It lists missing mandatory fields and values in the wrong format, and suggests corrections. Fix the workbook and check it again until it passes.
+   - The **FAIRe mapper** tools build a FAIRe workbook from your own sample table, with optional help from a language model, and add your OTU and taxonomy tables, or your qPCR results. FAIRe mapper has its own guide to the files it can work with.
+2. **Check the workbook with FAIRe-fier.** It lists missing mandatory fields and values in the wrong format, and suggests corrections. Fix the workbook and check it again until it passes. GBIF, OBIS, NCBI and ENA accept a dataset only when every mandatory term has a value, or a FAIRe missing-value term where it is truly unknown (such as *missing: not collected*).
 3. **Convert the checked workbook** to a format that suits where your data are going: a sequence archive (NCBI or ENA), a biodiversity database (GBIF or OBIS), or an analysis in QIIME 2. Each destination has its own tool, as the table under *Which tool for which destination* below shows.
 
 The tools are named here as they appear in Galaxy's tool panel. Search the panel for *FAIRe* or *edna2obis* to find them.
@@ -44,6 +44,7 @@ FAIRe-fier and the conversion tools all take the FAIRe workbook (.xlsx), except 
 - **FAIRe2MDT** needs the OTU table (otuFinal) and taxonomy table (taxaFinal), either as sheets of the workbook or as separate files, plus the assay name and sequencing run ID. Run it once for each assay and sequencing run.
 - **edna2obis: match taxa** needs a taxonomy table for each assay. It looks the names up in WoRMS or GBIF, so it needs internet access.
 - **edna2obis: build Darwin Core tables** needs a taxonomy table and an abundance table for each assay, and the reviewed mapping table from *match taxa* (or it can look the names up during the run). It also takes the dataset details (title, contact, licence), which you can instead write later in the IPT. You need access to an IPT (Integrated Publishing Toolkit) to publish.
+- **FAIRe to Darwin Core** publishes presence and absence: qPCR or ddPCR results (detected_notDetected, with ampData if you have it), or metabarcoding data as presence. It needs the name of each assay's target (targetTaxonomicAssay), or taxaFinal, and takes an optional taxon table with identifiers and higher taxonomy. It writes a Darwin Core archive for an IPT.
 
 ### Analysis
 
@@ -59,9 +60,10 @@ The tools write the files, and you then upload them to the archive or database y
 | ENA | FAIRe2ENA: samples, then FAIRe2ENA: experiments and runs | Sample XML, then experiment and run XML | ENA's Webin REST service; fastq files to your Webin upload area first |
 | GBIF, through MDT | FAIRe2MDT, once for each assay and run | MDT workbook | GBIF's Metabarcoding Data Toolkit |
 | OBIS and GBIF, through an IPT | edna2obis: match taxa, then edna2obis: build Darwin Core tables | Darwin Core archive (.zip) | An IPT (Integrated Publishing Toolkit) |
+| GBIF and OBIS, presence and absence (qPCR, ddPCR) | FAIRe to Darwin Core | Darwin Core archive (.zip) | An IPT |
 | QIIME 2 analysis | FAIRe2QIIME | Sample metadata and manifests | QIIME 2 (qiime tools import) |
 
-GBIF can take the same data by either route. MDT turns its own workbook into Darwin Core, while edna2obis writes the Darwin Core in Galaxy, and its output also suits OBIS.
+GBIF can take the same metabarcoding data by either route. MDT turns its own workbook into Darwin Core, while edna2obis writes the Darwin Core in Galaxy, and its output also suits OBIS. Neither takes qPCR or ddPCR results: FAIRe to Darwin Core does, and also metabarcoding data with no read counts.
 
 ## Where to find more
 

@@ -64,6 +64,10 @@ python '$__tool_directory__/faire_mapper_apply.py'
         --library '$l.library' --library_name '$lname' --library_sheet '$l.library_sheet'
         --library_assay '$l.library_assay' --library_filter '$l.library_filter' --library_run '$l.library_run'
     #end for
+    #for $q in $amp_tables:
+        #set $qname = str($q.amp.element_identifier).replace("'", "")
+        --amp '$q.amp' --amp_name '$qname' --amp_sheet '$q.amp_sheet' --amp_assay_column '$q.amp_assay_column'
+    #end for
     --table_name '$table_name'
     --crosswalk_name '$crosswalk_name'
     --output faire.xlsx
@@ -145,7 +149,7 @@ python '$__tool_directory__/faire_mapper_apply.py'
                 <validator type="regex" message="Column names cannot contain quotes">^[^'"]*$</validator>
             </param>
             <param name="otu_run" type="text" value="" optional="true" label="Sequencing run ID (seq_run_id) (optional)"
-                help="Used when the table has no library or run columns: the tool then writes one experimentRunMetadata row per sample of this table, with samp_name, assay_name and this run ID, and lib_id made from those three.">
+                help="Used when the table has no library or run columns: the tool then writes one experimentRunMetadata row per sample of this table, with samp_name, assay_name and this run ID, and lib_id made from those three. Give it also when one assay was sequenced in several runs: each run's table is then kept as its own sheet, otuFinal_assay_run.">
                 <validator type="regex" message="Letters, digits, _, - or . only">^[A-Za-z0-9_.-]*$</validator>
             </param>
             <param name="otu_sequences" type="data" format="fasta" optional="true" label="Sequences of this table (FASTA, optional)"
@@ -190,12 +194,76 @@ python '$__tool_directory__/faire_mapper_apply.py'
                 <validator type="regex" message="Letters, digits, _, - or . only">^[A-Za-z0-9_.-]*$</validator>
             </param>
         </repeat>
+        <repeat name="amp_tables" title="qPCR or ddPCR results" min="0" default="0"
+            help="For targeted assays: one row per reaction, with the sample, the assay and the Cq (or the copies, for ddPCR). The reactions are written to ampData, and each sample's detected_notDetected for each assay is worked out from them where your sample table gives none: 1 when at least one reaction amplified, 0 when none did, and 'not applicable' for a sample with no reactions for that assay. Check this against your study's detection criteria.">
+            <param name="amp" type="data" format="tabular,csv,xlsx,txt" label="qPCR or ddPCR results"
+                help="Columns are found by their names: the sample (samp_name, Sample, Sample ID), the assay (assay_name, Assay, Target), the Cq (quantificationCycle, Cq, Ct), and if you have them the technical replicate (technical_rep_id, Replicate), the plate (pcr_plate_id, Plate) and the copies (estimatedNumberOfCopies, Copies, Quantity). Undetermined and empty Cq values are read as no amplification. The assay values must be the assay names above."/>
+            <param name="amp_sheet" type="text" value="" optional="true" label="Excel sheet (results)" help="Leave empty for the first sheet.">
+                <validator type="regex" message="Sheet names cannot contain quotes">^[^'"]*$</validator>
+            </param>
+            <param name="amp_assay_column" type="text" value="" optional="true" label="Column that gives the assay (optional)"
+                help="Only when it is not called assay_name, Assay or Target, or when the table has several such columns.">
+                <validator type="regex" message="Column names cannot contain quotes">^[^'"]*$</validator>
+            </param>
+        </repeat>
     </inputs>
     <outputs>
         <data name="workbook" format="xlsx" from_work_dir="faire.xlsx" label="${tool.name} on ${on_string}: FAIRe workbook"/>
         <data name="log" format="txt" label="${tool.name} on ${on_string}: log"/>
     </outputs>
     <tests>
+        <!-- Targeted assays with qPCR results: ampData filled, technical replicates numbered, detected_notDetected
+             worked out per assay ('not applicable' where a sample was not tested), the assays listed in
+             project_level for FAIRe-fier, and Cq values above pcr_cycles reported -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_qpcr_samples.csv"/>
+            <param name="crosswalk" value="apply_qpcr_samples.sssom.tsv" ftype="tabular"/>
+            <param name="assay_type" value="targeted"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="qpcr_test"/>
+            <param name="assay_name" value="CmaeCOI,CmaeND2"/>
+            <param name="date_order" value="dmy"/>
+            <param name="project_values" value="apply_qpcr_values.tsv" ftype="tabular"/>
+            <repeat name="amp_tables">
+                <param name="amp" value="apply_qpcr_results.csv" ftype="csv"/>
+            </repeat>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet2.xml">
+                        <has_text text="CmaeCOI | CmaeND2"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/worksheets/sheet6.xml">
+                        <not_has_text text="&lt;t&gt;Undetermined&lt;/t&gt;"/>
+                        <has_text text="&lt;v&gt;33.1&lt;/v&gt;"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="qPCR results: apply_qpcr_results.csv, 18 reactions; columns 'Sample' as samp_name, 'Target' as assay_name, 'Ct' as quantificationCycle"/>
+                    <has_text text="ampData: technical_rep_id numbered 1, 2, 3"/>
+                    <has_text text="detected_notDetected for CmaeCOI: 4 samples, from the qPCR results"/>
+                    <has_text text="detected_notDetected for CmaeND2: 'not applicable' for 2 samples"/>
+                    <has_text text="CmaeCOI: 1 reactions have a Cq above pcr_cycles (40)"/>
+                    <has_text text="assay_name in project_level: CmaeCOI | CmaeND2"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- An assay in the results that is not one of the assay names stops the tool -->
+        <test expect_failure="true" expect_exit_code="1">
+            <param name="table" value="apply_qpcr_samples.csv"/>
+            <param name="crosswalk" value="apply_qpcr_samples.sssom.tsv" ftype="tabular"/>
+            <param name="assay_type" value="targeted"/>
+            <param name="project_id" value="qpcr_test"/>
+            <param name="assay_name" value="CmaeCOI"/>
+            <param name="date_order" value="dmy"/>
+            <repeat name="amp_tables">
+                <param name="amp" value="apply_qpcr_results.csv" ftype="csv"/>
+            </repeat>
+            <assert_stderr>
+                <has_text text="assay values not among the assay names (CmaeCOI): CmaeND2"/>
+            </assert_stderr>
+        </test>
         <!-- A reviewed crosswalk: combined place names, a number and its unit, dates (kept as written in
              verbatimEventDate, as FAIRe asks), durations -->
         <test expect_num_outputs="2">
@@ -388,6 +456,69 @@ python '$__tool_directory__/faire_mapper_apply.py'
                     <has_text text="otu_asv_table.tsv: taxonomy from the OTU table (taxonomy, Confidence)"/>
                     <has_text text="experimentRunMetadata: 4 rows made from the OTU tables (samp_name, assay_name, seq_run_id)"/>
                     <has_text text="lib_id is the library name, assay_name and seq_run_id (e.g. LIZ_01_COIElasmo_reef_run1), as FAIRe takes a library to be one amplicon of a sample; samp_name stands in for the library name in 4 rows"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- Reads summed per species (phylum, class and species, then the samples), as some studies publish
+             them: the species is the seq_id and the taxonomy, an RDP probability is the confidence score,
+             and 'sp.' and 'cf.' names are named to the genus -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="assay_name" value="COIElasmo"/>
+            <repeat name="otu_tables">
+                <param name="otu" value="otu_species_summed.csv" ftype="csv"/>
+                <param name="otu_run" value="reef_run1"/>
+            </repeat>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/worksheets/sheet6.xml">
+                        <has_text text="&lt;t&gt;Tridacna_maxima&lt;/t&gt;"/>
+                        <has_text text="&lt;t&gt;Tridacna maxima&lt;/t&gt;"/>
+                        <has_text text="&lt;t&gt;Conus sp. BOLD:AAA1234&lt;/t&gt;"/>
+                        <has_text text="&lt;t&gt;Acropora cf. millepora&lt;/t&gt;"/>
+                        <has_text text="&lt;v&gt;0.97&lt;/v&gt;"/>
+                        <not_has_text text="&lt;t&gt;Conus sp.&lt;/t&gt;"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="otu_species_summed.csv: the sequence IDs are in the column 'Species' (the first column, 'Phylum', repeats), so seq_id is the taxon name: reads summed per taxon"/>
+                    <has_text text="otu_species_summed.csv: taxonomy from the OTU table (Phylum, Class, Species, Probability)"/>
+                    <not_has_text text="columns of counts are not samples"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- One assay sequenced in two runs: the tables stay separate, as otuFinal_<assay>_<run> -->
+        <test expect_num_outputs="2">
+            <param name="table" value="apply_reef.csv"/>
+            <param name="crosswalk" value="apply_reef.sssom.tsv" ftype="tabular"/>
+            <param name="sample_types" value="Water"/>
+            <param name="project_id" value="lizard_test"/>
+            <param name="assay_name" value="COIElasmo"/>
+            <repeat name="otu_tables">
+                <param name="otu" value="otu_species_summed.csv" ftype="csv"/>
+                <param name="otu_run" value="run2019"/>
+            </repeat>
+            <repeat name="otu_tables">
+                <param name="otu" value="otu_species_summed.csv" ftype="csv"/>
+                <param name="otu_run" value="run2023"/>
+            </repeat>
+            <output name="workbook" ftype="xlsx">
+                <assert_contents>
+                    <has_archive_member path="xl/workbook.xml">
+                        <has_text text="otuFinal_COIElasmo_run2019"/>
+                        <has_text text="taxaFinal_COIElasmo_run2023"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="written as otuFinal_COIElasmo_run2019 and taxaFinal_COIElasmo_run2019 (assay COIElasmo)"/>
+                    <has_text text="written as otuFinal_COIElasmo_run2023 and taxaFinal_COIElasmo_run2023 (assay COIElasmo)"/>
                 </assert_contents>
             </output>
         </test>

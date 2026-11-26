@@ -7,6 +7,15 @@ read_tsv <- function(path, ...) {
            error = function(e) NULL)
 }
 
+# The assays typed in one box, separated by commas ("OlsonViiA7, OlsonFranklin"); "" (every assay) when
+# none is given. A value for several assays becomes one row of the project values for each.
+split_assays <- function(x) {
+  x <- as.character(x); x[is.na(x)] <- ""
+  a <- trimws(strsplit(paste(x, collapse = ","), ",", fixed = TRUE)[[1]])
+  a <- unique(a[nzchar(a)])
+  if (length(a)) a else ""
+}
+
 # Always UTF-8, whatever the computer's own character set: write.table's fileEncoding goes through the
 # native encoding, which turns ° and µ into <U+00B0> and <U+00B5> where that is not UTF-8.
 write_tsv <- function(df, path) {
@@ -276,3 +285,34 @@ explain_error <- function(log) {
   e <- sub("^ERROR:\\s*", "", e[1])
   paste0(toupper(substr(e, 1, 1)), substring(e, 2))
 }
+
+# Whether GitHub has a newer version of the app than this copy, checked once each time the app starts,
+# however it is started; nothing is said when GitHub cannot be reached. Only for a copy that the
+# one-line start (start.R) installed: it records the commit it installed in .faire_app_version, in the
+# folder above the app. A copy the person downloaded or cloned themselves is left to them to update.
+latest_app_commit <- function(timeout = 5) {
+  old <- options(timeout = timeout)
+  on.exit(options(old), add = TRUE)
+  tryCatch({
+    con <- url("https://github.com/FAIR-eDNA/FAIRe-Galaxy.git/info/refs?service=git-upload-pack", "rb")
+    on.exit(close(con), add = TRUE)
+    bytes <- readBin(con, "raw", 5e6)
+    bytes[bytes == as.raw(0)] <- as.raw(32)
+    text <- rawToChar(bytes)
+    hit <- regmatches(text, regexpr("[0-9a-f]{40} refs/heads/main", text))
+    if (length(hit)) substr(hit, 1, 40) else NA_character_
+  }, error = function(e) NA_character_, warning = function(w) NA_character_)
+}
+
+newer_app_available <- local({
+  found <- NULL
+  function() {
+    if (!is.null(found)) return(found)
+    home <- dirname(normalizePath(getOption("faire.app_dir", "."), winslash = "/", mustWork = FALSE))
+    marker <- file.path(home, ".faire_app_version")
+    installed <- if (file.exists(marker)) readLines(marker, warn = FALSE)[1] else NA_character_
+    latest <- if (is.na(installed) || installed == "unknown") NA_character_ else latest_app_commit()
+    found <<- !is.na(installed) && !is.na(latest) && !identical(installed, latest)
+    found
+  }
+})

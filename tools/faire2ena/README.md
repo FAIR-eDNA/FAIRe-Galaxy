@@ -13,7 +13,7 @@ Upstream: [FAIR-eDNA/FAIRe2ENA](https://github.com/FAIR-eDNA/FAIRe2ENA) at commi
 ## Status
 
 - `planemo lint`: passes with no warnings.
-- `planemo shed_lint`: passes except for the placeholder owner in `.shed.yml`.
+- `planemo shed_lint`: passes.
 - `planemo test`: all tests pass in Galaxy 25.0 (summary at the end of this file).
 - ENA's test server, 11 November 2026: three SEA-MES samples submitted through the test Webin
   Portal were checked by ENA and refused for missing units and an "Unknown" value. With item 11
@@ -35,7 +35,7 @@ Upstream: [FAIR-eDNA/FAIRe2ENA](https://github.com/FAIR-eDNA/FAIRe2ENA) at commi
 | `test-data/` | Test workbook and a made-up ENA receipt (see below) |
 | `faire_guide.xml` | The guide shown at the end of every FAIRe tool's help (`@HELP_FAIRE_GUIDE@`); a copy of `dev/faire_guide/faire_guide.xml`, updated by `dev/faire_guide/sync.py` |
 | `LICENSE` | MIT licence for the wrapper code in this folder (upstream files keep their own licence) |
-| `.shed.yml` | ToolShed metadata (owner still to fill in) |
+| `.shed.yml` | ToolShed metadata (owner `fair-edna`) |
 
 `upload_reads.py` is not included. It takes the Webin password as a command-line argument, and
 Galaxy would store that in the user's history.
@@ -180,8 +180,8 @@ These are worth raising with the FAIRe2ENA authors. If they are fixed upstream, 
    runs. Still to do with a real Australian dataset and real reads, and for single-end runs
    (item 13). The help now leads with the Webin Portal's XML upload, which worked; the Webin REST
    service refused the account with HTTP 403, for reasons not yet known.
-4. **Fill in `.shed.yml`.** Set `owner` (the ToolShed account that will publish it). Add the
-   maintainers to the `<creator>` block in `macros.xml`.
+4. **ToolShed owner and maintainers** (done, 23 November 2026): `owner` is `fair-edna` in `.shed.yml`, and Oliver Berry and Miwa Takahashi are the maintainers in
+   the `<creator>` block in `macros.xml`.
 5. **Publish to the ToolShed.** Use the Test ToolShed first (`planemo shed_create` and
    `planemo shed_update`), then the main ToolShed.
 6. **Ask Galaxy Australia to install it.** Ask the Galaxy Australia team how they want install

@@ -1,5 +1,5 @@
 name: faire_mapper
-owner: CHANGE_ME
+owner: fair-edna
 description: Propose how the columns of an eDNA sample sheet map to FAIRe metadata terms
 long_description: |
   Two tools that help turn eDNA metadata in a lab's own format into FAIR eDNA (FAIRe) format:

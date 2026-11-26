@@ -1,0 +1,5 @@
+Sample ID,Category,Negative control type,Date,Latitude,Longitude,Country,Site,env_broad_scale,env_local_scale,env_medium
+W1,sample,,05/03/2024,-42.8901,147.33,Australia,Derwent Estuary,marine biome [ENVO:00000447],estuary [ENVO:00000045],coastal sea water [ENVO:00002150]
+W2,sample,,05/03/2024,-42.9105,147.3512,Australia,Derwent Estuary,marine biome [ENVO:00000447],estuary [ENVO:00000045],coastal sea water [ENVO:00002150]
+W3,sample,,13/03/2024,-42.9302,147.3801,Australia,Derwent Estuary,marine biome [ENVO:00000447],estuary [ENVO:00000045],coastal sea water [ENVO:00002150]
+FB1,negative control,field negative,05/03/2024,,,,,,,

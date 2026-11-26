@@ -12,6 +12,11 @@ Upstream: [csiro/FAIRe-fier](https://github.com/csiro/FAIRe-fier) at commit `183
 
 - `planemo lint`: passes with no warnings. `pyflakes`: clean.
 - `planemo test`: all 6 tests pass in Galaxy 25.0 (summary at the end of this file).
+- Fixed 24 November 2026: the highlighted workbook of warnings and errors stopped with an
+  AttributeError when sample names were numbers (1520, as in the khapra beetle data), because pandas
+  reads them as integers. `highlight_cells_bysampnameloc` now compares them as text. The outputs for
+  the four test workbooks are unchanged. FAIRe-fier's own `validate_module.py` has the same code, so
+  this is worth offering upstream.
 - **Same results as the web app.** The outputs were compared cell by cell, including every
   highlight colour, with the app's own Shiny code run headlessly (see "How equivalence was
   checked" below). Six cases, all identical.
@@ -30,7 +35,7 @@ Upstream: [csiro/FAIRe-fier](https://github.com/csiro/FAIRe-fier) at commit `183
 | `test-data/` | Test workbooks (see below) |
 | `faire_guide.xml` | The guide shown at the end of every FAIRe tool's help (`@HELP_FAIRE_GUIDE@`); a copy of `dev/faire_guide/faire_guide.xml`, updated by `dev/faire_guide/sync.py` |
 | `LICENSE` | MIT licence for the wrapper code in this folder. `fairefier_cli.py` is derived from FAIRe-fier's own code and keeps its BSD 3-Clause licence (`LICENSE.upstream`), as do the upstream files |
-| `.shed.yml` | ToolShed metadata (owner still to fill in) |
+| `.shed.yml` | ToolShed metadata (owner `fair-edna`) |
 
 The equivalence check is in `dev/fairefier_equivalence/` at the top of the repository, outside the
 tool folder, so it is not published to the ToolShed.
@@ -46,6 +51,12 @@ It writes the same two workbooks as the app's download buttons:
 - `fairefier_metadata.xlsx` when the worksheets pass;
 - `fairefier_warn_error.xlsx` when there are warnings or errors, with `_revise` copies of the
   worksheets and the problem cells highlighted.
+
+When there are warnings or errors it also writes `fairefier_highlighted.xlsx`, an addition to
+FAIRe-fier's outputs: a copy of the workbook as given, every sheet kept, with each problem cell filled
+yellow (warning) or light red (error) and a note on the cell giving the message and any suggested
+value. A problem with a whole column marks the column's heading; a template's own note on a term is
+kept below FAIRe-fier's.
 
 It also writes two files for scripts and pipelines, including the planned AI-assisted mapper:
 
@@ -137,8 +148,8 @@ To the FAIRe checklist and FAIRe-ator authors:
    every FAIRe-ator template shows one error.
 3. **Test with real Australian workbooks** and compare with the hosted app at
    shiny.csiro.au/FAIRe-fier, ideally with people who already use it.
-4. **Fill in `.shed.yml`** and add the wrapper maintainers to the `<creator>` block, then publish
-   to the Test ToolShed and main ToolShed, and ask Galaxy Australia to install it.
+4. **ToolShed owner and maintainers** (done, 23 November 2026): `owner` is `fair-edna` in `.shed.yml`, and Oliver Berry and Miwa Takahashi are the maintainers in
+   the `<creator>` block. Next, publish to the Test ToolShed and main ToolShed, and ask Galaxy Australia to install it.
 
 ### Should do
 

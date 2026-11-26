@@ -4,12 +4,13 @@
         <!-- Upstream has no tagged releases. The version is the date of the pinned
              commit (aomlomics/faire2qiime 13e87de). -->
         <token name="@TOOL_VERSION@">2026.07.23</token>
-        <token name="@VERSION_SUFFIX@">3</token>
+        <token name="@VERSION_SUFFIX@">4</token>
         <import>faire_guide.xml</import>
     </macros>
     <creator>
         <organization name="NOAA 'Omics, AOML (FAIRe2QIIME developers)" url="https://github.com/aomlomics/faire2qiime"/>
         <person givenName="Oliver" familyName="Berry"/>
+        <person givenName="Miwa" familyName="Takahashi"/>
     </creator>
     <requirements>
         <requirement type="package" version="3.12">python</requirement>

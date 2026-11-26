@@ -275,7 +275,9 @@ def write_review_sheet(path, proposals, profiles, terms, review_rows, table_name
     headers = HEADERS + ([EARLIER] if carry is not None else [])
     ws.append(headers)
     choices = wb.create_sheet(CHOICES)
-    shown = [pr for pr in proposals if prof[pr.column].n_values]
+    # Columns with values, or with only missing-value notes ("missing: restricted access" where coordinates
+    # were withheld): the notes say why a mandatory term is empty, so the column is mapped like any other
+    shown = [pr for pr in proposals if prof[pr.column].n_values or prof[pr.column].missing_tokens]
     at = {h: j for j, h in enumerate(HEADERS, 1)}
     lists = []
     for i, pr in enumerate(shown, 2):

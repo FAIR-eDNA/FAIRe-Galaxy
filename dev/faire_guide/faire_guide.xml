@@ -27,11 +27,13 @@ on what you already have:
    - **FAIRe-ator** makes a blank Excel template for your study, from the project ID, assay names
      and sample types you give it. You fill it in outside Galaxy and upload it.
    - The **FAIRe mapper** tools build a FAIRe workbook from your own sample table, with optional
-     help from a language model, and add your OTU and taxonomy tables. FAIRe mapper has its own
-     guide to the files it can work with.
+     help from a language model, and add your OTU and taxonomy tables, or your qPCR results. FAIRe
+     mapper has its own guide to the files it can work with.
 
 2. **Check the workbook with FAIRe-fier.** It lists missing mandatory fields and values in the
    wrong format, and suggests corrections. Fix the workbook and check it again until it passes.
+   GBIF, OBIS, NCBI and ENA accept a dataset only when every mandatory term has a value, or a FAIRe
+   missing-value term where it is truly unknown (such as *missing: not collected*).
 3. **Convert the checked workbook** to a format that suits where your data are going: a sequence
    archive (NCBI or ENA), a biodiversity database (GBIF or OBIS), or an analysis in QIIME 2. Each
    destination has its own tool, as the table under *Which tool for which destination* below
@@ -87,6 +89,10 @@ dataset, and names such as samp_name and lib_id are FAIRe fields (terms) within 
     assay, and the reviewed mapping table from *match taxa* (or it can look the names up during the
     run). It also takes the dataset details (title, contact, licence), which you can instead write
     later in the IPT. You need access to an IPT (Integrated Publishing Toolkit) to publish.
+  - **FAIRe to Darwin Core** publishes presence and absence: qPCR or ddPCR results
+    (detected_notDetected, with ampData if you have it), or metabarcoding data as presence. It needs
+    the name of each assay's target (targetTaxonomicAssay), or taxaFinal, and takes an optional
+    taxon table with identifiers and higher taxonomy. It writes a Darwin Core archive for an IPT.
 
 **Analysis**
 
@@ -116,12 +122,18 @@ Galaxy.
 | through an IPT   | then edna2obis: build      | (.zip)                 | Publishing Toolkit)        |
 |                  | Darwin Core tables         |                        |                            |
 +------------------+----------------------------+------------------------+----------------------------+
+| GBIF and OBIS,   | FAIRe to Darwin Core       | Darwin Core archive    | An IPT                     |
+| presence and     |                            | (.zip)                 |                            |
+| absence (qPCR,   |                            |                        |                            |
+| ddPCR)           |                            |                        |                            |
++------------------+----------------------------+------------------------+----------------------------+
 | QIIME 2 analysis | FAIRe2QIIME                | Sample metadata and    | QIIME 2 (qiime tools       |
 |                  |                            | manifests              | import)                    |
 +------------------+----------------------------+------------------------+----------------------------+
 
-GBIF can take the same data by either route. MDT turns its own workbook into Darwin Core, while
-edna2obis writes the Darwin Core in Galaxy, and its output also suits OBIS.
+GBIF can take the same metabarcoding data by either route. MDT turns its own workbook into Darwin
+Core, while edna2obis writes the Darwin Core in Galaxy, and its output also suits OBIS. Neither takes
+qPCR or ddPCR results: FAIRe to Darwin Core does, and also metabarcoding data with no read counts.
 
 *Where to find more*
 
@@ -131,4 +143,13 @@ edna2obis writes the Darwin Core in Galaxy, and its output also suits OBIS.
   original scripts work and how to run them outside Galaxy.
 - **The FAIRe standard and checklist** are at `fair-edna.github.io <https://fair-edna.github.io/>`_.
     ]]></token>
+    <!-- At the top of each converter's help -->
+    <token name="@HELP_BEFORE_CONVERTING@"><![CDATA[
+.. class:: warningmark
+
+**Before you convert:** GBIF, OBIS, NCBI and ENA accept a dataset only when every mandatory FAIRe
+term has a value, or a FAIRe missing-value term where it is truly unknown (such as *missing: not
+collected* or *not applicable*). Check the workbook with **FAIRe-fier** first, and fix its errors
+and any mandatory term with no value, or the files this tool writes are likely to be refused.
+]]></token>
 </macros>

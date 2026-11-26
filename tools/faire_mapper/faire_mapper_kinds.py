@@ -14,6 +14,7 @@ from __future__ import annotations
 import re
 
 import faire_mapper as fm
+import faire_mapper_amp as fa
 import faire_mapper_library as fl
 import faire_mapper_otu as fo
 import faire_mapper_text as ft
@@ -24,6 +25,7 @@ NAME = {
     'otu': 'an OTU or ASV table (read counts per sequence or taxon and sample)',
     'taxonomy': 'a taxonomy table (one row per sequence, with its taxonomy and no read counts)',
     'library': 'a library table or run report (library names, sequence files or run accessions)',
+    'amp': 'qPCR or ddPCR results (one row per reaction, with the sample, the assay and the Cq or copies)',
     'crosswalk': 'a crosswalk (SSSOM) from FAIRe mapper: propose mapping',
     'dictionary': 'a data dictionary (column names with their descriptions)',
     'project_values': 'a table of values for the whole project (FAIRe term names with their values)',
@@ -33,7 +35,7 @@ NAME = {
     'unknown': 'not recognised',
 }
 SHORT = {'sample': 'sample table', 'otu': 'OTU or ASV table', 'taxonomy': 'taxonomy table',
-         'library': 'library table', 'crosswalk': 'crosswalk', 'dictionary': 'data dictionary',
+         'library': 'library table', 'amp': 'qPCR results', 'crosswalk': 'crosswalk', 'dictionary': 'data dictionary',
          'project_values': 'project values', 'primers': 'primer table', 'sequences': 'sequences (FASTA)',
          'text': 'text', 'unknown': 'not recognised'}
 WHERE = {
@@ -41,6 +43,7 @@ WHERE = {
     'otu': "'OTU or ASV table' in FAIRe mapper: apply mapping",
     'taxonomy': "'Taxonomy table', beside its OTU table, in FAIRe mapper: apply mapping",
     'library': "'Library table' in FAIRe mapper: apply mapping",
+    'amp': "'qPCR or ddPCR results' in FAIRe mapper: apply mapping (targeted assays)",
     'crosswalk': "'Crosswalk' in FAIRe mapper: apply mapping, or 'Earlier review' in propose mapping",
     'dictionary': "'Data dictionary' in FAIRe mapper: propose mapping",
     'project_values': "'Values for the whole project' in FAIRe mapper: apply mapping",
@@ -123,6 +126,22 @@ def describe(df, sample_names=(), term_names=(), faire_terms=()):
     acc_cols = [c for c in cols if _share(_vals(df[c]), lambda v: bool(RUN_ACC.match(v))) >= 0.8]
     if acc_cols:
         return 'library', [f'run accessions in {acc_cols[0]}']
+
+    # qPCR or ddPCR results: a column of Cq values (numbers, or Undetermined), or of copies beside an
+    # assay column, and sample names that repeat (one row per reaction)
+    amp = fa.find_columns(cols)
+    quant = amp.get('quantificationCycle') or (amp.get('estimatedNumberOfCopies') if 'assay_name' in amp else None)
+    if quant and 'samp_name' in amp:
+        q = [str(v).strip() for v in df[quant].head(500)]
+        readable = _share(q, lambda v: fa._number(v) is not None or v.lower() in fa.NO_AMPLIFICATION)
+        names = [v for v in (str(x).strip() for x in df[amp['samp_name']].head(500)) if v]
+        if readable >= 0.8 and names and len(set(names)) <= 0.8 * len(names):
+            why = [f"{'Cq values' if quant == amp.get('quantificationCycle') else 'copy numbers'} in {quant}",
+                   f"sample names in {amp['samp_name']} repeat ({n_rows} rows, "
+                   f"{df[amp['samp_name']].astype(str).str.strip().nunique()} samples)"]
+            if 'assay_name' in amp:
+                why.append(f"the assay in {amp['assay_name']}")
+            return 'amp', why
 
     first = cols[0]
     first_vals = _vals(df[first])

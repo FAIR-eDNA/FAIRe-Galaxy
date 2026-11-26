@@ -1,5 +1,5 @@
 <macros>
-    <token name="@TOOL_VERSION@">0.10.0</token>
+    <token name="@TOOL_VERSION@">0.12.3</token>
     <token name="@VERSION_SUFFIX@">0</token>
     <token name="@PROFILE@">23.0</token>
     <xml name="requirements">
@@ -14,6 +14,7 @@
     <xml name="creator">
         <creator>
             <person givenName="Oliver" familyName="Berry"/>
+            <person givenName="Miwa" familyName="Takahashi"/>
         </creator>
     </xml>
     <xml name="table_input">

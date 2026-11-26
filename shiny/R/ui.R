@@ -68,7 +68,8 @@ GLOSSARY <- c(
   primer_assay = paste("The name of the assay this primer pair was used for, such as Fish16S or Euk18S. It is filled in",
                        "from the reference table when you click a pair; change it if you call the assay something else.",
                        "e. Write the workbook offers the same names for the OTU tables and libraries. Leave it empty if",
-                       "the project has one assay."),
+                       "the project has one assay; for a pair used in several assays, give their names separated by",
+                       "commas."),
   project_values = paste("FAIRe terms with one value for the whole project, or for each assay: the primers, target gene,",
                          "extraction kit, sequencing platform, reference database and so on. They go in projectMetadata."),
   assay = paste("A name for one PCR assay, such as Fish16S or Euk18S. It links the project values, OTU tables and",
@@ -83,9 +84,19 @@ GLOSSARY <- c(
   run_id = paste("seq_run_id is mandatory for metabarcoding data. Give a short identifier for the sequencing run, using",
                  "only letters, numbers, underscores or hyphens (no spaces), so that software can read it. Each OTU",
                  "table should hold the reads of one assay from one sequencing run, because read counts can only be",
-                 "compared (for example as relative read abundance) within the same run."),
+                 "compared (for example as relative read abundance) within the same run. When one assay was",
+                 "sequenced in several runs, give each table its run: each is kept as its own sheet,",
+                 "otuFinal_assay_run."),
   library_table = paste("A table of sequencing libraries: library names, sequence file names and checksums, such as ENA's",
                         "or NCBI's run report, or your sequencing facility's run sheet."),
+  amp_table = paste("For targeted assays (qPCR, ddPCR): one row per reaction, with the sample, the assay and the Cq (or the",
+                    "copies, for ddPCR), and the technical replicate and plate if you have them. The rows go to ampData,",
+                    "and each sample's detected_notDetected is worked out from them: 1 when at least one reaction",
+                    "amplified, 0 when none did."),
+  taxon_table = paste("A table with one row per name as the workbook gives it (a column called name), and any of",
+                      "scientificName, scientificNameID (a WoRMS LSID, which OBIS needs), taxonRank and kingdom to genus."),
+  absences = paste("For a targeted assay, a sample where the target was not detected is a record of absence. GBIF's",
+                   "guide asks for these, as a negative result of a test for one species is informative."),
   crosswalk = paste("The record of which column of your table goes to which FAIRe term. The review sheet is the version",
                     "to fill in; the SSSOM table is the same record in a standard format for term mappings."),
   review_sheet = paste("An Excel workbook with one row per column of your sample table, with the proposed term and the",
@@ -136,8 +147,10 @@ GLOSSARY <- c(
 KIND_PLACE <- c(
   "sample table" = "b. Propose a mapping: Sample table",
   "OTU or ASV table" = "e. Write the workbook: OTU or ASV table",
-  "taxonomy table" = "e. Write the workbook: Taxonomy table (under More settings for this table)",
+  "taxonomy table" = paste("e. Write the workbook: Taxonomy table (under More settings for this table); or, with a name column,",
+                           "3. Convert, GBIF and OBIS (presence and absence): Taxon table"),
   "library table" = "e. Write the workbook: Library table",
+  "qPCR results" = "e. Write the workbook: qPCR or ddPCR results",
   "crosswalk" = "c. Review: Add a review sheet you filled in, or Use a crosswalk you edited yourself",
   "data dictionary" = "b. Propose a mapping: Data dictionary",
   "project values" = "d. Methods and project values: Or load a table of values",
@@ -195,6 +208,7 @@ start_page <- function() {
       col_widths = c(7, 5),
       card(
         card_header("The FAIRe tools"),
+        uiOutput("update_notice"),
         div(class = "start-hero",
             tags$img(src = "logo_large.png", alt = "", class = "start-logo"),
             tags$p("This app brings together the tools for making environmental DNA (eDNA) data FAIR: Findable,",
@@ -231,13 +245,14 @@ start_page <- function() {
       ),
       card(
         card_header("Try it with the demonstration data"),
-        tags$p("The demonstration set is a small cut of CSIRO's SEA-MES eDNA data record (Deagle et al.",
-               "2025): 13 water samples from the RV Investigator, a 16S fish ASV table, the authors' curated",
-               "fish taxa, ENA's run report and the methods text. It is for trying the tools, not for",
-               "ecological analysis."),
+        tags$p("Three published eDNA datasets, from the fullest to the least a dataset needs. They are for trying",
+               "the tools, not for ecological analysis."),
+        radioButtons("demo_choice", NULL, width = "100%", choiceValues = names(DEMOS),
+                     choiceNames = unname(lapply(DEMOS, function(d) tags$span(tags$b(d$title), tags$br(),
+                                                                                tags$small(class = "text-muted", d$blurb))))),
         actionButton("load_demo", "Load the demonstration data", icon = icon("flask"), class = "btn-success"),
-        help_text("Loading the demonstration adds these files to Your files and fills in the forms for them, so",
-                  "you can follow each step through to a demonstration FAIRe metadata workbook. You still press",
+        help_text("Loading a demonstration adds its files to Your files and fills in the forms for them, so",
+                  "you can follow each step through to a FAIRe metadata workbook. You still press",
                   "each tool's button yourself, in order, and you do the review of the mapping."),
         uiOutput("demo_status"),
         tags$hr(),
@@ -469,7 +484,7 @@ mapper_panel <- function() {
             layout_columns(
               col_widths = c(8, 4),
               textInput("pv_value", "Value", width = "100%"),
-              textInput("pv_assay", "Assay (optional)", width = "100%")),
+              textInput("pv_assay", "Assay (optional)", width = "100%", placeholder = "every assay, or names separated by commas")),
             actionButton("pv_add", "Add", icon = icon("plus"))),
               accordion_panel(
                 "Load a table of values", icon = icon("file-import"),
@@ -541,6 +556,17 @@ mapper_panel <- function() {
                   actionButton("lib_add", "Add a library table", icon = icon("plus"), class = "btn-sm"),
                   actionButton("lib_remove", "Remove the last", icon = icon("minus"), class = "btn-sm"))
             ),
+            card(
+              card_header(term_label("qPCR or ddPCR results (targeted assays)", "amp_table")),
+              help_text("One row per reaction: the sample, the assay and the Cq, or the copies for ddPCR. The",
+                        "reactions go to ampData, and each sample's detected_notDetected is worked out from them",
+                        "where your sample table gives none. Choose Targeted as the assay type in b. Propose a mapping,",
+                        "and give the assay names as they are in this table."),
+              uiOutput("amp_blocks"),
+              div(class = "btn-row",
+                  actionButton("amp_add", "Add a results table", icon = icon("plus"), class = "btn-sm"),
+                  actionButton("amp_remove", "Remove the last", icon = icon("minus"), class = "btn-sm"))
+            ),
             run_button("run_apply_bottom", "Write the FAIRe workbook")
           ),
           card(card_header("The workbook"), uiOutput("apply_result"), wb_preview_ui("apply_preview"))
@@ -581,7 +607,9 @@ convert_page <- function() {
         workbook_picker("cv_wb"),
         help_text("Each tool writes the files for one destination, and you then upload them yourself. NCBI and",
                   "ENA take the sample and run tables, GBIF takes data through its Metabarcoding Data Toolkit",
-                  "(MDT) or an IPT, OBIS through an IPT, and QIIME 2 takes the metadata and manifests."))
+                  "(MDT) or an IPT, OBIS through an IPT, and QIIME 2 takes the metadata and manifests. qPCR and",
+                  "ddPCR results go to GBIF and OBIS as presence and absence records.")),
+      uiOutput("cv_mandatory_warning")
     ),
     navset_card_tab(
       nav_panel(
@@ -732,6 +760,48 @@ convert_page <- function() {
                                selectInput("eo_licence", "Licence", c("CC0", "CC-BY", "CC-BY-NC"), selected = "CC-BY")))),
             run_button("run_eo_build", "2. Build the Darwin Core archive"),
             uiOutput("eo_build_result")
+          )
+        )
+      ),
+      nav_panel(
+        "GBIF and OBIS (presence and absence)",
+        layout_columns(
+          col_widths = 12,
+          div(
+            class = "convert-one",
+            tags$h5("FAIRe to Darwin Core"),
+            help_text("Writes a Darwin Core archive of presence and absence records for an", term_label("IPT", "ipt"),
+                      "(Integrated Publishing Toolkit), to publish to GBIF or OBIS. It is for qPCR and ddPCR results",
+                      "(detected_notDetected, with ampData if you have it), and for metabarcoding data published as",
+                      "presence, one record per sample and sequence. For read counts, use FAIRe2MDT or edna2obis.",
+                      "Controls are always left out."),
+            layout_columns(
+              col_widths = c(6, 6),
+              selectizeInput("dw_assays", "Assays to publish (empty for all)", choices = NULL, multiple = TRUE,
+                             options = list(create = TRUE, placeholder = "all the workbook's assays")),
+              uiOutput("dw_taxa_ui")),
+            layout_columns(
+              col_widths = c(4, 4, 4),
+              selectInput("dw_target", "Publishing to", c("GBIF" = "gbif", "OBIS" = "obis", "GBIF and OBIS" = "both")),
+              textInput("dw_country_code", "Country code (optional)", placeholder = "for example AU"),
+              checkboxInput("dw_absences", term_label("Write absences (targeted assays)", "absences"), TRUE)),
+            help_text("The country code is worked out from geo_loc_name for most countries; give it if the report says",
+                      "it could not be."),
+            accordion(open = FALSE, accordion_panel(
+              "Dataset details (EML)", icon = icon("sliders"),
+              textInput("dw_title", "Dataset title (optional: project_name is used otherwise)", width = "100%"),
+              textAreaInput("dw_abstract", "Abstract", rows = 4, width = "100%"),
+              textInput("dw_keywords", "Keywords, separated by commas (optional)", width = "100%"),
+              layout_columns(textInput("dw_given", "Given name"), textInput("dw_surname", "Surname")),
+              layout_columns(textInput("dw_org", "Organisation"), textInput("dw_email", "Email")),
+              layout_columns(textInput("dw_orcid", "ORCID (optional)"),
+                             selectInput("dw_licence", "Licence", c("As license in projectMetadata" = "workbook",
+                                                                    "CC0 1.0" = "CC0-1.0", "CC BY 4.0" = "CC-BY-4.0",
+                                                                    "CC BY-NC 4.0" = "CC-BY-NC-4.0"))),
+              help_text("With no name or organisation, the creator and contact come from project_contact and",
+                        "institution in projectMetadata. You can also change these in the IPT."))),
+            run_button("run_dwc", "Write the Darwin Core archive"),
+            uiOutput("dwc_result")
           )
         )
       ),

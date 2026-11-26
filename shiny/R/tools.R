@@ -166,7 +166,8 @@ read_method_review <- function(path) {
 run_apply <- function(session_dir, table, sheet, header_row, crosswalk, assay_type, sample_types, project_id,
                       assay_name = "", country = "", utc_offset = "", date_order = "stop", include_review = FALSE,
                       project_values = NULL, req_lev = c("HR", "R", "O"), drop_unmapped = FALSE,
-                      otu_tables = list(), library_tables = list(), table_name = basename(table)) {
+                      otu_tables = list(), library_tables = list(), amp_tables = list(),
+                      table_name = basename(table)) {
   d <- new_run_dir(session_dir, "apply_mapping")
   ck <- tool_path("faire_mapper", "checklist")
   args <- c(table_args(table, sheet, header_row), "--crosswalk", crosswalk,
@@ -198,6 +199,10 @@ run_apply <- function(session_dir, table, sheet, header_row, crosswalk, assay_ty
               "--library_assay", l$assay %||% "", "--library_filter", l$filter %||% "",
               "--library_run", l$run %||% "")
   }
+  for (q in amp_tables) {
+    args <- c(args, "--amp", q$path, "--amp_name", q$name, "--amp_sheet", q$sheet %||% "",
+              "--amp_assay_column", q$assay_column %||% "")
+  }
   args <- c(args, "--table_name", table_name, "--crosswalk_name", basename(crosswalk),
             "--output", "faire.xlsx", "--log", "apply_mapping_log.txt")
   s <- run_python(tool_path("faire_mapper", "faire_mapper_apply.py"), args, d)
@@ -219,6 +224,7 @@ run_fairefier <- function(session_dir, workbook, checklist_version = "auto", str
   o <- function(f) file.path(d, "out", f)
   run_result("fairefier", "FAIRe-fier", d, list(s),
              list(summary = o("fairefier_summary.json"), issues = o("fairefier_issues.tsv"),
+                  highlighted = o("fairefier_highlighted.xlsx"),
                   warn_error = o("fairefier_warn_error.xlsx"), metadata = o("fairefier_metadata.xlsx")))
 }
 
@@ -341,6 +347,29 @@ run_mdt <- function(session_dir, workbook, assay, seq_run, otu = workbook, otu_s
     s$output <- paste(s$output, paste(readLines(file.path(d, "faire2mdt_log.txt"), warn = FALSE), collapse = "\n"),
                       sep = "\n")
   run_result("mdt", "FAIRe2MDT", d, list(s), list(mdt_workbook = out))
+}
+
+# FAIRe to Darwin Core: presence and absence records (qPCR and ddPCR, or metabarcoding as presence).
+run_faire2dwc <- function(session_dir, workbook, assays = "", absences = TRUE, taxa = NULL, country_code = "",
+                          target = "gbif", title = "", abstract = "", keywords = "", licence = "workbook",
+                          given_name = "", surname = "", organisation = "", email = "", orcid = "") {
+  d <- new_run_dir(session_dir, "faire2dwc")
+  args <- c(link_input(d, workbook), "--workbook_name", basename(workbook),
+            if (!blank(assays)) c("--assays", gsub("\\s+", "", assays)),
+            if (absences) "--absences" else "--no-absences",
+            if (!is.null(taxa)) c("--taxa", taxa),
+            "--country_code", trimws(country_code %||% ""), "--target", target,
+            "--title", title %||% "", "--abstract", abstract %||% "", "--keywords", keywords %||% "",
+            if (!blank(licence) && licence != "workbook") c("--licence", licence),
+            "--given_name", given_name %||% "", "--surname", surname %||% "", "--organisation", organisation %||% "",
+            "--email", trimws(email %||% ""), "--orcid", trimws(orcid %||% ""),
+            "--archive", "dwca.zip", "--occurrence", "occurrence.txt", "--dna", "dna_derived_data.txt",
+            "--eml", "eml.xml", "--report", "report.md")
+  s <- run_python(tool_path("faire2dwc", "faire2dwc.py"), args, d)
+  o <- function(f) file.path(d, f)
+  run_result("faire2dwc", "FAIRe to Darwin Core", d, list(s),
+             list(archive = o("dwca.zip"), occurrence = o("occurrence.txt"), dna_derived = o("dna_derived_data.txt"),
+                  eml = o("eml.xml"), report = o("report.md")))
 }
 
 # edna2obis reads its settings from the JSON file Galaxy writes for the form; the app writes the

@@ -1,0 +1,355 @@
+<tool id="faire2dwc" name="FAIRe to Darwin Core" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="23.0" license="MIT">
+    <description>presence and absence records for GBIF and OBIS</description>
+    <macros>
+        <token name="@TOOL_VERSION@">0.2.0</token>
+        <token name="@VERSION_SUFFIX@">1</token>
+        <token name="@NAMES_RE@">^[A-Za-z0-9_.+() ,-]*$</token>
+        <token name="@TEXT_RE@">^[^'\\`$]*$</token>
+        <import>faire_guide.xml</import>
+    </macros>
+    <creator>
+        <person givenName="Oliver" familyName="Berry" url="https://github.com/ollybolly"/>
+        <person givenName="Miwa" familyName="Takahashi"/>
+        <organization name="CSIRO" url="https://www.csiro.au"/>
+    </creator>
+    <requirements>
+        <requirement type="package" version="3.12">python</requirement>
+        <requirement type="package" version="2.2.3">pandas</requirement>
+        <requirement type="package" version="3.1.5">openpyxl</requirement>
+    </requirements>
+    <version_command>python '$__tool_directory__/faire2dwc.py' --version</version_command>
+    <command detect_errors="exit_code"><![CDATA[
+python '$__tool_directory__/faire2dwc.py' '$workbook'
+    --workbook_name '$workbook.element_identifier'
+    #if str($assays).strip():
+        --assays '$assays'
+    #end if
+    $absences
+    #if $taxa:
+        --taxa '$taxa'
+    #end if
+    --country_code '$country_code'
+    --target '$target'
+    --title '$eml.title'
+    --abstract '$eml.abstract'
+    --keywords '$eml.keywords'
+    #if str($eml.licence) != 'workbook':
+        --licence '$eml.licence'
+    #end if
+    --given_name '$eml.given_name'
+    --surname '$eml.surname'
+    --organisation '$eml.organisation'
+    --email '$eml.email'
+    --orcid '$eml.orcid'
+    --archive '$archive'
+    --occurrence '$occurrence'
+    --dna '$dna'
+    --eml '$eml_xml'
+    --report '$report'
+    ]]></command>
+    <inputs>
+        <param name="workbook" type="data" format="xlsx" label="FAIRe workbook"
+            help="Checked with FAIRe-fier. For targeted assays: sampleMetadata with detected_notDetected (one column per assay), and ampData if you have it. For metabarcoding: otuFinal and taxaFinal sheets."/>
+        <param name="assays" type="text" value="" optional="true" label="Assays to publish (optional)"
+            help="Assay names as in assay_name, separated by commas. Leave empty for all.">
+            <validator type="regex" message="Use letters, digits, spaces and _ . + ( ) , - only">@NAMES_RE@</validator>
+        </param>
+        <param name="absences" type="boolean" truevalue="--absences" falsevalue="--no-absences" checked="true"
+            label="Write absences (targeted assays)"
+            help="A record with occurrenceStatus absent for each sample where the target was not detected. GBIF's guide encourages absences for targeted detection. Metabarcoding records are always presences."/>
+        <param name="taxa" type="data" format="tabular,csv" optional="true" label="Taxon table (optional)"
+            help="A column called name, with each name as the workbook gives it (targetTaxonomicAssay, or the name in taxaFinal), and any of scientificName, scientificNameID, taxonRank, kingdom, phylum, class, order, family and genus. OBIS needs scientificNameID, a WoRMS LSID such as urn:lsid:marinespecies.org:taxname:107381."/>
+        <param name="country_code" type="text" value="" optional="true" label="Country code (optional)"
+            help="ISO 3166-1 two-letter code, such as AU. Needed only when the country in geo_loc_name is not one the tool knows (the report says).">
+            <validator type="regex" message="Two letters, such as AU">^([A-Za-z]{2})?$</validator>
+        </param>
+        <param name="target" type="select" label="Check the records for">
+            <option value="gbif" selected="true">GBIF</option>
+            <option value="obis">OBIS</option>
+            <option value="both">GBIF and OBIS</option>
+        </param>
+        <section name="eml" title="Dataset details (EML)" expanded="false">
+            <param name="title" type="text" value="" optional="true" label="Title" help="Default: project_name from projectMetadata.">
+                <validator type="regex" message="Leave out quotes, backslashes and $">@TEXT_RE@</validator>
+            </param>
+            <param name="abstract" type="text" area="true" value="" optional="true" label="Abstract">
+                <validator type="regex" message="Leave out quotes, backslashes and $">@TEXT_RE@</validator>
+            </param>
+            <param name="keywords" type="text" value="" optional="true" label="Keywords (optional)" help="Separated by commas.">
+                <validator type="regex" message="Leave out quotes, backslashes and $">@TEXT_RE@</validator>
+            </param>
+            <param name="licence" type="select" label="Licence">
+                <option value="workbook" selected="true">As license in projectMetadata</option>
+                <option value="CC0-1.0">CC0 1.0</option>
+                <option value="CC-BY-4.0">CC BY 4.0</option>
+                <option value="CC-BY-NC-4.0">CC BY-NC 4.0</option>
+            </param>
+            <param name="given_name" type="text" value="" optional="true" label="Creator and contact: given name">
+                <validator type="regex" message="Leave out quotes, backslashes and $">@TEXT_RE@</validator>
+            </param>
+            <param name="surname" type="text" value="" optional="true" label="Creator and contact: surname">
+                <validator type="regex" message="Leave out quotes, backslashes and $">@TEXT_RE@</validator>
+            </param>
+            <param name="organisation" type="text" value="" optional="true" label="Creator and contact: organisation">
+                <validator type="regex" message="Leave out quotes, backslashes and $">@TEXT_RE@</validator>
+            </param>
+            <param name="email" type="text" value="" optional="true" label="Creator and contact: email">
+                <validator type="regex" message="An email address">^([^@\s'"]+@[^@\s'"]+)?$</validator>
+            </param>
+            <param name="orcid" type="text" value="" optional="true" label="Creator and contact: ORCID (optional)">
+                <validator type="regex" message="An ORCID, such as 0000-0002-1825-0097">^((https://orcid.org/)?\d{4}-\d{4}-\d{4}-\d{3}[\dX])?$</validator>
+            </param>
+        </section>
+    </inputs>
+    <outputs>
+        <data name="archive" format="zip" label="${tool.name} on ${on_string}: Darwin Core archive"/>
+        <data name="occurrence" format="tabular" label="${tool.name} on ${on_string}: occurrence"/>
+        <data name="dna" format="tabular" label="${tool.name} on ${on_string}: DNA derived data"/>
+        <data name="eml_xml" format="xml" label="${tool.name} on ${on_string}: EML"/>
+        <data name="report" format="markdown" label="${tool.name} on ${on_string}: report"/>
+    </outputs>
+    <tests>
+        <!-- 1. Targeted, two assays, with a taxon table: absences written, controls left out, a detection
+             given as "missing: not provided" not written, an empty one taken from ampData -->
+        <test expect_num_outputs="5">
+            <param name="workbook" value="targeted_two_assays.xlsx" ftype="xlsx"/>
+            <param name="taxa" value="taxa_carcinus.tsv" ftype="tabular"/>
+            <param name="target" value="both"/>
+            <section name="eml">
+                <param name="given_name" value="Ann"/>
+                <param name="surname" value="Sampler"/>
+                <param name="email" value="ann@example.org"/>
+            </section>
+            <output name="archive" ftype="zip">
+                <assert_contents>
+                    <has_archive_member path="meta.xml"/>
+                    <has_archive_member path="eml.xml"/>
+                    <has_archive_member path="occurrence.txt">
+                        <has_n_lines n="8"/>
+                    </has_archive_member>
+                    <has_archive_member path="dna_derived_data.txt">
+                        <has_n_lines n="8"/>
+                    </has_archive_member>
+                </assert_contents>
+            </output>
+            <output name="occurrence" ftype="tabular">
+                <assert_contents>
+                    <has_n_lines n="8"/>
+                    <has_line_matching expression="^crab_qpcr_test_W2_CmaeCOI\tMaterialSample\tabsent\t.*"/>
+                    <has_text text="urn:lsid:marinespecies.org:taxname:107381"/>
+                    <has_text text="target DNA amplified in 2 of 3 technical replicates (mean Cq 33.55)"/>
+                    <not_has_text text="FB1"/>
+                    <not_has_text text="W4_CmaeCOI"/>
+                </assert_contents>
+            </output>
+            <output name="dna" ftype="tabular">
+                <assert_contents>
+                    <has_text text="thresholdQuantificationCycle"/>
+                    <has_text text="Degrees Celsius"/>
+                    <has_text text="2 copies/µL"/>
+                </assert_contents>
+            </output>
+            <output name="eml_xml" ftype="xml">
+                <assert_contents>
+                    <is_valid_xml/>
+                    <has_text text="Green crab qPCR test data"/>
+                    <has_text text="http://creativecommons.org/licenses/by/4.0/legalcode"/>
+                    <has_text text="&lt;calendarDate&gt;2024-03-06&lt;/calendarDate&gt;"/>
+                </assert_contents>
+            </output>
+            <output name="report" ftype="markdown">
+                <assert_contents>
+                    <has_text text="1 control left out"/>
+                    <has_text text="CmaeCOI: 1 present, 2 absent, 1 sample not written"/>
+                    <has_text text="CmaeND2: 2 present, 2 absent, 1 detection taken from ampData"/>
+                    <has_text text="Nothing missing"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- 2. One assay, presences only, no taxon table: the report lists what OBIS needs -->
+        <test expect_num_outputs="5">
+            <param name="workbook" value="targeted_two_assays.xlsx" ftype="xlsx"/>
+            <param name="assays" value="CmaeND2"/>
+            <param name="absences" value="false"/>
+            <param name="target" value="obis"/>
+            <output name="occurrence" ftype="tabular">
+                <assert_contents>
+                    <has_n_lines n="3"/>
+                    <not_has_text text="absent"/>
+                    <not_has_text text="CmaeCOI"/>
+                </assert_contents>
+            </output>
+            <output name="report" ftype="markdown">
+                <assert_contents>
+                    <has_text text="scientificNameID is empty in 2 of 2 records"/>
+                    <has_text text="kingdom is empty in 2 of 2 records"/>
+                    <has_text text="no creator or contact"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- 3. Metabarcoding presence: one record per sample and sequence, with the sequence; the control's
+             column and a sequence with no name are left out; the creator and contact from project_contact -->
+        <test expect_num_outputs="5">
+            <param name="workbook" value="metabarcoding_presence.xlsx" ftype="xlsx"/>
+            <section name="eml">
+                <param name="licence" value="CC0-1.0"/>
+            </section>
+            <output name="occurrence" ftype="tabular">
+                <assert_contents>
+                    <has_n_lines n="4"/>
+                    <has_text text="pond_12S_test_P2_MiFish_asv2"/>
+                    <has_text text="Limnodynastes"/>
+                    <not_has_text text="asv3"/>
+                    <not_has_text text="_EB_"/>
+                </assert_contents>
+            </output>
+            <output name="dna" ftype="tabular">
+                <assert_contents>
+                    <has_text text="DNA_sequence"/>
+                    <has_text text="CACCGCGGTTATACGAGAGGCCCAAGTTGATAGACATCGGCGTAAAGAGTGG"/>
+                </assert_contents>
+            </output>
+            <output name="report" ftype="markdown">
+                <assert_contents>
+                    <has_text text="MiFish: 3 present, 1 detection with no taxon name, 1 control column"/>
+                    <has_text text="creator and contact from project_contact: given name Casey, surname Sampler, casey.sampler@example.org"/>
+                    <not_has_text text="no creator or contact"/>
+                </assert_contents>
+            </output>
+            <output name="eml_xml" ftype="xml">
+                <assert_contents>
+                    <has_text text="&lt;givenName&gt;Casey&lt;/givenName&gt;"/>
+                    <has_text text="&lt;organizationName&gt;Test Lab&lt;/organizationName&gt;"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- 4. One assay sequenced in two runs (otuFinal_MiFish_runA and otuFinal_MiFish_runB): the run goes
+             into each occurrenceID, so the records stay unique -->
+        <test expect_num_outputs="5">
+            <param name="workbook" value="metabarcoding_two_runs.xlsx" ftype="xlsx"/>
+            <section name="eml">
+                <param name="licence" value="CC0-1.0"/>
+            </section>
+            <output name="occurrence">
+                <assert_contents>
+                    <has_n_lines n="4"/>
+                    <has_text text="pond_12S_test_P1_MiFish_runA_asv1"/>
+                    <has_text text="pond_12S_test_P2_MiFish_runB_asv2"/>
+                </assert_contents>
+            </output>
+            <output name="report">
+                <assert_contents>
+                    <has_text text="MiFish: 3 present, 1 detection with no taxon name, 1 control column"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- 5. An assay that is not in the workbook stops the tool -->
+        <test expect_failure="true" expect_exit_code="2">
+            <param name="workbook" value="targeted_two_assays.xlsx" ftype="xlsx"/>
+            <param name="assays" value="NotAnAssay"/>
+            <assert_stderr>
+                <has_text text="assay NotAnAssay is not in projectMetadata"/>
+            </assert_stderr>
+        </test>
+    </tests>
+    <help><![CDATA[
+@HELP_BEFORE_CONVERTING@
+
+**What it does**
+
+This tool turns a FAIR eDNA (`FAIRe <https://fair-edna.github.io/>`_) workbook into a Darwin Core
+archive that you can publish through an IPT (Integrated Publishing Toolkit) to GBIF or OBIS. It is
+for **presence and absence** data:
+
+- **Targeted assays** (qPCR, ddPCR): one record per sample and assay, *present* where
+  detected_notDetected is 1 and *absent* where it is 0. GBIF's
+  `guide to publishing DNA-derived data <https://docs.gbif.org/publishing-dna-derived-data/>`_ calls this
+  targeted species detection, and has no Metabarcoding Data Toolkit route for it.
+- **Metabarcoding data reported as presence**: one record per sample and sequence with reads (or a
+  1) in otuFinal, named from taxaFinal. Read counts are not published. For read counts, use
+  **FAIRe2MDT** or **edna2obis**.
+
+Controls (samp_category other than *sample*) are always left out.
+
+-----
+
+**Inputs**
+
+- **FAIRe workbook**, ideally one that FAIRe-fier accepts.
+
+  - Targeted: sampleMetadata with detected_notDetected (detected_notDetected_<assay> for each
+    assay when there are several), and targetTaxonomicAssay for each assay in projectMetadata,
+    which gives the name of each record. ampData, when filled, adds the number of technical
+    replicates that amplified, the mean Cq and the mean copy number. A sample with no
+    detected_notDetected value but with ampData rows counts as detected when at least one
+    replicate amplified, and the report says how many. A sample whose value is a missing-value
+    term (*missing: not provided*) is not written.
+  - Metabarcoding: otuFinal and taxaFinal (otuFinal_<assay> and taxaFinal_<assay> for several
+    assays, and otuFinal_<assay>_<run> for an assay sequenced in several runs, as FAIRe mapper writes
+    them). otuFinal columns are samp_name or lib_id. Sequences with no taxon name are left out.
+
+- **Taxon table** (optional): names to publish and their identifiers and higher taxonomy, one row
+  per name as the workbook gives it. OBIS needs a WoRMS LSID (scientificNameID) for every name;
+  GBIF matches names to its backbone itself, but kingdom is highly recommended.
+- **Dataset details**: the title, abstract, creator and licence for the EML. With no name or
+  organisation given, the creator and contact come from project_contact and institution in
+  projectMetadata. You can also add or change these later in the IPT. GBIF takes CC0 1.0, CC BY 4.0
+  and CC BY-NC 4.0.
+
+**Outputs**
+
+- **Darwin Core archive** (zip): meta.xml, eml.xml, occurrence.txt (the core) and
+  dna_derived_data.txt (the DNA derived data extension), ready to upload to an IPT.
+- **Occurrence** and **DNA derived data** tables, the same as in the archive, to look at in Galaxy.
+- **EML**, the dataset metadata.
+- **Report**: the records written for each assay, the samples and controls left out, the columns
+  written, and what GBIF or OBIS will still want (such as coordinates, kingdom or scientificNameID).
+
+**How FAIRe terms become Darwin Core**
+
+The table *faire2dwc_terms.tsv*, next to the tool, lists every Darwin Core term written and the
+FAIRe term it comes from. A few are made by the tool:
+
+- occurrenceID is project_id, samp_name and assay (and seq_id for metabarcoding); eventID is
+  project_id and samp_name; basisOfRecord is MaterialSample.
+- country and locality come from geo_loc_name; countryCode from the country, or the form.
+- occurrenceRemarks says which assay detected the target, in how many technical replicates, and the
+  detection criteria. quantificationCycle is the mean Cq of the replicates that amplified;
+  estimatedNumberOfCopies and organismQuantity are the mean copy number of all replicates.
+- FAIRe's missing-value terms are written as empty cells.
+
+-----
+
+**Limits**
+
+- The tool does not look names up in WoRMS or GBIF. Use the taxon table, or **edna2obis: match
+  taxa** for metabarcoding names.
+- Records are published as the workbook gives them. Check the detection criteria and the controls
+  before publishing: a positive field control, for example, may mean some detections are
+  contamination.
+- The IPT checks the archive again when you upload it.
+
+@HELP_FAIRE_GUIDE@
+
+-----
+
+**Credits**
+
+Written by Oliver Berry (CSIRO), with Claude (Anthropic), for the FAIRe tools in the Galaxy
+Australia eDNA Lab. Darwin Core term URIs are those of the GBIF DNA derived data extension (issued
+2024-07-11). The FAIRe checklist is described in Takahashi et al. (2025) *Environmental DNA* 7:
+e70100.
+    ]]></help>
+    <citations>
+        <citation type="doi">10.1002/edn3.70100</citation>
+        <!-- a DataCite DOI, given as a link: planemo checks DOIs against Crossref, which does not hold it -->
+        <citation type="bibtex">@misc{abarenkov2023publishing,
+  author = {Abarenkov, Kessy and others},
+  title = {Publishing DNA-derived data through biodiversity data platforms},
+  publisher = {GBIF Secretariat},
+  year = {2023},
+  note = {Version 1.3, doi:10.35035/doc-vf1a-nr22},
+  url = {https://docs.gbif.org/publishing-dna-derived-data/}
+}</citation>
+    </citations>
+</tool>

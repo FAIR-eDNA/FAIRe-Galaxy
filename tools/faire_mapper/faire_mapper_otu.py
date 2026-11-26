@@ -37,7 +37,7 @@ TAXA_ALIASES = {
     'seq_id': ['seqid', 'featureid', 'asv', 'asvid', 'otu', 'otuid', 'id', 'sequenceid', 'zotu', 'zotuid'],
     'dna_sequence': ['dnasequence', 'sequence', 'seq', 'asvsequence', 'representativesequence', 'repseq'],
     'lineage': ['taxonomy', 'taxon', 'lineage', 'classification', 'consensus', 'consensustaxonomy'],
-    'confidence_score': ['confidence', 'confidencescore', 'bootstrap'],
+    'confidence_score': ['confidence', 'confidencescore', 'bootstrap', 'probability', 'assignmentprobability'],
     'percent_match': ['percentmatch', 'pident', 'percidentity', 'identity', 'percentidentity'],
     'percent_query_cover': ['percentquerycover', 'qcov', 'querycover', 'qcovs', 'qcovhsp', 'querycoverage',
                             'percentquerycoverage'],
@@ -166,17 +166,28 @@ def _count(v):
 def id_column(df, count_cols):
     """The column of sequence IDs in a table with the samples as columns: the first column, unless its
     values repeat and another column (not a count column) named as an ID or a sequence (OTU, ASV,
-    seq_id, sequence ...) has a different value on every row."""
+    seq_id, sequence ...) has a different value on every row. Failing that, in a table of reads summed
+    per taxon (Phylum, Class, Species, then the samples), the taxon names: a name or species column,
+    or the lowest rank, with a different value on every row."""
     first = df.columns[0]
     vals = [norm_id(v) for v in df[first] if not _blank(v)]
     if not vals or len(set(vals)) == len(vals):
         return first
+
+    def unique(c):
+        v = [norm_id(x) for x in df[c]]
+        return all(v) and len(set(v)) == len(v)
     names = set(TAXA_ALIASES['seq_id']) | set(TAXA_ALIASES['dna_sequence'])
     for c in df.columns[1:]:
-        if c in count_cols or _key(c) not in names:
-            continue
-        v = [norm_id(x) for x in df[c]]
-        if all(v) and len(set(v)) == len(v):
+        if c not in count_cols and _key(c) in names and unique(c):
+            return c
+    order = ['species', 'genus', 'family', 'order', 'class', 'phylum']
+    taxon = [c for c in df.columns[1:] if c not in count_cols
+             and (_key(c) in TAXA_ALIASES['scientificName'] or RANK_NAMES.get(_key(c)) in order)]
+    taxon.sort(key=lambda c: (0 if _key(c) in TAXA_ALIASES['scientificName'] else 1,
+                              order.index(RANK_NAMES[_key(c)]) if _key(c) in RANK_NAMES else 0))
+    for c in taxon:
+        if unique(c):
             return c
     return first
 
@@ -281,10 +292,13 @@ def read_otu(path, sheet, sample_names, lib_to_samp, log, label, is_detail=None,
             log(f'{label}: {len(outside)} columns of counts are not samples of the sample table and are left out: '
                 + ', '.join(outside[:5]) + (' ...' if len(outside) > 5 else ''))
         idc = id_column(df, cols)
+        # In a table of reads summed per taxon, the ID is a taxon name, and is taxonomy too
+        taxon_id = (idc != df.columns[0]
+                    and _key(idc) not in set(TAXA_ALIASES['seq_id']) | set(TAXA_ALIASES['dna_sequence']))
         if idc != df.columns[0]:
             # An LCA output (eDNAFlow's: domain ... species, then OTU, then the samples) puts its ranks first.
             log(f"{label}: the sequence IDs are in the column '{idc}' (the first column, '{df.columns[0]}', "
-                f"repeats)")
+                f"repeats)" + (', so seq_id is the taxon name: reads summed per taxon' if taxon_id else ''))
             first_header = str(idc)
         df = df[[not _blank(v) for v in df[idc]]]
         ids = [norm_id(v) for v in df[idc]]
@@ -292,6 +306,8 @@ def read_otu(path, sheet, sample_names, lib_to_samp, log, label, is_detail=None,
         counts.index = ids
         counts.columns = [norm_id(c) for c in cols]
         ann = df[[idc] + [c for c in [df.columns[0]] + rest if c != idc]].copy()
+        if taxon_id:
+            ann = pd.concat([df[[idc]].set_axis(['seq_id'], axis=1), df[[df.columns[0]] + rest]], axis=1)
         ann.index = ids
     elif in_rows:
         orientation = 'samples as rows'
@@ -990,6 +1006,13 @@ def finish_taxon(r):
     terms filled."""
     before = set(r)
     sp = r.pop('species', None)
+    m = UNNAMED_SUFFIX.match(re.sub(r'\s+', ' ', str(sp)).strip()) if sp else None
+    if m:
+        # 'Clitellio sp. BOLD:AAG8543' or 'Boonea cf. bisuturalis' in a species column: named to the genus,
+        # and kept as written in verbatimIdentification
+        r.setdefault('genus', m.group(1))
+        r.setdefault('verbatimIdentification', sp)
+        sp = None
     if sp:
         words = sp.split()
         if len(words) >= 2:

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 274 264" width="274" height="264" font-family="Helvetica, Arial, sans-serif">
+  <!-- AI assistant: one of the three cards in the README -->
+  <g transform="translate(2,2)">
+    <rect width="270" height="260" rx="12" fill="#fbf1e8" stroke="#c46a1b" stroke-width="2"/>
+    <rect width="270" height="54" rx="12" fill="#c46a1b"/>
+    <rect y="40" width="270" height="14" fill="#c46a1b"/>
+    <g fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linejoin="round">
+      <path d="M 26 14 h 30 a 4 4 0 0 1 4 4 v 14 a 4 4 0 0 1 -4 4 h -18 l -8 6 v -6 h -4 a 4 4 0 0 1 -4 -4 v -14 a 4 4 0 0 1 4 -4 z"/>
+      <circle cx="33" cy="25" r="1.4" fill="#ffffff"/><circle cx="41" cy="25" r="1.4" fill="#ffffff"/><circle cx="49" cy="25" r="1.4" fill="#ffffff"/>
+    </g>
+    <text x="150" y="35" text-anchor="middle" font-size="22" font-weight="bold" fill="#ffffff">AI assistant</text>
+    <text x="135" y="84" text-anchor="middle" font-size="14" font-style="italic" fill="#8a4a12">In a chat with Claude, ChatGPT</text>
+    <text x="135" y="102" text-anchor="middle" font-size="14" font-style="italic" fill="#8a4a12">or Microsoft 365 Copilot</text>
+    <path d="M 22 130 l 4 4 l 8 -9" fill="none" stroke="#c46a1b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="42" y="136" font-size="15" fill="#222">Talks you through</text>
+    <text x="42" y="156" font-size="15" fill="#222">each decision</text>
+    <path d="M 22 178 l 4 4 l 8 -9" fill="none" stroke="#c46a1b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="42" y="184" font-size="15" fill="#222">Copes with untidy files</text>
+    <text x="135" y="240" text-anchor="middle" font-size="13" fill="#8a4a12">Your files go to the AI company</text>
+  </g>
+</svg>

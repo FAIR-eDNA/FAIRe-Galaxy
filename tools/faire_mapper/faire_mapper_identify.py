@@ -31,6 +31,8 @@ NEXT = {
            "filtering and curation), or to otuRaw and taxaRaw if this is the table before that.",
     'taxonomy': 'Give it beside the OTU table whose sequence IDs it lists.',
     'library': 'Each row should be one library: one amplicon of one sample.',
+    'amp': ("Set the assay type to targeted. Its assay values must be the assay names you give apply mapping; "
+            "it fills ampData and each sample's detected_notDetected."),
     'crosswalk': ('Check it before apply mapping uses it. To map an updated sample table again, give it to propose '
                   'mapping as the earlier review, so its decisions are carried over.'),
     'dictionary': 'Its descriptions help propose mapping match columns whose headers are unclear.',

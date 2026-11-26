@@ -1,5 +1,5 @@
 name: faire2qiime
-owner: CHANGE_ME
+owner: fair-edna
 description: Make QIIME 2 sample metadata and manifests from a FAIRe eDNA workbook
 long_description: |
   Galaxy wrapper for FAIRe2QIIME (https://github.com/aomlomics/faire2qiime), which turns a

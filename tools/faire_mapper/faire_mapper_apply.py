@@ -38,6 +38,7 @@ from openpyxl.worksheet.datavalidation import DataValidation
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import faire_mapper as fm  # noqa: E402
+import faire_mapper_amp as fa  # noqa: E402
 import faire_mapper_kinds as fk  # noqa: E402
 import faire_mapper_library as fl  # noqa: E402
 import faire_mapper_otu as fo  # noqa: E402
@@ -159,6 +160,106 @@ def review_lines(log):
                      f"the others, as Mandatory and commonly confused terms need a reviewer's decision: "
                      f"{fm._first(log.draft_held, 5)}")
     return lines, warnings
+
+
+def write_readme(ws, readme, log, warnings, project_id, stamp):
+    """The README sheet: a summary at the top (what to review before submitting, highlighted, and a table
+    and chart of the reviewer's decisions), then the lines FAIRe-ator's README has and the review lines."""
+    from openpyxl.chart import BarChart, Reference
+    from openpyxl.styles import Alignment
+    navy, wrap = '1F4E79', Alignment(wrap_text=True, vertical='top')
+    fills = {'warn': PatternFill('solid', fgColor='FFEB9C'), 'bad': PatternFill('solid', fgColor='FFC7CE'),
+             'good': PatternFill('solid', fgColor='C6EFCE'), 'head': PatternFill('solid', fgColor='D9E1F2')}
+    ws.column_dimensions['A'].width = 36
+    for col in 'BCDEF':
+        ws.column_dimensions[col].width = 13
+
+    def heading(text, size=13, colour=navy):
+        ws.append([text])
+        ws.cell(ws.max_row, 1).font = Font(bold=True, size=size, color=colour)
+
+    def boxed(text, fill):
+        ws.append([text])
+        r = ws.max_row
+        ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=6)
+        c = ws.cell(r, 1)
+        c.fill, c.alignment = fills[fill], wrap
+        ws.row_dimensions[r].height = 15.5 * (1 + len(text) // 85)
+
+    heading(f'FAIRe workbook for {project_id}', size=16)
+    ws.append([f'Made by FAIRe mapper {__version__} on {stamp[:10]}. Check it before you submit it anywhere.'])
+    ws.cell(ws.max_row, 1).font = Font(italic=True)
+    ws.append([])
+    heading('To review before you submit', colour='9C0006')
+    review = [w[0].upper() + w[1:] for w in warnings]
+    review += [w[0].upper() + w[1:] for w in log.sections['Warnings'] if w not in warnings]
+    for w in review[:8]:
+        boxed(w, 'warn')
+    if len(review) > 8:
+        boxed(f'And {len(review) - 8} more warnings: see the log.', 'warn')
+    empty = log.sections['Mandatory terms with no value']
+    if empty:
+        names = [re.split(r' \(|:', x)[0] for x in empty]
+        boxed(f"{_n(len(empty), 'mandatory term has', 'mandatory terms have')} no value: "
+              f"{', '.join(dict.fromkeys(names))}. Fill {'it' if len(empty) == 1 else 'them'} in, or give a "
+              f"FAIRe missing-value term (such as 'missing: not collected').", 'bad')
+    if not review and not empty:
+        boxed('FAIRe mapper flagged nothing. The values still rest on the review: check them, and run FAIRe-fier.',
+              'good')
+    boxed('Run FAIRe-fier on the workbook: it checks the format and the required fields, not whether the values '
+          'are right.', 'warn' if review or empty else 'good')
+
+    # the reviewer's decisions, as a table and a chart
+    table = []
+    r = log.review_columns
+    if r:
+        d = r['decisions']
+        table.append(['Column mapping', d['Accept'], d['Change'], d['Reject'], d['']])
+    m = log.review_details
+    for tier, label in (('reliable', 'Method values found reliably'), ('check', 'Method values to check'),
+                        ('', 'Method values')):
+        c = [m.get((tier, o), 0) for o in ('accepted', 'changed', 'rejected', 'undecided')]
+        if sum(c):
+            table.append([label] + c)
+    if table:
+        ws.append([])
+        heading('Decisions on the mapping')
+        ws.append(['', 'Accepted', 'Changed', 'Rejected', 'Not decided'])
+        top = ws.max_row
+        for c in ws[top][:5]:
+            c.font, c.fill = Font(bold=True), fills['head']
+        for row in table:
+            ws.append(row)
+        if r and r.get('carried'):
+            ws.append([f"{_n(r['carried'], 'decision was', 'decisions were')} carried over from an earlier review."])
+            ws.cell(ws.max_row, 1).font = Font(italic=True)
+        chart = BarChart()
+        chart.type, chart.grouping, chart.overlap = 'bar', 'stacked', 100
+        chart.title, chart.style, chart.height, chart.width = 'Decisions', 10, 2.2 + 1.1 * len(table), 13
+        chart.add_data(Reference(ws, min_col=2, max_col=5, min_row=top, max_row=top + len(table)), titles_from_data=True)
+        chart.set_categories(Reference(ws, min_col=1, min_row=top + 1, max_row=top + len(table)))
+        for series, colour in zip(chart.series, ('70AD47', '5B9BD5', 'C00000', 'A5A5A5')):
+            series.graphicalProperties.solidFill = colour
+            series.graphicalProperties.line.solidFill = colour
+        chart.y_axis.majorGridlines = None
+        chart.x_axis.scaling.orientation = 'maxMin'  # the first row of the table at the top
+        chart.y_axis.delete = chart.x_axis.delete = False
+        ws.add_chart(chart, f'G{top - 1}')
+
+    ws.append([])
+    heading('Details')
+    for line in readme:
+        ws.append([line])
+        if line.endswith(';'):
+            ws.cell(ws.max_row, 1).font = Font(bold=True)
+        elif len(line) > 100:  # long lines wrap within the summary's width
+            r = ws.max_row
+            ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=6)
+            ws.cell(r, 1).alignment = wrap
+            ws.row_dimensions[r].height = 15.5 * (1 + len(line) // 85)
+    ws.sheet_view.showGridLines = False
+    ws.sheet_properties.pageSetUpPr.fitToPage = True  # printed one page wide
+    ws.page_setup.fitToWidth, ws.page_setup.fitToHeight = 1, 0
 
 
 # ------------------------------------------------------------------ reading the crosswalk
@@ -344,7 +445,7 @@ def convert_dates(column, values, date_order, profile):
             out.append(v.isoformat())
             continue
         s = str(v).strip()
-        if fm.ISO_OFFSET_RE.match(s) or PARTIAL_ISO.match(s):
+        if fm.ISO_OFFSET_RE.match(s) or PARTIAL_ISO.match(s) or fm.iso_interval(s):
             out.append(s)
             continue
         if serial and re.match(r'^\d+(\.0+)?$', s):
@@ -649,6 +750,12 @@ def build_workbook(args, df, rows, terms, by_name, log, others=()):
     project = {'project_id': args.project_id, 'assay_type': args.assay_type, 'checkls_ver': checklist_ver}
     if len(assays) == 1:
         project['assay_name'] = assays[0]
+    elif assays and args.assay_type == 'targeted':
+        # FAIRe-fier reads a targeted project's assays from project_level (A | B), to check assay_name and
+        # the detected_notDetected_<assay> columns of sampleMetadata; FAIRe-ator leaves it empty.
+        project['assay_name'] = ' | '.join(assays)
+        log.add('Project values', f"assay_name in project_level: {project['assay_name']}, as FAIRe-fier reads the "
+                                  f"assays of a targeted project from it (each assay column also has its name)")
     by_assay = {a: {} for a in assays}   # values for one assay, in its projectMetadata column
 
     n = len(df)
@@ -1177,6 +1284,23 @@ def build_workbook(args, df, rows, terms, by_name, log, others=()):
                 log.add('Warnings', f"{t['label']}: classified with PR2; name PR2 and its version in otu_db "
                                     f"(projectMetadata), e.g. PR2 v5.0.0")
 
+    # ---- qPCR and ddPCR results: ampData, and detected_notDetected where the table gives none
+    amp_rows = []
+    if getattr(args, 'amp', None):
+        if args.assay_type != 'targeted':
+            log.add('Warnings', 'qPCR results are for targeted assays (ampData); not used for metabarcoding')
+        elif not assays:
+            raise StopError('give the assay names (--assay_name) to read the qPCR results')
+        else:
+            try:
+                amp_rows, detected = fa.read_results(args.amp, args.amp_sheet, args.amp_name, args.amp_assay_column,
+                                                     assays, sample_out['samp_name'], log.add)
+            except ValueError as e:
+                raise StopError(str(e))
+            fa.fill_detections(sample_out, assays, detected, log.add)
+            fa.check_cycles(amp_rows, {a: by_assay.get(a, {}).get('pcr_cycles') or project.get('pcr_cycles')
+                                       for a in assays}, log.add)
+
     # ---- controls: their empty mandatory cells (a term FAIRe asks of every row, such as eventDate or
     # geo_loc_name) are given "not applicable: control sample", FAIRe's term for them
     ctrl = control_rows(sample_out, n)
@@ -1294,8 +1418,7 @@ def build_workbook(args, df, rows, terms, by_name, log, others=()):
     lines, warnings = review_lines(log)
     if lines or warnings:
         readme += ['', 'Review;'] + [w[0].upper() + w[1:] for w in warnings] + [x[0].upper() + x[1:] for x in lines]
-    for line in readme:
-        ws.append([line])
+    write_readme(ws, readme, log, warnings, args.project_id, stamp)
     bold = Font(bold=True)
 
     # projectMetadata
@@ -1354,6 +1477,9 @@ def build_workbook(args, df, rows, terms, by_name, log, others=()):
                 log.add('Warnings', f'{t}: not a column of experimentRunMetadata; not written')
         if st and in_place[st]:
             for r in by_stage[st][0]['taxa'].values():
+                ws.append([_cell(r.get(c)) for c in cols])
+        if name == 'ampData' and amp_rows:
+            for r in amp_rows:
                 ws.append([_cell(r.get(c)) for c in cols])
         _style_sample_sheet(ws, lv, bold)
         if st and in_place[st]:
@@ -1620,9 +1746,11 @@ def read_otu_tables(args, sample_out, run_out, other, assays, log, terms, table_
                     if j != i and not curated[j].strip() and stages[j] == 'Raw' and assay_of[j] == assay_of[i]), None)
               if curated[i].strip() and stages[i] == 'Final' else None for i in range(k)]
     in_stage = {'Raw': 0, 'Final': 0}
+    per_assay = {}   # (stage, assay) -> the runs of its tables
     for i in range(k):
         for st in (('Final',) if raw_of[i] else ('Raw', 'Final') if curated[i].strip() else (stages[i],)):
             in_stage[st] += 1
+            per_assay.setdefault((st, assay_of[i]), []).append(runs[i].strip())
     out, suffixes = [], []
     say = lambda m: log.add('OTU and taxonomy tables', m)  # noqa: E731
     for i, path in enumerate(args.otu):
@@ -1638,9 +1766,15 @@ def read_otu_tables(args, sample_out, run_out, other, assays, log, terms, table_
             suffix = assay if (in_stage[stage] > 1 or len(assays) > 1) else ''
             if in_stage[stage] > 1 and not assay:
                 suffix = str(i + 1)
+            # Tables of one assay from different sequencing runs stay separate: <sheet>_<assay>_<run>, as
+            # FAIRe names separate files (otuFinal_<project>_<assay>_<run>)
+            same = per_assay.get((stage, assay_of[i]), [])
+            if assay and len(same) > 1 and all(same) and len(set(same)) == len(same):
+                suffix = f'{assay}_{runs[i].strip()}'
             if (stage, suffix) in suffixes:
-                raise StopError(f"two {stage.lower()} OTU tables are for assay '{assay}'; give each a different "
-                                f"assay name, or set one to raw and the other to final")
+                raise StopError(f"two {stage.lower()} OTU tables are for assay '{assay}'; give each its sequencing "
+                                f"run (a different run ID), a different assay name, or set one to raw and the other "
+                                f"to final")
             suffixes.append((stage, suffix))
             sheet_names = (f'otu{stage}', f'taxa{stage}') if not suffix else \
                 (_sheet_name(f'otu{stage}', suffix), _sheet_name(f'taxa{stage}', suffix))
@@ -2138,6 +2272,15 @@ def main(argv=None):
     ap.add_argument('--otu_stage', action='append', choices=['final', 'raw'],
                     help='for each OTU table: final, written as otuFinal and taxaFinal (the default), or raw, '
                          'written as otuRaw and taxaRaw; one value applies to every table')
+    ap.add_argument('--amp', action='append', help='qPCR or ddPCR results (targeted assays): one row per reaction, '
+                                                   'with the sample, assay and Cq (or copies); written to ampData, '
+                                                   'and used for detected_notDetected where the table gives none; '
+                                                   'repeat for several tables')
+    ap.add_argument('--amp_sheet', action='append', help='Excel sheet of each results table (empty for the first)')
+    ap.add_argument('--amp_name', action='append', help='name of each results table for the log')
+    ap.add_argument('--amp_assay_column', action='append',
+                    help='column of each results table that gives the assay, when it is not called assay, '
+                         'assay_name or target')
     ap.add_argument('--table_name', help='name of the table to record in the README (default: file name)')
     ap.add_argument('--crosswalk_name', help='name of the crosswalk to record in the README (default: file name)')
     ap.add_argument('-o', '--output', required=True, help='FAIRe workbook (.xlsx)')

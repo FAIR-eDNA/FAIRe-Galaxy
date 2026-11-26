@@ -4,13 +4,14 @@
         <!-- Upstream has no tagged releases. The version is the date of the pinned
              commit (csiro/FAIRe-fier 183505d). -->
         <token name="@TOOL_VERSION@">2026.06.30</token>
-        <token name="@VERSION_SUFFIX@">0</token>
+        <token name="@VERSION_SUFFIX@">2</token>
         <import>faire_guide.xml</import>
     </macros>
     <creator>
         <person givenName="Suk Yee" familyName="Yong" email="sukyee.yong@csiro.au"/>
         <organization name="CSIRO" url="https://github.com/csiro/FAIRe-fier"/>
         <person givenName="Oliver" familyName="Berry"/>
+        <person givenName="Miwa" familyName="Takahashi"/>
     </creator>
     <requirements>
         <requirement type="package" version="3.12">python</requirement>
@@ -47,7 +48,7 @@ python '$__tool_directory__/fairefier_cli.py' input.xlsx
         <data name="summary" format="json" from_work_dir="out/fairefier_summary.json" label="${tool.name} on ${on_string}: summary"/>
         <data name="issues" format="tabular" from_work_dir="out/fairefier_issues.tsv" label="${tool.name} on ${on_string}: warnings and errors"/>
         <collection name="workbooks" type="list" label="${tool.name} on ${on_string}: workbooks">
-            <discover_datasets pattern="(?P&lt;designation&gt;fairefier_(metadata|warn_error))\.xlsx" directory="out" format="xlsx"/>
+            <discover_datasets pattern="(?P&lt;designation&gt;fairefier_(metadata|warn_error|highlighted))\.xlsx" directory="out" format="xlsx"/>
         </collection>
         <data name="log" format="txt" label="${tool.name} on ${on_string}: log"/>
     </outputs>
@@ -101,7 +102,17 @@ python '$__tool_directory__/fairefier_cli.py' input.xlsx
                     <has_line_matching expression="^projectMetadata\terror\tALL\tcheckls_ver\t.*"/>
                 </assert_contents>
             </output>
-            <output_collection name="workbooks" type="list" count="1">
+            <output_collection name="workbooks" type="list" count="2">
+                <element name="fairefier_highlighted">
+                    <assert_contents>
+                        <has_archive_member path="xl/workbook.xml">
+                            <has_text text="name=&quot;experimentRunMetadata&quot;"/>
+                        </has_archive_member>
+                        <has_archive_member path="xl/comments/comment2.xml">
+                            <has_text text="Closest option found. Suggested: sample"/>
+                        </has_archive_member>
+                    </assert_contents>
+                </element>
                 <element name="fairefier_warn_error">
                     <assert_contents>
                         <has_archive_member path="xl/workbook.xml">
@@ -185,6 +196,10 @@ after that version, the two may differ until this tool is updated too.
   - *fairefier_metadata*: the checked metadata, written when the worksheets pass.
   - *fairefier_warn_error*: the warnings and errors, plus *_revise* copies of your worksheets with
     the problem cells highlighted, red for errors and yellow for warnings.
+  - *fairefier_highlighted*: a copy of your workbook as you gave it, every sheet kept, with each
+    problem cell filled yellow (warning) or red (error) and a note giving the message and any
+    suggested value. Hover over a cell to read its note. A problem with a whole column marks the
+    column's heading.
 
 - **log**: a record of the run.
 

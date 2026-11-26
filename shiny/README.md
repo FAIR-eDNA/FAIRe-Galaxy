@@ -10,7 +10,7 @@ The app runs the same scripts as the Galaxy wrappers in `../tools`, with the sam
 give the same results. Each tool's command line in `R/tools.R` follows the `<command>` block of its
 Galaxy XML file. Run through the app, the SEA-MES demonstration gives a workbook identical, sheet for
 sheet, to the one the same steps give from the command line (`dev/faire_mapper_seames/run.sh`), given
-the same files.
+the same files and the same values for the whole project.
 
 This version is a demonstration that runs on one computer. It is written so that it can later be
 hosted on a server (see *Hosting later*, below). It was first built in a private repository and moved
@@ -27,19 +27,22 @@ been done, asks before work could be lost, and explains errors in plain words (s
 mistakes and warnings*, below). Its Start page also lists what you'll need for a FAIRe dataset.
 Version 0.7.0 (17 November 2026) maps in rounds: when your table gains columns or samples, the
 mapping can be run again with your earlier review, and only what is new needs reviewing (see
-*Mapping in rounds*, below). Version 0.7.1 (23 November 2026) has the first changes from Miwa
-Takahashi's and Oliver's trial with the SEA-MES demonstration: clearer labels and notes (Other among
-the sample types, user-defined fields, projectMetadata in step d, dates, geo_loc_name and the
-sequencing run ID), the mapper's calls in the review coloured as in the counts above it, one link to
-the review sheet in place of two, and CSV copies of the tools' tables for opening in Excel.
+*Mapping in rounds*, below). Version 0.8.0 (23 November 2026) takes qPCR and ddPCR results, adds
+*FAIRe to Darwin Core* for presence and absence records, and offers a choice of demonstrations,
+for a workshop on making FAIR eDNA datasets (see *Trying it with the demonstration data*, below).
+Version 0.8.1 (26 November 2026) has the first changes from Miwa Takahashi's and Oliver's trial with
+the SEA-MES demonstration: clearer labels and notes (Other among the sample types, user-defined
+fields, projectMetadata in step d, dates, geo_loc_name and the sequencing run ID), the mapper's
+calls in the review coloured as in the counts above it, one link to the review sheet in place of
+two, and CSV copies of the tools' tables for opening in Excel.
 
 ## What it covers
 
 | Step | Tools |
 |---|---|
-| 1. Make a workbook | FAIRe-ator (a blank template); the FAIRe mapper (identify your files, profile and propose a mapping, review it, find primers, values for the whole project, write the workbook), with the optional language model step |
+| 1. Make a workbook | FAIRe-ator (a blank template); the FAIRe mapper (identify your files, profile and propose a mapping, review it, find primers, values for the whole project, write the workbook with OTU tables, library tables or qPCR results), with the optional language model step |
 | 2. Check | FAIRe-fier |
-| 3. Convert | FAIRe2NCBI (BioSample and SRA), FAIRe2ENA (samples, and experiments and runs), FAIRe2MDT, edna2obis (match taxa and build the Darwin Core archive) and FAIRe2QIIME |
+| 3. Convert | FAIRe2NCBI (BioSample and SRA), FAIRe2ENA (samples, and experiments and runs), FAIRe2MDT, edna2obis (match taxa and build the Darwin Core archive), FAIRe to Darwin Core (presence and absence) and FAIRe2QIIME |
 
 The review screen is the review sheet that propose mapping writes, row for row: each column heading
 of the sample table (an input term), with some of its values, the proposed term and its score, the
@@ -217,6 +220,10 @@ source("https://raw.githubusercontent.com/FAIR-eDNA/FAIRe-Galaxy/main/shiny/star
 The first time, it downloads this repository, runs setup.R, and opens the app in your web browser.
 Afterwards, the same line checks for a newer version, downloads it if there is one, and starts the
 app. To stop the app, press Esc in the R console, or *Stop* in RStudio.
+
+Use this line each time you start the app. Starting it another way (*Run App* in RStudio, or
+`run_app.R`) uses the copy you have, without updating it. Whichever way you start it, the app's
+*Start* page says when a newer version is out (if your computer can reach GitHub).
 
 #### Where the app is kept
 
@@ -400,7 +407,8 @@ the *Outputs* page first. To use it again later, repeat step 4 only.
 
 ### Getting a newer version
 
-If you start the app with the one line above, it updates itself: run the same line again. Otherwise,
+If you start the app with the one line above, it updates itself: run the same line again. The app's
+*Start* page says when a newer version is out, for a copy the one line installed. Otherwise,
 download the repository again (step 2) and run setup.R again (step 3), which only installs what has
 changed. With git, `git pull` in the repository folder does the same as downloading.
 
@@ -415,11 +423,26 @@ somewhere other than `../tools`, `FAIRE_PYTHON` to use a Python other than the o
 
 ## Trying it with the demonstration data
 
-The Start page has a button that loads a small cut of CSIRO's SEA-MES eDNA data record (Deagle et al.
-2025; see `demo/README.md`). It adds the files to *Your files* and fills in the forms for them, so you
-can follow each step through to a demonstration FAIRe metadata workbook. Each tool still has to be run
-by pressing its button, and the review is done by hand, as a person would do it. The
-Start page lists the steps. edna2obis looks the names up in WoRMS or GBIF, so it needs internet
+The Start page offers three demonstrations (`demo/README.md`), from the fullest dataset to the least
+a dataset needs:
+
+- **SEA-MES** (`demo/seames`): a small cut of CSIRO's SEA-MES eDNA data record (Deagle et al. 2025),
+  metabarcoding with sequences, curated taxa, a run report and methods. It fills every sheet, for
+  every conversion.
+- **Khapra beetle** (`demo/khapra`): the published files of a qPCR study (Trujillo-González et al.
+  2022), a sample table and 766 reactions, to a workbook with ampData and a Darwin Core archive of
+  presence and absence records for GBIF.
+- **Nova Scotia eelgrass** (`demo/eelgrass`): the published files of a COI metabarcoding study
+  (Trask et al., Dryad), a table of reads per species and sample and the site coordinates, with no
+  sample table, controls or sequences, to presence records for GBIF.
+
+Choosing one and pressing *Load the demonstration data* adds its files to *Your files* and fills in
+the forms for them, so you can follow each step through. Each tool still has to be run by pressing
+its button, and the review is done by hand, as a person would do it. The values for the whole project
+start empty: you find them in the dataset's files with *find primers* and *find method details*, and
+type the rest, as you would with your own data. Where the published files leave out a detail, a notes
+file in the demonstration gives it, with its source. The Start page lists the steps for the one
+loaded, with the values to keep and to type. edna2obis looks the names up in WoRMS or GBIF, so it needs internet
 access, and its two steps were not run on the demonstration in testing; the Darwin Core build was
 tested through the app's code on edna2obis's own test data, with its stand-in mapping table.
 
@@ -430,21 +453,48 @@ samples and 58 FAIRe terms, plus 9 columns kept as their own terms, with the 16S
 and taxaRaw and the 48 curated fish taxa as otuFinal and taxaFinal. FAIRe-fier passes both sheets, with
 a warning for each of the 9 columns kept as their own terms, which the checklist does not list.
 FAIRe2NCBI writes 13 BioSamples and 13 SRA rows, and FAIRe2ENA 13 samples and 13 experiments and runs.
+On 25 November 2026, with the values for the whole project found and typed as the Start page's steps
+say (version 0.12.3), the workbook had 62 FAIRe terms, FAIRe-fier passed both sheets, FAIRe2ENA wrote
+the same experiments and runs, and FAIRe to Darwin Core wrote the same 108 records.
 (Tested 13 November 2026, up to the workbook through the app and the conversions from the command
 line with the app's settings. On 10 November, version 0.1.0 also ran FAIRe2MDT, which writes a
-workbook for Fish16S, and FAIRe2QIIME, which writes a metadata file and a manifest.)
+workbook for Fish16S, and FAIRe2QIIME, which writes a metadata file and a manifest. On 23 November,
+version 0.8.0 gave the same mapping, workbook and FAIRe-fier result through the app's server code,
+and FAIRe to Darwin Core wrote 108 presence records for the 11 samples, leaving out the 2 controls.)
+
+For the khapra beetle demonstration: *a. Your files* finds the sample table, the qPCR results, the
+taxon table, the README and the notes from the paper. *Fill in the authors' answers* rejects *sample
+type* (kept as the authors' own term) and changes *Category* to samp_category and *Extraction
+technique* to nucl_acid_ext_kit. The workbook has 90 rows (57 samples, 33 controls), ampData with the
+766 reactions, and detected_notDetected for each of the four assays (each assay on each machine). Apply
+mapping warns about a Cq of 0 and Cq values above the assays' cycle numbers, which are in the
+published data. FAIRe-fier passes both sheets. FAIRe to Darwin Core writes 162 records: 75 present and
+87 absent, with the controls left out. (Tested 23 November 2026 through the app's server code with
+`shiny::testServer`, in R 4.3 with shiny 1.8; again on 25 November 2026, with the values for the whole
+project found and typed as the steps say.)
+
+For the eelgrass demonstration: the mapping accepts 11 of the sample table's 13 columns and sends
+*Replicate* for review, which the authors' answers reject. The workbook has 50 samples, with the
+species table as otuFinal and taxaFinal (138 taxa, each named by its seq_id). It lists seq_run_id
+among the mandatory terms with no value, and warns that dna_sequence is empty. FAIRe-fier passes
+both sheets. FAIRe to Darwin Core writes 869 presence records. (Tested the same way, 23 and 25
+November 2026.)
 
 ## How it works
 
-- `app.R` holds the pages' behaviour; `R/ui.R` the pages themselves; `R/tools.R` one function for each
-  Galaxy tool, building its command line; `R/runner.R` finds Python, R and the tools and runs a
+- `app.R` holds the pages' behaviour; `R/ui.R` the pages themselves; `R/demos.R` the demonstrations
+  (their files in `demo/`, the forms each fills in and the reviewer's decisions); `R/tools.R` one
+  function for each Galaxy tool, building its command line; `R/runner.R` finds Python, R and the tools and runs a
   command; `R/helpers.R` reads the review sheet and the other files the tools exchange; and
   `python/fill_review_sheet.py` writes the decisions from the review screen into a copy of the review
   sheet, leaving the rest of it (the drop-downs, the shading and the other sheets) as it was.
 - `setup.R` installs what the app needs, `run_app.R` starts it, and `start.R` is the one-line start:
   it downloads the repository (or a newer version of it) into one folder, runs setup.R when needed,
   then runs run_app.R. It checks for a newer version by reading the commit at the tip of `main` from
-  GitHub, and records the commit it installed in `.faire_app_version`. A folder chosen with
+  GitHub, and records the commit it installed in `.faire_app_version`. The app makes the same check
+  once each time it starts, for the notice on its Start page (`newer_app_available()` in
+  `R/helpers.R`); it says nothing when it cannot reach GitHub, or when there is no
+  `.faire_app_version` (a copy you downloaded or cloned yourself). A folder chosen with
   `FAIRE_HOME` is remembered in `app_folder.txt` in `tools::R_user_dir("FAIRe-Galaxy", "config")`.
 - The files a person adds, and everything the tools write, go into a folder for the session in R's
   temporary folder. Each run has its own folder, with its inputs, outputs and a log of the exact
@@ -472,6 +522,25 @@ settle then:
 - **The language model.** A hosted version would hold the key on the server (as Galaxy's
   `FAIRE_MAPPER_SERVER` does), with a limit on use, and no longer ask people for theirs.
 - **Internet access.** edna2obis needs to reach WoRMS and GBIF from the server.
+
+## qPCR and ddPCR results
+
+For a targeted assay, *e. Write the workbook* takes one or more tables of qPCR or ddPCR results, one
+row per reaction, under *qPCR or ddPCR results*. The reactions go to ampData, and each sample's
+detected_notDetected for each assay is worked out from them, as apply mapping does in Galaxy:
+
+- 1 when at least one reaction amplified, 0 when none did, and *not applicable* for a sample not
+  tested with that assay. Check this against your study's detection criteria;
+- the technical replicates are numbered when the table has no replicate column;
+- Cq values above the assay's number of cycles (pcr_cycles in the project values) are reported.
+
+The table's columns are found by name (Sample ID, Assay or Target, Cq or Ct, Replicate, Plate,
+Copies). Its assay values must be the assay names given in *e*. Choose *Targeted* as the assay type
+in *b. Propose a mapping* first. *a. Your files* recognises such a table as *qPCR results*.
+
+*3. Convert*, *GBIF and OBIS (presence and absence)*, runs FAIRe to Darwin Core on the workbook: one
+record per sample and assay for a targeted assay (present or absent), or per sample and sequence for
+metabarcoding data (present), with the controls left out. Its report shows below the result.
 
 ## Not yet in the app
 

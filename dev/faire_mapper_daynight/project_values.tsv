@@ -28,7 +28,7 @@ filter_diameter	47
 filter_material	cellulose ester
 filter_name	MF-Millipore mixed cellulose ester (MCE) membrane
 samp_mat_process	Filtered within 1 h of collection with a Masterflex L/S Variable-Speed Digital Drive pump; membranes kept at about 5 °C, then stored at -80 °C until extraction.
-samp_store_temp	-80
+prepped_samp_store_temp	-80
 samp_store_loc	CSIRO Marine Laboratories, Hobart
 sterilise_method	Sampling bottles were bleach-sterilised. Filtration equipment was cleaned with 10% bleach between time points at a site and rinsed in Milli-Q water; 1 L of the rinse water was filtered between the day and night intervals as a filtration control.
 samp_vol_we_dna_ext	500

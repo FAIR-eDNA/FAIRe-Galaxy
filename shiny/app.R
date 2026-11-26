@@ -11,13 +11,12 @@ suppressPackageStartupMessages({
 })
 
 if (is.null(getOption("faire.app_dir"))) options(faire.app_dir = normalizePath("."))
-for (f in c("runner.R", "tools.R", "helpers.R", "ui.R"))
+for (f in c("runner.R", "tools.R", "helpers.R", "demos.R", "ui.R"))
   source(file.path(getOption("faire.app_dir"), "R", f), local = FALSE)
 
 options(shiny.maxRequestSize = 500 * 1024^2, DT.fillContainer = FALSE)
 
-APP_VERSION <- "0.7.1"
-DEMO_DIR <- file.path(getOption("faire.app_dir"), "demo")
+APP_VERSION <- "0.8.1"
 
 # Colours from the logo: petrol, teal, navy, red, orange and yellow (darkened where white text sits
 # on them, to keep it readable).
@@ -76,7 +75,7 @@ server <- function(input, output, session) {
                        pv = data.frame(term = character(), value = character(), assay = character()),
                        md_prov = data.frame(term = character(), assay = character(), value = character(),
                                             proposed = character(), tier = character()),
-                       otu_n = 1, lib_n = 1, block_version = 0, demo = FALSE, eo_mapping = NULL)
+                       otu_n = 1, lib_n = 1, amp_n = 0, block_version = 0, demo = "", eo_mapping = NULL)
 
   # ------------------------------------------------------------ shared helpers
   file_href <- function(path) {
@@ -201,31 +200,61 @@ server <- function(input, output, session) {
     nav_select("main", "FAIRe mapper: from your own tables"); nav_select("mapper_steps", "a. Your files")
   })
   observeEvent(input$start_check, nav_select("main", "2. Check"))
+  # A newer version on GitHub: said on the Start page, with how to get it
+  output$update_notice <- renderUI({
+    if (!newer_app_available()) return(NULL)
+    div(class = "res-warn", icon("circle-up"), tags$b(" A newer version of this app is available."),
+        " To update it, download what you want to keep from Outputs, close the app (press Esc in the R",
+        "console, or Stop in RStudio), and run the start line again:",
+        tags$pre(class = "mb-0 mt-1", tags$code(
+          'source("https://raw.githubusercontent.com/FAIR-eDNA/FAIRe-Galaxy/main/shiny/start.R")')))
+  })
   observeEvent(input$load_demo, {
-    if (!has_work()) return(load_demo())
+    id <- input$demo_choice %||% names(DEMOS)[1]
+    if (!has_work()) return(load_demo(id))
     showModal(modalDialog(
       title = "Load the demonstration data?",
-      tags$p("It adds the demonstration's files to Your files (replacing any with the same names), replaces the",
-             "values for the whole project, and fills in the forms with the demonstration's settings."),
+      tags$p("It adds the demonstration's files to Your files (replacing any with the same names), clears the",
+             "values for the whole project, and fills in the forms with the demonstration's settings. Files from",
+             "another demonstration stay in Your files: Remove all files first to start clean."),
       footer = tagList(modalButton("Cancel"), actionButton("load_demo_ok", "Load it", class = "btn-primary"))))
   })
-  observeEvent(input$load_demo_ok, { removeModal(); load_demo() })
-  load_demo <- function() {
-    for (f in list.files(DEMO_DIR, full.names = TRUE)) {
+  observeEvent(input$load_demo_ok, { removeModal(); load_demo(input$demo_choice %||% names(DEMOS)[1]) })
+  load_demo <- function(id) {
+    demo <- DEMOS[[id]]
+    for (f in list.files(file.path(DEMO_ROOT, demo$dir), full.names = TRUE)) {
       if (basename(f) == "README.md") next
       rv$files <- c(rv$files[names(rv$files) != basename(f)], add_to_library(file.path(sd, "files"), basename(f), f))
     }
-    rv$demo <- TRUE
-    pv <- read_tsv(file.path(DEMO_DIR, "SEA-MES_project_values_Fish16S.tsv"))
-    if (!is.null(pv)) rv$pv <- pv[, c("term", "value", "assay")]
-    rv$otu_n <- 2; rv$lib_n <- 1; rv$block_version <- rv$block_version + 1
-    updateCheckboxGroupInput(session, "map_sample_types", selected = "Water")
-    updateRadioButtons(session, "map_assay_type", selected = "metabarcoding")
-    updateTextInput(session, "fa_project_id", value = "SEA-MES_eDNA")
-    updateTextInput(session, "fa_assay_name", value = "Fish16S")
-    updateTextInput(session, "ap_project_id", value = "SEA-MES_eDNA")
-    updateTextInput(session, "ap_assay_name", value = "Fish16S")
-    updateTextInput(session, "ap_country", value = "Australia")
+    rv$demo <- id
+    # The values for the whole project start empty: the person finds them in the demonstration's files
+    # with find primers and find method details, and types the rest, as with their own data.
+    rv$pv <- rv$pv[0, , drop = FALSE]
+    rv$md_prov <- rv$md_prov[0, , drop = FALSE]
+    rv$otu_n <- length(demo$otu); rv$lib_n <- length(demo$lib); rv$amp_n <- length(demo$amp)
+    rv$block_version <- rv$block_version + 1
+    updateCheckboxGroupInput(session, "map_sample_types", selected = demo$sample_types)
+    updateRadioButtons(session, "map_assay_type", selected = demo$assay_type)
+    updateTextInput(session, "fa_project_id", value = demo$project_id)
+    updateTextInput(session, "fa_assay_name", value = demo$assay_name)
+    updateTextInput(session, "ap_project_id", value = demo$project_id)
+    updateTextInput(session, "ap_assay_name", value = demo$assay_name)
+    updateTextInput(session, "ap_country", value = demo$country)
+    updateSelectInput(session, "ap_date_order", selected = demo$date_order)
+    if (length(demo$dwc)) {
+      w <- demo$dwc
+      updateTextInput(session, "dw_title", value = w$title); updateTextAreaInput(session, "dw_abstract", value = w$abstract)
+      updateTextInput(session, "dw_keywords", value = w$keywords)
+      updateTextInput(session, "dw_given", value = w$given); updateTextInput(session, "dw_surname", value = w$surname)
+      updateTextInput(session, "dw_org", value = w$org); updateTextInput(session, "dw_email", value = w$email)
+      updateSelectInput(session, "dw_licence", selected = w$licence)
+    }
+    if (id == "seames") seames_forms()
+    rv$changed <- Sys.time()
+    notify_info("The demonstration files are in Your files. Start with 1. Make a workbook, FAIRe mapper.", duration = 6)
+  }
+  # The conversion forms for the SEA-MES demonstration, which has reads in the SRA
+  seames_forms <- function() {
     updateTextInput(session, "nb_bioproject", value = "PRJNA1263580")
     updateSelectInput(session, "nb_mandatory_fill", selected = "not applicable")
     updateSelectizeInput(session, "nb_duplicates", choices = "replicate", selected = "replicate")
@@ -236,25 +265,13 @@ server <- function(input, output, session) {
     updateTextInput(session, "er_study", value = "PRJNA1263580")
     updateSelectInput(session, "er_instrument", selected = "NextSeq 2000")
     updateRadioButtons(session, "eo_taxa_source", selected = "mapping")
-    rv$changed <- Sys.time()
-    notify_info("The demonstration files are in Your files. Start with 1. Make a workbook, FAIRe mapper.", duration = 6)
   }
 
   output$demo_status <- renderUI({
-    if (!rv$demo) return(NULL)
+    if (!nzchar(rv$demo)) return(NULL)
     div(class = "demo-steps",
-        tags$p(tags$b("Demonstration loaded."), " To follow it through:"),
-        tags$ol(
-          tags$li(HTML("In <em>1. Make a workbook, FAIRe mapper</em>, run <em>a. Your files</em> and",
-                       "<em>b. Propose a mapping</em> on SEA-MES_10L_samples.csv.")),
-          tags$li(HTML("In <em>c. Review</em>, decide the six rows for review. The authors' answers: Accept",
-                       "Control_Neg as samp_category (Y marks the field controls), *depth as the sampling depth and",
-                       "samp_vol_we_dna_ext; Reject replicate, bioproject_accession and Location, which are kept as",
-                       "their own terms. <em>Fill in the authors' answers</em> does this for you. Save the review.")),
-          tags$li(HTML("In <em>d.</em>, find primers in methods.txt. The project values are filled in already.")),
-          tags$li(HTML("In <em>e.</em>, write the workbook, then check it (2) and convert it (3).")),
-          tags$li("FAIRe-fier passes both sheets, with a warning for each column kept as your own term (the",
-                  "checklist does not list them). Every conversion runs on the workbook as it is.")))
+        tags$p(tags$b(paste0("Demonstration loaded: ", DEMOS[[rv$demo]]$title, ".")), " To follow it through:"),
+        DEMOS[[rv$demo]]$steps())
   })
 
   # ------------------------------------------------------------ your files
@@ -555,7 +572,8 @@ server <- function(input, output, session) {
     idf <- rv$identify
     found <- if (is.null(idf)) character() else intersect(unique(idf$file[idf$kind == "sample table"]), names(rv$files))
     ch <- if (length(found)) found else file_names("\\.(csv|tsv|txt|tab|xlsx)$", kinds = "sample table")
-    default <- if (rv$demo && "SEA-MES_10L_samples.csv" %in% ch) "SEA-MES_10L_samples.csv" else guess_file("sample table")
+    demo_table <- if (nzchar(rv$demo)) DEMOS[[rv$demo]]$sample_table else ""
+    default <- if (demo_table %in% ch) demo_table else guess_file("sample table")
     note <- if (length(found) == 1) {
       help_text("This is the file ", tags$em("a. Your files"), " identified as your sample table. If that is wrong,",
                 "change its kind there.")
@@ -580,8 +598,9 @@ server <- function(input, output, session) {
   output$map_dictionary_ui <- renderUI({
     ch <- file_names()
     # a plain drop-down, so None can be chosen again after a file
+    demo_dict <- if (nzchar(rv$demo)) DEMOS[[rv$demo]]$dictionary else ""
     selectInput("map_dictionary", term_label("Data dictionary (optional)", "data_dictionary"), c("None" = "", ch),
-                selected = keep_or("map_dictionary", ""), selectize = FALSE)
+                selected = keep_or("map_dictionary", if (demo_dict %in% ch) demo_dict else ""), selectize = FALSE)
   })
 
   # An earlier review sheet (or crosswalk) of this table, to carry its decisions over. None by default: it
@@ -811,7 +830,7 @@ server <- function(input, output, session) {
             tags$label(class = "toggle", tags$input(type = "checkbox", checked = NA,
                                                     onchange = "document.getElementById('review-grid').classList.toggle('hide-carried', !this.checked)"),
                        " Show the decisions carried over"),
-          if (rv$demo && identical(rv$map_args$table_name, "SEA-MES_10L_samples.csv"))
+          if (nzchar(rv$demo) && identical(rv$map_args$table_name, DEMOS[[rv$demo]]$sample_table))
             actionButton("demo_answers", "Fill in the authors' answers", icon = icon("flask"), class = "btn-sm"),
           actionButton("save_review", "Save the review", icon = icon("floppy-disk"), class = "btn-primary btn-sm")),
       help_text(paste0("The decisions in use: ", rv$crosswalk_from, ".")),
@@ -981,14 +1000,14 @@ server <- function(input, output, session) {
     if (length(notes)) notify_warning(msg, duration = 15) else notify_info(msg)
   })
 
-  # The authors' answers for the demonstration's 10 L table (dev/faire_mapper_seames/reviewer_decisions.tsv).
-  DEMO_DECISIONS <- c(Control_Neg = "Accept", "*depth" = "Accept", samp_vol_we_dna_ext = "Accept",
-                      sample_title = "Reject", replicate = "Reject", bioproject_accession = "Reject", Location = "Reject")
+  # The authors' answers for the demonstration's sample table (DEMOS in R/demos.R).
   observeEvent(input$demo_answers, {
+    req(nzchar(rv$demo))
+    ans <- DEMOS[[rv$demo]]$decisions
     d <- review_state()
-    k <- d$input %in% names(DEMO_DECISIONS)
-    d$decision[k] <- DEMO_DECISIONS[d$input[k]]
-    d$replacement[k] <- ""
+    k <- match(d$input, ans$input)
+    d$decision[!is.na(k)] <- ans$decision[k[!is.na(k)]]
+    d$replacement[!is.na(k)] <- ans$replacement[k[!is.na(k)]]
     show_decisions(d)
     notify_info("Filled in. Look them over, then save the review.")
   })
@@ -1075,7 +1094,7 @@ server <- function(input, output, session) {
   # ------------------------------------------------------------ mapper d: methods and project values
   output$pr_texts_ui <- renderUI({
     ch <- file_names("\\.(txt|md|pdf)$", kinds = "text")
-    sel <- isolate(input$pr_texts) %||% (if (rv$demo) intersect("methods.txt", ch) else ch[vapply(ch, function(f) identical(kind_of(f), "text"), logical(1))])
+    sel <- isolate(input$pr_texts) %||% (if (nzchar(rv$demo)) intersect(DEMOS[[rv$demo]]$methods, ch) else ch[vapply(ch, function(f) identical(kind_of(f), "text"), logical(1))])
     tagList(
       selectInput("pr_texts", term_label("Your methods (text or PDF)", "methods"), ch, selected = sel, multiple = TRUE),
       if (!length(ch)) help_text("Add your methods to Your files (left), as text or a PDF."))
@@ -1132,7 +1151,7 @@ server <- function(input, output, session) {
         uiOutput("pr_chosen"),
         layout_columns(col_widths = c(6, 6),
                        textInput("pr_assay", term_label("Assay this pair was used for", "primer_assay"),
-                                 value = if (rv$demo) "Fish16S" else "", placeholder = "for example Fish16S"),
+                                 value = if (nzchar(rv$demo)) DEMOS[[rv$demo]]$primer_assay else "", placeholder = "for example Fish16S"),
                        div(class = "pt-4", actionButton("pr_add", "Add this pair to the projectMetadata", icon = icon("arrow-right"))))))
   })
   # Pairs from a methods text say how likely each is; the less likely ones are hidden unless asked for.
@@ -1216,9 +1235,10 @@ server <- function(input, output, session) {
     i <- input$primers_table_rows_selected
     if (!length(i)) return(notify_error("Choose a primer pair in the table first."))
     r <- primers_shown()[i, ]
-    assay <- trimws(input$pr_assay)
-    n <- add_pair(r, assay)
-    notify_info(sprintf("%d values added for %s.", n, if (nzchar(assay)) assay else "every assay"))
+    assays <- split_assays(input$pr_assay)
+    for (a in assays) n <- add_pair(r, a)
+    notify_info(sprintf("%d values added for %s.", n,
+                        if (all(nzchar(assays))) paste(assays, collapse = " and ") else "every assay"))
   })
 
   # The project terms of the chosen section of the checklist (PCR and primers first), or all of them
@@ -1257,7 +1277,7 @@ server <- function(input, output, session) {
   })
   observeEvent(input$pv_add, {
     if (blank(input$pv_term) || blank(input$pv_value)) return(notify_error("Choose a term and give a value.", "pv_term"))
-    rv$pv <- rbind(rv$pv, data.frame(term = input$pv_term, value = input$pv_value, assay = trimws(input$pv_assay)))
+    rv$pv <- rbind(rv$pv, data.frame(term = input$pv_term, value = input$pv_value, assay = split_assays(input$pv_assay)))
     updateTextInput(session, "pv_value", value = "")
   })
   output$pv_file_ui <- renderUI(selectInput("pv_file", NULL, c("Choose a file" = "", file_names("\\.(tsv|tab|txt|csv|xlsx)$", kinds = "project values"))))
@@ -1340,7 +1360,7 @@ server <- function(input, output, session) {
         help_text("Tick the values to keep, after checking each against its sentence (open a sentence to read all of",
                   "it). Correct a value in its box if it is nearly right. When a term has several values (two storage",
                   "temperatures, say), keep the one for your eDNA samples. Give the assay only for a value that",
-                  "holds for one assay."),
+                  "holds for some assays and not others; separate several with commas (Fish16S, MiFish)."),
         div(class = "md-list",
             if (length(rel)) tagList(div(class = "md-part md-part-reliable", paste0(
               "Found reliably (", length(rel), "): terms the tool has proposed reliably in published papers it was ",
@@ -1363,6 +1383,13 @@ server <- function(input, output, session) {
   md_pending <- reactiveVal(NULL)
   md_add_now <- function(vals) {
     vals[] <- lapply(vals, function(x) trimws(as.character(x)))
+    # one row for each assay of a value given for several
+    vals <- do.call(rbind, lapply(seq_len(nrow(vals)), function(j) {
+      a <- split_assays(vals$assay[j])
+      v <- vals[rep(j, length(a)), , drop = FALSE]
+      v$assay <- a
+      v
+    }))
     added <- !paste(vals$term, vals$assay) %in% paste(rv$pv$term, rv$pv$assay) & nzchar(vals$value)
     add_values(vals[, c("term", "value", "assay")])
     # where each value added came from, for the workbook's log: what the tool proposed and how reliable its term is
@@ -1378,7 +1405,8 @@ server <- function(input, output, session) {
     if (!length(keep)) return(notify_error("Tick the values to keep first."))
     tier <- if ("confidence" %in% names(d)) d$confidence else rep("check", nrow(d))
     assay <- vapply(keep, function(i) trimws(input[[paste0("md_assay_", i)]] %||% ""), character(1))
-    twice <- unique(d$term[keep][duplicated(paste(d$term[keep], assay))])
+    each <- unlist(lapply(seq_along(keep), function(j) paste(d$term[keep[j]], split_assays(assay[j]))))
+    twice <- unique(sub(" .*", "", each[duplicated(each)]))
     if (length(twice))
       return(notify_error(paste0("More than one value is ticked for ", paste(twice, collapse = ", "),
                                      ". Keep one value per term (or give each its assay).")))
@@ -1437,15 +1465,13 @@ server <- function(input, output, session) {
   observeEvent(input$otu_remove, rv$otu_n <- max(0, rv$otu_n - 1))
   observeEvent(input$lib_add, rv$lib_n <- rv$lib_n + 1)
   observeEvent(input$lib_remove, rv$lib_n <- max(0, rv$lib_n - 1))
+  observeEvent(input$amp_add, rv$amp_n <- rv$amp_n + 1)
+  observeEvent(input$amp_remove, rv$amp_n <- max(0, rv$amp_n - 1))
 
   demo_block <- function(kind, i) {
-    if (!rv$demo) return(list())
-    if (kind == "otu") {
-      if (i == 1) return(list(file = "4_SEA-MES_16S_ASV_level_output_with_seq.csv", assay = "Fish16S", run = "AGRF_2024-12", stage = "raw"))
-      if (i == 2) return(list(file = "5_SEA_MES_Fish16S_Tax_Feb_27_2025.csv", assay = "Fish16S", run = "AGRF_2024-12", stage = "final"))
-    }
-    if (kind == "lib" && i == 1) return(list(file = "filereport_read_run_PRJNA1263580.tsv", assay = "Fish16S", filter = "16SFish"))
-    list()
+    if (!nzchar(rv$demo)) return(list())
+    blocks <- DEMOS[[rv$demo]][[kind]]
+    if (i <= length(blocks)) blocks[[i]] else list()
   }
   bid <- function(kind, i, field) paste0(kind, rv$block_version, "_", i, "_", field)
   bval <- function(kind, i, field, default = "") {
@@ -1532,6 +1558,26 @@ server <- function(input, output, session) {
     })
   })
 
+  at_of <- function(a) if (a$assay_type == "any") "metabarcoding" else a$assay_type
+  output$amp_blocks <- renderUI({
+    n <- rv$amp_n
+    if (!n) return(help_text("No qPCR or ddPCR results. Add a table for a targeted assay."))
+    ch <- c("Choose a file" = "", file_names("\\.(csv|tsv|tab|txt|xlsx)$"))
+    lapply(seq_len(n), function(i) {
+      b <- function(field) bid("amp", i, field)
+      div(class = "block",
+          tags$h6(paste("Results table", i)),
+          selectInput(b("file"), term_label("qPCR or ddPCR results", "amp_table"), ch, selected = bval("amp", i, "file")),
+          layout_columns(
+            col_widths = c(6, 6),
+            textInput(b("assay_column"), "Column that gives the assay (optional)", bval("amp", i, "assay_column"),
+                      placeholder = "assay_name, Assay or Target"),
+            textInput(b("sheet"), "Excel sheet (optional)", bval("amp", i, "sheet"))),
+          help_text("Give the column only when it is not called assay_name, Assay or Target, or when the table has",
+                    "several such columns. Its values must be the assay names above."))
+    })
+  })
+
   do_apply <- function() {
     a <- rv$map_args
     if (is.null(a)) return(notify_error("Propose a mapping first (step b)."))
@@ -1554,6 +1600,15 @@ server <- function(input, output, session) {
       libs[[length(libs) + 1]] <- list(path = p, name = g("lib", i, "file"), sheet = g("lib", i, "sheet"),
                                        assay = g("lib", i, "assay"), filter = g("lib", i, "filter"), run = g("lib", i, "run"))
     }
+    amps <- list()
+    for (i in seq_len(rv$amp_n)) {
+      p <- fpath(g("amp", i, "file")); if (is.null(p)) next
+      amps[[length(amps) + 1]] <- list(path = p, name = g("amp", i, "file"), sheet = g("amp", i, "sheet"),
+                                       assay_column = g("amp", i, "assay_column"))
+    }
+    if (length(amps) && at_of(a) != "targeted")
+      return(notify_error(paste("qPCR and ddPCR results are for targeted assays: choose Targeted as the assay type in",
+                                "b. Propose a mapping and run it again, or remove the results tables.")))
     # The assay names used here should be the ones the project values were given for in d.
     used <- trimws(unlist(strsplit(c(input$ap_assay_name %||% "", vapply(otus, `[[`, "", "assay"),
                                      vapply(libs, `[[`, "", "assay")), ",")))
@@ -1577,12 +1632,13 @@ server <- function(input, output, session) {
     utc <- trimws(input$ap_utc_offset %||% "")
     if (nzchar(utc) && !grepl("^(Z|[+-](0[0-9]|1[0-4]):[0-5][0-9])$", utc))
       return(notify_error("Give the UTC offset as +10:00, -04:00 or Z, or leave it empty.", "ap_utc_offset"))
-    at <- if (a$assay_type == "any") "metabarcoding" else a$assay_type
+    at <- at_of(a)
     res <- with_run("Writing the FAIRe workbook", run_apply(
       sd, a$table, a$sheet, a$header_row, rv$crosswalk, at, a$sample_types, pid,
       assay_name = input$ap_assay_name, country = input$ap_country, utc_offset = utc, date_order = input$ap_date_order,
       include_review = input$ap_include_review, project_values = pv_path, req_lev = input$ap_req_lev,
-      drop_unmapped = input$ap_drop_unmapped, otu_tables = otus, library_tables = libs, table_name = a$table_name))
+      drop_unmapped = input$ap_drop_unmapped, otu_tables = otus, library_tables = libs, amp_tables = amps,
+      table_name = a$table_name))
     if (!is.null(pv_path)) file.copy(pv_path, res$dir)
     rv$res$apply <- res
     if (res$ok && file.exists(res$outputs$workbook)) {
@@ -1636,6 +1692,20 @@ server <- function(input, output, session) {
     if (is.null(wb)) return(notify_error("Choose a workbook.", "ck_wb"))
     rv$res$fairefier <- with_run("Checking the workbook", run_fairefier(sd, wb, input$ck_version))
   })
+  # Repositories refuse a dataset without every mandatory term: said on the Convert page, more strongly
+  # when the last FAIRe-fier check in this session did not pass
+  output$cv_mandatory_warning <- renderUI({
+    res <- rv$res$fairefier
+    s <- if (!is.null(res) && file.exists(res$outputs$summary %||% "")) jsonlite::fromJSON(res$outputs$summary) else NULL
+    failed <- !is.null(s) && !isTRUE(s$valid)
+    div(class = if (failed) "res-fail" else "res-warn", icon("triangle-exclamation"),
+        tags$b("Before you convert: "),
+        "GBIF, OBIS, NCBI and ENA accept a dataset only when every mandatory FAIRe term has a value, or a FAIRe",
+        "missing-value term where it is truly unknown (such as 'missing: not collected' or 'not applicable').",
+        if (failed) tags$b("The last FAIRe-fier check did not pass: fix its errors and the mandatory terms with no value,",
+                           "then check again, or the files written here are likely to be refused.")
+        else "Check the workbook with FAIRe-fier first (step 2), and fix its errors and any mandatory term with no value.")
+  })
   output$fairefier_result <- renderUI({
     res <- rv$res$fairefier
     if (is.null(res)) return(help_text("FAIRe-fier's findings appear here."))
@@ -1647,7 +1717,9 @@ server <- function(input, output, session) {
             icon(if (isTRUE(s$valid)) "circle-check" else "circle-xmark"),
             if (isTRUE(s$valid)) "The workbook passes." else tagList(tags$b("Error: "), "the workbook does not pass yet.")),
         if (isTRUE(s$valid)) help_text("A pass means the format and the required fields are right, not that the values",
-                                       "are: those rest on your review of the mapping and the method details."),
+                                       "are: those rest on your review of the mapping and the method details.")
+        else help_text("GBIF, OBIS, NCBI and ENA will not accept the dataset until it passes: every mandatory term needs",
+                       "a value, or a FAIRe missing-value term (such as 'missing: not collected') where it is truly unknown."),
         div(class = "stats", lapply(sheets, function(sh) {
           x <- s[[sh]]
           stat_tile(if (isTRUE(x$valid)) "passes" else sprintf("%d errors", x$errors),
@@ -1657,7 +1729,8 @@ server <- function(input, output, session) {
       if (file.exists(res$outputs$issues %||% "")) tagList(
         tags$h6("Errors and warnings"),
         help_text("Errors must be fixed. Warnings are worth a look: an extra term, for example, may be a field you",
-                  "meant to name differently. The workbook below (fairefier_warn_error.xlsx) highlights the cells."),
+                  "meant to name differently. fairefier_highlighted.xlsx, below, is your workbook with each problem cell",
+                  "filled yellow (warning) or red (error) and a note on the cell giving the message."),
         DTOutput("fairefier_issues")),
       result_ui(res))
   })
@@ -1688,7 +1761,8 @@ server <- function(input, output, session) {
       tc <- which(apply(pm, 2, function(x) any(x == "term_name", na.rm = TRUE)))[1]
       if (!is.na(tc)) {
         r <- which(pm[[tc]] == "assay_name")[1]
-        if (!is.na(r)) assays <- unique(na.omit(unlist(pm[r, (tc + 1):ncol(pm)])))
+        # a targeted project lists its assays in project_level as 'A | B'
+        if (!is.na(r)) assays <- unique(trimws(unlist(strsplit(na.omit(unlist(pm[r, (tc + 1):ncol(pm)])), "|", fixed = TRUE))))
       }
     }
     erm <- if ("experimentRunMetadata" %in% sheets) read_faire_sheet(wb, "experimentRunMetadata") else NULL
@@ -1710,6 +1784,7 @@ server <- function(input, output, session) {
     offer("nb_exclude", w$sample_fields)
     offer("eo_location", w$sample_fields)
     offer("er_assay_name", w$assays)
+    offer("dw_assays", w$assays)
     offer("er_seq_runs", w$runs)
     offer("qi_suffix_col", w$run_fields)
     offer("ns_runs_values", switch(input$ns_runs_by %||% "all", assay = w$assays, seq_run = w$runs, lib_id = w$libs,
@@ -1720,12 +1795,12 @@ server <- function(input, output, session) {
   output$ns_accessions_ui <- renderUI({
     ch <- file_names("\\.(tsv|tab|txt|csv)$")
     selectInput("ns_accessions", "BioSample accession table (from NCBI)", c("Choose a file" = "", ch),
-                selected = keep_or("ns_accessions", if (rv$demo) "biosample_accessions.tsv" else ""))
+                selected = keep_or("ns_accessions", if (nzchar(rv$demo)) DEMOS[[rv$demo]]$accessions else ""))
   })
   output$er_receipt_ui <- renderUI({
     ch <- file_names("\\.xml$")
     selectInput("er_receipt", "ENA sample receipt", c("Choose a file" = "", ch),
-                selected = keep_or("er_receipt", if (rv$demo) "ena_sample_receipt.xml" else ""))
+                selected = keep_or("er_receipt", if (nzchar(rv$demo)) DEMOS[[rv$demo]]$receipt else ""))
   })
 
   table_result <- function(slot, table_key) {
@@ -1908,6 +1983,37 @@ server <- function(input, output, session) {
     tagList(tags$h6("2. Darwin Core archive"), result_ui(res))
   })
 
+  # FAIRe to Darwin Core: presence and absence records, with an optional taxon table from Your files.
+  output$dw_taxa_ui <- renderUI({
+    ch <- file_names("\\.(tsv|tab|csv|txt)$")
+    demo_taxa <- if (nzchar(rv$demo)) DEMOS[[rv$demo]]$dwc$taxa %||% "" else ""
+    tagList(selectInput("dw_taxa", term_label("Taxon table (optional)", "taxon_table"), c("None" = "", ch),
+                        selected = keep_or("dw_taxa", if (demo_taxa %in% ch) demo_taxa else ""), selectize = FALSE))
+  })
+  observeEvent(input$run_dwc, {
+    wb <- need_wb(); req(wb)
+    cc <- trimws(input$dw_country_code %||% "")
+    if (nzchar(cc) && !grepl("^[A-Za-z]{2}$", cc)) return(notify_error("Give a two-letter country code, such as AU.", "dw_country_code"))
+    email <- trimws(input$dw_email %||% "")
+    if (nzchar(email) && !grepl("^[^@[:space:]]+@[^@[:space:]]+$", email)) return(notify_error("Give an email address.", "dw_email"))
+    orcid <- trimws(input$dw_orcid %||% "")
+    if (nzchar(orcid) && !grepl("^(https://orcid.org/)?[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]$", orcid))
+      return(notify_error("Give an ORCID such as 0000-0002-1825-0097, or leave it empty.", "dw_orcid"))
+    rv$res$dwc <- with_run("Writing the Darwin Core archive", run_faire2dwc(
+      sd, wb, assays = joined(input$dw_assays), absences = isTRUE(input$dw_absences), taxa = fpath(input$dw_taxa %||% ""),
+      country_code = cc, target = input$dw_target, title = input$dw_title, abstract = input$dw_abstract,
+      keywords = input$dw_keywords, licence = input$dw_licence, given_name = input$dw_given, surname = input$dw_surname,
+      organisation = input$dw_org, email = email, orcid = orcid))
+  })
+  output$dwc_result <- renderUI({
+    res <- rv$res$dwc
+    if (is.null(res)) return(help_text("The archive and its report appear here. Upload the archive (dwca.zip) to an IPT,",
+                                       "which checks it again."))
+    report <- res$outputs$report
+    tagList(result_ui(res),
+            if (res$ok && !is.null(report)) div(class = "dwc-report", markdown(paste(readLines(report, warn = FALSE), collapse = "\n"))))
+  })
+
   observeEvent(input$run_qiime, {
     wb <- need_wb(); req(wb)
     rv$res$qiime <- with_run("Writing the QIIME 2 files", run_qiime(
@@ -1952,10 +2058,10 @@ server <- function(input, output, session) {
     rv$files <- character(); rv$workbook <- NULL; rv$res <- list(); rv$runs <- list(); rv$identify <- NULL
     rv$map <- NULL; rv$map_args <- NULL; rv$profile <- NULL; rv$crosswalk <- NULL; rv$review_saved <- NULL
     rv$review_saved_d <- NULL; rv$changed <- NULL; rv$written <- NULL
-    rv$model <- NULL; rv$model_used <- character(); rv$primers <- NULL; rv$demo <- FALSE; rv$eo_mapping <- NULL
+    rv$model <- NULL; rv$model_used <- character(); rv$primers <- NULL; rv$demo <- ""; rv$eo_mapping <- NULL
     rv$pv <- data.frame(term = character(), value = character(), assay = character())
     rv$md_prov <- rv$md_prov[0, , drop = FALSE]
-    rv$otu_n <- 1; rv$lib_n <- 1; rv$block_version <- rv$block_version + 1
+    rv$otu_n <- 1; rv$lib_n <- 1; rv$amp_n <- 0; rv$block_version <- rv$block_version + 1
   })
 }
 

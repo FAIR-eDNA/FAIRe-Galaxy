@@ -34,7 +34,7 @@ from pathlib import Path
 
 import pandas as pd
 
-__version__ = '0.10.0'
+__version__ = '0.12.3'
 
 # Excel saves a drop-down that lists cells of another sheet (the review sheet's replacement terms) in a
 # newer form that openpyxl does not read. Only the cell values are read here, so the warning says
@@ -542,12 +542,25 @@ def insdc_country(v):
     return _COUNTRY_KEYS.get(s) or COUNTRY_ALIASES.get(s)
 
 
+# One end of an ISO 8601 interval: a year, year-month, date or date-time (2019-07/2019-09)
+ISO_PART_RE = re.compile(r'^\d{4}(-\d{2}(-\d{2}(T\d{2}:\d{2}(:\d{2})?(Z|[+-]\d{2}:?\d{2})?)?)?)?$')
+
+
+def iso_interval(s):
+    """True for an ISO 8601 interval of dates or date-times, start/end (2019-07/2019-09), as FAIRe's
+    eventDate allows."""
+    parts = str(s).strip().split('/')
+    return len(parts) == 2 and all(ISO_PART_RE.match(x.strip()) for x in parts) and parts[0].strip() <= parts[1].strip()
+
+
 def _date_format(v):
     if isinstance(v, (dt.datetime, dt.date, pd.Timestamp)):
         return 'Excel date'
     s = str(v).strip()
     if ISO_OFFSET_RE.match(s):
         return 'ISO date-time with offset'
+    if iso_interval(s):
+        return 'ISO interval (start/end)'
     for fmt, label in DATE_FORMATS:
         try:
             d = dt.datetime.strptime(s, fmt)
@@ -662,7 +675,8 @@ def profile_column(column, series):
     if dated and p.numeric_frac < 0.5 or (dated and len(dated) / n >= 0.9 and all(f in ('yyyymmdd', 'Excel date') for f in dated)):
         p.date_frac = round(len(dated) / n, 3)
         p.date_format = pd.Series(dated).mode().iloc[0]
-    dna = [s for s in strs if len(s) >= 6 and DNA_RE.match(s)]
+    # Sequences are written in one case; a capitalised word of IUPAC letters (Canada) is not one
+    dna = [s for s in strs if len(s) >= 6 and DNA_RE.match(s) and (s.isupper() or s.islower())]
     p.dna_frac = round(len(dna) / n, 3)
     if dna:
         p.dna_length_median = float(pd.Series([len(s) for s in dna]).median())

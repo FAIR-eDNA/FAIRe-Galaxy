@@ -1,0 +1,14 @@
+name: faire2dwc
+owner: fair-edna
+description: FAIRe eDNA presence and absence records as a Darwin Core archive for GBIF and OBIS
+long_description: |
+  Turns a FAIR eDNA (FAIRe) workbook into a Darwin Core archive (occurrence core, DNA derived
+  data extension, EML) for a GBIF or OBIS IPT: one record per sample and assay for targeted
+  detection (qPCR, ddPCR), present or absent, and one record per taxon found for metabarcoding
+  data reported as presence.
+homepage_url: https://github.com/FAIR-eDNA/FAIRe-Galaxy/tree/main/tools/faire2dwc
+remote_repository_url: https://github.com/FAIR-eDNA/FAIRe-Galaxy/tree/main/tools/faire2dwc
+type: unrestricted
+categories:
+  - Ecology
+  - Convert Formats

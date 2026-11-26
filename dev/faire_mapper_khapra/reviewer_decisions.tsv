@@ -1,0 +1,8 @@
+# A person's review of the crosswalk for the khapra beetle sample table (with the columns prepare_table.py
+# adds), as the guide describes: confirm a match, change its term, or delete the row so the column is
+# kept as a user-defined field.
+# action: confirm | delete | term:<FAIRe term> | add:<FAIRe term> (a second row for the same column)
+column	action	reason
+sample type	delete	the authors' sample types (dust, airborne, field control ...): kept as a user-defined field; Category gives samp_category
+Category	term:samp_category	sample, negative control or positive control, added by prepare_table.py
+Extraction technique	term:nucl_acid_ext_kit	the extraction kit (Biomeme M1 sample prep, DNeasy Blood and Tissue kit), not sample processing
