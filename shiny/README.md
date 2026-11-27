@@ -37,6 +37,8 @@ calls in the review coloured as in the counts above it, one link to the review s
 two, and CSV copies of the tools' tables for opening in Excel.
 Version 0.8.2 (26 November 2026) adds user-defined experimentRunMetadata fields to the blank
 template (metabarcoding only), from FAIRe-ator's new `experimentRunMetadata_user`.
+Version 0.8.3 (27 November 2026) goes with FAIRe mapper 0.13.0: the review sheet colours only the
+mapper's call, and *e. Write the workbook* no longer asks for a country or sea for geo_loc_name.
 
 ## What it covers
 

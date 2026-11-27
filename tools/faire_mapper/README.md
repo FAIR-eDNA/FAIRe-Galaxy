@@ -48,6 +48,12 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   match grey, accept and set by a reviewer green), in place of shading whole rows. Rows left to
   decide in a later round are those without a decision (new columns and those marked *check
   again*). Propose mapping's review sheet test checks the colours.
+  - *Apply mapping* no longer has the *Country or sea for geo_loc_name* setting (`--country`),
+    agreed by Miwa and Oliver: it was set once for the project but used in every sample's
+    geo_loc_name. When no column of the table gives the country, geo_loc_name keeps the table's
+    values and the log warns that they do not start with an INSDC country or sea name (the reef
+    times test checks the warning). The Shiny app, the demonstrations and the trial scripts in
+    `dev/` no longer set it. geo_loc_name from the coordinates is planned for propose mapping.
 - New in 0.12.3 (25 November 2026), from running the Shiny app's demonstrations with no values
   loaded for the whole project:
   - Find primers writes a tab inside a field (a line quoted from a table in the methods) as a space,
@@ -532,8 +538,9 @@ FAIRe needs a set form:
 - MIxS lat_lon into signed decimalLatitude and decimalLongitude, keeping the digits given;
 - a yes/no control column into samp_category (*negative control* or *sample*);
 - dates saved with a time of midnight (as Excel and pandas write dates) to dates only;
-- the parts of geo_loc_name into "Country: region, locality", with the country from the form when
-  no column gives it;
+- the parts of geo_loc_name into "Country: region, locality". When the first part is not an INSDC
+  country or sea name (no column gives the country), the values are kept as they are, with a
+  warning;
 - yes/no to 1/0; allowed values, including several joined with " | ", to the checklist's spelling;
 - a project-level term mapped from a column with one value to projectMetadata.
 

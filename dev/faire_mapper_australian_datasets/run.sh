@@ -53,7 +53,7 @@ for n in dibattista kimberley; do
   python "$tools/faire_primers.py" text $(echo ${methods[$n]} | cut -d' ' -f1) -o "$out/primers/$n.candidates.tsv"
   python "$tools/faire_mapper_apply.py" "${table[$n]}" --crosswalk "$out/with_model/$n/crosswalk.sssom.tsv" \
       --checklist "$ck" --template "$tools/checklist/FAIRe_checklist_v1.0.2_FULLtemplate.xlsx" --sample_types Water \
-      --project_id "${project[$n]}" --assay_name "${assays[$n]}" --country Australia --include_review \
+      --project_id "${project[$n]}" --assay_name "${assays[$n]}" --include_review \
       --project_values "$out/methods/$n.values.tsv" ${otu[$n]} -o "$out/faire/$n.xlsx" --log "$out/faire/$n.log"
   python "$here/../../tools/fairefier/fairefier_cli.py" "$out/faire/$n.xlsx" -o "$out/faire/fairefier_$n" \
       --checklist_dir "$here/../../tools/fairefier/checklist"

@@ -16,7 +16,7 @@ for (f in c("runner.R", "tools.R", "helpers.R", "demos.R", "ui.R"))
 
 options(shiny.maxRequestSize = 500 * 1024^2, DT.fillContainer = FALSE)
 
-APP_VERSION <- "0.8.2"
+APP_VERSION <- "0.8.3"
 
 # Colours from the logo: petrol, teal, navy, red, orange and yellow (darkened where white text sits
 # on them, to keep it readable).
@@ -239,7 +239,6 @@ server <- function(input, output, session) {
     updateTextInput(session, "fa_assay_name", value = demo$assay_name)
     updateTextInput(session, "ap_project_id", value = demo$project_id)
     updateTextInput(session, "ap_assay_name", value = demo$assay_name)
-    updateTextInput(session, "ap_country", value = demo$country)
     updateSelectInput(session, "ap_date_order", selected = demo$date_order)
     if (length(demo$dwc)) {
       w <- demo$dwc
@@ -1674,7 +1673,7 @@ server <- function(input, output, session) {
     at <- at_of(a)
     res <- with_run("Writing the FAIRe workbook", run_apply(
       sd, a$table, a$sheet, a$header_row, rv$crosswalk, at, a$sample_types, pid,
-      assay_name = input$ap_assay_name, country = input$ap_country, utc_offset = utc, date_order = input$ap_date_order,
+      assay_name = input$ap_assay_name, utc_offset = utc, date_order = input$ap_date_order,
       include_review = input$ap_include_review, project_values = pv_path, req_lev = input$ap_req_lev,
       drop_unmapped = input$ap_drop_unmapped, otu_tables = otus, library_tables = libs, amp_tables = amps,
       table_name = a$table_name))
