@@ -70,6 +70,12 @@ Agreed by Miwa Takahashi and Oliver.
 Version 0.8.9 (27 November 2026) lists the primer pairs found with a tick box and an assay name
 each, as in find method details, with one button to add the ticked pairs, where there were a box of
 exact matches with its own button and a table to click a pair in with another.
+Version 0.8.10 (27 November 2026) lays out *e. Write the workbook* as numbered steps. Step 1 shows
+what goes into the workbook (projectMetadata, sampleMetadata and the DNA results), each in a box
+saying where it comes from and whether it is ready, joining into the workbook with its sheets. Then
+come the OTU or ASV tables, with what to check in them, the run reports or library tables
+(optional), and the button to write the workbook, at the end, where it was at the top before the
+tables.
 
 ## What it covers
 
@@ -170,7 +176,14 @@ Making a workbook takes several steps, and people go back to change one. The app
   below).
 - **Writing the workbook checks the review first.** If the review has changes not yet saved, or has
   not been done, *e. Write the workbook* says so and offers to save it, or to go to the review, before
-  writing. The *Write the workbook* button is at the top of step e, with a second one at the end.
+  writing.
+- **e. Write the workbook goes in steps.** Step 1 shows what goes into the workbook, as boxes that
+  join into it: projectMetadata from *d*, sampleMetadata from your sample table as mapped in *b* and
+  reviewed in *c*, and your DNA results. Each box says where it comes from and whether it is ready
+  (green), still needs something (orange) or is optional (grey). Step 2 asks for the OTU or ASV tables
+  (or the qPCR or ddPCR results), and says what to check in them; step 3 for run reports or library
+  tables, which are optional; and the last step writes the workbook, which then comes into view on
+  the right.
 - **A workbook that is out of date says so.** If the review or the project values change after the
   workbook was written, the sidebar and the Check and Convert pages say the workbook in use is out of
   date, with a link to write it again.

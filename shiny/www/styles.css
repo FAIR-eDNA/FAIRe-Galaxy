@@ -268,3 +268,26 @@ h6.group-head { margin: 0.6rem 0 0.1rem; font-weight: 600; color: var(--faire-na
 .pr-item .likely-exact { font-size: 0.75rem; }
 /* e: the assay names, as given in d */
 .assay-names { font-weight: 600; padding: 0.3rem 0; }
+
+/* e. Write the workbook, step 1: what goes into the workbook, as boxes that join into it. Green is
+   ready, orange still needs something, grey is optional. */
+.e-flow { margin-top: 0.2rem; }
+.e-sources { display: flex; gap: 0.7rem; flex-wrap: wrap; }
+.e-src { flex: 1 1 200px; border: 1px solid #d5dede; border-top-width: 4px; border-radius: 6px; padding: 0.55rem 0.75rem;
+  background: white; font-size: 0.84rem; }
+.e-src-title { font-weight: 700; font-family: var(--bs-font-monospace); font-size: 0.86rem; color: var(--faire-navy); }
+.e-src-holds { color: #4a5a60; margin: 0.15rem 0 0.3rem; }
+.e-src-from { font-size: 0.78rem; color: #5b6770; }
+.e-src-status { margin-top: 0.35rem; font-weight: 600; display: flex; gap: 0.35rem; align-items: baseline; }
+.e-src-status > span { overflow-wrap: anywhere; min-width: 0; }
+.e-ready { border-top-color: #2e8b57; background: #f4faf5; } .e-ready .e-src-status { color: #1d6b38; }
+.e-todo { border-top-color: var(--faire-orange); background: #fff8f1; } .e-todo .e-src-status { color: #8a4b00; }
+.e-optional { border-top-color: #b0bec5; } .e-optional .e-src-status { color: #5b6770; font-weight: 400; }
+.e-join { text-align: center; color: var(--faire-teal); font-size: 0.84rem; font-weight: 600; margin: 0.5rem 0; }
+.e-workbook { max-width: 46rem; margin: 0 auto; border: 2px solid var(--faire-teal); border-radius: 8px;
+  background: #eef5f5; padding: 0.6rem 0.9rem; font-size: 0.88rem; }
+.e-wb-sheets { margin: 0.35rem 0 0.2rem; font-size: 0.8rem; color: #4a5a60; }
+.e-sheet { display: inline-block; font-family: var(--bs-font-monospace); font-size: 0.76rem; background: white;
+  border: 1px solid #b9d3d6; border-radius: 3px; padding: 0 0.35rem; margin: 0.1rem 0.25rem 0.1rem 0; }
+.e-check { background: #eef5f5; border-left: 3px solid var(--faire-teal); border-radius: 0 4px 4px 0;
+  padding: 0.45rem 0.7rem; margin: 0.2rem 0 0.8rem; font-size: 0.86rem; }

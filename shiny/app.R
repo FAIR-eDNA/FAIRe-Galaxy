@@ -16,7 +16,7 @@ for (f in c("runner.R", "tools.R", "helpers.R", "demos.R", "ui.R"))
 
 options(shiny.maxRequestSize = 500 * 1024^2, DT.fillContainer = FALSE)
 
-APP_VERSION <- "0.8.9"
+APP_VERSION <- "0.8.10"
 
 # Colours from the logo: petrol, teal, navy, red, orange and yellow (darkened where white text sits
 # on them, to keep it readable).
@@ -1460,11 +1460,17 @@ server <- function(input, output, session) {
     md_add_now(vals)
   })
   # The mandatory project terms no file covers yet (propose mapping's list), less those given here.
+  # project_id is given here (e. Write the workbook takes it from projectMetadata); the tools fill the rest
+  pv_missing_map <- reactive(if (!is.null(rv$map)) read_tsv(rv$map$outputs$missing) else NULL)
+  pv_left <- reactive({
+    m <- pv_missing_map()
+    if (is.null(m) || !nrow(m)) return(character())
+    setdiff(m$term[m$sheet == "projectMetadata"], c(rv$pv$term, "assay_name", "assay_type", "checkls_ver"))
+  })
   output$pv_missing <- renderUI({
-    m <- if (!is.null(rv$map)) read_tsv(rv$map$outputs$missing) else NULL
+    m <- pv_missing_map()
     if (is.null(m) || !nrow(m)) return(NULL)
-    # project_id is given here (e. Write the workbook takes it from projectMetadata); the tools fill the rest
-    left <- setdiff(m$term[m$sheet == "projectMetadata"], c(rv$pv$term, "assay_name", "assay_type", "checkls_ver"))
+    left <- pv_left()
     if (!length(left)) return(div(class = "res-ok", icon("circle-check"),
                                   "Every mandatory project term the mapping found missing has a value here."))
     div(class = "missing-terms",
@@ -1474,15 +1480,80 @@ server <- function(input, output, session) {
   output$pv_download <- downloadHandler("project_values.csv", function(file) write_csv(rv$pv, file))
 
   # ------------------------------------------------------------ mapper e: write the workbook
-  output$apply_inputs_summary <- renderUI({
-    if (is.null(rv$map_args)) return(div(class = "res-info", icon("circle-info"), "Propose a mapping first (step b)."))
-    help_text(tags$b("Sample table: "), rv$map_args$table_name, tags$br(), tags$b("Crosswalk: "),
-              basename(rv$crosswalk %||% ""), paste0(" (", rv$crosswalk_from, ")"), tags$br(),
-              tags$b("Project values: "), nrow(rv$pv), " (step d)", tags$br(),
-              tags$b("Project ID: "), if (nzchar(e_project_id())) e_project_id() else
-                tags$span(class = "text-danger", "not given yet: add project_id in d"), tags$br(),
-              tags$b("Assays: "), if (nzchar(e_assays())) e_assays() else "none named in d (the OTU tables name them)")
+  # Step 1 of e: what goes into the workbook, as boxes that join into it, each saying where it comes from
+  # and whether it is ready (green), still needs something (orange) or is optional (grey)
+  e_box <- function(title, holds, from, state, status) {
+    div(class = paste("e-src", paste0("e-", state)),
+        div(class = "e-src-title", title),
+        div(class = "e-src-holds", holds),
+        div(class = "e-src-from", from),
+        div(class = "e-src-status", icon(switch(state, ready = "circle-check", todo = "circle-exclamation", "circle")),
+            tags$span(status)))
+  }
+  # The files chosen in e's blocks of one kind (otu, lib or amp)
+  e_files <- function(kind, n) {
+    f <- vapply(seq_len(n), function(i) input[[bid(kind, i, "file")]] %||% "", "")
+    f[nzchar(f)]
+  }
+  output$e_flow <- renderUI({
+    targeted <- identical(input$map_assay_type, "targeted")
+    pv <- rv$pv; pid <- e_project_id(); assays <- pv_assays(); left <- pv_left()
+    proj <- e_box(
+      "projectMetadata", "Values for the whole project: the primers, methods and contacts",
+      tagList("From ", actionLink("e_goto_d", "d. Methods and project values")),
+      if (nrow(pv) && nzchar(pid) && !length(left)) "ready" else "todo",
+      if (!nrow(pv)) "No values yet" else paste(c(
+        if (nrow(pv) == 1) "1 value" else paste(nrow(pv), "values"),
+        if (nzchar(pid)) paste("project ID", pid) else "project_id not given yet",
+        if (length(assays)) paste(if (length(assays) == 1) "assay" else "assays", paste(assays, collapse = ", "))
+        else "no assay names yet",
+        if (length(left)) sprintf("%s still to give, listed in d", count_of(length(left), "mandatory term"))),
+        collapse = "; "))
+    a <- rv$map_args
+    samp <- e_box(
+      "sampleMetadata", "One row per sample: where, when and how it was collected",
+      tagList("Your sample table, mapped in ", actionLink("e_goto_b", "b"), " and reviewed in ", actionLink("e_goto_c", "c")),
+      if (is.null(a) || review_status() == "unsaved" || identical(rv$crosswalk_from, "proposed, not yet reviewed")) "todo" else "ready",
+      if (is.null(a)) "No mapping yet: propose one in b" else paste0(a$table_name, "; ",
+        if (review_status() == "unsaved") "the review has changes not saved"
+        else if (identical(rv$crosswalk_from, "proposed, not yet reviewed")) "mapping not reviewed yet"
+        else if (identical(rv$crosswalk_from, "your own crosswalk")) "mapped with your own crosswalk"
+        else "mapping reviewed"))
+    if (targeted) {
+      amps <- e_files("amp", rv$amp_n)
+      dna <- list(e_box("qPCR or ddPCR results", "One row per reaction: the sample, the assay and the Cq or copies",
+                        "From your files, in step 2 below", if (length(amps)) "ready" else "todo",
+                        if (length(amps)) paste(amps, collapse = ", ") else "None chosen yet"))
+      sheets <- c("projectMetadata", "sampleMetadata", "ampData")
+      step <- "3"
+    } else {
+      otus <- e_files("otu", rv$otu_n); libs <- e_files("lib", rv$lib_n)
+      stage <- vapply(seq_len(rv$otu_n), function(i) input[[bid("otu", i, "stage")]] %||% "final", "")
+      stage <- unique(stage[nzchar(vapply(seq_len(rv$otu_n), function(i) input[[bid("otu", i, "file")]] %||% "", ""))])
+      dna <- list(
+        e_box("OTU or ASV tables", "The DNA sequences found, their reads in each sample, and their taxonomy",
+              "From your files, in step 2 below", if (length(otus)) "ready" else "todo",
+              if (length(otus)) paste(otus, collapse = ", ") else "None chosen yet"),
+        e_box("experimentRunMetadata", "One row per sequencing library: its sequence files and checksums",
+              "From your files, in step 3 below", if (length(libs)) "ready" else "optional",
+              if (length(libs)) paste(libs, collapse = ", ") else "Optional: none given"))
+      sheets <- c("projectMetadata", "sampleMetadata", "experimentRunMetadata",
+                  if (!length(stage) || "final" %in% stage) c("otuFinal", "taxaFinal"),
+                  if ("raw" %in% stage) c("otuRaw", "taxaRaw"))
+      step <- "4"
+    }
+    div(class = "e-flow",
+        div(class = "e-sources", proj, samp, dna),
+        div(class = "e-join", icon("arrow-down"), " written together into"),
+        div(class = "e-workbook",
+            div(class = "e-wb-name", icon("file-excel"), tags$b(" Your FAIRe workbook: "),
+                if (nzchar(pid)) paste0(pid, ".xlsx") else tags$span("<project_id>.xlsx")),
+            div(class = "e-wb-sheets", "Sheets: ", lapply(sheets, function(s) tags$span(class = "e-sheet", s))),
+            div(class = "e-src-from", sprintf("Written in step %s below, and shown on the right", step))))
   })
+  observeEvent(input$e_goto_b, nav_select("mapper_steps", "b. Propose a mapping"))
+  observeEvent(input$e_goto_c, nav_select("mapper_steps", "c. Review the mapping"))
+  observeEvent(input$e_goto_d, nav_select("mapper_steps", "d. Methods and project values"))
 
   observeEvent(input$otu_add, rv$otu_n <- rv$otu_n + 1)
   observeEvent(input$otu_remove, rv$otu_n <- max(0, rv$otu_n - 1))
@@ -1732,13 +1803,14 @@ server <- function(input, output, session) {
       table_name = a$table_name))
     if (!is.null(pv_path)) file.copy(pv_path, res$dir)
     rv$res$apply <- res
+    # the button is below the tables, so the result on the right is brought into view
+    session$sendCustomMessage("scroll_to", "apply_result")
     if (res$ok && file.exists(res$outputs$workbook)) {
       set_workbook(res$outputs$workbook, "written by the FAIRe mapper")
       rv$written <- Sys.time()
     }
   }
   observeEvent(input$run_apply, apply_clicked())
-  observeEvent(input$run_apply_bottom, apply_clicked())
   apply_clicked <- function() {
     st <- review_status()
     if (st == "unsaved") {

@@ -535,15 +535,68 @@ mapper_panel <- function() {
       ),
       nav_panel(
         "e. Write the workbook",
+        card(
+          class = "step-card",
+          card_header("1. Check what goes into the workbook"),
+          step_intro("Your FAIRe workbook brings together what you have given so far with your DNA results, as",
+                     "shown below. Check each box: green is ready, and orange still needs something. Then add your",
+                     "DNA results in step 2, and write the workbook."),
+          uiOutput("e_flow")),
         layout_columns(
           col_widths = c(5, 7),
           div(
+            # Metabarcoding: OTU tables and experimentRunMetadata. Targeted: qPCR or ddPCR results. As chosen in b.
+            conditionalPanel("input.map_assay_type != 'targeted'",
             card(
-              card_header("Write the workbook"),
-              uiOutput("apply_inputs_summary"),
-              run_button("run_apply", "Write the FAIRe workbook"),
-              help_text("Check the tables below first. The project ID and the assay names come from projectMetadata",
-                        "in d. Methods and project values, and the dates and times settings from b. Propose a mapping."),
+              class = "step-card",
+              card_header("2. Add your OTU or ASV tables"),
+              help_text("An OTU or ASV table holds your DNA results: each sequence found (an OTU or ASV), its number",
+                        "of reads in each sample and, usually, its taxonomy. The workbook writes the reads to otuFinal",
+                        "and the taxonomy to taxaFinal. Give one block for each table: choose the file (added in a.",
+                        "Your files), the assay it belongs to, and whether it holds the reads you report, after",
+                        "filtering and curation (final), or the reads before (raw). If the taxonomy is in a separate",
+                        "file, choose it under More settings."),
+              div(class = "e-check", icon("magnifying-glass"), tags$b(" Check: "),
+                  "the reads are linked to your samples by name, so the sample names in each table must be those in",
+                  "your sample table. After writing, the mapper's notes on the right warn of any that are not."),
+              uiOutput("otu_blocks"),
+              div(class = "btn-row",
+                  actionButton("otu_add", "Add an OTU table", icon = icon("plus"), class = "btn-sm"),
+                  actionButton("otu_remove", "Remove the last", icon = icon("minus"), class = "btn-sm"))
+            ),
+            card(
+              class = "step-card",
+              card_header(term_label("3. Add your run reports or library tables (optional)", "library_table")),
+              help_text("experimentRunMetadata describes each sequencing library: its name, its sequence files and",
+                        "their checksums. The conversions for NCBI and ENA build their run tables from it. Give a file",
+                        "that lists your libraries, such as the run report you can download from ENA or NCBI for your",
+                        "project, or your sequencing facility's run sheet. Each row should be one library in the FAIRe",
+                        "sense: one amplicon of one sample, with its own index sequences (MIDs). Leave this step out",
+                        "if you have none."),
+              uiOutput("lib_blocks"),
+              div(class = "btn-row",
+                  actionButton("lib_add", "Add a run report or library table", icon = icon("plus"), class = "btn-sm"),
+                  actionButton("lib_remove", "Remove the last", icon = icon("minus"), class = "btn-sm"))
+            )),
+            conditionalPanel("input.map_assay_type == 'targeted'",
+            card(
+              class = "step-card",
+              card_header(term_label("2. Add your qPCR or ddPCR results", "amp_table")),
+              help_text("One row per reaction: the sample, the assay and the Cq, or the copies for ddPCR. The",
+                        "reactions go to ampData, and each sample's detected_notDetected is worked out from them",
+                        "where your sample table gives none. Give the assay names as they are in this table."),
+              uiOutput("amp_blocks"),
+              div(class = "btn-row",
+                  actionButton("amp_add", "Add a results table", icon = icon("plus"), class = "btn-sm"),
+                  actionButton("amp_remove", "Remove the last", icon = icon("minus"), class = "btn-sm"))
+            )),
+            card(
+              class = "step-card",
+              card_header(conditionalPanel("input.map_assay_type == 'targeted'", "3. Write the workbook"),
+                          conditionalPanel("input.map_assay_type != 'targeted'", "4. Write the workbook")),
+              help_text("Writes your FAIRe workbook from all of the above. It appears on the right, with the",
+                        "mapper's notes on what it wrote: read them, then check the workbook with FAIRe-fier, in",
+                        "2. Check."),
               accordion(
                 open = FALSE,
                 accordion_panel(
@@ -553,44 +606,8 @@ mapper_panel <- function() {
                   checkboxInput("ap_include_review", "Also write the matches still for review (rows with no decision)", FALSE),
                   help_text("For a first draft only. Matches for Mandatory and commonly confused terms are still left out",
                             "until you decide them, and the workbook's README and log say it is a draft."),
-                  checkboxInput("ap_drop_unmapped", "Leave out columns not matched to a FAIRe term", FALSE)))
-            ),
-            # Metabarcoding: OTU tables and experimentRunMetadata. Targeted: qPCR or ddPCR results. As chosen in b.
-            conditionalPanel("input.map_assay_type != 'targeted'",
-            card(
-              card_header("OTU or ASV tables"),
-              help_text("One block for each table. A taxonomy table is only needed when the taxonomy is not in the",
-                        "OTU table itself. Write a table as final (otuFinal and taxaFinal) if these are the reads you",
-                        "report, after filtering and curation, or as raw for the reads before."),
-              uiOutput("otu_blocks"),
-              div(class = "btn-row",
-                  actionButton("otu_add", "Add an OTU table", icon = icon("plus"), class = "btn-sm"),
-                  actionButton("otu_remove", "Remove the last", icon = icon("minus"), class = "btn-sm"))
-            ),
-            card(
-              card_header(term_label("experimentRunMetadata: run reports or library tables", "library_table")),
-              help_text("experimentRunMetadata describes each sequencing library: its name, its sequence files and",
-                        "their checksums. Give a file that lists your libraries, such as the run report you can",
-                        "download from ENA or NCBI for your project, or your sequencing facility's run sheet. Each row",
-                        "should be one library in the FAIRe sense: one amplicon of one sample, with its own index",
-                        "sequences (MIDs)."),
-              uiOutput("lib_blocks"),
-              div(class = "btn-row",
-                  actionButton("lib_add", "Add a run report or library table", icon = icon("plus"), class = "btn-sm"),
-                  actionButton("lib_remove", "Remove the last", icon = icon("minus"), class = "btn-sm"))
-            )),
-            conditionalPanel("input.map_assay_type == 'targeted'",
-            card(
-              card_header(term_label("qPCR or ddPCR results (targeted assays)", "amp_table")),
-              help_text("One row per reaction: the sample, the assay and the Cq, or the copies for ddPCR. The",
-                        "reactions go to ampData, and each sample's detected_notDetected is worked out from them",
-                        "where your sample table gives none. Give the assay names as they are in this table."),
-              uiOutput("amp_blocks"),
-              div(class = "btn-row",
-                  actionButton("amp_add", "Add a results table", icon = icon("plus"), class = "btn-sm"),
-                  actionButton("amp_remove", "Remove the last", icon = icon("minus"), class = "btn-sm"))
-            )),
-            run_button("run_apply_bottom", "Write the FAIRe workbook")
+                  checkboxInput("ap_drop_unmapped", "Leave out columns not matched to a FAIRe term", FALSE))),
+              run_button("run_apply", "Write the FAIRe workbook"))
           ),
           card(card_header("The workbook"), uiOutput("apply_result"), wb_preview_ui("apply_preview"))
         )
