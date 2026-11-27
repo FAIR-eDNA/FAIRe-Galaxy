@@ -56,7 +56,7 @@ installers, ask your IT support before the workshop.
    sequences in the authors' QIIME 2 script. Add the exact match, renaming its assay *LerayCOI*, and
    check what it adds in the table on the right: is Sabella spallanzanii the right target taxon?
    Then go on to *2. Find the other method details*: the reliable values come ticked. Check sequencing_location against the
-   notes, and add them. In step 3, add the rest by hand: the app lists the mandatory terms still to give.
+   notes, and add them. In step 3, give the mandatory terms still missing in their fields.
 6. **e. Write the workbook**: the species table is filled in as otuFinal. Write the workbook and read
    its warnings.
 7. **2. Check**: run FAIRe-fier.

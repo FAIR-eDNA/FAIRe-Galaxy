@@ -41,7 +41,7 @@ checklist_terms <- local({
       d <- readxl::read_excel(checklist(), sheet = "checklist")
       cache <<- data.frame(term = d$term_name, sheet = d$data_type, section = d$section,
                            level = d$requirement_level_code, description = d$description, example = d$example,
-                           stringsAsFactors = FALSE)
+                           type = d$term_type, vocab = d$controlled_vocabulary_options, stringsAsFactors = FALSE)
     }
     cache
   }

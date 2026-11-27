@@ -60,8 +60,8 @@ installers, ask your IT support before the workshop.
    *FuruiViiA7, FuruiFranklin* for the ND6 pair).
    Go on to *2. Find the other method details* with *Targeted*: four values come ticked. Which of them
    belong in the sample table instead? Which cycling conditions belong to which machine? Which values
-   are the LAMP assay's, and so not for these data? In step 3, add the rest by hand from the notes: the
-   app lists the mandatory terms still to give, and the steps on the Start page give each value.
+   are the LAMP assay's, and so not for these data? In step 3, give the rest from the notes in the fields
+   for the mandatory terms still to give; the steps on the Start page give each value.
 6. **e. Write the workbook**: the qPCR results are filled in. Write the workbook and read its
    warnings.
 7. **2. Check**: run FAIRe-fier on the workbook.

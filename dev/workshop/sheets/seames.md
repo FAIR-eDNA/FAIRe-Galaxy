@@ -46,7 +46,7 @@ installers, ask your IT support before the workshop.
 4. **d. Methods and project values**: the values for the whole project start empty. Open *1. Find the primers* and find primers in
    `methods.txt` and the notes: two pairs match exactly. Which one goes with these data? Add it, and
    check its ampliconSize. Go on to *2. Find the other method details*: the reliable values come ticked. Add them, then
-   look through the others. In step 3, add the rest by hand: the app lists the mandatory terms still to give.
+   look through the others. In step 3, give the mandatory terms still missing in their fields.
 5. **e. Write the workbook**: the ASV table goes in as raw, the curated taxa as final, and ENA's run
    report as the library table.
 6. **2. Check** with FAIRe-fier, then **3. Convert** to each destination.
