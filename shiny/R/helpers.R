@@ -252,6 +252,11 @@ fmt_bytes <- function(b) {
 short_log <- function(log, n = 40) {
   l <- strsplit(log, "\n", fixed = TRUE)[[1]]
   l <- l[!grepl("^\\$ |UserWarning: Data Validation|^\\s*warn\\(msg\\)$", l)]
+  # R's notes that a package was built under a newer R, which say nothing about the run, and the
+  # 'Warning messages:' heading left with nothing under it
+  l <- l[!grepl("package '[^']+' was built under R version", l)]
+  lone <- grepl("^Warning messages?:\\s*$", l) & !grepl("^\\s*([0-9]+:|In )", c(l[-1], ""))
+  l <- l[!lone]
   paste(utils::tail(l, n), collapse = "\n")
 }
 
@@ -259,6 +264,13 @@ short_log <- function(log, n = 40) {
 # The tool's own message stays in the log. Our own scripts' "ERROR:" lines are plain already, so when no
 # pattern fits, the first of them is used.
 ERROR_HELP <- list(
+  # FAIRe2MDT: no libraries of the assay and run asked for, as the workbook gives the assay no run ID
+  c("assay_name '([^']+)' and seq_run_id '[^']*'\\. The workbook has: (?:[^\\n]*; )?\\1 / NA ",
+    paste("The workbook gives no sequencing run ID (seq_run_id) for \\1, and FAIRe2MDT finds the libraries by assay",
+          "and run. Add the run ID in Make a workbook, e (the Sequencing run ID of the OTU table), write the workbook",
+          "again, then choose the run here.")),
+  c("no rows in experimentRunMetadata have assay_name .* The workbook has: ([^\\n]*)",
+    "The workbook has no libraries of that assay and sequencing run. Choose one of the pairs it has (assay / run): \\1"),
   c("can be read day first or month first",
     paste("Dates such as 06/09/2017 in your table can be read either way. In b. Map sample information, open",
           "Table-reading settings and previous mappings, set how your table writes dates (day first or month",

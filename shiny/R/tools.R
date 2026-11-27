@@ -347,9 +347,13 @@ run_mdt <- function(session_dir, workbook, assay, seq_run, otu = workbook, otu_s
             "--taxa", taxa, "--taxa_format", galaxy_ext(taxa), "--taxa_sheet", taxa_sheet,
             "--controls", controls, "--output", out, "--log", "faire2mdt_log.txt")
   s <- run_rscript(tool_path("faire2mdt", "faire2mdt_galaxy.R"), args, d)
-  if (file.exists(file.path(d, "faire2mdt_log.txt")))
-    s$output <- paste(s$output, paste(readLines(file.path(d, "faire2mdt_log.txt"), warn = FALSE), collapse = "\n"),
-                      sep = "\n")
+  # the log file, when the console did not already show its lines (as it does when the tool stops)
+  lf <- file.path(d, "faire2mdt_log.txt")
+  if (file.exists(lf)) {
+    lg <- readLines(lf, warn = FALSE)
+    if (!all(lg[nzchar(lg)] %in% strsplit(s$output %||% "", "\n", fixed = TRUE)[[1]]))
+      s$output <- paste(s$output, paste(lg, collapse = "\n"), sep = "\n")
+  }
   run_result("mdt", "FAIRe2MDT", d, list(s), list(mdt_workbook = out))
 }
 

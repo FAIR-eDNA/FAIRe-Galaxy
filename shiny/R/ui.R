@@ -673,11 +673,15 @@ convert_page <- function() {
       layout_columns(
         col_widths = c(5, 7),
         workbook_picker("cv_wb"),
-        help_text("Converting is optional: choose a destination only if you are publishing or analysing the data.",
-                  "Each tool writes the files for one destination, and you then upload them yourself. NCBI and",
-                  "ENA take the sample and run tables, GBIF takes data through its Metabarcoding Data Toolkit",
-                  "(MDT) or an IPT, OBIS through an IPT, and QIIME 2 takes the metadata and manifests. qPCR and",
-                  "ddPCR results go to GBIF and OBIS as presence and absence records.")),
+        div(class = "convert-guide",
+            help_text("Converting is optional. Open the tab for where the data is going, fill in that tab only and",
+                      "press its button; the others can be left alone. Each writes files that you then upload yourself."),
+            tags$ul(
+              tags$li(tags$b("NCBI"), "or", tags$b("ENA:"), "raw reads not yet in a public archive (sample and run tables)."),
+              tags$li(tags$b("GBIF (MDT):"), "read counts, through GBIF's Metabarcoding Data Toolkit."),
+              tags$li(tags$b("OBIS and GBIF (Darwin Core):"), "read counts, through an IPT, with names matched to WoRMS or GBIF."),
+              tags$li(tags$b("GBIF and OBIS (presence and absence):"), "qPCR and ddPCR results, or metabarcoding as presence only."),
+              tags$li(tags$b("QIIME 2:"), "metadata and manifests, to analyse the data.")))),
       uiOutput("cv_mandatory_warning")
     ),
     navset_card_tab(

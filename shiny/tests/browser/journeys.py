@@ -222,6 +222,28 @@ with sync_playwright() as p:
         go_card(pg)
         check(pg.evaluate("() => document.querySelector('.navbar .nav-link.active').textContent.includes('Convert')"),
               'passed: the card goes to the Convert page')
+        # The demonstration gives no sequencing run ID: FAIRe2MDT says so, and its button goes to the
+        # run ID of the OTU table in step e
+        pg.click('a.nav-link:has-text("GBIF (MDT)")')
+        pg.wait_for_selector('#mdt_no_run button', timeout=20000)
+        check('no run ID' in pg.inner_text('#mdt_no_run'), 'convert: FAIRe2MDT says the workbook has no run ID')
+        pg.click('#mdt_no_run button')
+        pg.wait_for_timeout(1500)
+        focus = pg.evaluate("() => document.activeElement && document.activeElement.id")
+        check(focus.endswith('_1_run') and pg.is_visible(f'#{focus}'), f'convert: the button goes to the run ID in step e ({focus})')
+        check(menus_closed(pg), 'convert: no menu left open after going to step e')
+        pg.fill(f'#{focus}', 'AGRF_2024-12')
+        pg.click('#run_apply')
+        expect_card(pg, 'Check the workbook', 'rebuilt with a run ID', 240000)
+        pg.click('a.nav-link:has-text("Convert")')
+        pg.click('a.nav-link:has-text("GBIF (MDT)")')
+        pg.wait_for_timeout(2000)
+        runs = pg.evaluate("() => { const s = document.getElementById('mdt_run'); return s ? Array.from(s.options).map(o => o.value) : []; }")
+        check(runs == ['AGRF_2024-12'] and pg.locator('#mdt_no_run').count() == 0, f'convert: FAIRe2MDT now offers the run ({runs})')
+        check('No sequencing run ID' not in pg.inner_text('#cv_mandatory_warning'), 'convert: the page no longer warns about the run ID')
+        pg.click('#run_mdt')
+        pg.wait_for_selector('#mdt_result .res-ok, #mdt_result .res-fail', timeout=240000)
+        check(pg.locator('#mdt_result .res-ok').count() > 0, 'convert: FAIRe2MDT writes the MDT workbook')
     pg.close()
 
     print('== 3. An existing FAIRe workbook')
@@ -236,6 +258,16 @@ with sync_playwright() as p:
     go_card(pg)
     check(pg.evaluate("() => document.querySelector('.navbar .nav-link.active').textContent.includes('Convert')"),
           'workbook: on to the Convert page')
+    # The eelgrass workbook gives no sequencing run ID: the page says so before FAIRe2MDT is run, and, as
+    # the workbook was added rather than written here, says to fill it in the workbook
+    pg.wait_for_timeout(1500)
+    top = pg.inner_text('#cv_mandatory_warning')
+    check('No sequencing run ID' in top and 'experimentRunMetadata' in top, 'convert: the page says the workbook has no run ID')
+    pg.click('a.nav-link:has-text("GBIF (MDT)")')
+    pg.wait_for_selector('#mdt_no_run', timeout=20000)
+    note = pg.inner_text('#mdt_no_run')
+    check('no run ID' in note and 'Fill seq_run_id' in note and pg.locator('#mdt_no_run button').count() == 0,
+          'convert: FAIRe2MDT says why it has no run to offer, and where to add one')
     pg.close()
 
     print('== 4. Targeted (khapra)')

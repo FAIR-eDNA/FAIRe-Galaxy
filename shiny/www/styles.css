@@ -105,6 +105,9 @@ details > summary { cursor: pointer; color: var(--faire-teal); font-size: 0.88re
 table.runs td { font-size: 0.85rem; vertical-align: top; }
 .out-link { display: inline-block; margin-right: 0.7rem; font-size: 0.8rem; }
 .convert-top { margin-bottom: 0.6rem; }
+.convert-guide ul { margin: 0.2rem 0 0; padding-left: 1.2rem; font-size: 0.92rem; color: var(--bs-secondary-color, #555); }
+.convert-guide li { margin-bottom: 0.1rem; }
+.convert-guide .help-text { margin-bottom: 0.2rem; }
 .run-btn, .card-body > .btn, .card-body > .shiny-download-link { align-self: flex-start; }
 table.dataTable { font-size: 0.82rem; }
 ul.lib li i { flex: 0 0 auto; }

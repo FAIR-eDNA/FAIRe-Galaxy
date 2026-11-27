@@ -111,9 +111,15 @@ matches that will be accepted by default*, a fold across the review that stays a
 a small tick box above the review hid them. Step 2 of *e* says *Check your OTU or ASV tables* when a
 table is already chosen (as a demonstration chooses its own), and *Add* when none is, and its assay,
 *Write as* and run ID fields are one to a row, so a long assay name fits its box. The Make eDNA FAIR
-logo is at the top right: the app is part of the Make eDNA FAIR initiative. It goes with FAIRe mapper
-0.13.3, whose chart of the reviewer's decisions has its legend below the bars and colours that read for
-red-green colour blindness.
+logo is at the top right: the app is part of the Make eDNA FAIR initiative. The Convert page opens with
+a short guide to which tab suits which destination, and says when the workbook has no sequencing run ID
+(seq_run_id), which FAIRe-fier lets pass but FAIRe2MDT needs: FAIRe2MDT offers only the runs of the
+assay chosen and, when there are none, says where to add one (step *e*, with a button to its run ID
+field, for a workbook written here; the workbook's own sheet otherwise) in place of an empty box that
+took any run ID and then stopped. Step *e* says what the run ID is for. The tool's messages leave out
+R's notes that a package was built under a newer R, and show FAIRe2MDT's lines once. It goes with
+FAIRe mapper 0.13.3, whose chart of the reviewer's decisions has its legend below the bars and colours
+that read for red-green colour blindness.
 
 ## What it covers
 
