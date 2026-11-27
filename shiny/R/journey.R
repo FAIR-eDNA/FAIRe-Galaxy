@@ -176,7 +176,7 @@ next_step <- function(path, st, f) {
                     paste0(if (targeted) "No qPCR or ddPCR results" else "No OTU or ASV table", " chosen yet."),
                     "The workbook joins your DNA results to the sample and project information.",
                     go_action("Go to e. DNA results and the workbook", "build"))
-              else out("build", "Build the FAIRe workbook", "Everything it needs is ready.",
+              else out("build", "Build the FAIRe workbook", "Everything it needs is ready: check the tables chosen in step 2, then build it.",
                        "It joins your sample, project and DNA information into one FAIRe workbook.",
                        go_action("Go to e. DNA results and the workbook", "build")),
       check = if (isTRUE(f$check_current) && !is.null(f$checked) && !isTRUE(f$checked$valid))

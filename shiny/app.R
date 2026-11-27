@@ -16,7 +16,7 @@ for (f in c("runner.R", "tools.R", "helpers.R", "demos.R", "journey.R", "ui.R"))
 
 options(shiny.maxRequestSize = 500 * 1024^2, DT.fillContainer = FALSE)
 
-APP_VERSION <- "0.9.0"
+APP_VERSION <- "0.9.1"
 
 # Colours from the logo: petrol, teal, navy, red, orange and yellow (darkened where white text sits
 # on them, to keep it readable).
@@ -58,7 +58,10 @@ ui <- page_navbar(
   convert_page(),
   outputs_page(),
   nav_spacer(),
-  nav_item(tags$span(class = "version", paste("version", APP_VERSION)))
+  nav_item(tags$span(class = "version", paste("version", APP_VERSION))),
+  # The app is part of the Make eDNA FAIR initiative (the logo at the left is the Southern eDNA Society's)
+  nav_item(tags$img(src = "make_edna_fair.png", alt = "Make eDNA FAIR", class = "partner-logo",
+                    title = "Part of the Make eDNA FAIR initiative"))
 )
 
 server <- function(input, output, session) {
@@ -825,14 +828,13 @@ server <- function(input, output, session) {
     }
   }
 
-  # The mapper's accepted matches and the decisions carried over are hidden at first, so that the rows to
-  # decide come first, unless there is nothing else to show
+  # The uncertain rows come first. The mapper's accepted matches, and the decisions carried over, follow in
+  # their own folds, closed at first when there is anything to decide (open when there is not).
   hide_first <- reactive({
     r <- review()$rows
     any(r$kind != "accept" & r$earlier_kind != "carried")
   })
-  # Whether a group is shown: as the person last set it, or hidden at first; the toolbar and the rows are
-  # drawn at different times, so both read this
+  # Whether a fold is open: as the person last set it, or as it starts
   show_group <- function(id) isTRUE(isolate(input[[id]]) %||% !isolate(hide_first()))
   output$review_toolbar <- renderUI({
     if (is.null(rv$map)) return(help_text("Map your sample table first (step b)."))
@@ -847,15 +849,6 @@ server <- function(input, output, session) {
           if (any(r$earlier_kind == "check" | (r$earlier_kind == "new" & r$kind == "review")))
             tags$span(class = "badge text-bg-warning", sum(r$earlier_kind == "check" | (r$earlier_kind == "new" & r$kind == "review")),
                       "new or changed to review"),
-          # the uncertain rows come first: the mapper's accepted matches and the decisions carried over start
-          # hidden (when there is anything else to show), with these to show them
-          tags$label(class = "toggle", tags$input(type = "checkbox", id = "rv_show_accepted", checked = if (show_group("rv_show_accepted")) NA,
-                                                  onchange = "document.getElementById('review-grid').classList.toggle('hide-accepted', !this.checked)"),
-                     sprintf(" Show the mapper's accepted matches (%d)", sum(r$kind == "accept"))),
-          if (any(r$earlier_kind == "carried"))
-            tags$label(class = "toggle", tags$input(type = "checkbox", id = "rv_show_carried", checked = if (show_group("rv_show_carried")) NA,
-                                                    onchange = "document.getElementById('review-grid').classList.toggle('hide-carried', !this.checked)"),
-                       sprintf(" Show the decisions carried over (%d)", sum(r$earlier_kind == "carried"))),
           if (nzchar(rv$demo) && identical(rv$map_args$table_name, DEMOS[[rv$demo]]$sample_table))
             actionButton("demo_answers", "Fill in the authors' answers", icon = icon("flask"), class = "btn-sm"),
           actionButton("save_review", "Save the review", icon = icon("floppy-disk"), class = "btn-primary btn-sm")),
@@ -879,7 +872,10 @@ server <- function(input, output, session) {
     model <- rv$model
     show <- order(r$earlier_kind == "carried", r$earlier_kind != "check",
                   match(r$kind, c("review", "no-match", "accept")), seq_len(nrow(r)))
-    rows <- lapply(show, function(i) {
+    # three groups: the rows to decide; the mapper's accepted matches; the decisions carried over
+    group <- ifelse(r$earlier_kind == "carried", "carried",
+                    ifelse(r$kind == "accept" & r$earlier_kind != "check", "accepted", "decide"))
+    row_ui <- function(i) {
       x <- r[i, ]
       has_term <- nzchar(x$proposed)
       dec_choices <- c("No decision" = "", if (has_term) c("Accept" = "Accept"), "Reject" = "Reject", "Change" = "Change")
@@ -921,14 +917,36 @@ server <- function(input, output, session) {
                                 `aria-label` = paste("Reviewer's decision for", x$input), .cssSelector = "select"),
             tags$small(class = "kept-as", "If rejected, kept as ", x$kept_as)),
         div(class = "rv-replace", rep_select))
-    })
+    }
+    # A fold of rows: a button across the grid saying what it holds, then its rows. A row whose decision is
+    # changed stays in view when the fold is closed.
+    fold <- function(id, which, show_label, hide_label, note) {
+      if (!length(which)) return(NULL)
+      open <- show_group(id)
+      tagList(
+        tags$button(type = "button", class = "rv-group-head", id = paste0(id, "_btn"),
+                    `aria-expanded` = if (open) "true" else "false", `aria-controls` = paste0(id, "_rows"),
+                    onclick = sprintf("faireToggleGroup('%s')", id),
+                    icon("chevron-right", class = "rv-chev"),
+                    tags$span(class = "rv-show", show_label), tags$span(class = "rv-hide", hide_label),
+                    tags$small(class = "rv-note", note)),
+        div(class = paste("rv-group", if (!open) "collapsed"), id = paste0(id, "_rows"), lapply(which, row_ui)))
+    }
+    n_acc <- sum(group == "accepted"); n_car <- sum(group == "carried")
     tagList(
-      div(id = "review-grid", class = paste(if (!show_group("rv_show_accepted")) "hide-accepted",
-                                            if (!show_group("rv_show_carried")) "hide-carried"),
+      div(id = "review-grid",
         div(class = "rv-row rv-head", div(term_label("Your column", "input_term"), " and some values (grey text)"),
             div("Proposed FAIRe term and score"), div(term_label("Mapper's call", "mappers_call")),
             div("Evidence: the mapper's reasoning"), div(term_label("Your decision", "decision")), div("Replacement FAIRe term")),
-        rows),
+        lapply(show[group[show] == "decide"], row_ui),
+        fold("rv_show_accepted", show[group[show] == "accepted"],
+             sprintf("Show %s that will be accepted by default", plural(n_acc, "high-confidence match", "high-confidence matches")),
+             sprintf("Hide the %s", plural(n_acc, "high-confidence match", "high-confidence matches")),
+             "The mapper is confident of these and has accepted them. Open them to see what it did; change any that is wrong."),
+        fold("rv_show_carried", show[group[show] == "carried"],
+             sprintf("Show %s carried over from your earlier review", plural(n_car, "decision")),
+             sprintf("Hide the %s carried over", plural(n_car, "decision")),
+             "As you decided them before. Change any that no longer fits.")),
       div(class = "review-foot",
           actionButton("save_review_bottom", "Save the review", icon = icon("floppy-disk"), class = "btn-primary"),
           help_text("Saves the decisions above. You can also save at the top of the review.")))
@@ -1757,6 +1775,32 @@ server <- function(input, output, session) {
     }
   })
 
+  # Step 2 of e says what to do: check the tables already chosen (as a demonstration chooses its own), or
+  # add them when none is chosen
+  output$otu_head <- renderUI({
+    task_header(if (length(e_files("otu", rv$otu_n))) "2. Check your OTU or ASV tables" else "2. Add your OTU or ASV tables",
+                "otuFinal and taxaFinal")
+  })
+  output$otu_intro <- renderUI({
+    n <- length(e_files("otu", rv$otu_n))
+    if (n) help_text(sprintf(paste(
+      "%s already chosen below. Check that %s the right file and assay, and whether it holds the reads you report",
+      "(final) or the reads before filtering (raw). Add another table if you have more."),
+      if (n == 1) "A table is" else paste(n, "tables are"), if (n == 1) "it is" else "each is"))
+    else help_text("Choose each OTU or ASV table: the file, the assay it belongs to, and whether it holds the reads",
+                   "you report (final) or the reads before filtering (raw).")
+  })
+  output$amp_head <- renderUI({
+    task_header(term_label(if (length(e_files("amp", rv$amp_n))) "2. Check your qPCR or ddPCR results"
+                           else "2. Add your qPCR or ddPCR results", "amp_table"), "ampData")
+  })
+  output$amp_intro <- renderUI({
+    n <- length(e_files("amp", rv$amp_n))
+    if (n) help_text(sprintf("%s already chosen below. Check that %s the right file. Add another if you have more.",
+                             if (n == 1) "A results table is" else paste(n, "results tables are"), if (n == 1) "it is" else "each is"))
+    else help_text("Choose the table of your qPCR or ddPCR results.")
+  })
+
   output$otu_blocks <- renderUI({
     n <- rv$otu_n
     if (!n) return(help_text("No OTU tables. The workbook will hold the sample and project metadata only."))
@@ -1768,13 +1812,14 @@ server <- function(input, output, session) {
       div(class = "block",
           tags$h6(paste("OTU table", i)),
           selectInput(b("file"), term_label("OTU or ASV table", "otu_table"), ch, selected = bval("otu", i, "file")),
-          layout_columns(
-            col_widths = c(4, 4, 4),
-            assay_input(b("assay"), term_label("Assay", "assay"),
-                        bval("otu", i, "assay", if (length(pv_assays()) == 1) pv_assays() else "")),
-            textInput(b("run"), term_label("Sequencing run ID", "run_id", run_note), bval("otu", i, "run")),
-            selectInput(b("stage"), term_label("Write as", "stage"), c("final (otuFinal, taxaFinal)" = "final", "raw (otuRaw, taxaRaw)" = "raw"),
-                        selected = bval("otu", i, "stage", "final"))),
+          # one to a row, so an assay name such as mlCOIintF_jgHCO2198 fits its box in this narrow column
+          assay_input(b("assay"), term_label("Assay", "assay"),
+                      bval("otu", i, "assay", if (length(pv_assays()) == 1) pv_assays() else "")),
+          selectInput(b("stage"), term_label("Write as", "stage"), c("final (otuFinal, taxaFinal)" = "final", "raw (otuRaw, taxaRaw)" = "raw"),
+                      selected = bval("otu", i, "stage", "final")),
+          textInput(b("run"), term_label("Sequencing run ID", "run_id", run_note), bval("otu", i, "run")),
+          help_text("FAIRe makes it mandatory, and GBIF's MDT needs it. If your data record does not",
+                    "name the run, use the sequencing facility and month, such as AGRF_2024-12."),
           accordion(open = FALSE, accordion_panel(
             "More settings for this table (optional)",
             help_text(GLOSSARY[["more_for_table"]]),
@@ -1999,8 +2044,28 @@ server <- function(input, output, session) {
         "missing-value term where it is truly unknown (such as 'missing: not collected' or 'not applicable').",
         if (failed) tags$b("The last FAIRe-fier check did not pass: fix its errors and the mandatory terms with no value,",
                            "then check again, or the files written here are likely to be refused.")
-        else "Check the workbook with FAIRe-fier first (step 2), and fix its errors and any mandatory term with no value.")
+        else "Check the workbook with FAIRe-fier first (6. Check), and fix its errors and any mandatory term with no value.",
+        no_run_note())
   })
+  # Where to add a missing run ID: in step e, for the workbook the mapper wrote here; otherwise in the
+  # workbook's own experimentRunMetadata sheet
+  run_fix_ui <- function(margin = "ms-1") {
+    if (identical(input$cv_wb, "__current__") && identical(rv$workbook_from, "written by the FAIRe mapper"))
+      tagList("Give it in", tags$em("Make a workbook, e"), "(the", tags$em("Sequencing run ID"), "of the OTU table),",
+              "write the workbook again, then come back here.",
+              tags$button(type = "button", class = paste("btn btn-sm btn-outline-primary", margin), onclick = go_js("run_id"),
+                          icon("arrow-right"), "Add the run ID in step e"))
+    else tagList("Fill seq_run_id in the workbook's experimentRunMetadata sheet, then add the workbook again.")
+  }
+  # FAIRe-fier lets an empty seq_run_id pass, but FAIRe makes it mandatory and FAIRe2MDT needs it
+  no_run_note <- function() {
+    w <- wb_info()
+    if (!w$n_no_run) return(NULL)
+    tags$p(class = "mt-2 mb-0", tags$b("No sequencing run ID: "),
+           if (w$n_no_run == w$n_libs) sprintf("seq_run_id is empty in all %d rows of experimentRunMetadata.", w$n_libs)
+           else sprintf("seq_run_id is empty in %d of the %d rows of experimentRunMetadata.", w$n_no_run, w$n_libs),
+           "FAIRe makes it mandatory, and FAIRe2MDT (GBIF) needs it to find the libraries.", run_fix_ui())
+  }
   output$fairefier_result <- renderUI({
     res <- rv$res$fairefier
     if (is.null(res)) return(help_text("FAIRe-fier's findings appear here."))
@@ -2047,7 +2112,8 @@ server <- function(input, output, session) {
   }
   wb_info <- reactive({
     wb <- cv_wb()
-    if (is.null(wb) || !file.exists(wb)) return(list(assays = character(), runs = character(), sheets = character()))
+    if (is.null(wb) || !file.exists(wb)) return(list(assays = character(), runs = character(), sheets = character(),
+                                                      run_pairs = NULL, n_libs = 0, n_no_run = 0))
     sheets <- xlsx_sheets(wb)
     assays <- character()
     pm <- tryCatch(as.data.frame(readxl::read_excel(wb, "projectMetadata", col_names = FALSE, col_types = "text")),
@@ -2063,8 +2129,14 @@ server <- function(input, output, session) {
     erm <- if ("experimentRunMetadata" %in% sheets) read_faire_sheet(wb, "experimentRunMetadata") else NULL
     runs <- if (!is.null(erm) && "seq_run_id" %in% names(erm)) unique(erm$seq_run_id[nzchar(erm$seq_run_id)]) else character()
     libs <- if (!is.null(erm) && "lib_id" %in% names(erm)) unique(erm$lib_id[nzchar(erm$lib_id)]) else character()
+    # The libraries (rows of experimentRunMetadata) as assay and run, so a converter that picks them by
+    # both (FAIRe2MDT) offers only the runs of the assay chosen, and the page can say when there are none
+    col <- function(x) if (!is.null(erm) && x %in% names(erm)) trimws(erm[[x]]) else rep("", if (is.null(erm)) 0 else nrow(erm))
+    used <- if (is.null(erm)) logical() else nzchar(col("samp_name")) | nzchar(col("lib_id"))
+    run_pairs <- data.frame(assay = col("assay_name")[used], run = col("seq_run_id")[used], stringsAsFactors = FALSE)
     smd <- if ("sampleMetadata" %in% sheets) read_faire_sheet(wb, "sampleMetadata") else NULL
     list(assays = assays[nzchar(assays)], runs = runs, libs = libs, sheets = sheets,
+         run_pairs = run_pairs, n_libs = nrow(run_pairs), n_no_run = sum(!nzchar(run_pairs$run)),
          sample_fields = if (is.null(smd)) character() else names(smd),
          run_fields = if (is.null(erm)) character() else names(erm))
   })
@@ -2154,7 +2226,28 @@ server <- function(input, output, session) {
     layout_columns(
       col_widths = c(6, 6),
       selectizeInput("mdt_assay", "Assay name", choices = info$assays, selected = info$assays[1], options = list(create = TRUE)),
-      selectizeInput("mdt_run", "Sequencing run ID", choices = info$runs, selected = info$runs[1], options = list(create = TRUE)))
+      uiOutput("mdt_run_ui"))
+  })
+  # The runs of the chosen assay in the workbook: FAIRe2MDT picks the libraries by assay and run, so a
+  # run the workbook does not give would find none
+  mdt_runs <- reactive({
+    p <- wb_info()$run_pairs
+    a <- trimws(input$mdt_assay %||% "")
+    if (is.null(p) || !nrow(p)) return(character())
+    unique(p$run[nzchar(p$run) & (p$assay == a | !nzchar(p$assay))])
+  })
+  output$mdt_run_ui <- renderUI({
+    runs <- mdt_runs()
+    if (length(runs))
+      return(selectInput("mdt_run", term_label("Sequencing run ID", "run_id"), runs,
+                         selected = if (keep_or("mdt_run", "") %in% runs) keep_or("mdt_run", "") else runs[1]))
+    if (is.null(cv_wb())) return(NULL)
+    a <- trimws(input$mdt_assay %||% "")
+    div(class = "res-warn", id = "mdt_no_run", icon("triangle-exclamation"),
+        tags$b("No sequencing run ID. "),
+        sprintf("FAIRe2MDT finds the libraries by assay and sequencing run, and this workbook gives no run ID (seq_run_id) for %s.",
+                if (nzchar(a)) a else "this assay"),
+        run_fix_ui())
   })
   table_source_ui <- function(id, label, sheets, default_sheet) {
     ch <- c(setNames(paste0("sheet:", sheets), paste("Workbook sheet:", sheets)),
@@ -2176,7 +2269,9 @@ server <- function(input, output, session) {
   }
   observeEvent(input$run_mdt, {
     wb <- need_wb(); req(wb)
-    if (blank(input$mdt_assay) || blank(input$mdt_run)) return(notify_error("Give the assay and sequencing run.", if (blank(input$mdt_assay)) "mdt_assay" else "mdt_run"))
+    if (blank(input$mdt_assay)) return(notify_error("Give the assay name.", "mdt_assay"))
+    if (!length(mdt_runs()))
+      return(notify_error("The workbook gives no sequencing run ID for this assay, and FAIRe2MDT needs one: see the note above the button."))
     o <- source_of(input$mdt_otu, wb); t <- source_of(input$mdt_taxa, wb)
     if (is.null(o) || is.null(t)) return(notify_error("Choose the OTU and taxonomy tables.", if (is.null(o)) "mdt_otu" else "mdt_taxa"))
     sheet_or <- function(x, default) if (nzchar(x$sheet)) x$sheet else default
@@ -2381,9 +2476,10 @@ server <- function(input, output, session) {
            project = go_step("d. Methods and project values"), missing = go_step("d. Methods and project values"),
            build = go_step("e. Write the workbook"), check = nav_select("main", "2. Check"),
            convert = nav_select("main", "3. Convert"), outputs = nav_select("main", "Outputs"),
+           run_id = go_step("e. Write the workbook"),
            start = nav_select("main", "Start"), faireator = nav_select("main", "FAIRe-ator: a blank template"))
-    # focus moves to the page's heading, or to the missing terms
-    session$sendCustomMessage("after_go", if (t == "missing") "pv_missing" else "")
+    # focus moves to the page's heading, or to the missing terms, or to the first OTU table's run ID
+    session$sendCustomMessage("after_go", switch(t, missing = "pv_missing", run_id = if (rv$otu_n) bid("otu", 1, "run") else "", ""))
   })
 
   # ------------------------------------------------------------ outputs

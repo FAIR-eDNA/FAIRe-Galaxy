@@ -17,6 +17,7 @@ body { background: #f7f8f8; color: var(--faire-ink); }
 .start-hero .start-logo { flex: none; height: 96px; width: auto; }
 @media (max-width: 700px) { .start-hero { flex-direction: column; align-items: flex-start; } }
 .navbar .version { font-size: 0.8rem; opacity: 0.6; }
+.navbar .partner-logo { height: 46px; width: auto; margin-left: 0.6rem; display: block; }
 .card-header { font-weight: 600; background: var(--faire-sand); }
 
 .help-text { color: #5b6770; font-size: 0.86rem; margin: 0.15rem 0 0.75rem; }
@@ -82,7 +83,17 @@ details > summary { cursor: pointer; color: var(--faire-teal); font-size: 0.88re
 .rv-row .model-says { margin-top: 0.3rem; color: #4a3f8f; font-size: 0.8rem; }
 .rv-row .shiny-input-container { margin-bottom: 0; }
 .rv-row select { font-size: 0.84rem; }
-#review-grid.hide-accepted .rv-row.call-accept:not(.rv-changed) { display: none; }
+/* c: the folds of high-confidence matches and of decisions carried over, below the rows to decide */
+.rv-group-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.5rem; width: 100%; text-align: left;
+  border: 0; border-top: 1px solid #dfe5e5; background: #eef5f2; padding: 0.6rem 0.9rem; color: #1d6b38;
+  font-weight: 600; font-size: 0.9rem; }
+.rv-group-head:hover { background: #e2efe9; }
+.rv-group-head:focus-visible { outline: 3px solid var(--faire-yellow); outline-offset: -3px; }
+.rv-group-head .rv-chev { transition: transform 0.15s; }
+.rv-group-head[aria-expanded="true"] .rv-chev { transform: rotate(90deg); }
+.rv-group-head[aria-expanded="true"] .rv-show, .rv-group-head[aria-expanded="false"] .rv-hide { display: none; }
+.rv-group-head .rv-note { flex-basis: 100%; font-weight: 400; color: #4a5a60; font-size: 0.8rem; padding-left: 1.4rem; }
+.rv-group.collapsed > .rv-row:not(.rv-changed) { display: none; }
 .review-files { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: center; margin: 0.4rem 0; }
 .review-files .shiny-input-container { margin-bottom: 0; }
 @media (max-width: 900px) { .rv-row { grid-template-columns: 1fr; } .rv-row.rv-head { display: none; } }
@@ -94,6 +105,9 @@ details > summary { cursor: pointer; color: var(--faire-teal); font-size: 0.88re
 table.runs td { font-size: 0.85rem; vertical-align: top; }
 .out-link { display: inline-block; margin-right: 0.7rem; font-size: 0.8rem; }
 .convert-top { margin-bottom: 0.6rem; }
+.convert-guide ul { margin: 0.2rem 0 0; padding-left: 1.2rem; font-size: 0.92rem; color: var(--bs-secondary-color, #555); }
+.convert-guide li { margin-bottom: 0.1rem; }
+.convert-guide .help-text { margin-bottom: 0.2rem; }
 .run-btn, .card-body > .btn, .card-body > .shiny-download-link { align-self: flex-start; }
 table.dataTable { font-size: 0.82rem; }
 ul.lib li i { flex: 0 0 auto; }
@@ -225,7 +239,7 @@ h6.group-head { margin: 0.6rem 0 0.1rem; font-weight: 600; color: var(--faire-na
 .need-forms { color: #525c62; font-style: italic; margin-left: 0.3rem; }
 
 /* rows of the review from an earlier review: carried over, to check again, or new */
-#review-grid.hide-carried .rv-row.earlier-carried:not(.rv-changed) { display: none; }
+
 .earlier { display: inline-block; margin-top: 0.25rem; border-radius: 10px; padding: 0 0.5rem; font-size: 0.72rem;
   border: 1px solid #c9d3d6; color: #3f4a50; background: #ffffff; }
 .earlier.carried { border-color: #9cc7cd; color: #155f69; background: #eaf5f6; }
@@ -374,3 +388,8 @@ h6.group-head { margin: 0.6rem 0 0.1rem; font-weight: 600; color: var(--faire-na
 /* b: the folded settings, and the line saying how they are set */
 .map-more { margin: 0.6rem 0 0.3rem; }
 .settings-summary { font-size: 0.8rem; color: #4a5a60; margin: 0.2rem 0 0.8rem; display: flex; gap: 0.4rem; align-items: baseline; }
+
+/* e: a long name chosen in a block (an assay such as mlCOIintF_jgHCO2198) stays inside its box */
+.block .selectize-input { overflow: hidden; }
+.block .selectize-input > .item { white-space: normal; overflow-wrap: anywhere; }
+.block .form-select { text-overflow: ellipsis; }

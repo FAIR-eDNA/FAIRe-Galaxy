@@ -13,7 +13,7 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 URL = 'http://127.0.0.1:8765/'
-WORKBOOK = sys.argv[1] if len(sys.argv) > 1 else '/tmp/ux_after/eelgrass_workbook.xlsx'
+WORKBOOK = sys.argv[1] if len(sys.argv) > 1 else '/tmp/ux_091/eelgrass_workbook.xlsx'
 WORDS = {'Done', 'To do', 'Optional', 'Out of date', 'Waiting', 'Not needed'}
 failures = []
 
@@ -61,9 +61,15 @@ def active_pill(pg):
     return pg.evaluate("() => { const a = document.querySelector('#mapper_steps .nav-link.active'); return a ? a.innerText.split('\\n')[0] : ''; }")
 
 
+def menus_closed(pg):
+    return not pg.evaluate("() => Array.from(document.querySelectorAll('.navbar .dropdown-menu')).some(m => m.classList.contains('show'))")
+
+
 def go_card(pg):
     pg.click('#next-step-side .ns-go')
     pg.wait_for_timeout(1500)
+    if not menus_closed(pg):
+        check(False, 'after going to a step, the Make a workbook menu is closed')
 
 
 def load_demo(pg, name):
@@ -126,7 +132,20 @@ with sync_playwright() as p:
     expect_card(pg, 'Review the uncertain matches', 'mapped')
     check('need' in pg.inner_text('#next-step-side .ns-attention'), 'mapped: the card says how many columns need a decision')
     go_card(pg)
+    check(menus_closed(pg), 'after going to a step, the Make a workbook menu is closed')
     pg.wait_for_selector('#demo_answers', state='visible', timeout=60000)
+    # the high-confidence matches are in a fold below the rows to decide, closed at first
+    fold_btn = '#rv_show_accepted_btn'
+
+    def shown():
+        return pg.evaluate("() => Array.from(document.querySelectorAll('#rv_show_accepted_rows .rv-row')).filter(e => e.offsetParent !== null).length")
+    label = pg.inner_text(fold_btn)
+    check('high-confidence match' in label and 'accepted by default' in label and shown() == 0,
+          f'review: the accepted matches are folded under "{label.splitlines()[0]}"')
+    pg.click(fold_btn)
+    pg.wait_for_timeout(400)
+    n_open = shown()
+    check(n_open > 0 and pg.get_attribute(fold_btn, 'aria-expanded') == 'true', f'review: opening the fold shows the {n_open} matches')
     pg.click('#demo_answers')
     expect_card(pg, 'Save your review', 'decisions changed, not saved', 30000)
     check('To do' in pg.inner_text('#mapper_steps .nav-link.active'), 'unsaved: step c says To do')
@@ -142,6 +161,8 @@ with sync_playwright() as p:
     check(card(pg) == 'Save your review', 'moving about does not lose the unsaved state')
     pg.click('#save_review')
     expect_card(pg, 'Find the primers and method details', 'review saved', 30000)
+    pg.wait_for_timeout(1000)
+    check(shown() == n_open, 'review: the fold stays open after saving')
     go_card(pg)
     pg.click('#methods_steps > .accordion-item[data-value=primers] .accordion-button')
     pg.wait_for_timeout(800)
@@ -201,6 +222,28 @@ with sync_playwright() as p:
         go_card(pg)
         check(pg.evaluate("() => document.querySelector('.navbar .nav-link.active').textContent.includes('Convert')"),
               'passed: the card goes to the Convert page')
+        # The demonstration gives no sequencing run ID: FAIRe2MDT says so, and its button goes to the
+        # run ID of the OTU table in step e
+        pg.click('a.nav-link:has-text("GBIF (MDT)")')
+        pg.wait_for_selector('#mdt_no_run button', timeout=20000)
+        check('no run ID' in pg.inner_text('#mdt_no_run'), 'convert: FAIRe2MDT says the workbook has no run ID')
+        pg.click('#mdt_no_run button')
+        pg.wait_for_timeout(1500)
+        focus = pg.evaluate("() => document.activeElement && document.activeElement.id")
+        check(focus.endswith('_1_run') and pg.is_visible(f'#{focus}'), f'convert: the button goes to the run ID in step e ({focus})')
+        check(menus_closed(pg), 'convert: no menu left open after going to step e')
+        pg.fill(f'#{focus}', 'AGRF_2024-12')
+        pg.click('#run_apply')
+        expect_card(pg, 'Check the workbook', 'rebuilt with a run ID', 240000)
+        pg.click('a.nav-link:has-text("Convert")')
+        pg.click('a.nav-link:has-text("GBIF (MDT)")')
+        pg.wait_for_timeout(2000)
+        runs = pg.evaluate("() => { const s = document.getElementById('mdt_run'); return s ? Array.from(s.options).map(o => o.value) : []; }")
+        check(runs == ['AGRF_2024-12'] and pg.locator('#mdt_no_run').count() == 0, f'convert: FAIRe2MDT now offers the run ({runs})')
+        check('No sequencing run ID' not in pg.inner_text('#cv_mandatory_warning'), 'convert: the page no longer warns about the run ID')
+        pg.click('#run_mdt')
+        pg.wait_for_selector('#mdt_result .res-ok, #mdt_result .res-fail', timeout=240000)
+        check(pg.locator('#mdt_result .res-ok').count() > 0, 'convert: FAIRe2MDT writes the MDT workbook')
     pg.close()
 
     print('== 3. An existing FAIRe workbook')
@@ -215,6 +258,16 @@ with sync_playwright() as p:
     go_card(pg)
     check(pg.evaluate("() => document.querySelector('.navbar .nav-link.active').textContent.includes('Convert')"),
           'workbook: on to the Convert page')
+    # The eelgrass workbook gives no sequencing run ID: the page says so before FAIRe2MDT is run, and, as
+    # the workbook was added rather than written here, says to fill it in the workbook
+    pg.wait_for_timeout(1500)
+    top = pg.inner_text('#cv_mandatory_warning')
+    check('No sequencing run ID' in top and 'experimentRunMetadata' in top, 'convert: the page says the workbook has no run ID')
+    pg.click('a.nav-link:has-text("GBIF (MDT)")')
+    pg.wait_for_selector('#mdt_no_run', timeout=20000)
+    note = pg.inner_text('#mdt_no_run')
+    check('no run ID' in note and 'Fill seq_run_id' in note and pg.locator('#mdt_no_run button').count() == 0,
+          'convert: FAIRe2MDT says why it has no run to offer, and where to add one')
     pg.close()
 
     print('== 4. Targeted (khapra)')
@@ -256,6 +309,7 @@ with sync_playwright() as p:
     pg.keyboard.press('Enter')
     pg.wait_for_timeout(1500)
     check(active_pill(pg).startswith('b.'), 'keyboard: Enter on a journey step goes there')
+    check(menus_closed(pg), 'keyboard: the Make a workbook menu is closed after going to a step')
     summ = pg.locator('summary:visible', has_text='More about this step').first
     summ.focus()
     pg.keyboard.press('Enter')

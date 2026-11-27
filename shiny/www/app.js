@@ -189,3 +189,31 @@ document.addEventListener('change', function (e) {
   var row = e.target && e.target.closest && e.target.closest('#review-grid .rv-row');
   if (row && e.target.tagName === 'SELECT') row.classList.add('rv-changed');
 });
+
+// Bootstrap 5.2 and later open a navbar menu when a tab inside it is shown, which leaves Make a workbook
+// dropped down over the page each time the Next step box, the journey bar or a Start page link opens a
+// FAIRe mapper step. The menu is for choosing; once a tab is shown, any open navbar menu is closed.
+(function () {
+  function closeMenus() {
+    document.querySelectorAll('.navbar .dropdown-menu.show').forEach(function (m) {
+      var outer = m.closest('.dropdown');
+      var toggle = outer && outer.querySelector('.dropdown-toggle');
+      m.classList.remove('show');
+      if (toggle) { toggle.classList.remove('show'); toggle.setAttribute('aria-expanded', 'false'); }
+      if (outer) outer.removeAttribute('aria-expanded');
+    });
+  }
+  document.addEventListener('shown.bs.tab', function () { setTimeout(closeMenus, 0); });
+  if (window.jQuery) jQuery(document).on('shown.bs.tab', function () { setTimeout(closeMenus, 0); });
+})();
+
+// c. Review: opens or closes a fold of rows (the high-confidence matches, or the decisions carried over),
+// and tells the app, so the fold stays as it is when the review is drawn again
+window.faireToggleGroup = function (id) {
+  var btn = document.getElementById(id + '_btn'), rows = document.getElementById(id + '_rows');
+  if (!btn || !rows) return;
+  var open = btn.getAttribute('aria-expanded') !== 'true';
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  rows.classList.toggle('collapsed', !open);
+  if (window.Shiny && Shiny.setInputValue) Shiny.setInputValue(id, open);
+};

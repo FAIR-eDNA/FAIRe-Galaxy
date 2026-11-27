@@ -43,6 +43,11 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   independent answer keys (`dev/faire_mapper_real_datasets/`, `dev/faire_mapper_australian_datasets/`,
   summarised below), and end to end on CSIRO's SEA-MES data (`dev/faire_mapper_seames/`). Not yet
   tried on datasets from Australian labs that already have a FAIRe version.
+- New in 0.13.3 (28 November 2026): the chart of the reviewer's decisions, in the workbook's README
+  sheet, has its legend below the bars rather than over them, the value axis at the bottom and no title
+  of its own (the heading above names it), and colours that read for red-green colour blindness:
+  blue for accepted, reddish purple for changed, orange for rejected and grey for not decided, with a
+  white edge between the stacked segments.
 - New in 0.13.2 (27 November 2026): assay names and the project ID follow one rule across the tools,
   the FAIRe tools app and the AI assistant: letters, digits, _ and - only, as FAIRe asks (no spaces or
   special characters). *Apply mapping* now checks the assay names it is given, and stops when the name
