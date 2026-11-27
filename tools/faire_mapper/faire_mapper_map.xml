@@ -385,7 +385,9 @@ python '$__tool_directory__/faire_mapper.py' map
         <!-- The review sheet: one row per column with the proposed term, score, reasoning, a decision
              drop-down (Accept, Reject or Change), the mapper's call, a replacement drop-down (best
              candidates first, a blank line, then every FAIRe term), and a FAIRe match for review whose
-             column has a MIxS term too, which comes first in the replacement list -->
+             column has a MIxS term too, which comes first in the replacement list. The mapper's call is
+             coloured as in the Shiny app (review yellow, no match grey, accept green), and rows are not
+             shaded -->
         <test expect_num_outputs="7">
             <param name="table" value="review_table.csv"/>
             <param name="sample_types" value="Water"/>
@@ -409,6 +411,12 @@ python '$__tool_directory__/faire_mapper.py' map
                     </has_archive_member>
                     <has_archive_member path="xl/worksheets/sheet2.xml">
                         <has_text text="phosphate (MIxS term)"/>
+                    </has_archive_member>
+                    <has_archive_member path="xl/styles.xml">
+                        <has_text text="F0CC3C"/>
+                        <has_text text="5B6770"/>
+                        <has_text text="1D7F74"/>
+                        <not_has_text text="FBEFD9"/>
                     </has_archive_member>
                     <!-- named as the user sees it in Galaxy, not by its file name (dataset_N.dat) -->
                     <has_archive_member path="xl/worksheets/sheet4.xml">
@@ -580,8 +588,8 @@ value. Untick *Suggest MIxS or Darwin Core terms* to leave them out.
   FAIRe term fits), its score, the mapper's call (accept, review or no match), the mapper's
   reasoning, the reviewer's decision (Accept, Reject or Change, from a drop-down), the replacement
   FAIRe term (a drop-down with the column's best candidates first, a blank line, then every FAIRe
-  term) and what the column is kept as if the match is rejected (its own term). Rows to review are
-  shaded. Hover over a proposed term to see its definition. It also has the additional checks to make and how to review. Give it to
+  term) and what the column is kept as if the match is rejected (its own term). The mapper's call
+  is coloured: yellow for review, grey for no match, green for accept. Hover over a proposed term to see its definition. It also has the additional checks to make and how to review. Give it to
   **FAIRe mapper: apply mapping** as the crosswalk once the decisions are made.
 - **crosswalk (SSSOM)**: the proposed and confirmed matches in the
   `SSSOM <https://mapping-commons.github.io/sssom/>`_ format, which you can reuse with later

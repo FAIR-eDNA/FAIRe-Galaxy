@@ -491,7 +491,7 @@ November 2026.)
   function for each Galaxy tool, building its command line; `R/runner.R` finds Python, R and the tools and runs a
   command; `R/helpers.R` reads the review sheet and the other files the tools exchange; and
   `python/fill_review_sheet.py` writes the decisions from the review screen into a copy of the review
-  sheet, leaving the rest of it (the drop-downs, the shading and the other sheets) as it was.
+  sheet, leaving the rest of it (the drop-downs, the colours and the other sheets) as it was.
 - `setup.R` installs what the app needs, `run_app.R` starts it, and `start.R` is the one-line start:
   it downloads the repository (or a newer version of it) into one folder, runs setup.R when needed,
   then runs run_app.R. It checks for a newer version by reading the commit at the tip of `main` from

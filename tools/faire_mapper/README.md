@@ -43,6 +43,11 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   independent answer keys (`dev/faire_mapper_real_datasets/`, `dev/faire_mapper_australian_datasets/`,
   summarised below), and end to end on CSIRO's SEA-MES data (`dev/faire_mapper_seames/`). Not yet
   tried on datasets from Australian labs that already have a FAIRe version.
+- New in 0.13.0 (27 November 2026), from Miwa Takahashi's check of the Shiny app: the review
+  sheet colours only the *Mapper's call* column, as the Shiny app's review does (review yellow, no
+  match grey, accept and set by a reviewer green), in place of shading whole rows. Rows left to
+  decide in a later round are those without a decision (new columns and those marked *check
+  again*). Propose mapping's review sheet test checks the colours.
 - New in 0.12.3 (25 November 2026), from running the Shiny app's demonstrations with no values
   loaded for the whole project:
   - Find primers writes a tab inside a field (a line quoted from a table in the methods) as a space,
@@ -450,12 +455,12 @@ carried over, column by column (`faire_mapper_review.carry_over`):
   reviewer's own choice;
 - an **acceptance** is kept when the mapper still proposes the same term (the same terms, and the
   same part of a combined value). When it proposes another term, the row is left without a decision
-  and shaded, marked *check again*, as the reviewer accepted something else;
+  and marked *check again*, as the reviewer accepted something else;
 - a column that is **new**, or had no decision before, gets the mapper's call as usual.
 
 The new review sheet has the carried decisions filled in, and a last column, *Earlier review*, that
-says what happened to each row. Carried rows are not shaded, so the shaded rows are what is left to
-look at. The crosswalk has the carried decisions applied (rejected columns left out, accepted ones
+says what happened to each row. The rows without a decision (new columns, and those marked *check
+again*) are what is left to look at. The crosswalk has the carried decisions applied (rejected columns left out, accepted ones
 as `skos:exactMatch`, changed ones as one `semapv:ManualMappingCuration` row), and its description
 names the earlier review. The log and the summary (`earlier_review`) list the decisions carried
 over, the new columns, those to check again, those left to review and any columns of the earlier
