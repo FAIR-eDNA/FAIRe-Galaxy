@@ -43,6 +43,11 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   independent answer keys (`dev/faire_mapper_real_datasets/`, `dev/faire_mapper_australian_datasets/`,
   summarised below), and end to end on CSIRO's SEA-MES data (`dev/faire_mapper_seames/`). Not yet
   tried on datasets from Australian labs that already have a FAIRe version.
+- New in 0.13.1 (27 November 2026): *find method details* states each term's record in plain words:
+  "Accuracy assessment for this term is based on correctly finding it 16 times in 17 different
+  manuscripts inspected. In 1 more, it gave a value where a person reading the manuscript found none."
+  It said "agreed in 16 of 17 papers tested; proposed in 1 more where an independent reading found
+  none".
 - New in 0.13.0 (27 November 2026), from Miwa Takahashi's check of the Shiny app: the review
   sheet colours only the *Mapper's call* column, as the Shiny app's review does (review yellow, no
   match grey, accept and set by a reviewer green), in place of shading whole rows. Rows left to
@@ -824,8 +829,8 @@ tool did not often propose a value the reading did not find; descriptions, terms
 and values that fail a plausibility check (cycles or annealing temperature that differ from the PCR
 programme, a number out of range, an instrument of another platform, more water extracted than
 collected) are always to check. The review sheet and the Shiny app list the reliable values first and
-the others as values to check, Mandatory terms first within each; in the app, *Tick all* ticks only the
-reliable values. Apply mapping uses only accepted or given values, logs which values came from this
+the others as values to check, Mandatory terms first within each; in the app, only the reliable values
+come ticked. Apply mapping uses only accepted or given values, logs which values came from this
 tool and whether a person accepted or changed them, and runs the same plausibility checks on the values
 it writes. The counts in `reliability.tsv` come from values checked by a person in 41 papers (all the
 held-out papers' values, the development papers' values that Copilot did not confirm, and a blind review of

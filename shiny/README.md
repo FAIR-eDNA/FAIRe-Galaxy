@@ -41,6 +41,11 @@ Version 0.8.3 (27 November 2026) folds the instructions for choosing primer pair
 under *Instructions*, closed until opened.
 Version 0.8.4 (27 November 2026) goes with FAIRe mapper 0.13.0: the review sheet colours only the
 mapper's call, and *e. Write the workbook* no longer asks for a country or sea for geo_loc_name.
+Version 0.8.5 (27 November 2026) lays out *d. Methods and project values* as three numbered steps in
+order (find the primers, find the other method details, then check projectMetadata and add what is
+missing), each pointing to the next, where the primers and the other method details were side by side
+as tabs. In find method details, the values the tool usually finds with high accuracy come ticked, the two
+groups have plainer headings, and each value's record in testing is stated in plain words.
 
 ## What it covers
 
@@ -80,10 +85,12 @@ A few things that help along the way:
   offers only the files found to be sample tables. The other files need no mapping: the methods go in
   at *d. Methods and project values*, and the OTU, taxonomy and library tables at *e. Write the
   workbook*.
-- **Methods** can be text or a PDF. *d. Methods and project values* reads them for primers (the
-  *Primers* tab) and for the other method details, such as PCR conditions and the sequencing platform
-  (the *Other method details* tab), and lists the mandatory project terms still to give. A PDF of
-  scanned pages has no text to read: save it as text first.
+- **Methods** can be text or a PDF. *d. Methods and project values* takes three steps, in order:
+  *1. Find the primers*, *2. Find the other method details* (such as PCR conditions and the
+  sequencing platform), and *3. Check projectMetadata and add what is missing*, on the right, which
+  lists the mandatory project terms still to give. The primers come first because the assay you give
+  each pair is used in step 2. Each step ends by pointing to the next. A PDF of scanned pages has no
+  text to read: save it as text first.
 - **Primers** are checked against a reference table of about 550 published primer pairs, most from
   Takahashi et al. (2023) and Wilderlab's assays. This keeps primer names as they are in the
   literature and catches typos in sequences. If your primers are not in it, add your own table.
@@ -95,13 +102,13 @@ A few things that help along the way:
   table, which you can change. *e. Write the workbook* then
   offers the same assay names for the OTU tables and libraries, and stops with a message if a name
   there differs from the ones given in *d*.
-- **Other method details**: in its own tab beside the primers, *Find method details* reads the
+- **Other method details**: in step 2, after the primers, *Find method details* reads the
   same methods for the filters, extraction kit, PCR conditions, sequencing kit, software, settings
   and reference databases, and lists each value it finds with a snippet of text from the source, its
-  FAIRe requirement level and its term's record in papers tested. Values for terms found reliably come
-  first and the rest are listed as values to check; *Tick all reliable values* ticks only the
-  first group, so each of the others takes its own tick. Tick the ones to keep (correcting any
-  that are nearly right) and add them to projectMetadata. If any ticked values
+  FAIRe requirement level and its term's record in papers tested. Values for terms the tool usually
+  finds with high accuracy come first, ticked; the rest are listed under *Please check*, unticked, so
+  each takes its own tick. Untick any of the first that do not fit your study, tick the others to keep
+  (correcting any that are nearly right), and add them to projectMetadata. If any ticked values
   are values to check, the app lists them with their sentences and asks you to confirm that you
   have checked them before it adds them. Keep one value per term: if two are ticked for the same
   term (two sample volumes, say), the app asks you to choose one. Choose *Targeted (qPCR, ddPCR)*
