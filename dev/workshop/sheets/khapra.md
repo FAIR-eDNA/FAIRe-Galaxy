@@ -55,7 +55,7 @@ installers, ask your IT support before the workshop.
 
    *Fill in the authors' answers* does this for you.
 5. **d. Methods and project values**: the values for the whole project start empty, and each
-   assay needs its own. In *1. Find the primers*, run *Find primers* on the README and the notes, and add each pair for the
+   assay needs its own. Open *1. Find the primers*, run *Find primers* on the README and the notes, and add each pair for the
    two assays that used it (type *OlsonViiA7, OlsonFranklin*, then *FuruiViiA7, FuruiFranklin*).
    Go on to *2. Find the other method details* with *Targeted*: four values come ticked. Which of them
    belong in the sample table instead? Which cycling conditions belong to which machine? Which values

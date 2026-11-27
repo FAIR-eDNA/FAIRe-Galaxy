@@ -234,7 +234,21 @@ h6.group-head { margin: 0.6rem 0 0.1rem; font-weight: 600; color: var(--faire-na
 .rv-status { display: flex; flex-direction: column; align-items: flex-start; }
 
 /* d. Methods and project values: the numbered steps, and the line pointing to the next one */
-.method-steps .accordion-button { font-weight: 600; }
+/* d's three steps: separate cards with coloured headers, so that step 2 stands out below step 1 when
+   step 1 is open; child selectors keep the colours off any accordion inside a step */
+.method-steps { --bs-accordion-border-width: 0; margin-top: 0.5rem; }
+.method-steps > .accordion-item { border: 1px solid #b9d3d6; border-radius: 8px; overflow: hidden;
+  margin-bottom: 0.8rem; background: white; }
+.method-steps > .accordion-item > .accordion-header .accordion-button,
+.method-steps > .accordion-item > .accordion-header .accordion-button:not(.collapsed) {
+  background: var(--faire-teal); color: white; font-weight: 600; font-size: 1.05rem; box-shadow: none;
+  border-radius: 0; }
+.method-steps > .accordion-item > .accordion-header .accordion-button:hover { background: #145a64; }
+.method-steps > .accordion-item > .accordion-header .accordion-button::after { filter: brightness(0) invert(1); }
+.method-steps > .accordion-item > .accordion-header .accordion-button:focus-visible {
+  outline: 3px solid var(--faire-yellow); outline-offset: -3px; }
+.step-card > .card-header { background: var(--faire-teal); color: white; font-size: 1.05rem; }
+.step-card > .card-header .term-help { color: #d7ebec; }
 .next-step { margin: 0.8rem 0 0.2rem; font-size: 0.9rem; }
 
 /* d, find primers: the exact matches, each with the assay name it is added under */
