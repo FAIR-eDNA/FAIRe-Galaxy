@@ -478,8 +478,7 @@ mapper_panel <- function() {
                 help_text("Reads your methods for the filtration, extraction, PCR, sequencing and bioinformatics, and",
                           "proposes a FAIRe value for each term it recognises, with a snippet of text from the source so",
                           "that you can check it."),
-                radioButtons("md_assay_type", term_label("Assay type", "assay_type"),
-                             c("Metabarcoding" = "metabarcoding", "Targeted (qPCR, ddPCR)" = "targeted"), inline = TRUE),
+                uiOutput("md_assay_type_ui"),
                 run_button("run_details", "Find method details"),
                 uiOutput("details_result"),
                 tags$p(class = "next-step", "When you have added the values that fit, go on to step 3, on the right.")

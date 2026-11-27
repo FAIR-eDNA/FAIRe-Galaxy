@@ -1350,15 +1350,20 @@ server <- function(input, output, session) {
     if (!length(texts)) return(notify_error("Choose your methods (text or PDF) at the top of this step.", "pr_texts"))
     assays <- unique(rv$pv$assay[nzchar(rv$pv$assay)])
     res <- with_run("Reading the methods", run_method_details(sd, texts, input$pr_texts, paste(assays, collapse = ","),
-                                                              input$md_assay_type %||% "metabarcoding"))
+                                                              md_assay_type()))
     rv$res$details <- res
     rv$details <- if (res$ok) read_tsv(res$outputs$proposals) else NULL
   })
-  # The assay type chosen for the mapping (b. Propose a mapping) is the default here too
-  observeEvent(input$map_assay_type, {
-    if (input$map_assay_type %in% c("metabarcoding", "targeted"))
-      updateRadioButtons(session, "md_assay_type", selected = input$map_assay_type)
-  }, ignoreInit = TRUE)
+  # Method details are read with the terms of the assay type chosen in b. Propose a mapping (the one the
+  # mapping was run with, or the one on b's form before then); it is shown here, not asked again.
+  md_assay_type <- reactive({
+    t <- if (!is.null(rv$map_args)) at_of(rv$map_args) else input$map_assay_type %||% "metabarcoding"
+    if (t %in% c("metabarcoding", "targeted")) t else "metabarcoding"
+  })
+  output$md_assay_type_ui <- renderUI(help_text(
+    tags$b("Assay type: "), if (md_assay_type() == "targeted") "Targeted (qPCR, ddPCR)" else "Metabarcoding",
+    inline(", as chosen in ", actionLink("goto_map_type", "b. Propose a mapping"), ".")))
+  observeEvent(input$goto_map_type, nav_select("mapper_steps", "b. Propose a mapping"))
   output$details_result <- renderUI({
     res <- rv$res$details
     if (is.null(res)) return(NULL)

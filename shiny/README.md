@@ -59,7 +59,8 @@ mapping*, beside the sample table they describe, and the optional settings for w
 into the write card. The library tables are now *experimentRunMetadata: run reports or library
 tables*, with notes in full sentences and an Excel sheet drop-down. The cards follow the assay type
 chosen in *b*: OTU tables and experimentRunMetadata for metabarcoding, qPCR or ddPCR results for
-targeted assays.
+targeted assays. *2. Find the other method details* in *d* shows the assay type chosen in *b*, where it
+asked for it again.
 
 ## What it covers
 
