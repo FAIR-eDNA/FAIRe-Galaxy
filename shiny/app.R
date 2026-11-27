@@ -16,7 +16,7 @@ for (f in c("runner.R", "tools.R", "helpers.R", "demos.R", "ui.R"))
 
 options(shiny.maxRequestSize = 500 * 1024^2, DT.fillContainer = FALSE)
 
-APP_VERSION <- "0.8.3"
+APP_VERSION <- "0.8.4"
 
 # Colours from the logo: petrol, teal, navy, red, orange and yellow (darkened where white text sits
 # on them, to keep it readable).
@@ -1125,7 +1125,8 @@ server <- function(input, output, session) {
     tagList(
       result_ui(res, show_files = TRUE),
       if (!is.null(rv$primers) && nrow(rv$primers)) tagList(
-        div(class = "how-to",
+        # The instructions fold away under one line, open when wanted
+        tags$details(tags$summary("Instructions"), div(class = "how-to",
             tags$b("Choose the primer pairs you used, one for each assay"),
             tags$ol(
               tags$li("Each row is a published primer pair that matches your methods (or the names you typed).",
@@ -1143,7 +1144,7 @@ server <- function(input, output, session) {
                       "references go into the table on the right: check them there, and change any that do not fit",
                       "your study."),
               tags$li("Do the same for each of your other assays (say COI as well as 16S). The assay names you give",
-                      "here are filled in for you in e. Write the workbook, so they stay the same."))),
+                      "here are filled in for you in e. Write the workbook, so they stay the same.")))),
         uiOutput("pr_exact_ui"),
         uiOutput("pr_show_all_ui"),
         DTOutput("primers_table"),
