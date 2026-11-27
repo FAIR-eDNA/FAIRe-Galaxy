@@ -76,6 +76,10 @@ saying where it comes from and whether it is ready, joining into the workbook wi
 come the OTU or ASV tables, with what to check in them, the run reports or library tables
 (optional), and the button to write the workbook, at the end, where it was at the top before the
 tables.
+Version 0.8.11 (27 November 2026) gives each mandatory project term still missing in *d* its own field,
+in step 3, with its description, its example and, where FAIRe has one, a list to choose from, and one
+button to add them, where before they were listed for you to find under *Add a value by hand*. A value
+from outside a term's list is written as "other: ...", as FAIRe asks.
 
 ## What it covers
 
@@ -117,8 +121,10 @@ A few things that help along the way:
   workbook*.
 - **Methods** can be text or a PDF. *d. Methods and project values* takes three steps, in order:
   *1. Find the primers*, *2. Find the other method details* (such as PCR conditions and the
-  sequencing platform), and *3. Check projectMetadata and add what is missing*, on the right, which
-  lists the mandatory project terms still to give. The primers come first because the assay you give
+  sequencing platform), and *3. Check projectMetadata and add what is missing*, on the right. Step 3
+  lists the mandatory project terms still to give, each with its description and a field to give it
+  in (a list to choose from where FAIRe has one), and *Add these values to the projectMetadata* adds
+  those filled in; *Add a value by hand*, below, gives any other term. The primers come first because the assay you give
   each pair is used in step 2. Steps 1 and 2 start closed, as cards with coloured headers: open each in
   turn. Each step ends by pointing to the next. A PDF of scanned pages has no
   text to read: save it as text first.

@@ -291,3 +291,14 @@ h6.group-head { margin: 0.6rem 0 0.1rem; font-weight: 600; color: var(--faire-na
   border: 1px solid #b9d3d6; border-radius: 3px; padding: 0 0.35rem; margin: 0.1rem 0.25rem 0.1rem 0; }
 .e-check { background: #eef5f5; border-left: 3px solid var(--faire-teal); border-radius: 0 4px 4px 0;
   padding: 0.45rem 0.7rem; margin: 0.2rem 0 0.8rem; font-size: 0.86rem; }
+
+/* d, step 3: the mandatory project terms still missing, each with its field */
+.missing-terms .mt-head { margin-bottom: 0.4rem; }
+.mt-row { display: grid; grid-template-columns: minmax(9rem, 1fr) minmax(11rem, 1.2fr); gap: 0.3rem 0.9rem;
+  align-items: start; padding: 0.45rem 0; border-top: 1px solid rgba(0, 0, 0, 0.08); }
+.mt-term label { margin: 0; font-family: var(--bs-font-monospace); font-size: 0.86rem; }
+.mt-desc { font-size: 0.78rem; color: #4a5a60; margin-top: 0.1rem; }
+.mt-cond { font-size: 0.78rem; color: #6b4300; margin-top: 0.1rem; }
+.mt-field .shiny-input-container { margin-bottom: 0.25rem; }
+.mt-field .form-control, .mt-field .selectize-input { font-size: 0.85rem; }
+@media (max-width: 700px) { .mt-row { grid-template-columns: 1fr; } }

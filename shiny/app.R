@@ -16,7 +16,7 @@ for (f in c("runner.R", "tools.R", "helpers.R", "demos.R", "ui.R"))
 
 options(shiny.maxRequestSize = 500 * 1024^2, DT.fillContainer = FALSE)
 
-APP_VERSION <- "0.8.10"
+APP_VERSION <- "0.8.11"
 
 # Colours from the logo: petrol, teal, navy, red, orange and yellow (darkened where white text sits
 # on them, to keep it readable).
@@ -1467,15 +1467,84 @@ server <- function(input, output, session) {
     if (is.null(m) || !nrow(m)) return(character())
     setdiff(m$term[m$sheet == "projectMetadata"], c(rv$pv$term, "assay_name", "assay_type", "checkls_ver"))
   })
+  # The mandatory project terms still missing, each with a field to give it in, so they are given here
+  # rather than searched for under Add a value by hand
+  mt_id <- function(term, what = "value") paste0("mt_", what, "_", term)
+  # A term's allowed values, and whether others may be given (as "other: ..."), or NULL for free text
+  mt_options <- function(t) {
+    ct <- checklist_terms(); v <- ct$vocab[match(t, ct$term)]
+    if (is.na(v) || !nzchar(trimws(v))) return(NULL)
+    o <- trimws(strsplit(v, "|", fixed = TRUE)[[1]])
+    list(options = setdiff(o[nzchar(o)], "other:"), other = "other:" %in% o)
+  }
   output$pv_missing <- renderUI({
     m <- pv_missing_map()
     if (is.null(m) || !nrow(m)) return(NULL)
     left <- pv_left()
     if (!length(left)) return(div(class = "res-ok", icon("circle-check"),
                                   "Every mandatory project term the mapping found missing has a value here."))
+    ct <- checklist_terms()
+    many <- length(pv_assays()) > 1
+    cell <- function(x) if (length(x) && !is.na(x) && nzchar(trimws(x))) trimws(x) else ""
+    row <- function(t) {
+      k <- match(t, m$term)
+      desc <- cell(m$description[k]); ex <- cell(m$example[k]); cond <- cell(m$condition[k])
+      first <- if (nchar(desc) > 180) sub("^(.{40,180}?[.;:])\\s.*$", "\\1", desc) else desc
+      old <- isolate(input[[mt_id(t)]]) %||% ""
+      opt <- mt_options(t)
+      field <- if (is.null(opt)) {
+        textInput(mt_id(t), NULL, old, width = "100%", placeholder = if (nzchar(ex)) paste("for example", ex) else "")
+      } else {
+        selectizeInput(mt_id(t), NULL, c("", opt$options, if (nzchar(old) && !old %in% opt$options) old), old, width = "100%",
+                       options = list(create = opt$other, placeholder = if (opt$other) "choose, or type another" else "choose"))
+      }
+      sec <- ct$section[match(t, ct$term)]
+      div(class = "mt-row",
+          div(class = "mt-term",
+              tags$label(`for` = mt_id(t), tags$b(t)),
+              if (nzchar(first)) div(class = "mt-desc", title = desc, first),
+              if (nzchar(cond)) div(class = "mt-cond", paste("Mandatory", sub("^If", "if", cond)))),
+          div(class = "mt-field", field,
+              if (many && !sec %in% c("Project", "Data management"))
+                selectizeInput(mt_id(t, "assay"), NULL, pv_assays(), isolate(input[[mt_id(t, "assay")]]), multiple = TRUE,
+                               width = "100%", options = list(placeholder = "every assay"))))
+    }
+    primers <- intersect(left, c("pcr_primer_forward", "pcr_primer_reverse"))
     div(class = "missing-terms",
-        tags$b("Mandatory terms still to give"), " (from b. Propose a mapping):",
-        tags$div(lapply(left, function(t) tags$span(class = "term-chip", title = m$description[m$term == t][1], t))))
+        div(class = "mt-head", tags$b(sprintf("Give the mandatory terms still missing (%d)", length(left))),
+            " The mapping found no value for these in your files. Give each one here, or leave it empty to give later."),
+        if (length(primers)) div(class = "mt-cond", "The primer sequences usually come from ",
+                                 actionLink("mt_goto_primers", "1. Find the primers"), "."),
+        lapply(left, row),
+        div(class = "btn-row", actionButton("mt_add", "Add these values to the projectMetadata", icon = icon("plus"))))
+  })
+  observeEvent(input$mt_goto_primers, {
+    accordion_panel_set("methods_steps", "primers")
+    session$sendCustomMessage("scroll_to", "methods_steps")
+  })
+  observeEvent(input$mt_add, {
+    left <- pv_left(); req(length(left))
+    vals <- vapply(left, function(t) trimws(paste(input[[mt_id(t)]] %||% "", collapse = "")), "")
+    give <- left[nzchar(vals)]
+    if (!length(give)) return(notify_error("Give a value for at least one of the terms first.", mt_id(left[1])))
+    type <- checklist_terms()$type[match(give, checklist_terms()$term)]
+    # checked before any is added, so a mistake adds nothing
+    for (j in seq_along(give)) {
+      t <- give[j]; v <- vals[[t]]
+      if (t == "project_id" && !grepl("^[A-Za-z0-9_.-]+$", v))
+        return(notify_error("Give project_id with letters, digits, dots, hyphens and underscores only (no spaces).", mt_id(t)))
+      if (identical(type[j], "numeric") && is.na(suppressWarnings(as.numeric(v))))
+        return(notify_error(sprintf("Give %s as a number.", t), mt_id(t)))
+    }
+    for (t in give) {
+      v <- vals[[t]]; opt <- mt_options(t)
+      # FAIRe writes a value from outside a term's list as "other: ..."
+      if (!is.null(opt) && opt$other && !v %in% opt$options && !startsWith(v, "other:")) v <- paste0("other: ", v)
+      a <- input[[mt_id(t, "assay")]]
+      rv$pv <- rbind(rv$pv, data.frame(term = t, value = v, assay = if (length(a)) a else ""))
+    }
+    notify_info(sprintf("Added %s: %s.", if (length(give) == 1) "1 value" else paste(length(give), "values"),
+                        paste(give, collapse = ", ")))
   })
   output$pv_download <- downloadHandler("project_values.csv", function(file) write_csv(rv$pv, file))
 
