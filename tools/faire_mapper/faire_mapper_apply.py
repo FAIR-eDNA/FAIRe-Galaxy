@@ -233,17 +233,24 @@ def write_readme(ws, readme, log, warnings, project_id, stamp):
         if r and r.get('carried'):
             ws.append([f"{_n(r['carried'], 'decision was', 'decisions were')} carried over from an earlier review."])
             ws.cell(ws.max_row, 1).font = Font(italic=True)
+        # The heading above names the chart, so it has no title of its own (one sat on the axis numbers). The
+        # legend goes below the bars, not over them. The colours read for red-green colour blindness (Okabe
+        # and Ito's blue, reddish purple and orange, with grey for no decision), and a white edge parts the
+        # stacked segments, so they do not rest on colour alone; the table beside gives the numbers.
         chart = BarChart()
         chart.type, chart.grouping, chart.overlap = 'bar', 'stacked', 100
-        chart.title, chart.style, chart.height, chart.width = 'Decisions', 10, 2.2 + 1.1 * len(table), 13
+        chart.title, chart.style, chart.height, chart.width = None, 10, 3.6 + 1.1 * len(table), 13
         chart.add_data(Reference(ws, min_col=2, max_col=5, min_row=top, max_row=top + len(table)), titles_from_data=True)
         chart.set_categories(Reference(ws, min_col=1, min_row=top + 1, max_row=top + len(table)))
-        for series, colour in zip(chart.series, ('70AD47', '5B9BD5', 'C00000', 'A5A5A5')):
+        for series, colour in zip(chart.series, ('0072B2', 'CC79A7', 'E69F00', 'A5A5A5')):
             series.graphicalProperties.solidFill = colour
-            series.graphicalProperties.line.solidFill = colour
+            series.graphicalProperties.line.solidFill = 'FFFFFF'
+            series.graphicalProperties.line.width = 12700
         chart.y_axis.majorGridlines = None
         chart.x_axis.scaling.orientation = 'maxMin'  # the first row of the table at the top
+        chart.y_axis.crosses = 'max'  # and so the value axis at the bottom
         chart.y_axis.delete = chart.x_axis.delete = False
+        chart.legend.position, chart.legend.overlay = 'b', False
         ws.add_chart(chart, f'G{top - 1}')
 
     ws.append([])
