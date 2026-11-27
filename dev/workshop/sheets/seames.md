@@ -36,20 +36,20 @@ installers, ask your IT support before the workshop.
 ## The exercise
 
 1. On the app's **Start** page, choose **SEA-MES** and press *Load the demonstration data*.
-2. **1. Make a workbook, FAIRe mapper**: run *a. Your files*, then *b. Propose a mapping* on
+2. **Make a workbook, FAIRe mapper**: run *a. Prepare your files*, then *b. Map sample information* on
    `SEA-MES_10L_samples.csv`.
-3. **c. Review the mapping**: decide the six rows for review, then save. Suggested answers:
+3. **c. Review the matches**: decide the six rows for review, then save. Suggested answers:
    - Accept Control_Neg as samp_category, *depth, and samp_vol_we_dna_ext;
    - Reject replicate, bioproject_accession and Location.
 
    *Fill in the authors' answers* does this for you.
-4. **d. Methods and project values**: the values for the whole project start empty. Open *1. Find the primers* and find primers in
+4. **d. Methods and project information**: the values for the whole project start empty. Open *1. Find the primers* and find primers in
    `methods.txt` and the notes: two pairs match exactly. Which one goes with these data? Add it, and
    check its ampliconSize. Go on to *2. Find the other method details*: the reliable values come ticked. Add them, then
    look through the others. In step 3, give the mandatory terms still missing in their fields.
-5. **e. Write the workbook**: the ASV table goes in as raw, the curated taxa as final, and ENA's run
+5. **e. DNA results and the workbook**: the ASV table goes in as raw, the curated taxa as final, and ENA's run
    report as the library table.
-6. **2. Check** with FAIRe-fier, then **3. Convert** to each destination.
+6. **Check** with FAIRe-fier, then **Convert** to each destination.
 
 ## What to look for
 
