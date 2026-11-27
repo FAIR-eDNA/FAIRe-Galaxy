@@ -16,7 +16,7 @@ for (f in c("runner.R", "tools.R", "helpers.R", "demos.R", "ui.R"))
 
 options(shiny.maxRequestSize = 500 * 1024^2, DT.fillContainer = FALSE)
 
-APP_VERSION <- "0.8.5"
+APP_VERSION <- "0.8.6"
 
 # Colours from the logo: petrol, teal, navy, red, orange and yellow (darkened where white text sits
 # on them, to keep it readable).
@@ -237,7 +237,6 @@ server <- function(input, output, session) {
     updateRadioButtons(session, "map_assay_type", selected = demo$assay_type)
     updateTextInput(session, "fa_project_id", value = demo$project_id)
     updateTextInput(session, "fa_assay_name", value = demo$assay_name)
-    updateTextInput(session, "ap_project_id", value = demo$project_id)
     updateSelectInput(session, "ap_date_order", selected = demo$date_order)
     if (length(demo$dwc)) {
       w <- demo$dwc
@@ -435,7 +434,7 @@ server <- function(input, output, session) {
 
   # Checks made as you type: a note under the field, gone once the value is fine.
   field_check <- function(id, msg) session$sendCustomMessage("field_check", list(id = id, msg = msg))
-  for (pid_field in c("ap_project_id", "fa_project_id")) local({
+  for (pid_field in c("fa_project_id")) local({
     id <- pid_field
     observeEvent(input[[id]], {
       v <- trimws(input[[id]] %||% "")
@@ -1484,8 +1483,8 @@ server <- function(input, output, session) {
   output$pv_missing <- renderUI({
     m <- if (!is.null(rv$map)) read_tsv(rv$map$outputs$missing) else NULL
     if (is.null(m) || !nrow(m)) return(NULL)
-    left <- setdiff(m$term[m$sheet == "projectMetadata"], c(rv$pv$term, "project_id", "assay_name", "assay_type",
-                                                             "checkls_ver"))
+    # project_id is given here (e. Write the workbook takes it from projectMetadata); the tools fill the rest
+    left <- setdiff(m$term[m$sheet == "projectMetadata"], c(rv$pv$term, "assay_name", "assay_type", "checkls_ver"))
     if (!length(left)) return(div(class = "res-ok", icon("circle-check"),
                                   "Every mandatory project term the mapping found missing has a value here."))
     div(class = "missing-terms",
@@ -1499,7 +1498,10 @@ server <- function(input, output, session) {
     if (is.null(rv$map_args)) return(div(class = "res-info", icon("circle-info"), "Propose a mapping first (step b)."))
     help_text(tags$b("Sample table: "), rv$map_args$table_name, tags$br(), tags$b("Crosswalk: "),
               basename(rv$crosswalk %||% ""), paste0(" (", rv$crosswalk_from, ")"), tags$br(),
-              tags$b("Project values: "), nrow(rv$pv), " (step d)")
+              tags$b("Project values: "), nrow(rv$pv), " (step d)", tags$br(),
+              tags$b("Project ID: "), if (nzchar(e_project_id())) e_project_id() else
+                tags$span(class = "text-danger", "not given yet: add project_id in d"), tags$br(),
+              tags$b("Assays: "), if (nzchar(e_assays())) e_assays() else "none named in d (the OTU tables name them)")
   })
 
   observeEvent(input$otu_add, rv$otu_n <- rv$otu_n + 1)
@@ -1530,25 +1532,15 @@ server <- function(input, output, session) {
     selectizeInput(id, label, c("", ch), selected = value,
                    options = list(create = TRUE, placeholder = if (length(ch)) "choose or type" else "type a name"))
   }
-  # e. Write the workbook takes the assay names from d. It asks for them only when d has none (no
-  # primers or values given for an assay).
-  e_assays <- reactive({
-    if (length(pv_assays())) paste(pv_assays(), collapse = ", ") else trimws(input$ap_assay_name %||% "")
+  # e. Write the workbook takes the assay names from projectMetadata in d. With none there, it passes none,
+  # and the OTU tables and libraries name their own assays.
+  e_assays <- reactive(paste(pv_assays(), collapse = ", "))
+  # The project ID: the project-level project_id in projectMetadata, in d
+  e_project_id <- reactive({
+    pv <- rv$pv
+    v <- trimws(pv$value[pv$term == "project_id" & (is.na(pv$assay) | !nzchar(trimws(pv$assay)))])
+    if (length(v)) v[1] else ""
   })
-  output$ap_assay_ui <- renderUI({
-    a <- pv_assays()
-    if (length(a)) return(div(class = "mb-3",
-      tags$label(class = "form-label", "Assay names"),
-      div(class = "assay-names", paste(a, collapse = ", ")),
-      help_text(inline("From ", actionLink("goto_primers_names", "d. Methods and project values"),
-                       ". To rename an assay, change it there (step 3, Rename an assay)."))))
-    tagList(
-      textInput("ap_assay_name", "Assay names", value = isolate(input$ap_assay_name) %||% "", placeholder = "for example Fish16S"),
-      help_text("No assays are named in d. Methods and project values yet. Name them there with their primers, or",
-                "give them here, separated by commas. Leave this empty when an OTU table names its assays in a",
-                "column."))
-  })
-  observeEvent(input$goto_primers_names, nav_select("mapper_steps", "d. Methods and project values"))
   # Renaming an assay in d renames it in every row of projectMetadata
   observe(updateSelectInput(session, "pv_rename_from", choices = pv_assays()))
   observeEvent(input$pv_rename, {
@@ -1573,11 +1565,15 @@ server <- function(input, output, session) {
   # When a block's OTU table or taxonomy table changes, its sheet list follows: a sheet the new file
   # does not have goes back to the first sheet.
   observe({
-    for (i in seq_len(rv$otu_n)) {
-      for (pair in list(c("file", "sheet"), c("taxa", "taxa_sheet"))) {
-        f <- input[[bid("otu", i, pair[1])]]
+    blocks <- c(rep("otu", rv$otu_n), rep("lib", rv$lib_n))
+    nums <- c(seq_len(rv$otu_n), seq_len(rv$lib_n))
+    for (k in seq_along(blocks)) {
+      kind <- blocks[k]; i <- nums[k]
+      pairs <- if (kind == "otu") list(c("file", "sheet"), c("taxa", "taxa_sheet")) else list(c("file", "sheet"))
+      for (pair in pairs) {
+        f <- input[[bid(kind, i, pair[1])]]
         if (is.null(f)) next
-        id <- bid("otu", i, pair[2])
+        id <- bid(kind, i, pair[2])
         ch <- sheet_choices(f)
         cur <- isolate(input[[id]]) %||% ""
         updateSelectInput(session, id, choices = ch, selected = if (cur %in% ch) cur else "")
@@ -1647,19 +1643,23 @@ server <- function(input, output, session) {
 
   output$lib_blocks <- renderUI({
     n <- rv$lib_n
-    if (!n) return(help_text("No library tables."))
+    if (!n) return(help_text("No run reports or library tables."))
     ch <- c("Choose a file" = "", file_names("\\.(csv|tsv|tab|txt|xlsx)$", kinds = "library table"))
     lapply(seq_len(n), function(i) {
       b <- function(field) bid("lib", i, field)
       div(class = "block",
-          tags$h6(paste("Library table", i)),
-          selectInput(b("file"), term_label("Library table", "library_table"), ch, selected = bval("lib", i, "file")),
+          tags$h6(paste("Run report or library table", i)),
+          selectInput(b("file"), term_label("Run report or library table", "library_table"), ch, selected = bval("lib", i, "file")),
+          selectInput(b("sheet"), "Excel sheet", sheet_choices(bval("lib", i, "file")),
+                      selected = bval("lib", i, "sheet"), selectize = FALSE),
           layout_columns(
             col_widths = c(4, 4, 4),
             textInput(b("assay"), "Assays of these libraries", bval("lib", i, "assay", paste(pv_assays(), collapse = ", "))),
-            textInput(b("filter"), "Only libraries whose name holds", bval("lib", i, "filter")),
+            textInput(b("filter"), "Only libraries whose name contains (optional)", bval("lib", i, "filter")),
             textInput(b("run"), term_label("Sequencing run ID", "run_id"), bval("lib", i, "run"))),
-          textInput(b("sheet"), "Excel sheet (optional)", bval("lib", i, "sheet")))
+          help_text("If the file lists libraries of other assays too, as a run report for a whole project can, give",
+                    "a part of the library names that only this assay's libraries have, for example 16SFish, and",
+                    "only those rows are used. Leave it empty to use every row."))
     })
   })
 
@@ -1686,8 +1686,13 @@ server <- function(input, output, session) {
   do_apply <- function() {
     a <- rv$map_args
     if (is.null(a)) return(notify_error("Propose a mapping first (step b)."))
-    pid <- trimws(input$ap_project_id)
-    if (!nzchar(pid)) return(notify_error("Give a project ID.", "ap_project_id"))
+    pid <- e_project_id()
+    if (!nzchar(pid))
+      return(notify_error(paste("Give project_id in projectMetadata, in d. Methods and project values (Add a value by",
+                                "hand): a short ID for the project, with letters, digits, hyphens and underscores only.")))
+    if (!grepl("^[A-Za-z0-9_-]+$", pid))
+      return(notify_error(sprintf(paste("The project_id in d. Methods and project values, %s, can only hold letters,",
+                                        "digits, hyphens and underscores. Correct it there."), pid)))
     g <- function(kind, i, field) { v <- input[[bid(kind, i, field)]]; if (is.null(v)) "" else trimws(v) }
     otus <- list()
     for (i in seq_len(rv$otu_n)) {
@@ -1723,11 +1728,12 @@ server <- function(input, output, session) {
         "The assay name%s %s %s not among the assays in d. Methods and project values (%s). Use the same names,",
         "so the project values go with the right OTU tables and libraries."),
         if (length(odd) == 1) "" else "s", paste(odd, collapse = ", "), if (length(odd) == 1) "is" else "are",
-        paste(pv_assays(), collapse = ", ")), "ap_assay_name"))
+        paste(pv_assays(), collapse = ", "))))
     pv_path <- NULL
-    if (nrow(rv$pv)) {
+    # project_id goes to the tool as --project_id, so it is not given twice
+    if (nrow(rv$pv[rv$pv$term != "project_id", , drop = FALSE])) {
       pv_path <- file.path(sd, "project_values.tsv")
-      pv <- rv$pv
+      pv <- rv$pv[rv$pv$term != "project_id", , drop = FALSE]
       k <- match(paste(pv$term, pv$assay, trimws(pv$value)), paste(rv$md_prov$term, rv$md_prov$assay, rv$md_prov$value))
       pv$source <- ifelse(is.na(k), "", "find method details")
       pv$proposed <- ifelse(is.na(k), "", rv$md_prov$proposed[k])
