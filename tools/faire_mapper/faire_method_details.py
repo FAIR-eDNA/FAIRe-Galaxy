@@ -1393,8 +1393,9 @@ def reliability_of(term, rel):
     # in words a reader can follow: what the tool was tested against, and how often it matched
     times = {1: 'once', 2: 'twice'}.get(a, f'{a} times')
     text = (f"Accuracy assessment for this term is based on correctly finding it {times} in {a + d} different "
-            f"manuscript{'s' if a + d != 1 else ''} inspected." +
-            (f" In {t} more, it gave a value where a person reading the manuscript found none." if t else ''))
+            f"manuscript{'s' if a + d != 1 else ''} inspected.")
+    if t:
+        text += f" In {t} more, it gave a value where a person reading the manuscript found none."
     ok = term not in DESCRIPTION_TERMS and a >= 5 and a >= 0.9 * (a + d) and t <= a
     return ('reliable' if ok else 'check'), text
 
