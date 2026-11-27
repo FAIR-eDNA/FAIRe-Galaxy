@@ -363,3 +363,16 @@ h6.group-head { margin: 0.6rem 0 0.1rem; font-weight: 600; color: var(--faire-na
   .ns-narrow { display: block; }
   .journey .j-step { min-width: 6.6rem; }
 }
+
+/* A card header led by the task, with the tool or FAIRe name after it; and the fold for the fuller
+   explanation of a step */
+.card-term { font-weight: 400; font-size: 0.8rem; color: #5b6770; margin-left: 0.5rem; }
+.step-card > .card-header .card-term { color: #d7ebec; }
+.more-about { margin: -0.3rem 0 0.8rem; font-size: 0.86rem; }
+.more-about > summary { color: var(--faire-teal); cursor: pointer; font-weight: 600; font-size: 0.84rem; width: fit-content; }
+.more-about > summary:focus-visible { outline: 3px solid var(--faire-yellow); outline-offset: 2px; }
+.more-about > div { margin-top: 0.4rem; padding: 0.5rem 0.75rem; background: #f6f8f8; border-radius: 4px; color: #3c4a50; }
+.more-about > div ul { margin-bottom: 0.3rem; }
+/* b: the folded settings, and the line saying how they are set */
+.map-more { margin: 0.6rem 0 0.3rem; }
+.settings-summary { font-size: 0.8rem; color: #4a5a60; margin: 0.2rem 0 0.8rem; display: flex; gap: 0.4rem; align-items: baseline; }

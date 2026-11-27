@@ -259,6 +259,10 @@ short_log <- function(log, n = 40) {
 # The tool's own message stays in the log. Our own scripts' "ERROR:" lines are plain already, so when no
 # pattern fits, the first of them is used.
 ERROR_HELP <- list(
+  c("can be read day first or month first",
+    paste("Dates such as 06/09/2017 in your table can be read either way. In b. Map sample information, open",
+          "Table-reading settings and previous mappings, set how your table writes dates (day first or month",
+          "first), then build the workbook again.")),
   c("Excel file format cannot be determined|BadZipFile|not a zip file|File is not a zip file",
     "The file is not an Excel workbook (.xlsx), or it is damaged. Open it in Excel, save it as an Excel workbook (.xlsx) and add it again."),
   c("Worksheet named .* not found|Worksheet .* does not exist|No sheet named|sheet .* not found",

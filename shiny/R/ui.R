@@ -23,6 +23,11 @@ help_text <- function(...) tags$p(class = "help-text", ...)
 # between children), for a link or emphasis followed by punctuation.
 inline <- function(...) HTML(paste(vapply(list(...), function(x) as.character(x), ""), collapse = ""))
 step_intro <- function(...) div(class = "step-intro", ...)
+# A card header that leads with the task, with the tool or FAIRe name after it, smaller
+task_header <- function(task, term = NULL) tagList(tags$span(task), if (!is.null(term)) tags$span(class = "card-term", term))
+# The fuller explanation of a step, folded under the one or two sentences that say what to do. A
+# details element opens with the keyboard (Enter or Space on its summary) as well as the mouse.
+more_about <- function(..., title = "More about this step") tags$details(class = "more-about", tags$summary(title), div(...))
 run_button <- function(id, label) actionButton(id, label, class = "btn-primary run-btn", icon = icon("play"))
 
 # Short explanations of the words the app uses, shown when the pointer rests on (or keyboard focus
@@ -347,38 +352,46 @@ mapper_panel <- function() {
         layout_columns(
           col_widths = c(4, 8),
           card(
-            card_header("Your sample table"),
-            step_intro(HTML(paste(
-              "This step proposes a FAIRe term for each column of your sample table. You do it once, for the",
-              "sample table only. Your other files need no mapping: the methods go in at <em>d. Methods and",
-              "project values</em>, and the OTU, taxonomy and library tables at <em>e. Write the workbook</em>."))),
-            tags$h6(class = "group-head", "Your table"),
+            card_header(task_header("Map your sample information", "FAIRe mapper: propose mapping")),
+            step_intro("Choose your sample table and say what kind of study it is. The mapper proposes a FAIRe",
+                       "term for each column, for you to review in c."),
+            more_about(HTML(paste(
+              "You map the sample table only, once. Your other files need no mapping: the methods go in at",
+              "<em>d. Methods and project information</em>, and the OTU, taxonomy and library tables at",
+              "<em>e. DNA results and the workbook</em>. The assay type and sample types decide which FAIRe",
+              "terms apply to your samples."))),
             uiOutput("map_table_ui"),
             uiOutput("map_sheet_ui"),
-            numericInput("map_header_row", term_label("Row holding the column headers", "header_row"), 1, min = 1, max = 50),
-            help_text("Change this when the sheet has a title or notes above the headers. Comment lines",
-                      "starting with # (as in NCBI and ENA submission sheets) are skipped without it."),
-            tags$h6(class = "group-head", "Dates and times in your table"),
-            help_text("These are used when the workbook is written, in e. Write the workbook."),
-            textInput("ap_utc_offset", term_label("UTC offset of the times of collection (optional)", "utc_offset"), placeholder = "for example +10:00"),
-            help_text("When the table gives the time of collection in its own column, the time is joined to its",
-                      "date in eventDate, in local time. Give the offset of local time from UTC, such as +10:00",
-                      "for Australian Eastern Standard Time; times the column name says are UTC are converted to",
-                      "local time with it."),
-            selectInput("ap_date_order", term_label("How your table writes dates such as 06/09/2017", "date_order"),
-                        c("Not sure: stop and ask me" = "stop", "Day first: 6 September 2017 (as in Australia)" = "dmy",
-                          "Month first: June 9, 2017 (as in the USA)" = "mdy")),
-            tags$h6(class = "group-head", "Your study"),
-            help_text("These decide which FAIRe terms apply to your samples."),
             radioButtons("map_assay_type", term_label("Assay type", "assay_type"), c("Metabarcoding" = "metabarcoding",
                                                            "Targeted" = "targeted"), inline = TRUE),
             sample_type_input("map_sample_types", term_label("Sample types", "sample_types")),
-            uiOutput("map_dictionary_ui"),
-            checkboxInput("map_other_terms", term_label("Suggest MIxS or Darwin Core terms for columns with no FAIRe term", "other_terms"), TRUE),
-            help_text("The FAIRe guidelines ask for a MIxS or Darwin Core term, where one exists, before a name of",
-                      "your own. These suggestions are always for review."),
-            tags$h6(class = "group-head", "Mapping this table again?"),
-            uiOutput("map_earlier_ui"),
+            # Settings that are usually right as they are, folded away with a line saying how they are set
+            accordion(
+              id = "map_more", open = FALSE, class = "map-more",
+              accordion_panel(
+                "Table-reading settings and previous mappings", value = "settings", icon = icon("sliders"),
+                tags$h6(class = "group-head", "Reading the table"),
+                numericInput("map_header_row", term_label("Row holding the column headers", "header_row"), 1, min = 1, max = 50),
+                help_text("Change this when the sheet has a title or notes above the headers. Comment lines",
+                          "starting with # (as in NCBI and ENA submission sheets) are skipped without it."),
+                tags$h6(class = "group-head", "Dates and times in your table"),
+                help_text("Used when the workbook is built, in e."),
+                selectInput("ap_date_order", term_label("How your table writes dates such as 06/09/2017", "date_order"),
+                            c("Not sure: stop and ask me" = "stop", "Day first: 6 September 2017 (as in Australia)" = "dmy",
+                              "Month first: June 9, 2017 (as in the USA)" = "mdy")),
+                textInput("ap_utc_offset", term_label("UTC offset of the times of collection (optional)", "utc_offset"), placeholder = "for example +10:00"),
+                help_text("When the table gives the time of collection in its own column, the time is joined to its",
+                          "date in eventDate, in local time. Give the offset of local time from UTC, such as +10:00",
+                          "for Australian Eastern Standard Time; times the column name says are UTC are converted to",
+                          "local time with it."),
+                tags$h6(class = "group-head", "Help for the mapper"),
+                uiOutput("map_dictionary_ui"),
+                checkboxInput("map_other_terms", term_label("Suggest MIxS or Darwin Core terms for columns with no FAIRe term", "other_terms"), TRUE),
+                help_text("The FAIRe guidelines ask for a MIxS or Darwin Core term, where one exists, before a name of",
+                          "your own. These suggestions are always for review."),
+                tags$h6(class = "group-head", "Mapping this table again?"),
+                uiOutput("map_earlier_ui"))),
+            uiOutput("map_settings_summary"),
             run_button("run_map", "Propose a mapping for the information in your sample table")
           ),
           card(card_header("Proposed mapping"), uiOutput("map_result"))

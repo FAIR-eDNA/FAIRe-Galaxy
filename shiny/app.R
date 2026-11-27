@@ -618,6 +618,23 @@ server <- function(input, output, session) {
                 "carried over, so you review only the new columns and any whose proposed term has changed."))
   })
 
+  # These two are in the folded Table-reading settings: drawn even while folded, so a demonstration's data
+  # dictionary is used and an earlier review is offered whether or not the fold has been opened.
+  outputOptions(output, "map_dictionary_ui", suspendWhenHidden = FALSE)
+  outputOptions(output, "map_earlier_ui", suspendWhenHidden = FALSE)
+  # How the folded settings are set, in one line, so they can be seen without opening the fold
+  output$map_settings_summary <- renderUI({
+    order <- c(stop = "ask me when unclear", dmy = "day first", mdy = "month first")[[input$ap_date_order %||% "stop"]]
+    utc <- trimws(input$ap_utc_offset %||% "")
+    parts <- c(paste("header row", input$map_header_row %||% 1),
+               paste("dates", order),
+               if (nzchar(utc)) paste("UTC offset", utc),
+               paste("data dictionary:", if (nzchar(input$map_dictionary %||% "")) input$map_dictionary else "none"),
+               paste("MIxS and Darwin Core suggestions", if (isTRUE(input$map_other_terms)) "on" else "off"),
+               paste("earlier review:", if (nzchar(input$map_earlier %||% "")) input$map_earlier else "none"))
+    div(class = "settings-summary", icon("sliders"), tags$span(paste0("Settings: ", paste(parts, collapse = "; "), ".")))
+  })
+
   # Running the mapping again replaces the review, so it asks first when there is one, and offers to keep
   # the decisions for columns that are still there (an Accept only when the mapper still proposes the same term).
   observeEvent(input$run_map, {
