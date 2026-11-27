@@ -147,3 +147,14 @@
     if (cleared && window.jQuery) window.jQuery(box).trigger('change');
   });
 })();
+
+// Brings an output into view, such as the workbook after it is written from the button below the tables
+(function () {
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!(window.Shiny && Shiny.addCustomMessageHandler)) return;
+    Shiny.addCustomMessageHandler('scroll_to', function (id) {
+      var el = document.getElementById(Array.isArray(id) ? id[0] : id);
+      if (el) el.scrollIntoView({block: 'start', behavior: 'smooth'});
+    });
+  });
+})();
