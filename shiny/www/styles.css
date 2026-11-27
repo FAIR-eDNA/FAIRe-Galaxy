@@ -208,7 +208,7 @@ h6.group-head { margin: 0.6rem 0 0.1rem; font-weight: 600; color: var(--faire-na
 .dataTables_scrollBody:focus-visible {
   outline: 2px solid var(--faire-teal); outline-offset: 2px; }
 
-/* in the primers table, an exact match stands out */
+/* in the primer pairs found, an exact match stands out */
 .likely-exact { color: #1d6b38; background: #e2f2e6; font-weight: 600; padding: 0.05rem 0.4rem;
   border-radius: 0.6rem; white-space: nowrap; }
 
@@ -252,10 +252,19 @@ h6.group-head { margin: 0.6rem 0 0.1rem; font-weight: 600; color: var(--faire-na
 .next-step { margin: 0.8rem 0 0.2rem; font-size: 0.9rem; }
 
 /* d, find primers: the exact matches, each with the assay name it is added under */
-.exact-box { border: 1px solid #cfe3d4; background: #f3f9f4; border-radius: 6px; padding: 0.6rem 0.8rem; margin: 0.4rem 0 0.8rem; }
-.exact-row { display: flex; gap: 0.8rem; align-items: center; flex-wrap: wrap; margin: 0.3rem 0; }
-.exact-row .form-group, .exact-row .shiny-input-container { margin-bottom: 0; }
-.exact-row .checkbox { flex: 1 1 18rem; margin: 0; }
-.exact-row input[type=text] { width: 14rem; }
+/* step d: the primer pairs found, each with a tick box, as in find method details, and the assay name
+   it will be added under */
+.pr-list { border-top: 1px solid #e3e6e6; margin: 0.6rem 0 0.4rem; }
+.pr-list > .shiny-input-container { margin: 0.5rem 0 0.2rem; }
+.pr-body { padding-left: 1.45rem; }
+.pr-why, .pr-ref { font-size: 0.78rem; color: #4a5a60; margin-top: 0.15rem; }
+.pr-seq { font-family: var(--bs-font-monospace); font-size: 0.76rem; color: #33444a; word-break: break-all; margin-top: 0.15rem; }
+.pr-body .shiny-input-container { display: flex; align-items: center; gap: 0.5rem; margin: 0.4rem 0 0.1rem;
+  width: auto !important; }
+.pr-body .shiny-input-container label { margin: 0; font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
+.pr-body .shiny-input-container input { width: 15rem; max-width: 100%; font-size: 0.82rem; padding: 0.15rem 0.4rem; }
+.likely-other { color: #6b4300; background: #fcebd5; font-weight: 600; font-size: 0.75rem; padding: 0.05rem 0.4rem;
+  border-radius: 0.6rem; white-space: nowrap; }
+.pr-item .likely-exact { font-size: 0.75rem; }
 /* e: the assay names, as given in d */
 .assay-names { font-weight: 600; padding: 0.3rem 0; }

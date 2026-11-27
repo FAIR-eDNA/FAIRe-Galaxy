@@ -67,6 +67,9 @@ Version 0.8.8 (27 November 2026) names the blank template and the finished workb
 `<project_id>.xlsx`, as FAIRe-ator does and as the FAIRe guidelines ask (*Consistent identifiers and
 file naming*), where they were `<project_id>_FAIRe_template.xlsx` and `<project_id>_FAIRe.xlsx`.
 Agreed by Miwa Takahashi and Oliver.
+Version 0.8.9 (27 November 2026) lists the primer pairs found with a tick box and an assay name
+each, as in find method details, with one button to add the ticked pairs, where there were a box of
+exact matches with its own button and a table to click a pair in with another.
 
 ## What it covers
 
@@ -116,13 +119,13 @@ A few things that help along the way:
 - **Primers** are checked against a reference table of about 550 published primer pairs, most from
   Takahashi et al. (2023) and Wilderlab's assays. This keeps primer names as they are in the
   literature and catches typos in sequences. If your primers are not in it, add your own table.
-  Pairs whose two sequences in your methods match the reference table exactly come first, marked
-  *exact match* in green, and are listed above the table, each ticked, with the assay name it will be
-  added under: the reference table's name, to keep or change. Untick any pair not used for these
-  data, and *Add the ticked pairs* adds the rest, for you to check in projectMetadata, on the right.
-  Pairs found only from a primer name, for a gene whose sequences the methods already give, are less
-  likely (one name can belong to several published pairs) and are hidden unless you ask for them.
-  Clicking a pair fills in its assay name from the reference table, which you can change.
+  Each pair found has a tick box, as in find method details, and the assay name it will be added
+  under: the reference table's name, to keep or change. Pairs whose two sequences in your methods
+  match the reference table exactly come first, marked *exact match* in green, and come ticked.
+  Untick any pair not used for these data, tick any other you used, and *Add the ticked pairs to the
+  projectMetadata* adds them, for you to check in projectMetadata, on the right. Pairs found only
+  from a primer name, for a gene whose sequences the methods already give, are less likely (one name
+  can belong to several published pairs) and are hidden unless you ask for them.
 - **Assay names** are given in *d*, with the primers: a short name you will keep, such as MiFish or
   LerayCOI, with letters, digits, dots, hyphens and underscores only. FAIRe's `assay_name` labels
   the assay within the dataset: it links projectMetadata's columns to the OTU tables, libraries and

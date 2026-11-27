@@ -16,7 +16,7 @@ for (f in c("runner.R", "tools.R", "helpers.R", "demos.R", "ui.R"))
 
 options(shiny.maxRequestSize = 500 * 1024^2, DT.fillContainer = FALSE)
 
-APP_VERSION <- "0.8.8"
+APP_VERSION <- "0.8.9"
 
 # Colours from the logo: petrol, teal, navy, red, orange and yellow (darkened where white text sits
 # on them, to keep it readable).
@@ -67,7 +67,7 @@ server <- function(input, output, session) {
     unlink(sd, recursive = TRUE)
   })
 
-  rv <- reactiveValues(files = character(), workbook = NULL, workbook_from = "", res = list(), runs = list(),
+  rv <- reactiveValues(pr_run = 0, files = character(), workbook = NULL, workbook_from = "", res = list(), runs = list(),
                        identify = NULL, map = NULL, map_args = NULL, profile = NULL, crosswalk = NULL,
                        crosswalk_from = "", review_version = 0, review_saved = NULL, review_saved_d = NULL, changed = NULL, written = NULL,
                        model = NULL, model_used = character(),
@@ -1107,6 +1107,7 @@ server <- function(input, output, session) {
     if (input$pr_mode == "names" && blank(input$pr_names)) return(notify_error("Type at least one name."))
     res <- with_run("Looking for primers", run_primers(sd, input$pr_mode, texts, input$pr_names, input$pr_gene,
                                                       input$pr_source, fpath(input$pr_own)))
+    rv$pr_run <- rv$pr_run + 1
     rv$res$primers <- res
     rv$primers <- if (res$ok) read_tsv(res$outputs$candidates) else NULL
   })
@@ -1117,89 +1118,101 @@ server <- function(input, output, session) {
   output$primers_result <- renderUI({
     res <- rv$res$primers
     if (is.null(res)) return(NULL)
+    d <- rv$primers
     tagList(
       result_ui(res, show_files = TRUE),
-      if (!is.null(rv$primers) && nrow(rv$primers)) tagList(
+      if (!is.null(d) && nrow(d)) tagList(
         # The instructions fold away under one line, open when wanted
         tags$details(tags$summary("Instructions"), div(class = "how-to",
-            tags$b("Choose the primer pairs you used, one for each assay"),
+            tags$b("Tick the primer pairs you used, one for each assay"),
             tags$ol(
               tags$li("Each row is a published primer pair that matches your methods (or the names you typed).",
                       "When both sequences in your methods match a pair in the reference table, it is an exact",
-                      "match: usually these are the pairs you used, one for each assay. The exact matches are listed",
-                      "above the table, each with the assay name it will be added under. Keep or change each name,",
-                      "untick any pair not used for these data (methods sometimes give the sequences of primers from",
-                      "a pilot comparison, or of blocking primers), and add the ticked pairs."),
-              tags$li("Pairs found only from a primer name, for a gene whose sequences your methods already give,",
-                      "are less likely (one name can belong to several published pairs), so they are hidden. Show",
-                      "them if a pair you used is missing."),
-              tags$li("Click the row of a pair you used, and check it against the paper it cites. Its assay name is",
-                      "filled in below from the reference table; change it if you call the assay something else."),
-              tags$li("Press Add this pair to the projectMetadata. The pair's names, sequences, gene, target taxon and",
-                      "references go into the table on the right: check them there, and change any that do not fit",
-                      "your study."),
-              tags$li("Do the same for each of your other assays (say COI as well as 16S). e. Write the workbook",
-                      "uses the assay names you give here.")))),
-        uiOutput("pr_exact_ui"),
-        uiOutput("pr_show_all_ui"),
-        DTOutput("primers_table"),
-        uiOutput("pr_chosen"),
-        layout_columns(col_widths = c(6, 6),
-                       textInput("pr_assay", term_label("Assay name for this pair", "primer_assay"),
-                                 placeholder = "for example Fish16S"),
-                       div(class = "pt-4", actionButton("pr_add", "Add this pair to the projectMetadata", icon = icon("arrow-right")))),
-        help_text("Give each assay a short name you will keep, with letters, digits, dots, hyphens and underscores only,",
-                  "such as MiFish or LerayCOI. It labels the assay in this dataset's sheets, file names and record IDs.",
-                  "The primer names, sequences and gene that people search on come from the reference table, whatever",
-                  "you call the assay.")))
-  })
-  # Pairs from a methods text say how likely each is; the less likely ones are hidden unless asked for.
-  less_likely <- function(d) {
-    if (!"how_likely" %in% names(d)) return(rep(FALSE, nrow(d)))
-    startsWith(ifelse(is.na(d$how_likely), "", as.character(d$how_likely)), "less likely")
-  }
-  primers_shown <- reactive({
-    d <- rv$primers; req(d)
-    if (isTRUE(input$pr_show_all)) d else d[!less_likely(d), , drop = FALSE]
-  })
-  output$pr_show_all_ui <- renderUI({
-    n <- sum(less_likely(rv$primers %||% data.frame()))
-    if (n) checkboxInput("pr_show_all", sprintf("Show the %d less likely %s", n, if (n == 1) "pair" else "pairs"),
-                         isTRUE(isolate(input$pr_show_all)))
-  })
-  exact_rows <- function(d) {
-    if (is.null(d) || !"how_likely" %in% names(d)) return(integer())
-    which(startsWith(ifelse(is.na(d$how_likely), "", as.character(d$how_likely)), "exact match"))
-  }
-  # The exact matches, each with the assay name it will be added under: the reference table's name to
-  # start with, for the person to keep or change. Untick a pair that was not used for these data.
-  output$pr_exact_ui <- renderUI({
-    d <- rv$primers
-    k <- exact_rows(d)
-    if (!length(k)) return(NULL)
-    names <- make.unique(vapply(k, function(i) default_assay(d[i, , drop = FALSE]), ""), sep = "_")
-    nm <- function(i, x) if (x %in% names(d) && !is.na(d[[x]][i])) d[[x]][i] else ""
-    div(class = "exact-box",
-        tags$b(sprintf("%s: both sequences in your methods match %s in the reference table",
-                       if (length(k) == 1) "Exact match" else "Exact matches",
-                       if (length(k) == 1) "a pair" else "these pairs")),
-        lapply(seq_along(k), function(j) {
-          i <- k[j]
-          div(class = "exact-row",
-              checkboxInput(paste0("pr_exact_use_", j), sprintf("%s / %s (%s; %s)", nm(i, "pcr_primer_name_forward"),
-                                                                nm(i, "pcr_primer_name_reverse"),
-                                                                if (nzchar(nm(i, "target_gene"))) nm(i, "target_gene") else "gene not given",
-                                                                nm(i, "pcr_primer_reference_forward")), TRUE),
-              textInput(paste0("pr_exact_name_", j), "Assay name", names[j]))
-        }),
+                      "match and comes ticked: usually these are the pairs you used, one for each assay. Untick any",
+                      "pair not used for these data (methods sometimes give the sequences of primers from a pilot",
+                      "comparison, or of blocking primers)."),
+              tags$li("Tick any other pair you used, after checking it against the paper it cites. Pairs found only",
+                      "from a primer name, for a gene whose sequences your methods already give, are less likely",
+                      "(one name can belong to several published pairs), so they are hidden. Show them if a pair",
+                      "you used is missing."),
+              tags$li("Each pair's assay name starts as the reference table's name for it. Keep it or change it to",
+                      "the name you call the assay. For a pair used in several assays, give their names separated by",
+                      "commas."),
+              tags$li("Press Add the ticked pairs to the projectMetadata. The pairs' names, sequences, gene, target",
+                      "taxon and references go into the table on the right: check them there, and change any that do",
+                      "not fit your study. e. Write the workbook uses the assay names you give here.")))),
+        primer_list(d),
         help_text("Give each assay a short name you will keep, with letters, digits, dots, hyphens and underscores only,",
                   "such as MiFish or LerayCOI. It labels the assay in this dataset's sheets, file names and record IDs.",
                   "The primer names, sequences and gene that people search on come from the reference table, whatever",
                   "you call the assay."),
-        actionButton("pr_add_exact", sprintf("Add the ticked %s to the projectMetadata",
-                                             if (length(k) == 1) "pair" else "pairs"),
-                     icon = icon("check-double"), class = "btn-primary btn-sm"))
+        div(class = "btn-row",
+            actionButton("pr_add", "Add the ticked pairs to the projectMetadata", icon = icon("arrow-right")))))
   })
+  # How likely each pair is, as the start of its how_likely: "exact match", "as written", "possible",
+  # "less likely", or nothing for pairs looked up by name
+  likely_of <- function(d) {
+    if (!"how_likely" %in% names(d)) return(rep("", nrow(d)))
+    trimws(sub(":.*", "", ifelse(is.na(d$how_likely), "", as.character(d$how_likely))))
+  }
+  # Each run of find primers has its own input IDs, so no tick or name is carried over from an earlier run
+  pr_id <- function(what, i) paste0("pr_", what, "_", rv$pr_run, "_", i)
+  # One pair: a tick box, its names, gene and how likely it is, its reference and sequences, and the assay
+  # name it will be added under
+  primer_item <- function(d, i, assay, ticked) {
+    v <- function(x) if (x %in% names(d) && !is.na(d[[x]][i])) trimws(as.character(d[[x]][i])) else ""
+    nm <- c(v("pcr_primer_name_forward"), v("pcr_primer_name_reverse"))
+    title <- if (any(nzchar(nm))) paste(nm[nzchar(nm)], collapse = " / ") else "No primer names given"
+    seqs <- c(v("pcr_primer_forward"), v("pcr_primer_reverse"))
+    refs <- unique(c(v("pcr_primer_reference_forward"), v("pcr_primer_reference_reverse")))
+    lk <- likely_of(d[i, , drop = FALSE])
+    why <- sub("^[^:]*:\\s*", "", v("how_likely"))
+    found <- trimws(paste0(v("query"), if (nzchar(v("matched_by"))) paste0(" (", v("matched_by"), ")")))
+    div(class = "md-item pr-item",
+        div(class = "md-head",
+            tags$input(type = "checkbox", id = pr_id("use", i), class = "pr-use", checked = if (ticked) NA,
+                       `aria-label` = paste("Use", title)),
+            tags$label(`for` = pr_id("use", i), tags$b(title)),
+            if (nzchar(v("target_gene"))) tags$span(class = "md-section", v("target_gene")),
+            if (nzchar(lk)) tags$span(class = if (lk == "exact match") "likely-exact" else "likely-other", lk)),
+        div(class = "pr-body",
+            if (lk != "exact match" && nzchar(why)) div(class = "pr-why", paste0(toupper(substr(why, 1, 1)), substring(why, 2), ".")),
+            if (any(nzchar(refs))) div(class = "pr-ref", paste(refs[nzchar(refs)], collapse = "; ")),
+            if (any(nzchar(seqs))) div(class = "pr-seq", paste(seqs[nzchar(seqs)], collapse = " / ")),
+            textInput(pr_id("name", i), "Assay name", assay, placeholder = "for example Fish16S"),
+            if (nzchar(found) || nzchar(v("notes")))
+              tags$details(class = "md-evidence", tags$summary("More about this pair"),
+                           if (nzchar(found)) div("Found from: ", found),
+                           if (nzchar(v("notes"))) div("Notes: ", v("notes")))))
+  }
+  # The pairs found, in groups: exact matches (ticked), the others to check, and the less likely ones,
+  # hidden unless asked for
+  primer_list <- function(d) {
+    lk <- likely_of(d)
+    exact <- which(lk == "exact match")
+    less <- which(lk == "less likely")
+    other <- setdiff(seq_len(nrow(d)), c(exact, less))
+    assay <- vapply(seq_len(nrow(d)), function(i) default_assay(d[i, , drop = FALSE]), "")
+    assay[exact] <- make.unique(assay[exact], sep = "_")
+    item <- function(i) primer_item(d, i, assay[i], i %in% exact)
+    other_head <- if (all(!nzchar(lk))) {
+      sprintf("Found %s for the names or citations you typed. Tick the ones you used, after checking them",
+              count_of(length(other), "pair"))
+    } else {
+      sprintf("Please check. Found %s in your methods that %s not match the reference table exactly",
+              count_of(length(other), if (length(exact)) "other pair" else "pair"), if (length(other) == 1) "does" else "do")
+    }
+    div(class = "pr-list",
+        if (length(exact)) tagList(div(class = "md-part md-part-reliable", sprintf(
+          "Found %s whose sequences in your methods match the reference table exactly. These are usually the pairs you used",
+          count_of(length(exact), "pair"))), lapply(exact, item)),
+        if (length(other)) tagList(div(class = "md-part md-part-check", other_head), lapply(other, item)),
+        if (length(less)) tagList(
+          checkboxInput("pr_show_all", sprintf("Show the %d less likely %s", length(less), if (length(less) == 1) "pair" else "pairs")),
+          conditionalPanel("input.pr_show_all", div(class = "md-part md-part-check", sprintf(
+            "Less likely: %s found only from a primer name, for a gene whose sequences your methods already give",
+            count_of(length(less), "pair"))), lapply(less, item))))
+  }
   # An assay name FAIRe can use: letters, digits, dots, hyphens and underscores
   bad_assay_names <- function(a) a[nzchar(a) & !grepl("^[A-Za-z0-9_.-]+$", a)]
   # Puts a pair's values into the project values for an assay, replacing what that assay had.
@@ -1211,69 +1224,34 @@ server <- function(input, output, session) {
     rv$pv <- rbind(pv, data.frame(term = f, value = unname(unlist(r[f])), assay = assay))
     length(f)
   }
-  observeEvent(input$pr_add_exact, {
-    d <- rv$primers
-    k <- exact_rows(d)
-    if (!length(k)) return()
-    use <- vapply(seq_along(k), function(j) isTRUE(input[[paste0("pr_exact_use_", j)]]), logical(1))
-    names <- vapply(seq_along(k), function(j) trimws(input[[paste0("pr_exact_name_", j)]] %||% ""), "")
-    if (!any(use)) return(notify_error("Tick the pairs to add."))
-    if (any(use & !nzchar(names))) return(notify_error("Give each ticked pair an assay name."))
-    bad <- bad_assay_names(names[use])
-    if (length(bad)) return(notify_error(sprintf(
-      "Use letters, digits, dots, hyphens and underscores only in an assay name (no spaces): %s.", paste(bad, collapse = ", "))))
-    if (anyDuplicated(names[use])) return(notify_error("Give each pair its own assay name."))
-    for (j in which(use)) add_pair(d[k[j], , drop = FALSE], names[j])
-    notify_info(sprintf("%d %s added, for %s. Check them in the table on the right.", sum(use),
-                        if (sum(use) == 1) "pair" else "pairs", paste(names[use], collapse = " and ")), duration = 8)
-  })
-  # The assay name for a chosen pair: the reference table's name for it, as a FAIRe assay_name
-  # (letters, digits, dots, hyphens and underscores), or its gene when it has none.
+  # The assay name for a pair: the reference table's name for it, as a FAIRe assay_name (letters, digits,
+  # dots, hyphens and underscores), or its gene when it has none.
   default_assay <- function(r) {
     a <- if ("assay_name" %in% names(r) && !is.na(r$assay_name)) trimws(r$assay_name) else ""
     if (!nzchar(a) && "target_gene" %in% names(r) && !is.na(r$target_gene)) a <- sub("\\s.*", "", r$target_gene)
     gsub("^_+|_+$", "", gsub("[^A-Za-z0-9_.-]+", "_", a))
   }
-  observeEvent(input$primers_table_rows_selected, {
-    i <- input$primers_table_rows_selected
-    if (length(i)) updateTextInput(session, "pr_assay", value = default_assay(primers_shown()[i, , drop = FALSE]))
-  })
-  output$primers_table <- renderDT({
-    d <- primers_shown()
-    cols <- c(how_likely = "How likely", query = "Found from", matched_by = "Found by", assay_name = "Assay", target_gene = "Gene",
-              pcr_primer_name_forward = "Forward primer", pcr_primer_forward = "Forward sequence",
-              pcr_primer_name_reverse = "Reverse primer", pcr_primer_reverse = "Reverse sequence",
-              pcr_primer_reference_forward = "Reference", notes = "Notes")
-    keep <- intersect(names(cols), names(d))
-    # "exact match" stands out in green, so the pairs the study most likely used are easy to see
-    if ("how_likely" %in% keep) {
-      h <- htmltools::htmlEscape(ifelse(is.na(d$how_likely), "", as.character(d$how_likely)))
-      d$how_likely <- sub("^exact match:?\\s*", '<span class="likely-exact">exact match</span><br>', h)
-    }
-    datatable(d[, keep], rownames = FALSE, selection = "single", class = "compact stripe", colnames = unname(cols[keep]),
-              escape = which(keep != "how_likely"), options = list(scrollX = TRUE, pageLength = 5, dom = "tip"))
-  })
-  output$pr_chosen <- renderUI({
-    i <- input$primers_table_rows_selected
-    if (!length(i)) return(help_text("No pair chosen yet: click a row of the table."))
-    r <- primers_shown()[i, ]
-    nm <- function(x) if (x %in% names(r) && !is.na(r[[x]])) r[[x]] else ""
-    div(class = "res-ok", icon("circle-check"),
-        sprintf(" Chosen: %s / %s (%s).", nm("pcr_primer_name_forward"), nm("pcr_primer_name_reverse"),
-                if (nzchar(nm("target_gene"))) nm("target_gene") else "gene not given"))
-  })
   observeEvent(input$pr_add, {
-    i <- input$primers_table_rows_selected
-    if (!length(i)) return(notify_error("Choose a primer pair in the table first."))
-    r <- primers_shown()[i, ]
-    assays <- split_assays(input$pr_assay)
-    bad <- bad_assay_names(assays)
-    if (length(bad)) return(notify_error(sprintf(
-      "Use letters, digits, dots, hyphens and underscores only in an assay name (no spaces): %s.", paste(bad, collapse = ", ")),
-      "pr_assay"))
-    for (a in assays) n <- add_pair(r, a)
-    notify_info(sprintf("%d values added for %s.", n,
-                        if (all(nzchar(assays))) paste(assays, collapse = " and ") else "every assay"))
+    d <- rv$primers; req(d)
+    # the ticked pairs that are in view: the less likely ones count only while they are shown
+    shown <- if (isTRUE(input$pr_show_all)) seq_len(nrow(d)) else which(likely_of(d) != "less likely")
+    use <- shown[vapply(shown, function(i) isTRUE(input[[pr_id("use", i)]]), logical(1))]
+    if (!length(use)) return(notify_error("Tick the pairs to add first."))
+    names <- vapply(use, function(i) trimws(input[[pr_id("name", i)]] %||% ""), "")
+    if (!all(nzchar(names))) return(notify_error("Give each ticked pair an assay name.", pr_id("name", use[!nzchar(names)][1])))
+    assays <- lapply(names, split_assays)
+    bad <- vapply(assays, function(a) length(bad_assay_names(a)) > 0, logical(1))
+    if (any(bad)) return(notify_error(sprintf(
+      "Use letters, digits, dots, hyphens and underscores only in an assay name (no spaces): %s.",
+      paste(bad_assay_names(unlist(assays)), collapse = ", ")), pr_id("name", use[bad][1])))
+    all <- unlist(assays)
+    if (anyDuplicated(all)) return(notify_error(sprintf(
+      "Give each pair its own assay name: %s is given to more than one ticked pair.", all[duplicated(all)][1])))
+    for (j in seq_along(use)) for (a in assays[[j]]) add_pair(d[use[j], , drop = FALSE], a)
+    notify_info(sprintf("%s added, for %s. Check %s in the table on the right.",
+                        if (length(use) == 1) "1 pair" else paste(length(use), "pairs"), paste(all, collapse = " and "),
+                        if (length(use) == 1) "it" else "them"), duration = 8)
+    for (i in use) updateCheckboxInput(session, pr_id("use", i), value = FALSE)
   })
 
   # The project terms of the chosen section of the checklist (PCR and primers first), or all of them
