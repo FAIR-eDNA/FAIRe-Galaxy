@@ -16,7 +16,7 @@ for (f in c("runner.R", "tools.R", "helpers.R", "demos.R", "ui.R"))
 
 options(shiny.maxRequestSize = 500 * 1024^2, DT.fillContainer = FALSE)
 
-APP_VERSION <- "0.8.11"
+APP_VERSION <- "0.8.12"
 
 # Colours from the logo: petrol, teal, navy, red, orange and yellow (darkened where white text sits
 # on them, to keep it readable).
@@ -490,9 +490,12 @@ server <- function(input, output, session) {
   # ------------------------------------------------------------ FAIRe-ator
   observeEvent(input$run_faireator, {
     pid <- trimws(input$fa_project_id)
-    if (!nzchar(pid) || grepl("[^A-Za-z0-9_.-]", pid))
-      return(notify_error("Give a project ID with no spaces or special characters.", "fa_project_id"))
+    if (!nzchar(pid) || grepl("[^A-Za-z0-9_-]", pid))
+      return(notify_error("Give a project ID with letters, digits, hyphens and underscores only (no spaces).", "fa_project_id"))
     if (blank(input$fa_assay_name)) return(notify_error("Give at least one assay name.", "fa_assay_name"))
+    fa_targeted <- identical(input$fa_assay_type, "targeted")
+    if (length(bad_assay_names(split_assays(input$fa_assay_name), fa_targeted)))
+      return(notify_error(paste0(assay_name_rule(fa_targeted), "."), "fa_assay_name"))
     if (!length(input$fa_sample_type)) return(notify_error("Choose at least one sample type.", "fa_sample_type"))
     rv$res$faireator <- with_run("Making the template", run_faireator(
       sd, pid, input$fa_assay_type, input$fa_assay_name, input$fa_sample_type, input$fa_req_lev,
@@ -1142,7 +1145,8 @@ server <- function(input, output, session) {
                       "taxon and references go into the table on the right: check them there, and change any that do",
                       "not fit your study. e. Write the workbook uses the assay names you give here.")))),
         primer_list(d),
-        help_text("Give each assay a short name you will keep, with letters, digits, dots, hyphens and underscores only,",
+        help_text("Give each assay a short name you will keep, with letters, digits, hyphens and underscores only,",
+                  if (md_assay_type() == "targeted") "and no underscores for a qPCR or ddPCR assay,",
                   "such as MiFish or LerayCOI. It labels the assay in this dataset's sheets, file names and record IDs.",
                   "The primer names, sequences and gene that people search on come from the reference table, whatever",
                   "you call the assay."),
@@ -1213,8 +1217,16 @@ server <- function(input, output, session) {
             "Less likely: %s found only from a primer name, for a gene whose sequences your methods already give",
             count_of(length(less), "pair"))), lapply(less, item))))
   }
-  # An assay name FAIRe can use: letters, digits, dots, hyphens and underscores
-  bad_assay_names <- function(a) a[nzchar(a) & !grepl("^[A-Za-z0-9_.-]+$", a)]
+  # An assay name FAIRe can use, as the tools check it: letters, digits, hyphens and underscores, and for a
+  # targeted assay no underscore, as FAIRe-fier reads the assay name after the last underscore of
+  # detected_notDetected_<assay_name>
+  bad_assay_names <- function(a, targeted = md_assay_type() == "targeted") {
+    ok <- grepl("^[A-Za-z0-9_-]+$", a) & !(targeted & grepl("_", a, fixed = TRUE))
+    a[nzchar(a) & !ok]
+  }
+  assay_name_rule <- function(targeted = md_assay_type() == "targeted")
+    paste0("Use letters, digits, hyphens and underscores only in an assay name (no spaces)",
+           if (targeted) ", and no underscores for a qPCR or ddPCR assay, as FAIRe-fier reads the name after the last underscore")
   # Puts a pair's values into the project values for an assay, replacing what that assay had.
   add_pair <- function(r, assay) {
     f <- intersect(primer_fields, names(r))
@@ -1225,11 +1237,12 @@ server <- function(input, output, session) {
     length(f)
   }
   # The assay name for a pair: the reference table's name for it, as a FAIRe assay_name (letters, digits,
-  # dots, hyphens and underscores), or its gene when it has none.
+  # hyphens and underscores, with hyphens for underscores in a targeted assay), or its gene when it has none.
   default_assay <- function(r) {
     a <- if ("assay_name" %in% names(r) && !is.na(r$assay_name)) trimws(r$assay_name) else ""
     if (!nzchar(a) && "target_gene" %in% names(r) && !is.na(r$target_gene)) a <- sub("\\s.*", "", r$target_gene)
-    gsub("^_+|_+$", "", gsub("[^A-Za-z0-9_.-]+", "_", a))
+    a <- gsub("^_+|_+$", "", gsub("[^A-Za-z0-9_-]+", "_", a))
+    if (md_assay_type() == "targeted") gsub("_", "-", a, fixed = TRUE) else a
   }
   observeEvent(input$pr_add, {
     d <- rv$primers; req(d)
@@ -1241,8 +1254,7 @@ server <- function(input, output, session) {
     if (!all(nzchar(names))) return(notify_error("Give each ticked pair an assay name.", pr_id("name", use[!nzchar(names)][1])))
     assays <- lapply(names, split_assays)
     bad <- vapply(assays, function(a) length(bad_assay_names(a)) > 0, logical(1))
-    if (any(bad)) return(notify_error(sprintf(
-      "Use letters, digits, dots, hyphens and underscores only in an assay name (no spaces): %s.",
+    if (any(bad)) return(notify_error(sprintf("%s: %s.", assay_name_rule(),
       paste(bad_assay_names(unlist(assays)), collapse = ", ")), pr_id("name", use[bad][1])))
     all <- unlist(assays)
     if (anyDuplicated(all)) return(notify_error(sprintf(
@@ -1290,6 +1302,10 @@ server <- function(input, output, session) {
   })
   observeEvent(input$pv_add, {
     if (blank(input$pv_term) || blank(input$pv_value)) return(notify_error("Choose a term and give a value.", "pv_term"))
+    if (input$pv_term == "project_id" && !grepl("^[A-Za-z0-9_-]+$", trimws(input$pv_value)))
+      return(notify_error("Give project_id with letters, digits, hyphens and underscores only (no spaces).", "pv_value"))
+    if (length(bad_assay_names(split_assays(input$pv_assay))))
+      return(notify_error(paste0(assay_name_rule(), "."), "pv_assay"))
     rv$pv <- rbind(rv$pv, data.frame(term = input$pv_term, value = input$pv_value, assay = split_assays(input$pv_assay)))
     updateTextInput(session, "pv_value", value = "")
   })
@@ -1531,8 +1547,8 @@ server <- function(input, output, session) {
     # checked before any is added, so a mistake adds nothing
     for (j in seq_along(give)) {
       t <- give[j]; v <- vals[[t]]
-      if (t == "project_id" && !grepl("^[A-Za-z0-9_.-]+$", v))
-        return(notify_error("Give project_id with letters, digits, dots, hyphens and underscores only (no spaces).", mt_id(t)))
+      if (t == "project_id" && !grepl("^[A-Za-z0-9_-]+$", v))
+        return(notify_error("Give project_id with letters, digits, hyphens and underscores only (no spaces).", mt_id(t)))
       if (identical(type[j], "numeric") && is.na(suppressWarnings(as.numeric(v))))
         return(notify_error(sprintf("Give %s as a number.", t), mt_id(t)))
     }
@@ -1667,8 +1683,7 @@ server <- function(input, output, session) {
     from <- input$pv_rename_from %||% ""; to <- trimws(input$pv_rename_to %||% "")
     if (!nzchar(from)) return(notify_error("Choose the assay to rename."))
     if (!nzchar(to)) return(notify_error("Give the new name.", "pv_rename_to"))
-    if (length(bad_assay_names(to))) return(notify_error(
-      "Use letters, digits, dots, hyphens and underscores only in an assay name (no spaces).", "pv_rename_to"))
+    if (length(bad_assay_names(to))) return(notify_error(paste0(assay_name_rule(), "."), "pv_rename_to"))
     if (to %in% setdiff(pv_assays(), from)) return(notify_error(sprintf("There is already an assay named %s.", to), "pv_rename_to"))
     pv <- rv$pv; pv$assay[pv$assay == from] <- to; rv$pv <- pv
     if (nrow(rv$md_prov)) { m <- rv$md_prov; m$assay[m$assay == from] <- to; rv$md_prov <- m }

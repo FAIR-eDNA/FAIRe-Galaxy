@@ -2174,9 +2174,9 @@ def split_by_assay_column(args, log):
         values = df[match[0]].map(lambda v: '' if fo._blank(v) else str(v).strip())
         assays = list(dict.fromkeys(v for v in values if v))
         empty = int((values == '').sum())
-        bad = [a for a in assays if not re.match(r'^[A-Za-z0-9_.-]+$', a)]
+        bad = [a for a in assays if not re.match(r'^[A-Za-z0-9_-]+$', a)]
         if bad:
-            raise StopError(f"OTU table '{label}': assay names can hold only letters, digits, _, . and -: "
+            raise StopError(f"OTU table '{label}': assay names can hold only letters, digits, _ and -: "
                             + ', '.join(bad[:5]))
         unknown = [a for a in assays if given and a not in given]
         if unknown:
@@ -2201,6 +2201,22 @@ def split_by_assay_column(args, log):
         args.otu_stage = new_stages
     if not given:
         args.assay_name = ','.join(found)
+
+
+def check_assay_names(args):
+    """Assay names hold letters, digits, _ and - only, as FAIRe asks (no spaces or special characters). A
+    targeted assay's name holds no _ either: FAIRe-fier reads it from detected_notDetected_<assay_name>, after
+    the last _."""
+    assays = [a.strip() for a in (args.assay_name or '').split(',') if a.strip()]
+    bad = [a for a in assays if not re.match(r'^[A-Za-z0-9_-]+$', a)]
+    if bad:
+        raise StopError(f"assay names can hold only letters, digits, _ and -: {', '.join(bad)}")
+    if args.assay_type == 'targeted':
+        under = [a for a in assays if '_' in a]
+        if under:
+            raise StopError(f"the name of a targeted assay cannot hold _, as FAIRe-fier reads it after the last _ of "
+                            f"detected_notDetected_<assay_name>: {', '.join(under)}. Use - instead, such as "
+                            f"{under[0].replace('_', '-')}")
 
 
 def main(argv=None):
@@ -2313,6 +2329,7 @@ def main(argv=None):
                               f"applied: skos:exactMatch{' and skos:closeMatch' if args.include_review else ''}")
         named = bool(args.assay_name)
         split_by_assay_column(args, log)
+        check_assay_names(args)
         log.add('Inputs', f"assay type {args.assay_type}; sample types {args.sample_types or 'all'}; project ID "
                           f"{args.project_id or '(none)'}; assays {args.assay_name or '(none)'}"
                           + (' (from the assay column of the OTU table)' if args.assay_name and not named else ''))

@@ -92,7 +92,7 @@ python '$__tool_directory__/faire_mapper_apply.py'
             <validator type="regex" message="Use letters, digits, _ or - only">^[A-Za-z0-9_-]+$</validator>
         </param>
         <param name="assay_name" type="text" value="" optional="true" label="Assay name(s)"
-            help="Separate several with commas, for example MiFish, crust16S. With one assay, the name is written to projectMetadata and to every sample; with several, each gets a column in projectMetadata, as FAIRe-ator makes them.">
+            help="Letters, digits, _ or - only; for a targeted assay (qPCR or ddPCR), no _ either, as FAIRe-fier reads the assay name after the last _ of detected_notDetected_assay_name. Separate several with commas, for example MiFish, crust16S. With one assay, the name is written to projectMetadata and to every sample; with several, each gets a column in projectMetadata, as FAIRe-ator makes them.">
             <validator type="regex" message="Use letters, digits, _ or - in names, separated by commas">^\s*([A-Za-z0-9_-]+\s*(,\s*[A-Za-z0-9_-]+\s*)*)?$</validator>
         </param>
         <param name="date_order" type="select" label="Dates such as 06/09/2017"

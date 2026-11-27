@@ -205,7 +205,7 @@ def main(outdir=None):
         shutil.rmtree(plug)
     (plug / '.claude-plugin').mkdir(parents=True)
     shutil.copytree(pkg, plug / 'skills' / 'faire-dataset')
-    version = '1.4.0'
+    version = '1.4.1'
     (plug / '.claude-plugin' / 'plugin.json').write_text(json.dumps({
         'name': 'faire-dataset', 'displayName': 'FAIRe dataset assistant', 'version': version,
         'description': 'Helps eDNA researchers turn their sample sheets, methods and OTU or qPCR tables into a FAIRe '

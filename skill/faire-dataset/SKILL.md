@@ -122,11 +122,13 @@ choice where the files or the conversation suggest one:
 
 - Metabarcoding or a targeted assay (qPCR or ddPCR)?
 - What was sampled (water, sediment, soil, air ...)?
-- Which assays (primer sets)? Agree a short name for each with no spaces (MiFish_12S, Fish16S). For
-  qPCR or ddPCR assays, use no underscores either (OlsonViiA7): FAIRe-fier reads the assay name from
-  detected_notDetected_<assay_name> after the last underscore.
-- A project ID (letters, digits, _ or -), the country or sea, and the time zone of sampling as a UTC
-  offset (+08:00 for Perth). Collection times are kept as local time, as daily cycles follow it.
+- Which assays (primer sets)? Agree a short name for each with letters, digits, _ and - only
+  (MiFish_12S, Fish16S). For qPCR or ddPCR assays, use no underscores either (OlsonViiA7): FAIRe-fier
+  reads the assay name from detected_notDetected_<assay_name> after the last underscore.
+- A project ID (letters, digits, _ or -), and the time zone of sampling as a UTC offset (+08:00 for
+  Perth). Collection times are kept as local time, as daily cycles follow it.
+- The country or sea is the first part of geo_loc_name: if no column of the sample table gives it,
+  add one before `map` (`table add-column Country --value Australia`).
 
 Record the answers with `start` (run it again later to change any of them).
 

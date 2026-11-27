@@ -43,6 +43,13 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   independent answer keys (`dev/faire_mapper_real_datasets/`, `dev/faire_mapper_australian_datasets/`,
   summarised below), and end to end on CSIRO's SEA-MES data (`dev/faire_mapper_seames/`). Not yet
   tried on datasets from Australian labs that already have a FAIRe version.
+- New in 0.13.2 (27 November 2026): assay names and the project ID follow one rule across the tools,
+  the FAIRe tools app and the AI assistant: letters, digits, _ and - only, as FAIRe asks (no spaces or
+  special characters). *Apply mapping* now checks the assay names it is given, and stops when the name
+  of a targeted assay holds _, as FAIRe-fier reads that name after the last _ of
+  detected_notDetected_<assay_name> (use - instead). *Find method details* can choose *Accept* in the
+  review sheet for the values of terms found reliably (`--accept_reliable`), as the app ticks them; the
+  Galaxy tool does so unless you turn it off, and the reviewer changes any that is wrong.
 - New in 0.13.1 (27 November 2026): *find method details* states each term's record in plain words:
   "Accuracy assessment for this term is based on correctly finding it 16 times in 17 different
   manuscripts inspected. In 1 more, it gave a value where a person reading the manuscript found none."
