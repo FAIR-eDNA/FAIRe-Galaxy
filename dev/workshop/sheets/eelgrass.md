@@ -50,7 +50,7 @@ installers, ask your IT support before the workshop.
    data dictionary.
 4. **c. Review the mapping**: Reject *Replicate* (FAIRe's biological_rep is the number of replicates
    for the whole project), then save the review. *Fill in the authors' answers* does this for you.
-5. **d. Methods and project values**: the values for the whole project start empty. In *1. Find the primers*, run *Find
+5. **d. Methods and project values**: the values for the whole project start empty. Open *1. Find the primers* and run *Find
    primers* on `Dryad_README.md` alone first. It names only "the Leray et al. (2013) primer set": how
    many published pairs fit that? Then run it on the README and `eelgrass_notes.md`, which gives the
    sequences in the authors' QIIME 2 script. Add the exact match, renaming its assay *LerayCOI*, and

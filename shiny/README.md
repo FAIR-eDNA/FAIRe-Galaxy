@@ -61,6 +61,8 @@ tables*, with notes in full sentences and an Excel sheet drop-down. The cards fo
 chosen in *b*: OTU tables and experimentRunMetadata for metabarcoding, qPCR or ddPCR results for
 targeted assays. *2. Find the other method details* in *d* shows the assay type chosen in *b*, where it
 asked for it again.
+Version 0.8.7 (27 November 2026) starts steps 1 and 2 of *d* closed, as separate cards with coloured
+headers, so that step 2 stays easy to see below step 1; step 3's header has the same colour.
 
 ## What it covers
 
@@ -104,7 +106,8 @@ A few things that help along the way:
   *1. Find the primers*, *2. Find the other method details* (such as PCR conditions and the
   sequencing platform), and *3. Check projectMetadata and add what is missing*, on the right, which
   lists the mandatory project terms still to give. The primers come first because the assay you give
-  each pair is used in step 2. Each step ends by pointing to the next. A PDF of scanned pages has no
+  each pair is used in step 2. Steps 1 and 2 start closed, as cards with coloured headers: open each in
+  turn. Each step ends by pointing to the next. A PDF of scanned pages has no
   text to read: save it as text first.
 - **Primers** are checked against a reference table of about 550 published primer pairs, most from
   Takahashi et al. (2023) and Wilderlab's assays. This keeps primer names as they are in the
