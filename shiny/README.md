@@ -42,7 +42,12 @@ order (find the primers, find the other method details, then check projectMetada
 missing), each pointing to the next, where the primers and the other method details were side by side
 as tabs. The instructions for choosing primer pairs fold under *Instructions*, closed until opened.
 In find method details, the values the tool usually finds with high accuracy come ticked, the two
-groups have plainer headings, and each value's record in testing is stated in plain words.
+groups have plainer headings, and each value's record in testing is stated in plain words. Assay
+names are given once, in *d*: each exact match is listed with its name to keep or change, *Rename an
+assay* renames one in every row, and *e. Write the workbook* shows the names from *d*. The project ID
+has a line saying what it is for, and the demonstrations no longer preset assay names. Started with
+*Run App* in RStudio or `shiny::runApp()`, the app now loads the demonstration data (Shiny's own
+loading of the `R/` folder had left their folder empty; `R/_disable_autoload.R` stops it).
 
 ## What it covers
 
@@ -92,13 +97,20 @@ A few things that help along the way:
   Takahashi et al. (2023) and Wilderlab's assays. This keeps primer names as they are in the
   literature and catches typos in sequences. If your primers are not in it, add your own table.
   Pairs whose two sequences in your methods match the reference table exactly come first, marked
-  *exact match* in green, and *Add the exact matches* adds them all with one click, each with its assay name, for
-  you to check in projectMetadata, on the right. Pairs found only from a primer name, for a gene whose sequences
-  the methods already give, are less likely (one name can belong to several published pairs) and
-  are hidden unless you ask for them. Clicking a pair fills in its assay name from the reference
-  table, which you can change. *e. Write the workbook* then
-  offers the same assay names for the OTU tables and libraries, and stops with a message if a name
-  there differs from the ones given in *d*.
+  *exact match* in green, and are listed above the table, each ticked, with the assay name it will be
+  added under: the reference table's name, to keep or change. Untick any pair not used for these
+  data, and *Add the ticked pairs* adds the rest, for you to check in projectMetadata, on the right.
+  Pairs found only from a primer name, for a gene whose sequences the methods already give, are less
+  likely (one name can belong to several published pairs) and are hidden unless you ask for them.
+  Clicking a pair fills in its assay name from the reference table, which you can change.
+- **Assay names** are given in *d*, with the primers: a short name you will keep, such as MiFish or
+  LerayCOI, with letters, digits, dots, hyphens and underscores only. FAIRe's `assay_name` labels
+  the assay within the dataset: it links projectMetadata's columns to the OTU tables, libraries and
+  qPCR results, and appears in file names and record IDs (GBIF occurrenceIDs, NCBI and ENA library
+  names). The primer names, sequences, gene and references that people search on go to their own
+  fields, from the reference table, whatever the assay is called. *Rename an assay*, in step 3,
+  renames it in every row. *e. Write the workbook* shows the names given in *d* and uses them for the
+  OTU tables and libraries; it asks for names only when *d* has none.
 - **Other method details**: in step 2, after the primers, *Find method details* reads the
   same methods for the filters, extraction kit, PCR conditions, sequencing kit, software, settings
   and reference databases, and lists each value it finds with a snippet of text from the source, its
@@ -147,8 +159,8 @@ Making a workbook takes several steps, and people go back to change one. The app
   missing package and so on), with the tool's own message below.
 - **Warnings are listed where you see them.** Writing the workbook lists its warnings, and the
   mandatory terms still with no value, in the result.
-- **Some values are checked as you type**: the project ID, the UTC offset, and the assay names
-  against the ones given in *d*.
+- **Some values are checked as you type**: the project ID and the UTC offset. Assay names are
+  checked when you add them in *d*.
 - **Dates that could be read two ways are caught early.** If a date column has values such as
   06/09/2017 and none settles whether the day or the month comes first, *b. Propose a mapping* asks,
   and your answer sets the date order in *e*.
@@ -547,7 +559,7 @@ detected_notDetected for each assay is worked out from them, as apply mapping do
 - Cq values above the assay's number of cycles (pcr_cycles in the project values) are reported.
 
 The table's columns are found by name (Sample ID, Assay or Target, Cq or Ct, Replicate, Plate,
-Copies). Its assay values must be the assay names given in *e*. Choose *Targeted* as the assay type
+Copies). Its assay values must be the assay names given in *d*. Choose *Targeted* as the assay type
 in *b. Propose a mapping* first. *a. Your files* recognises such a table as *qPCR results*.
 
 *3. Convert*, *GBIF and OBIS (presence and absence)*, runs FAIRe to Darwin Core on the workbook: one

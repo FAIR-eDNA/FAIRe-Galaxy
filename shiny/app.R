@@ -238,7 +238,6 @@ server <- function(input, output, session) {
     updateTextInput(session, "fa_project_id", value = demo$project_id)
     updateTextInput(session, "fa_assay_name", value = demo$assay_name)
     updateTextInput(session, "ap_project_id", value = demo$project_id)
-    updateTextInput(session, "ap_assay_name", value = demo$assay_name)
     updateTextInput(session, "ap_country", value = demo$country)
     updateSelectInput(session, "ap_date_order", selected = demo$date_order)
     if (length(demo$dwc)) {
@@ -450,13 +449,6 @@ server <- function(input, output, session) {
     field_check("ap_utc_offset", if (nzchar(v) && !grepl("^(Z|[+-](0[0-9]|1[0-4]):[0-5][0-9])$", v))
       "Give it as +10:00, -04:00 or Z (hours and minutes, with the sign)." else "")
   }, ignoreInit = TRUE)
-  observe({
-    used <- trimws(strsplit(input$ap_assay_name %||% "", ",")[[1]])
-    odd <- setdiff(used[nzchar(used)], pv_assays())
-    field_check("ap_assay_name", if (length(pv_assays()) && length(odd))
-      sprintf("Not among the assays named in d: %s. The assays there: %s.", paste(odd, collapse = ", "),
-              paste(pv_assays(), collapse = ", ")) else "")
-  })
 
   # The status of each mapper step, shown beside its name in the step list (app.js puts it there).
   observe({
@@ -1139,10 +1131,10 @@ server <- function(input, output, session) {
             tags$ol(
               tags$li("Each row is a published primer pair that matches your methods (or the names you typed).",
                       "When both sequences in your methods match a pair in the reference table, it is an exact",
-                      "match and comes first: usually these are the pairs you used, one for each assay.",
-                      "Add the exact matches adds them all at once, each with its assay name; check them in the",
-                      "table on the right, and delete any that were not used for these data (methods sometimes",
-                      "give the sequences of primers from a pilot comparison, or of blocking primers)."),
+                      "match: usually these are the pairs you used, one for each assay. The exact matches are listed",
+                      "above the table, each with the assay name it will be added under. Keep or change each name,",
+                      "untick any pair not used for these data (methods sometimes give the sequences of primers from",
+                      "a pilot comparison, or of blocking primers), and add the ticked pairs."),
               tags$li("Pairs found only from a primer name, for a gene whose sequences your methods already give,",
                       "are less likely (one name can belong to several published pairs), so they are hidden. Show",
                       "them if a pair you used is missing."),
@@ -1151,16 +1143,20 @@ server <- function(input, output, session) {
               tags$li("Press Add this pair to the projectMetadata. The pair's names, sequences, gene, target taxon and",
                       "references go into the table on the right: check them there, and change any that do not fit",
                       "your study."),
-              tags$li("Do the same for each of your other assays (say COI as well as 16S). The assay names you give",
-                      "here are filled in for you in e. Write the workbook, so they stay the same.")))),
+              tags$li("Do the same for each of your other assays (say COI as well as 16S). e. Write the workbook",
+                      "uses the assay names you give here.")))),
         uiOutput("pr_exact_ui"),
         uiOutput("pr_show_all_ui"),
         DTOutput("primers_table"),
         uiOutput("pr_chosen"),
         layout_columns(col_widths = c(6, 6),
-                       textInput("pr_assay", term_label("Assay this pair was used for", "primer_assay"),
-                                 value = if (nzchar(rv$demo)) DEMOS[[rv$demo]]$primer_assay else "", placeholder = "for example Fish16S"),
-                       div(class = "pt-4", actionButton("pr_add", "Add this pair to the projectMetadata", icon = icon("arrow-right"))))))
+                       textInput("pr_assay", term_label("Assay name for this pair", "primer_assay"),
+                                 placeholder = "for example Fish16S"),
+                       div(class = "pt-4", actionButton("pr_add", "Add this pair to the projectMetadata", icon = icon("arrow-right")))),
+        help_text("Give each assay a short name you will keep, with letters, digits, dots, hyphens and underscores only,",
+                  "such as MiFish or LerayCOI. It labels the assay in this dataset's sheets, file names and record IDs.",
+                  "The primer names, sequences and gene that people search on come from the reference table, whatever",
+                  "you call the assay.")))
   })
   # Pairs from a methods text say how likely each is; the less likely ones are hidden unless asked for.
   less_likely <- function(d) {
@@ -1180,12 +1176,37 @@ server <- function(input, output, session) {
     if (is.null(d) || !"how_likely" %in% names(d)) return(integer())
     which(startsWith(ifelse(is.na(d$how_likely), "", as.character(d$how_likely)), "exact match"))
   }
+  # The exact matches, each with the assay name it will be added under: the reference table's name to
+  # start with, for the person to keep or change. Untick a pair that was not used for these data.
   output$pr_exact_ui <- renderUI({
-    n <- length(exact_rows(rv$primers))
-    if (n) actionButton("pr_add_exact", sprintf("Add the exact %s (%d) to the projectMetadata",
-                                                if (n == 1) "match" else "matches", n),
-                        icon = icon("check-double"), class = "btn-primary btn-sm mb-2")
+    d <- rv$primers
+    k <- exact_rows(d)
+    if (!length(k)) return(NULL)
+    names <- make.unique(vapply(k, function(i) default_assay(d[i, , drop = FALSE]), ""), sep = "_")
+    nm <- function(i, x) if (x %in% names(d) && !is.na(d[[x]][i])) d[[x]][i] else ""
+    div(class = "exact-box",
+        tags$b(sprintf("%s: both sequences in your methods match %s in the reference table",
+                       if (length(k) == 1) "Exact match" else "Exact matches",
+                       if (length(k) == 1) "a pair" else "these pairs")),
+        lapply(seq_along(k), function(j) {
+          i <- k[j]
+          div(class = "exact-row",
+              checkboxInput(paste0("pr_exact_use_", j), sprintf("%s / %s (%s; %s)", nm(i, "pcr_primer_name_forward"),
+                                                                nm(i, "pcr_primer_name_reverse"),
+                                                                if (nzchar(nm(i, "target_gene"))) nm(i, "target_gene") else "gene not given",
+                                                                nm(i, "pcr_primer_reference_forward")), TRUE),
+              textInput(paste0("pr_exact_name_", j), "Assay name", names[j]))
+        }),
+        help_text("Give each assay a short name you will keep, with letters, digits, dots, hyphens and underscores only,",
+                  "such as MiFish or LerayCOI. It labels the assay in this dataset's sheets, file names and record IDs.",
+                  "The primer names, sequences and gene that people search on come from the reference table, whatever",
+                  "you call the assay."),
+        actionButton("pr_add_exact", sprintf("Add the ticked %s to the projectMetadata",
+                                             if (length(k) == 1) "pair" else "pairs"),
+                     icon = icon("check-double"), class = "btn-primary btn-sm"))
   })
+  # An assay name FAIRe can use: letters, digits, dots, hyphens and underscores
+  bad_assay_names <- function(a) a[nzchar(a) & !grepl("^[A-Za-z0-9_.-]+$", a)]
   # Puts a pair's values into the project values for an assay, replacing what that assay had.
   add_pair <- function(r, assay) {
     f <- intersect(primer_fields, names(r))
@@ -1199,10 +1220,17 @@ server <- function(input, output, session) {
     d <- rv$primers
     k <- exact_rows(d)
     if (!length(k)) return()
-    names <- make.unique(vapply(k, function(i) default_assay(d[i, , drop = FALSE]), ""), sep = "_")
-    for (j in seq_along(k)) add_pair(d[k[j], , drop = FALSE], names[j])
-    notify_info(sprintf("%d %s added, for %s. Check them in the table on the right.", length(k),
-                             if (length(k) == 1) "pair" else "pairs", paste(names, collapse = " and ")), duration = 8)
+    use <- vapply(seq_along(k), function(j) isTRUE(input[[paste0("pr_exact_use_", j)]]), logical(1))
+    names <- vapply(seq_along(k), function(j) trimws(input[[paste0("pr_exact_name_", j)]] %||% ""), "")
+    if (!any(use)) return(notify_error("Tick the pairs to add."))
+    if (any(use & !nzchar(names))) return(notify_error("Give each ticked pair an assay name."))
+    bad <- bad_assay_names(names[use])
+    if (length(bad)) return(notify_error(sprintf(
+      "Use letters, digits, dots, hyphens and underscores only in an assay name (no spaces): %s.", paste(bad, collapse = ", "))))
+    if (anyDuplicated(names[use])) return(notify_error("Give each pair its own assay name."))
+    for (j in which(use)) add_pair(d[k[j], , drop = FALSE], names[j])
+    notify_info(sprintf("%d %s added, for %s. Check them in the table on the right.", sum(use),
+                        if (sum(use) == 1) "pair" else "pairs", paste(names[use], collapse = " and ")), duration = 8)
   })
   # The assay name for a chosen pair: the reference table's name for it, as a FAIRe assay_name
   # (letters, digits, dots, hyphens and underscores), or its gene when it has none.
@@ -1244,6 +1272,10 @@ server <- function(input, output, session) {
     if (!length(i)) return(notify_error("Choose a primer pair in the table first."))
     r <- primers_shown()[i, ]
     assays <- split_assays(input$pr_assay)
+    bad <- bad_assay_names(assays)
+    if (length(bad)) return(notify_error(sprintf(
+      "Use letters, digits, dots, hyphens and underscores only in an assay name (no spaces): %s.", paste(bad, collapse = ", ")),
+      "pr_assay"))
     for (a in assays) n <- add_pair(r, a)
     notify_info(sprintf("%d values added for %s.", n,
                         if (all(nzchar(assays))) paste(assays, collapse = " and ") else "every assay"))
@@ -1494,18 +1526,43 @@ server <- function(input, output, session) {
   # names stay the same and the project values link to the right OTU tables and libraries.
   pv_assays <- reactive({ a <- unique(trimws(rv$pv$assay)); a[!is.na(a) & nzchar(a)] })
   assay_input <- function(id, label, value) {
+    if (!nzchar(value) && length(pv_assays()) == 1) value <- pv_assays()
     ch <- unique(c(pv_assays(), if (nzchar(value)) value))
     selectizeInput(id, label, c("", ch), selected = value,
                    options = list(create = TRUE, placeholder = if (length(ch)) "choose or type" else "type a name"))
   }
-  ap_assay_auto <- reactiveVal("")
-  observe({
-    a <- paste(pv_assays(), collapse = ", ")
-    now <- trimws(isolate(input$ap_assay_name) %||% "")
-    if (nzchar(a) && (!nzchar(now) || identical(now, ap_assay_auto()))) {
-      updateTextInput(session, "ap_assay_name", value = a)
-      ap_assay_auto(a)
-    }
+  # e. Write the workbook takes the assay names from d. It asks for them only when d has none (no
+  # primers or values given for an assay).
+  e_assays <- reactive({
+    if (length(pv_assays())) paste(pv_assays(), collapse = ", ") else trimws(input$ap_assay_name %||% "")
+  })
+  output$ap_assay_ui <- renderUI({
+    a <- pv_assays()
+    if (length(a)) return(div(class = "mb-3",
+      tags$label(class = "form-label", "Assay names"),
+      div(class = "assay-names", paste(a, collapse = ", ")),
+      help_text(inline("From ", actionLink("goto_primers_names", "d. Methods and project values"),
+                       ". To rename an assay, change it there (step 3, Rename an assay)."))))
+    tagList(
+      textInput("ap_assay_name", "Assay names", value = isolate(input$ap_assay_name) %||% "", placeholder = "for example Fish16S"),
+      help_text("No assays are named in d. Methods and project values yet. Name them there with their primers, or",
+                "give them here, separated by commas. Leave this empty when an OTU table names its assays in a",
+                "column."))
+  })
+  observeEvent(input$goto_primers_names, nav_select("mapper_steps", "d. Methods and project values"))
+  # Renaming an assay in d renames it in every row of projectMetadata
+  observe(updateSelectInput(session, "pv_rename_from", choices = pv_assays()))
+  observeEvent(input$pv_rename, {
+    from <- input$pv_rename_from %||% ""; to <- trimws(input$pv_rename_to %||% "")
+    if (!nzchar(from)) return(notify_error("Choose the assay to rename."))
+    if (!nzchar(to)) return(notify_error("Give the new name.", "pv_rename_to"))
+    if (length(bad_assay_names(to))) return(notify_error(
+      "Use letters, digits, dots, hyphens and underscores only in an assay name (no spaces).", "pv_rename_to"))
+    if (to %in% setdiff(pv_assays(), from)) return(notify_error(sprintf("There is already an assay named %s.", to), "pv_rename_to"))
+    pv <- rv$pv; pv$assay[pv$assay == from] <- to; rv$pv <- pv
+    if (nrow(rv$md_prov)) { m <- rv$md_prov; m$assay[m$assay == from] <- to; rv$md_prov <- m }
+    updateTextInput(session, "pv_rename_to", value = "")
+    notify_info(sprintf("Renamed %s to %s.", from, to))
   })
   # The sheets of a file chosen in an OTU table block, for its Excel sheet drop-downs. The first choice
   # (empty) uses the first sheet, as the tools do when no sheet is given.
@@ -1659,7 +1716,7 @@ server <- function(input, output, session) {
       return(notify_error(paste("qPCR and ddPCR results are for targeted assays: choose Targeted as the assay type in",
                                 "b. Propose a mapping and run it again, or remove the results tables.")))
     # The assay names used here should be the ones the project values were given for in d.
-    used <- trimws(unlist(strsplit(c(input$ap_assay_name %||% "", vapply(otus, `[[`, "", "assay"),
+    used <- trimws(unlist(strsplit(c(e_assays(), vapply(otus, `[[`, "", "assay"),
                                      vapply(libs, `[[`, "", "assay")), ",")))
     odd <- setdiff(unique(used[nzchar(used)]), pv_assays())
     if (length(pv_assays()) && length(odd))
@@ -1684,7 +1741,7 @@ server <- function(input, output, session) {
     at <- at_of(a)
     res <- with_run("Writing the FAIRe workbook", run_apply(
       sd, a$table, a$sheet, a$header_row, rv$crosswalk, at, a$sample_types, pid,
-      assay_name = input$ap_assay_name, country = input$ap_country, utc_offset = utc, date_order = input$ap_date_order,
+      assay_name = e_assays(), country = input$ap_country, utc_offset = utc, date_order = input$ap_date_order,
       include_review = input$ap_include_review, project_values = pv_path, req_lev = input$ap_req_lev,
       drop_unmapped = input$ap_drop_unmapped, otu_tables = otus, library_tables = libs, amp_tables = amps,
       table_name = a$table_name))

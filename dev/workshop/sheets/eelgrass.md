@@ -53,7 +53,7 @@ installers, ask your IT support before the workshop.
 5. **d. Methods and project values**: the values for the whole project start empty. In *1. Find the primers*, run *Find
    primers* on `Dryad_README.md` alone first. It names only "the Leray et al. (2013) primer set": how
    many published pairs fit that? Then run it on the README and `eelgrass_notes.md`, which gives the
-   sequences in the authors' QIIME 2 script. Add the exact match, with *LerayCOI* as its assay, and
+   sequences in the authors' QIIME 2 script. Add the exact match, renaming its assay *LerayCOI*, and
    check what it adds in the table on the right: is Sabella spallanzanii the right target taxon?
    Then go on to *2. Find the other method details*: the reliable values come ticked. Check sequencing_location against the
    notes, and add them. In step 3, add the rest by hand: the app lists the mandatory terms still to give.

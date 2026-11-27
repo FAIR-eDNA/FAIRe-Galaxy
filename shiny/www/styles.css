@@ -236,3 +236,12 @@ h6.group-head { margin: 0.6rem 0 0.1rem; font-weight: 600; color: var(--faire-na
 /* d. Methods and project values: the numbered steps, and the line pointing to the next one */
 .method-steps .accordion-button { font-weight: 600; }
 .next-step { margin: 0.8rem 0 0.2rem; font-size: 0.9rem; }
+
+/* d, find primers: the exact matches, each with the assay name it is added under */
+.exact-box { border: 1px solid #cfe3d4; background: #f3f9f4; border-radius: 6px; padding: 0.6rem 0.8rem; margin: 0.4rem 0 0.8rem; }
+.exact-row { display: flex; gap: 0.8rem; align-items: center; flex-wrap: wrap; margin: 0.3rem 0; }
+.exact-row .form-group, .exact-row .shiny-input-container { margin-bottom: 0; }
+.exact-row .checkbox { flex: 1 1 18rem; margin: 0; }
+.exact-row input[type=text] { width: 14rem; }
+/* e: the assay names, as given in d */
+.assay-names { font-weight: 600; padding: 0.3rem 0; }
