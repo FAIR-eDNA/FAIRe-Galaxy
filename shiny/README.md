@@ -61,6 +61,10 @@ tables*, with notes in full sentences and an Excel sheet drop-down. The cards fo
 chosen in *b*: OTU tables and experimentRunMetadata for metabarcoding, qPCR or ddPCR results for
 targeted assays. *2. Find the other method details* in *d* shows the assay type chosen in *b*, where it
 asked for it again.
+Version 0.8.7 (27 November 2026) names the blank template and the finished workbook
+`<project_id>.xlsx`, as FAIRe-ator does and as the FAIRe guidelines ask (*Consistent identifiers and
+file naming*), where they were `<project_id>_FAIRe_template.xlsx` and `<project_id>_FAIRe.xlsx`.
+Agreed by Miwa Takahashi and Oliver.
 
 ## What it covers
 
