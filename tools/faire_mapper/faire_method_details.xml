@@ -23,6 +23,7 @@ python '$__tool_directory__/faire_method_details.py'
     --assay_names '$assay_names'
 #end if
 $whole_text
+$accept_reliable
 --output '$proposals'
 --review_sheet '$review_sheet'
 > '$summary'
@@ -35,12 +36,15 @@ $whole_text
             <option value="targeted">Targeted assay (qPCR or ddPCR)</option>
         </param>
         <param name="assay_names" type="text" value="" optional="true" label="Assay names (optional)"
-            help="Separated by commas, as in your other files (Fish16S, COI_Leray). A value found in a sentence that names one of them is proposed for that assay. Leave empty if the study has one assay.">
-            <validator type="regex" message="Letters, digits, spaces and _ - . , only">^[A-Za-z0-9_ .,-]*$</validator>
+            help="Separated by commas, as in your other files (Fish16S, COI_Leray): letters, digits, _ and - in each name. A value found in a sentence that names one of them is proposed for that assay. Leave empty if the study has one assay.">
+            <validator type="regex" message="Letters, digits, _ and - in names, separated by commas">^[A-Za-z0-9_ ,-]*$</validator>
         </param>
         <param name="whole_text" type="boolean" truevalue="--whole_text" falsevalue="" checked="false"
             label="Read the whole text"
             help="By default, a text with a Methods heading is read from that heading to the Results, Discussion or References heading, with any supplementary methods after the references. Other parts of a paper name tools and kits that other studies used. Choose this if the tool misses part of your methods."/>
+        <param name="accept_reliable" type="boolean" truevalue="--accept_reliable" falsevalue="" checked="true"
+            label="Choose Accept for the values found reliably"
+            help="In the review sheet, the values for terms the tool has found reliably in papers tested come with Accept as the Reviewer's decision, as the FAIRe tools app ticks them. Check each against its sentence all the same, and change it to Reject or Change where it is wrong. Leave this off to choose every decision yourself."/>
     </inputs>
     <outputs>
         <data name="review_sheet" format="xlsx" label="${tool.name} on ${on_string}: review sheet"/>
@@ -141,7 +145,8 @@ Primers are left to **FAIRe mapper: find primers**, which looks them up in a tab
 - **Review sheet** (Excel), with a *Method details* sheet and a *How to review* sheet. The rows come in
   three parts: values for terms found reliably, values to check, and the method terms not found. Each
   value has the FAIRe term and its requirement level, what FAIRe asks for, the proposed value, how
-  reliable the term has been, the sentence it came from and how it was found. Choose a *Reviewer's decision* for each: Accept, Change (and write
+  reliable the term has been, the sentence it came from and how it was found. The values found reliably come
+  with *Accept* already chosen (unless you turn that off): check them all the same. Choose a *Reviewer's decision* for each of the others: Accept, Change (and write
   the right value in *Your value*) or Reject. When a term has several values (two storage
   temperatures, say), keep the one that applies to your eDNA samples. The rows after them are the
   FAIRe method terms the tool did not find: write a value in *Your value* for any you know. Rows with

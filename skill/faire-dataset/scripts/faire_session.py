@@ -255,28 +255,40 @@ def cmd_start(args):
         s['sample_types'] = split_list(args.sample_types)
     if args.assays is not None:
         names = split_list(args.assays)
-        bad = [a for a in names if not re.fullmatch(r'[A-Za-z0-9_.-]+', a)]
+        bad = [a for a in names if not re.fullmatch(r'[A-Za-z0-9_-]+', a)]
         if bad:
-            raise Stop(f'Assay names need letters, digits, _ . or - only (FAIRe asks for no spaces): {", ".join(bad)}')
+            raise Stop(f'Assay names need letters, digits, _ or - only (FAIRe asks for no spaces or special '
+                       f'characters): {", ".join(bad)}')
         s['assays'] = names
+    # FAIRe-fier reads a targeted assay's name after the last _ of detected_notDetected_<assay_name>
+    under = [a for a in s.get('assays') or [] if '_' in a]
+    if s.get('assay_type') == 'targeted' and under:
+        raise Stop(f'A targeted assay\'s name cannot hold _, as FAIRe-fier reads it after the last _ of '
+                   f'detected_notDetected_<assay_name>: {", ".join(under)}. Use - instead, such as '
+                   f'{under[0].replace("_", "-")}.')
     if args.project_id is not None:
         if not re.fullmatch(r'[A-Za-z0-9_-]+', args.project_id):
             raise Stop('The project ID needs letters, digits, _ or - only (FAIRe asks for no spaces or special '
                        'characters), for example Smith2025_RiverFish.')
         s['project_id'] = args.project_id
-    for k in ('country', 'utc_offset', 'date_order'):
+    for k in ('utc_offset', 'date_order'):
         v = getattr(args, k)
         if v is not None:
             s[k] = v
+    # The country is no longer set for the whole project (apply mapping 0.13.0): it comes from the table
+    if args.country is not None or s.pop('country', None):
+        print('Note: the country or sea is not set for the whole project any more. Give it in the sample table, '
+              'as a column such as Country (table add-column Country --value NAME), and map it to geo_loc_name: '
+              'it becomes the first part of each sample\'s geo_loc_name.')
     if s.get('utc_offset') and not re.fullmatch(r'Z|[+-]\d{2}:\d{2}', s['utc_offset']):
         raise Stop('Give the UTC offset as +HH:MM or -HH:MM (for example +08:00 for Perth, +10:00 for AEST), or Z.')
     s.setdefault('assay_type', 'metabarcoding')
     save_state(w, s)
     log_event(w, 'start', json.dumps({k: s.get(k) for k in ('assay_type', 'sample_types', 'assays', 'project_id',
-                                                               'country', 'utc_offset', 'date_order')}))
+                                                               'utc_offset', 'date_order')}))
     print(f'Session folder: {w}')
     for k, label in (('assay_type', 'Assay type'), ('sample_types', 'Sample types'), ('assays', 'Assays'),
-                     ('project_id', 'Project ID'), ('country', 'Country or sea'), ('utc_offset', 'UTC offset'),
+                     ('project_id', 'Project ID'), ('utc_offset', 'UTC offset'),
                      ('date_order', 'Date order')):
         v = s.get(k)
         print(f'  {label}: {", ".join(v) if isinstance(v, list) else (v or "(not given)")}')
@@ -1641,8 +1653,6 @@ def cmd_build(args):
         targs += ['--sample_types', ','.join(s['sample_types'])]
     if s.get('assays'):
         targs += ['--assay_name', ','.join(s['assays'])]
-    if s.get('country'):
-        targs += ['--country', s['country']]
     if s.get('utc_offset'):
         targs += [f"--utc_offset={s['utc_offset']}"]
     targs += ['--date_order', s.get('date_order') or 'stop']
@@ -1978,7 +1988,6 @@ def cmd_summary(args):
          f"- Assay type: {s.get('assay_type', '')}",
          f"- Sample types: {', '.join(s.get('sample_types', [])) or '(not given)'}",
          f"- Assays: {', '.join(s.get('assays', [])) or '(not given)'}",
-         f"- Country or sea: {s.get('country') or '(not given)'}",
          f"- UTC offset of collection times: {s.get('utc_offset') or '(not given)'}",
          f"- Sample table: {s.get('table', {}).get('name', '(none)')}",
          f"- Methods: {', '.join(Path(m).name for m in s.get('methods', [])) or '(none)'}", '']
@@ -2135,7 +2144,7 @@ def main(argv=None):
     p.add_argument('--sample_types', help='comma-separated: Water, Sediment, Soil, Air, Biofilm, Tissue, Other ...')
     p.add_argument('--assays', help='assay names, comma-separated, no spaces (MiFish_12S, Fish16S ...)')
     p.add_argument('--project_id', help='letters, digits, _ or -')
-    p.add_argument('--country', help='country or sea for geo_loc_name when the table has none (INSDC name)')
+    p.add_argument('--country', help='no longer used: give the country or sea as a column of the sample table')
     p.add_argument('--utc_offset', help='UTC offset of the local collection times: +08:00, -03:30 or Z')
     p.add_argument('--date_order', choices=['stop', 'dmy', 'mdy'], help='how to read dates like 03/04/2023')
     p.set_defaults(fn=cmd_start)

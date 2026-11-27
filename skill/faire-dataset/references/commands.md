@@ -22,7 +22,7 @@ The script prints `STOPPED:` and the reason when something needs fixing, and exi
 | Command | What it does |
 |---|---|
 | `setup [--install]` | Checks Python has pandas, openpyxl, pypdf, pydantic and numpy; installs what is missing with `--install`. |
-| `start --assay_type metabarcoding --sample_types Water --assays MiFish_12S,Fish16S --project_id Smith2025_Rivers --country Australia --utc_offset +08:00 [--date_order dmy]` | Records the study's settings. Run again with any option to change it. Assay names and the project ID take letters, digits, `_` and `-` only. |
+| `start --assay_type metabarcoding --sample_types Water --assays MiFish_12S,Fish16S --project_id Smith2025_Rivers --utc_offset +08:00 [--date_order dmy]` | Records the study's settings. Run again with any option to change it. Assay names and the project ID take letters, digits, `_` and `-` only. |
 | `status` | What has been done, and the next step. |
 
 ## Files and the sample table

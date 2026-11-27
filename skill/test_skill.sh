@@ -40,7 +40,7 @@ $S setup > /dev/null
 echo "== 1. day-night"
 D="$repo/demo/daynight"; W="$out/daynight"; rm -rf "$W"
 $S --work "$W" start --assay_type metabarcoding --sample_types Water --assays 16S_Fish,COI_Leray \
-    --project_id West2024_DayNight --country Australia --utc_offset +11:00 > /dev/null
+    --project_id West2024_DayNight --utc_offset +11:00 > /dev/null
 $S --work "$W" identify "$D"/* > /dev/null
 $S --work "$W" map "$D/Day_night_Tasmania_sample_data.xlsx" > /dev/null
 $S --work "$W" table set "Sample ID" --value 9B --where "Sample ID=8B" --nth 2 --reason "typing slip" > /dev/null
@@ -50,6 +50,7 @@ $S --work "$W" table add-column "Control type" > /dev/null
 $S --work "$W" table set "Control type" --value "field negative" --where "Sample ID~^Filtration control" > /dev/null
 $S --work "$W" table add-row --cells "Sample ID=Extbl19_4" "Sample type=negative control" "Control type=extraction negative" > /dev/null
 for c in "Collected by" "Filtered by" "Information:"; do $S --work "$W" table drop-column "$c" --reason notes > /dev/null; done
+$S --work "$W" table add-column Country --value Australia > /dev/null
 $S --work "$W" map --again > /dev/null
 $S --work "$W" methods "$D/methods.txt" > /dev/null
 $S --work "$W" method-decide accept --all-reliable --except 9 > /dev/null
@@ -110,7 +111,7 @@ PY
 
 echo "== 2. khapra beetle (qPCR)"
 K="$repo/demo/khapra"; W="$out/khapra"; rm -rf "$W"
-$S --work "$W" start --assay_type targeted --sample_types Air,Other --project_id khapra_eDNA --country Australia \
+$S --work "$W" start --assay_type targeted --sample_types Air,Other --project_id khapra_eDNA \
     --date_order dmy --assays FURUIFranklin,FURUIViiA7,OLSONFranklin,OLSONViiA7 > /dev/null
 $S --work "$W" map "$K/Sample_metadata.csv" --dictionary "$K/Trujillo_Gonzalez_et_al_2022_README.txt" > /dev/null
 $S --work "$W" table add-column Category --value sample > /dev/null
@@ -137,7 +138,7 @@ check_pass "$W" khapra ran
 echo "== 3. eelgrass (no sample table)"
 E="$repo/demo/eelgrass"; W="$out/eelgrass"; rm -rf "$W"
 $S --work "$W" start --assay_type metabarcoding --sample_types Water --assays COI_Leray --project_id Trask_eelgrass \
-    --country Canada > /dev/null
+    > /dev/null
 $S --work "$W" new-table "$E/Final_ASVTable_withTaxonomy_Filtered.csv" \
     --split '(?P<Code>[A-Z]+[0-9]*)-(?P<Replicate>[0-9]+)' --join "$E/Site_coordinates.csv" --on 'Code=Code' > /dev/null
 $S --work "$W" table set Site --value "Wreck Cove" --where "Code=WRK02" > /dev/null

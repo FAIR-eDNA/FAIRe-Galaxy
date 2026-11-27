@@ -39,7 +39,7 @@ from pathlib import Path
 
 import faire_mapper_text as ft
 
-__version__ = '0.13.1'
+__version__ = '0.13.2'
 
 HERE = Path(__file__).resolve().parent
 VOCABULARY = HERE / 'method_details' / 'vocabulary.tsv'
@@ -1597,7 +1597,9 @@ PART_TITLES = {'reliable': 'Found reliably: terms the tool has proposed reliably
 SHEET = 'Method details'
 
 
-def write_review_sheet(rows, terms, path, read, label):
+def write_review_sheet(rows, terms, path, read, label, accept_reliable=False):
+    """The review sheet. With accept_reliable, the values for terms found reliably come with Accept as the
+    Reviewer's decision, as the FAIRe tools app ticks them, for the reviewer to change where one is wrong."""
     from openpyxl import Workbook
     from openpyxl.styles import Alignment, Font, PatternFill
     from openpyxl.worksheet.datavalidation import DataValidation
@@ -1610,7 +1612,12 @@ def write_review_sheet(rows, terms, path, read, label):
     part_rows = []
 
     def part(key):
-        ws.append([PART_TITLES[key]] + [''] * (len(REVIEW_HEADERS) - 1))
+        title = PART_TITLES[key]
+        if key == 'reliable' and accept_reliable:
+            title = ('Found reliably, with Accept already chosen: terms the tool has proposed reliably in papers '
+                     'tested. Check each against its sentence all the same, and change Accept to Reject or Change '
+                     'where it is wrong.')
+        ws.append([title] + [''] * (len(REVIEW_HEADERS) - 1))
         part_rows.append((ws.max_row, key))
 
     for key in ('reliable', 'check'):
@@ -1623,7 +1630,8 @@ def write_review_sheet(rows, terms, path, read, label):
             how = ('Reliable' if p.tier == 'reliable' else 'Check') + (f'. {p.tested}' if p.tested else '')
             ws.append([SECTION_NAMES.get(t['section'], t['section']), p.term, LEVEL_NAMES.get(t['level'], ''), asks(t),
                        clean(p.value), how, p.assay, clean(excerpt(p)),
-                       p.found_by + (f' (and {p.others} more sentences)' if p.others else ''), clean(p.note), '', ''])
+                       p.found_by + (f' (and {p.others} more sentences)' if p.others else ''), clean(p.note),
+                       'Accept' if accept_reliable and p.tier == 'reliable' else '', ''])
             for c in ws[ws.max_row][10:12]:
                 c.fill = found_fill
     missing = sorted(missing_terms(rows, terms), key=lambda n: LEVEL_ORDER.get(terms[n]['level'], 9))
@@ -1664,7 +1672,9 @@ def write_review_sheet(rows, terms, path, read, label):
         'whether the value is for a term found reliably or one to check, and how often the tool agreed with an '
         'independent reading of the same papers.',
         '',
-        "For each value found, choose a Reviewer's decision:",
+        "For each value found, choose a Reviewer's decision:" + (
+            " the values for terms found reliably come with Accept already chosen, so check each of them and "
+            "change it where it is wrong; leaving Accept means you agree with the value." if accept_reliable else ''),
         '  Accept: the proposed value is right.',
         '  Change: the value is nearly right; write the right one in Your value.',
         '  Reject: the value does not apply (it may describe other work in the paper, or another assay).',
@@ -1816,6 +1826,9 @@ def main(argv=None):
     ap.add_argument('--whole_text', action='store_true', help='read the whole text, not only its Methods section')
     ap.add_argument('-o', '--output', required=True, help='proposals (TSV)')
     ap.add_argument('--review_sheet', help='review sheet to write (Excel)')
+    ap.add_argument('--accept_reliable', action='store_true',
+                    help="in the review sheet, choose Accept for the values of terms found reliably, for the reviewer "
+                         "to change where one is wrong")
     ap.add_argument('--version', action='version', version=__version__)
     args = ap.parse_args(argv)
 
@@ -1839,7 +1852,7 @@ def main(argv=None):
     write_tsv(rows, terms, args.output)
     label = ', '.join(t[0] for t in texts)
     if args.review_sheet:
-        write_review_sheet(rows, terms, args.review_sheet, read, label)
+        write_review_sheet(rows, terms, args.review_sheet, read, label, args.accept_reliable)
     by_section = OrderedDict()
     for p in rows:
         sec = SECTION_NAMES.get(terms[p.term]['section'], terms[p.term]['section'])

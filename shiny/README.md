@@ -80,6 +80,10 @@ Version 0.8.11 (27 November 2026) gives each mandatory project term still missin
 in step 3, with its description, its example and, where FAIRe has one, a list to choose from, and one
 button to add them, where before they were listed for you to find under *Add a value by hand*. A value
 from outside a term's list is written as "other: ...", as FAIRe asks.
+Version 0.8.12 (27 November 2026) checks assay names and the project ID by the same rule as the
+Galaxy tools and the AI assistant: letters, digits, hyphens and underscores only, with no underscores
+in the name of a qPCR or ddPCR assay (FAIRe-fier reads it after the last underscore). It suggests
+hyphens for underscores in a targeted assay's name. It allowed dots before, which the tools refuse.
 
 ## What it covers
 
@@ -139,7 +143,8 @@ A few things that help along the way:
   from a primer name, for a gene whose sequences the methods already give, are less likely (one name
   can belong to several published pairs) and are hidden unless you ask for them.
 - **Assay names** are given in *d*, with the primers: a short name you will keep, such as MiFish or
-  LerayCOI, with letters, digits, dots, hyphens and underscores only. FAIRe's `assay_name` labels
+  LerayCOI, with letters, digits, hyphens and underscores only, and no underscores for a qPCR or
+  ddPCR assay (FAIRe-fier reads its name after the last underscore of detected_notDetected_<assay_name>). FAIRe's `assay_name` labels
   the assay within the dataset: it links projectMetadata's columns to the OTU tables, libraries and
   qPCR results, and appears in file names and record IDs (GBIF occurrenceIDs, NCBI and ENA library
   names). The primer names, sequences, gene and references that people search on go to their own

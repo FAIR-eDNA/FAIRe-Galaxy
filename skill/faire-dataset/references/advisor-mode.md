@@ -21,7 +21,7 @@ values for the whole project, apply mapping, FAIRe-fier.
 
 1. **Opening and data notice**, as in SKILL.md Step 1.
 2. **Scope**, as in SKILL.md Step 2. Write the answers down for the researcher, as they enter them in
-   the app: assay type, sample types, assay names, project ID, country or sea, UTC offset.
+   the app: assay type, sample types, assay names, project ID, UTC offset.
 3. **Propose mapping.** Ask the researcher to run *propose mapping* on their sample table and share
    the review sheet it writes (or paste its Review sheet). Go through it with them:
    - the rows the mapper accepted: a short list, asking if any look wrong;
