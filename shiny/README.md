@@ -120,6 +120,10 @@ took any run ID and then stopped. Step *e* says what the run ID is for. The tool
 R's notes that a package was built under a newer R, and show FAIRe2MDT's lines once. It goes with
 FAIRe mapper 0.13.3, whose chart of the reviewer's decisions has its legend below the bars and colours
 that read for red-green colour blindness.
+Version 0.9.2 (28 November 2026): the panel beside a step for its tool's result (the proposed mapping
+in *b*, the workbook in *e*, FAIRe-fier's findings in *Check* and the template in *FAIRe-ator*) is
+shown once the tool has run. Before that it was an empty box saying what would appear there, which drew
+the eye from the step itself.
 
 ## What it covers
 
