@@ -49,7 +49,9 @@ run_faireator <- function(session_dir, project_id, assay_type, assay_name, sampl
   writeLines(call, file.path(d, "faireator_call.R"))
   s <- run_rscript("faireator_call.R", character(), d)
   made <- file.path(d, paste0("template_", project_id), paste0(project_id, ".xlsx"))
-  out <- file.path(d, paste0(project_id, "_FAIRe_template.xlsx"))
+  # Named <project_id>.xlsx, as FAIRe-ator and the FAIRe guidelines name a workbook (consistent identifiers
+  # and file naming); each run keeps its files in its own folder, so a template and a workbook can share it
+  out <- file.path(d, paste0(project_id, ".xlsx"))
   if (file.exists(made)) file.copy(made, out)
   run_result("faireator", "FAIRe-ator", d, list(s), list(template = out))
 }
@@ -208,7 +210,7 @@ run_apply <- function(session_dir, table, sheet, header_row, crosswalk, assay_ty
   args <- c(args, "--table_name", table_name, "--crosswalk_name", basename(crosswalk),
             "--output", "faire.xlsx", "--log", "apply_mapping_log.txt")
   s <- run_python(tool_path("faire_mapper", "faire_mapper_apply.py"), args, d)
-  wb <- file.path(d, paste0(project_id, "_FAIRe.xlsx"))
+  wb <- file.path(d, paste0(project_id, ".xlsx"))   # as the FAIRe guidelines name a workbook
   if (file.exists(file.path(d, "faire.xlsx"))) file.copy(file.path(d, "faire.xlsx"), wb)
   run_result("apply", "FAIRe mapper: apply mapping", d, list(s),
              list(workbook = wb, log = file.path(d, "apply_mapping_log.txt")))

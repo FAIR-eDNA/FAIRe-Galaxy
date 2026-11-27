@@ -63,6 +63,10 @@ targeted assays. *2. Find the other method details* in *d* shows the assay type 
 asked for it again.
 Version 0.8.7 (27 November 2026) starts steps 1 and 2 of *d* closed, as separate cards with coloured
 headers, so that step 2 stays easy to see below step 1; step 3's header has the same colour.
+Version 0.8.8 (27 November 2026) names the blank template and the finished workbook
+`<project_id>.xlsx`, as FAIRe-ator does and as the FAIRe guidelines ask (*Consistent identifiers and
+file naming*), where they were `<project_id>_FAIRe_template.xlsx` and `<project_id>_FAIRe.xlsx`.
+Agreed by Miwa Takahashi and Oliver.
 
 ## What it covers
 
