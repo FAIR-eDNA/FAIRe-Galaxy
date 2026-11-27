@@ -358,6 +358,16 @@ mapper_panel <- function() {
             numericInput("map_header_row", term_label("Row holding the column headers", "header_row"), 1, min = 1, max = 50),
             help_text("Change this when the sheet has a title or notes above the headers. Comment lines",
                       "starting with # (as in NCBI and ENA submission sheets) are skipped without it."),
+            tags$h6(class = "group-head", "Dates and times in your table"),
+            help_text("These are used when the workbook is written, in e. Write the workbook."),
+            textInput("ap_utc_offset", term_label("UTC offset of the times of collection (optional)", "utc_offset"), placeholder = "for example +10:00"),
+            help_text("When the table gives the time of collection in its own column, the time is joined to its",
+                      "date in eventDate, in local time. Give the offset of local time from UTC, such as +10:00",
+                      "for Australian Eastern Standard Time; times the column name says are UTC are converted to",
+                      "local time with it."),
+            selectInput("ap_date_order", term_label("How your table writes dates such as 06/09/2017", "date_order"),
+                        c("Not sure: stop and ask me" = "stop", "Day first: 6 September 2017 (as in Australia)" = "dmy",
+                          "Month first: June 9, 2017 (as in the USA)" = "mdy")),
             tags$h6(class = "group-head", "Your study"),
             help_text("These decide which FAIRe terms apply to your samples."),
             radioButtons("map_assay_type", term_label("Assay type", "assay_type"), c("Metabarcoding" = "metabarcoding",
@@ -468,8 +478,7 @@ mapper_panel <- function() {
                 help_text("Reads your methods for the filtration, extraction, PCR, sequencing and bioinformatics, and",
                           "proposes a FAIRe value for each term it recognises, with a snippet of text from the source so",
                           "that you can check it."),
-                radioButtons("md_assay_type", term_label("Assay type", "assay_type"),
-                             c("Metabarcoding" = "metabarcoding", "Targeted (qPCR, ddPCR)" = "targeted"), inline = TRUE),
+                uiOutput("md_assay_type_ui"),
                 run_button("run_details", "Find method details"),
                 uiOutput("details_result"),
                 tags$p(class = "next-step", "When you have added the values that fit, go on to step 3, on the right.")
@@ -532,23 +541,8 @@ mapper_panel <- function() {
               card_header("Write the workbook"),
               uiOutput("apply_inputs_summary"),
               run_button("run_apply", "Write the FAIRe workbook"),
-              help_text("Check the details below first: about your samples, then the OTU and library tables.")
-            ),
-            card(
-              card_header("About your samples"),
-              textInput("ap_project_id", "Project ID", placeholder = "for example SEA-MES_eDNA"),
-              help_text("A short ID you choose for this project, with letters, digits, hyphens and underscores only.",
-                        "FAIRe uses it in file names, and the conversions build record IDs from it (GBIF's eventID is",
-                        "the project ID and the sample name). Keep it the same each time you write this workbook."),
-              uiOutput("ap_assay_ui"),
-              textInput("ap_utc_offset", term_label("UTC offset of the times of collection (optional)", "utc_offset"), placeholder = "for example +10:00"),
-              help_text("When the table gives the time of collection in its own column, the time is joined to its",
-                        "date in eventDate, in local time. Give the offset of local time from UTC, such as +10:00",
-                        "for Australian Eastern Standard Time; times the column name says are UTC are converted to",
-                        "local time with it."),
-              selectInput("ap_date_order", term_label("How your table writes dates such as 06/09/2017", "date_order"),
-                          c("Not sure: stop and ask me" = "stop", "Day first: 6 September 2017 (as in Australia)" = "dmy",
-                            "Month first: June 9, 2017 (as in the USA)" = "mdy")),
+              help_text("Check the tables below first. The project ID and the assay names come from projectMetadata",
+                        "in d. Methods and project values, and the dates and times settings from b. Propose a mapping."),
               accordion(
                 open = FALSE,
                 accordion_panel(
@@ -560,6 +554,8 @@ mapper_panel <- function() {
                             "until you decide them, and the workbook's README and log say it is a draft."),
                   checkboxInput("ap_drop_unmapped", "Leave out columns not matched to a FAIRe term", FALSE)))
             ),
+            # Metabarcoding: OTU tables and experimentRunMetadata. Targeted: qPCR or ddPCR results. As chosen in b.
+            conditionalPanel("input.map_assay_type != 'targeted'",
             card(
               card_header("OTU or ASV tables"),
               help_text("One block for each table. A taxonomy table is only needed when the taxonomy is not in the",
@@ -571,25 +567,28 @@ mapper_panel <- function() {
                   actionButton("otu_remove", "Remove the last", icon = icon("minus"), class = "btn-sm"))
             ),
             card(
-              card_header("Library tables"),
-              help_text("A library table or run report gives each library's name, read files and checksums (for",
-                        "example ENA's run report). Each row should be one amplicon of one sample."),
+              card_header(term_label("experimentRunMetadata: run reports or library tables", "library_table")),
+              help_text("experimentRunMetadata describes each sequencing library: its name, its sequence files and",
+                        "their checksums. Give a file that lists your libraries, such as the run report you can",
+                        "download from ENA or NCBI for your project, or your sequencing facility's run sheet. Each row",
+                        "should be one library in the FAIRe sense: one amplicon of one sample, with its own index",
+                        "sequences (MIDs)."),
               uiOutput("lib_blocks"),
               div(class = "btn-row",
-                  actionButton("lib_add", "Add a library table", icon = icon("plus"), class = "btn-sm"),
+                  actionButton("lib_add", "Add a run report or library table", icon = icon("plus"), class = "btn-sm"),
                   actionButton("lib_remove", "Remove the last", icon = icon("minus"), class = "btn-sm"))
-            ),
+            )),
+            conditionalPanel("input.map_assay_type == 'targeted'",
             card(
               card_header(term_label("qPCR or ddPCR results (targeted assays)", "amp_table")),
               help_text("One row per reaction: the sample, the assay and the Cq, or the copies for ddPCR. The",
                         "reactions go to ampData, and each sample's detected_notDetected is worked out from them",
-                        "where your sample table gives none. Choose Targeted as the assay type in b. Propose a mapping,",
-                        "and give the assay names as they are in this table."),
+                        "where your sample table gives none. Give the assay names as they are in this table."),
               uiOutput("amp_blocks"),
               div(class = "btn-row",
                   actionButton("amp_add", "Add a results table", icon = icon("plus"), class = "btn-sm"),
                   actionButton("amp_remove", "Remove the last", icon = icon("minus"), class = "btn-sm"))
-            ),
+            )),
             run_button("run_apply_bottom", "Write the FAIRe workbook")
           ),
           card(card_header("The workbook"), uiOutput("apply_result"), wb_preview_ui("apply_preview"))

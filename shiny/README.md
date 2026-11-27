@@ -51,6 +51,16 @@ assay* renames one in every row, and *e. Write the workbook* shows the names fro
 has a line saying what it is for, and the demonstrations no longer preset assay names. Started with
 *Run App* in RStudio or `shiny::runApp()`, the app now loads the demonstration data (Shiny's own
 loading of the `R/` folder had left their folder empty; `R/_disable_autoload.R` stops it).
+Version 0.8.6 (27 November 2026), from Miwa Takahashi's check of step e: *e. Write the workbook* no
+longer has the *About your samples* box. The project ID comes from project_id in projectMetadata, in
+*d* (where it is now listed among the mandatory terms still to give), and the assay names from *d*,
+as before; the write card shows both. The UTC offset and the date order move to *b. Propose a
+mapping*, beside the sample table they describe, and the optional settings for what to write move
+into the write card. The library tables are now *experimentRunMetadata: run reports or library
+tables*, with notes in full sentences and an Excel sheet drop-down. The cards follow the assay type
+chosen in *b*: OTU tables and experimentRunMetadata for metabarcoding, qPCR or ddPCR results for
+targeted assays. *2. Find the other method details* in *d* shows the assay type chosen in *b*, where it
+asked for it again.
 
 ## What it covers
 
@@ -88,7 +98,7 @@ A few things that help along the way:
   file, to help you decide.
 - **b. Propose a mapping** is done once, for the sample table only. Once *a. Your files* has run, it
   offers only the files found to be sample tables. The other files need no mapping: the methods go in
-  at *d. Methods and project values*, and the OTU, taxonomy and library tables at *e. Write the
+  at *d. Methods and project values*, and the OTU, taxonomy and run report tables at *e. Write the
   workbook*.
 - **Methods** can be text or a PDF. *d. Methods and project values* takes three steps, in order:
   *1. Find the primers*, *2. Find the other method details* (such as PCR conditions and the
@@ -162,11 +172,12 @@ Making a workbook takes several steps, and people go back to change one. The app
   missing package and so on), with the tool's own message below.
 - **Warnings are listed where you see them.** Writing the workbook lists its warnings, and the
   mandatory terms still with no value, in the result.
-- **Some values are checked as you type**: the project ID and the UTC offset. Assay names are
-  checked when you add them in *d*.
+- **Some values are checked as you type**: the UTC offset in *b*, and the project ID of the blank
+  template. Assay names are checked when you add them in *d*, and the project_id in *d* when the
+  workbook is written.
 - **Dates that could be read two ways are caught early.** If a date column has values such as
   06/09/2017 and none settles whether the day or the month comes first, *b. Propose a mapping* asks,
-  and your answer sets the date order in *e*.
+  and your answer sets the date order beside the table.
 - **The Convert forms offer the workbook's own fields**, such as the field that marks replicates for
   NCBI, in drop-downs you can also type into.
 
