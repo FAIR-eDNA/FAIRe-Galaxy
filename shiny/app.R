@@ -11,7 +11,7 @@ suppressPackageStartupMessages({
 })
 
 if (is.null(getOption("faire.app_dir"))) options(faire.app_dir = normalizePath("."))
-for (f in c("runner.R", "tools.R", "helpers.R", "demos.R", "ui.R"))
+for (f in c("runner.R", "tools.R", "helpers.R", "demos.R", "journey.R", "ui.R"))
   source(file.path(getOption("faire.app_dir"), "R", f), local = FALSE)
 
 options(shiny.maxRequestSize = 500 * 1024^2, DT.fillContainer = FALSE)
@@ -31,10 +31,16 @@ ui <- page_navbar(
   title = tags$span(class = "brand", tags$img(src = "logo.png", alt = "", class = "brand-logo"), "FAIRe tools"),
   window_title = "FAIRe tools",
   theme = theme,
-  header = tags$head(tags$link(rel = "icon", type = "image/png", href = "favicon.png"),
-                     tags$link(rel = "stylesheet", href = "styles.css"), tags$script(src = "app.js")),
+  header = tagList(
+    tags$head(tags$link(rel = "icon", type = "image/png", href = "favicon.png"),
+              tags$link(rel = "stylesheet", href = "styles.css"), tags$script(src = "app.js")),
+    # The journey across the top of every page, and the next step at the top of the page on narrow screens,
+    # where the sidebar is folded away
+    uiOutput("journey_bar"),
+    div(class = "ns-narrow", uiOutput("next_step_top"))),
   sidebar = sidebar(
     width = 300, open = "desktop",
+    uiOutput("next_step_side"),
     tags$h6("Workbook in use"),
     uiOutput("current_workbook"),
     tags$hr(),
@@ -67,7 +73,7 @@ server <- function(input, output, session) {
     unlink(sd, recursive = TRUE)
   })
 
-  rv <- reactiveValues(pr_run = 0, files = character(), workbook = NULL, workbook_from = "", res = list(), runs = list(),
+  rv <- reactiveValues(pr_run = 0, checked = NULL, files = character(), workbook = NULL, workbook_from = "", res = list(), runs = list(),
                        identify = NULL, map = NULL, map_args = NULL, profile = NULL, crosswalk = NULL,
                        crosswalk_from = "", review_version = 0, review_saved = NULL, review_saved_d = NULL, changed = NULL, written = NULL,
                        model = NULL, model_used = character(),
@@ -448,16 +454,15 @@ server <- function(input, output, session) {
       "Give it as +10:00, -04:00 or Z (hours and minutes, with the sign)." else "")
   }, ignoreInit = TRUE)
 
-  # The status of each mapper step, shown beside its name in the step list (app.js puts it there).
+  # The status of each mapper step, from the journey, shown beside its name in the step list (app.js puts
+  # it there) with the same icon and word as in the journey bar.
   observe({
-    st <- list(
-      a = if (!is.null(rv$identify)) "done" else "",
-      b = if (!is.null(rv$map)) "done" else "",
-      c = if (is.null(rv$map)) "" else switch(review_status(), unsaved = "not saved",
-                                              unreviewed = "", if (!is.null(rv$review_saved)) "done" else ""),
-      d = if (nrow(rv$pv)) "done" else "",
-      e = if (wb_stale()) "redo" else if (!is.null(rv$written) && identical(rv$workbook_from, "written by the FAIRe mapper")) "done" else "")
-    session$sendCustomMessage("step_status", st)
+    st <- journey_now()$stages
+    keys <- c(a = "files", b = "map", c = "review", d = "project", e = "build")
+    session$sendCustomMessage("step_status", lapply(keys, function(k) {
+      s <- st$status[st$id == k]
+      list(status = s, word = STATUS_WORD[[s]], detail = st$detail[st$id == k])
+    }))
   })
 
   # Workbook pickers on the Check and Convert pages: the workbook in use, or one of your files.
@@ -1565,28 +1570,30 @@ server <- function(input, output, session) {
   output$pv_download <- downloadHandler("project_values.csv", function(file) write_csv(rv$pv, file))
 
   # ------------------------------------------------------------ mapper e: write the workbook
-  # Step 1 of e: what goes into the workbook, as boxes that join into it, each saying where it comes from
-  # and whether it is ready (green), still needs something (orange) or is optional (grey)
-  e_box <- function(title, holds, from, state, status) {
-    div(class = paste("e-src", paste0("e-", state)),
-        div(class = "e-src-title", title),
+  # Step 1 of e: what goes into the workbook, as boxes that join into it, each led by what it holds (with
+  # its FAIRe sheet second), saying where it comes from and its status, in the journey's icons and words
+  e_box <- function(title, sheet, holds, from, state, status) {
+    div(class = paste("e-src", paste0("st-", state)),
+        div(class = "e-src-head", tags$span(class = "e-src-title", title), status_tag(state)),
+        div(class = "e-src-sheet", sheet),
         div(class = "e-src-holds", holds),
         div(class = "e-src-from", from),
-        div(class = "e-src-status", icon(switch(state, ready = "circle-check", todo = "circle-exclamation", "circle")),
-            tags$span(status)))
+        div(class = "e-src-status", tags$span(status)))
   }
   # The files chosen in e's blocks of one kind (otu, lib or amp)
   e_files <- function(kind, n) {
-    f <- vapply(seq_len(n), function(i) input[[bid(kind, i, "file")]] %||% "", "")
+    f <- vapply(seq_len(n), function(i) input[[bid(kind, i, "file")]] %||% demo_block(kind, i)$file %||% "", "")
     f[nzchar(f)]
   }
   output$e_flow <- renderUI({
     targeted <- identical(input$map_assay_type, "targeted")
     pv <- rv$pv; pid <- e_project_id(); assays <- pv_assays(); left <- pv_left()
+    st <- journey_now()$stages
+    jst <- function(id) { x <- st$status[st$id == id]; if (x %in% c("done", "todo")) x else "todo" }
     proj <- e_box(
-      "projectMetadata", "Values for the whole project: the primers, methods and contacts",
-      tagList("From ", actionLink("e_goto_d", "d. Methods and project values")),
-      if (nrow(pv) && nzchar(pid) && !length(left)) "ready" else "todo",
+      "Methods and project information", "projectMetadata", "Values for the whole project: the primers, methods and contacts",
+      tagList("From ", actionLink("e_goto_d", "d. Methods and project information")),
+      jst("project"),
       if (!nrow(pv)) "No values yet" else paste(c(
         if (nrow(pv) == 1) "1 value" else paste(nrow(pv), "values"),
         if (nzchar(pid)) paste("project ID", pid) else "project_id not given yet",
@@ -1596,18 +1603,19 @@ server <- function(input, output, session) {
         collapse = "; "))
     a <- rv$map_args
     samp <- e_box(
-      "sampleMetadata", "One row per sample: where, when and how it was collected",
+      "Sample information", "sampleMetadata", "One row per sample: where, when and how it was collected",
       tagList("Your sample table, mapped in ", actionLink("e_goto_b", "b"), " and reviewed in ", actionLink("e_goto_c", "c")),
-      if (is.null(a) || review_status() == "unsaved" || identical(rv$crosswalk_from, "proposed, not yet reviewed")) "todo" else "ready",
-      if (is.null(a)) "No mapping yet: propose one in b" else paste0(a$table_name, "; ",
+      if (jst("map") == "done" && jst("review") == "done") "done" else "todo",
+      if (is.null(a)) "No mapping yet: map your sample table in b" else paste0(a$table_name, "; ",
         if (review_status() == "unsaved") "the review has changes not saved"
         else if (identical(rv$crosswalk_from, "proposed, not yet reviewed")) "mapping not reviewed yet"
         else if (identical(rv$crosswalk_from, "your own crosswalk")) "mapped with your own crosswalk"
         else "mapping reviewed"))
     if (targeted) {
       amps <- e_files("amp", rv$amp_n)
-      dna <- list(e_box("qPCR or ddPCR results", "One row per reaction: the sample, the assay and the Cq or copies",
-                        "From your files, in step 2 below", if (length(amps)) "ready" else "todo",
+      dna <- list(e_box("DNA results", "qPCR or ddPCR results, written to ampData",
+                        "One row per reaction: the sample, the assay and the Cq or copies",
+                        "From your files, in step 2 below", if (length(amps)) "done" else "todo",
                         if (length(amps)) paste(amps, collapse = ", ") else "None chosen yet"))
       sheets <- c("projectMetadata", "sampleMetadata", "ampData")
       step <- "3"
@@ -1616,12 +1624,14 @@ server <- function(input, output, session) {
       stage <- vapply(seq_len(rv$otu_n), function(i) input[[bid("otu", i, "stage")]] %||% "final", "")
       stage <- unique(stage[nzchar(vapply(seq_len(rv$otu_n), function(i) input[[bid("otu", i, "file")]] %||% "", ""))])
       dna <- list(
-        e_box("OTU or ASV tables", "The DNA sequences found, their reads in each sample, and their taxonomy",
-              "From your files, in step 2 below", if (length(otus)) "ready" else "todo",
+        e_box("DNA results", "OTU or ASV tables, written to otuFinal and taxaFinal",
+              "The DNA sequences found, their reads in each sample, and their taxonomy",
+              "From your files, in step 2 below", if (length(otus)) "done" else "todo",
               if (length(otus)) paste(otus, collapse = ", ") else "None chosen yet"),
-        e_box("experimentRunMetadata", "One row per sequencing library: its sequence files and checksums",
-              "From your files, in step 3 below", if (length(libs)) "ready" else "optional",
-              if (length(libs)) paste(libs, collapse = ", ") else "Optional: none given"))
+        e_box("Sequencing libraries and runs", "experimentRunMetadata",
+              "One row per sequencing library: its sequence files and checksums",
+              "From your files, in step 3 below", if (length(libs)) "done" else "optional",
+              if (length(libs)) paste(libs, collapse = ", ") else "None given"))
       sheets <- c("projectMetadata", "sampleMetadata", "experimentRunMetadata",
                   if (!length(stage) || "final" %in% stage) c("otuFinal", "taxaFinal"),
                   if ("raw" %in% stage) c("otuRaw", "taxaRaw"))
@@ -1629,12 +1639,12 @@ server <- function(input, output, session) {
     }
     div(class = "e-flow",
         div(class = "e-sources", proj, samp, dna),
-        div(class = "e-join", icon("arrow-down"), " written together into"),
+        div(class = "e-join", icon("arrow-down"), " built together into"),
         div(class = "e-workbook",
             div(class = "e-wb-name", icon("file-excel"), tags$b(" Your FAIRe workbook: "),
                 if (nzchar(pid)) paste0(pid, ".xlsx") else tags$span("<project_id>.xlsx")),
             div(class = "e-wb-sheets", "Sheets: ", lapply(sheets, function(s) tags$span(class = "e-sheet", s))),
-            div(class = "e-src-from", sprintf("Written in step %s below, and shown on the right", step))))
+            div(class = "e-src-from", sprintf("Built in step %s below, and shown on the right", step))))
   })
   observeEvent(input$e_goto_b, nav_select("mapper_steps", "b. Propose a mapping"))
   observeEvent(input$e_goto_c, nav_select("mapper_steps", "c. Review the mapping"))
@@ -1937,7 +1947,14 @@ server <- function(input, output, session) {
   observeEvent(input$run_fairefier, {
     wb <- picked_workbook("ck_wb")
     if (is.null(wb)) return(notify_error("Choose a workbook.", "ck_wb"))
-    rv$res$fairefier <- with_run("Checking the workbook", run_fairefier(sd, wb, input$ck_version))
+    res <- with_run("Checking the workbook", run_fairefier(sd, wb, input$ck_version))
+    rv$res$fairefier <- res
+    # Which workbook was checked, when, and with what result: the journey's check stage reads it
+    s <- if (file.exists(res$outputs$summary %||% "")) tryCatch(jsonlite::fromJSON(res$outputs$summary), error = function(e) NULL)
+    rv$checked <- if (is.null(s)) NULL else list(
+      path = wb, time = Sys.time(), valid = isTRUE(s$valid),
+      errors = sum(vapply(intersect(c("projectMetadata", "sampleMetadata", "experimentRunMetadata"), names(s)),
+                          function(sh) as.numeric(s[[sh]]$errors %||% 0), numeric(1))))
   })
   # Repositories refuse a dataset without every mandatory term: said on the Convert page, more strongly
   # when the last FAIRe-fier check in this session did not pass
@@ -2272,6 +2289,70 @@ server <- function(input, output, session) {
     if (is.null(res)) return(help_text("The metadata and manifest files appear here, one set for each target gene."))
     result_ui(res, extra = if (res$ok) help_text("Import with qiime tools import, using the manifest, and pass the",
                                                  "metadata file to QIIME 2's analysis steps."))
+  })
+
+  # ------------------------------------------------------------ the journey: progress and the next step
+  # Facts about the session, read from the state the app already keeps; R/journey.R turns them into the
+  # seven stages and the next step. FAIRe workbooks among Your files (Excel files with projectMetadata and
+  # sampleMetadata sheets) are remembered by path and time, as reading the sheet names takes a moment.
+  faire_wb_seen <- new.env()
+  is_faire_workbook <- function(p) {
+    if (!grepl("\\.xlsx$", p, ignore.case = TRUE) || !file.exists(p)) return(FALSE)
+    key <- paste(p, file.mtime(p))
+    if (is.null(faire_wb_seen[[key]]))
+      faire_wb_seen[[key]] <- all(c("projectMetadata", "sampleMetadata") %in% tryCatch(xlsx_sheets(p), error = function(e) character()))
+    faire_wb_seen[[key]]
+  }
+  CONVERSIONS <- c(ncbi_biosample = "NCBI (BioSample)", ncbi_sra = "NCBI (SRA)", ena_sample = "ENA (samples)",
+                   ena_run = "ENA (runs)", mdt = "GBIF (MDT)", eo_build = "OBIS and GBIF (Darwin Core)",
+                   dwc = "GBIF and OBIS (presence and absence)", qiime = "QIIME 2")
+  journey_facts <- reactive({
+    files <- names(rv$files)
+    wbs <- files[vapply(unname(rv$files), is_faire_workbook, logical(1))]
+    data_files <- setdiff(files, wbs)
+    idf <- rv$identify
+    mapped <- !is.null(rv$map)
+    rows <- if (mapped) tryCatch(review()$rows, error = function(e) NULL)
+    decisions <- if (!is.null(rows)) tryCatch(review_state(), error = function(e) NULL)
+    targeted <- md_assay_type() == "targeted"
+    fx <- rv$res$faireator
+    template <- if (!is.null(fx) && isTRUE(fx$ok) && file.exists(fx$outputs$template %||% "")) file_href(fx$outputs$template) else ""
+    ck <- rv$checked
+    in_use <- rv$workbook %||% ""
+    current <- !is.null(ck) && (
+      (nzchar(in_use) && identical(ck$path, in_use) && (is.null(rv$written) || ck$time >= rv$written)) ||
+        ck$path %in% unname(rv$files[wbs]))
+    done <- names(CONVERSIONS)[vapply(names(CONVERSIONS), function(k) isTRUE(rv$res[[k]]$ok), logical(1))]
+    list(n_files = length(files), n_unidentified = length(if (is.null(idf)) data_files else setdiff(data_files, idf$file)),
+         identified = !is.null(idf), demo = nzchar(rv$demo), faire_workbooks = wbs, template_href = template,
+         mapped = mapped, map_failed = !mapped && !is.null(rv$res$map) && !isTRUE(rv$res$map$ok),
+         n_columns = if (is.null(rows)) 0 else nrow(rows), review = if (mapped) review_status() else "",
+         review_saved = mapped && !identical(rv$crosswalk_from, "proposed, not yet reviewed"),
+         n_open = if (is.null(decisions)) 0 else sum(rows$kind == "review" & !nzchar(decisions$decision)),
+         n_pv = nrow(rv$pv), missing = pv_left(), project_id = e_project_id(), assay_type = md_assay_type(),
+         n_dna = length(if (targeted) e_files("amp", rv$amp_n) else e_files("otu", rv$otu_n)),
+         written = !is.null(rv$written) && identical(rv$workbook_from, "written by the FAIRe mapper"),
+         stale = wb_stale(), workbook = in_use, checked = ck, check_current = current, converted = unname(CONVERSIONS[done]))
+  })
+  # Kept only when it changes, so the card and the bar are redrawn only then (and keep keyboard focus)
+  journey_now <- reactiveVal(journey_status(list(n_files = 0)))
+  observe(journey_now(journey_status(journey_facts())))
+  output$journey_bar <- renderUI(journey_bar_ui(journey_now()))
+  output$next_step_side <- renderUI(next_step_ui(journey_now(), "side"))
+  output$next_step_top <- renderUI(next_step_ui(journey_now(), "top"))
+  outputOptions(output, "next_step_top", suspendWhenHidden = FALSE)
+  # Going to a stage, from the bar or the card: a recommendation, never a gate, so every stage can be opened
+  go_step <- function(step) { nav_select("main", "FAIRe mapper: from your own tables"); nav_select("mapper_steps", step) }
+  observeEvent(input$journey_go, {
+    t <- input$journey_go
+    switch(t,
+           files = go_step("a. Your files"), map = go_step("b. Propose a mapping"), review = go_step("c. Review the mapping"),
+           project = go_step("d. Methods and project values"), missing = go_step("d. Methods and project values"),
+           build = go_step("e. Write the workbook"), check = nav_select("main", "2. Check"),
+           convert = nav_select("main", "3. Convert"), outputs = nav_select("main", "Outputs"),
+           start = nav_select("main", "Start"), faireator = nav_select("main", "FAIRe-ator: a blank template"))
+    # focus moves to the page's heading, or to the missing terms
+    session$sendCustomMessage("after_go", if (t == "missing") "pv_missing" else "")
   })
 
   # ------------------------------------------------------------ outputs

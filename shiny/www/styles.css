@@ -190,8 +190,10 @@ ul.kind-help li { margin-bottom: 0.2rem; }
 
 /* FAIRe mapper: each step's status beside its name, and the out-of-date note for the workbook */
 #mapper_steps .step-status { display: block; font-size: 0.74rem; font-weight: 600; margin-top: 0.1rem; }
-#mapper_steps .st-done { color: #1d6b4f; }
-#mapper_steps .st-not-saved, #mapper_steps .st-redo { color: #8a4b00; }
+#mapper_steps .step-status.st-done { color: #1d6b38; }
+#mapper_steps .step-status.st-todo, #mapper_steps .step-status.st-stale { color: #8a4b00; }
+#mapper_steps .step-status.st-blocked, #mapper_steps .step-status.st-skip,
+#mapper_steps .step-status.st-optional { color: #5b6770; font-weight: 400; }
 #mapper_steps .nav-link.active .step-status { color: #fff; }
 .stale-note { font-size: 0.85rem; margin-top: 0.5rem; }
 
@@ -275,14 +277,16 @@ h6.group-head { margin: 0.6rem 0 0.1rem; font-weight: 600; color: var(--faire-na
 .e-sources { display: flex; gap: 0.7rem; flex-wrap: wrap; }
 .e-src { flex: 1 1 200px; border: 1px solid #d5dede; border-top-width: 4px; border-radius: 6px; padding: 0.55rem 0.75rem;
   background: white; font-size: 0.84rem; }
-.e-src-title { font-weight: 700; font-family: var(--bs-font-monospace); font-size: 0.86rem; color: var(--faire-navy); }
+.e-src-head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.4rem; flex-wrap: wrap; }
+.e-src-title { font-weight: 700; font-size: 0.9rem; color: var(--faire-navy); }
+.e-src-sheet { font-family: var(--bs-font-monospace); font-size: 0.76rem; color: #4a5a60; }
 .e-src-holds { color: #4a5a60; margin: 0.15rem 0 0.3rem; }
 .e-src-from { font-size: 0.78rem; color: #5b6770; }
 .e-src-status { margin-top: 0.35rem; font-weight: 600; display: flex; gap: 0.35rem; align-items: baseline; }
 .e-src-status > span { overflow-wrap: anywhere; min-width: 0; }
-.e-ready { border-top-color: #2e8b57; background: #f4faf5; } .e-ready .e-src-status { color: #1d6b38; }
-.e-todo { border-top-color: var(--faire-orange); background: #fff8f1; } .e-todo .e-src-status { color: #8a4b00; }
-.e-optional { border-top-color: #b0bec5; } .e-optional .e-src-status { color: #5b6770; font-weight: 400; }
+.e-src.st-done { border-top-color: #2e8b57; background: #f4faf5; } .e-src.st-done .e-src-status { color: #1d6b38; }
+.e-src.st-todo { border-top-color: var(--faire-orange); background: #fff8f1; } .e-src.st-todo .e-src-status { color: #8a4b00; }
+.e-src.st-optional { border-top-color: #b0bec5; } .e-src.st-optional .e-src-status { color: #5b6770; font-weight: 400; }
 .e-join { text-align: center; color: var(--faire-teal); font-size: 0.84rem; font-weight: 600; margin: 0.5rem 0; }
 .e-workbook { max-width: 46rem; margin: 0 auto; border: 2px solid var(--faire-teal); border-radius: 8px;
   background: #eef5f5; padding: 0.6rem 0.9rem; font-size: 0.88rem; }
@@ -302,3 +306,60 @@ h6.group-head { margin: 0.6rem 0 0.1rem; font-weight: 600; color: var(--faire-na
 .mt-field .shiny-input-container { margin-bottom: 0.25rem; }
 .mt-field .form-control, .mt-field .selectize-input { font-size: 0.85rem; }
 @media (max-width: 700px) { .mt-row { grid-template-columns: 1fr; } }
+
+/* ------------------------------------------------------------ the journey (R/journey.R)
+   One status language across the app: an icon and a word with each colour, so none relies on colour
+   alone. Done (green), To do (orange), Optional (grey), Out of date (red), Waiting (grey, dashed) and
+   Not needed (grey). */
+.st-tag { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.74rem; font-weight: 600;
+  padding: 0.05rem 0.45rem; border-radius: 0.7rem; white-space: nowrap; border: 1px solid transparent; }
+.st-tag.st-done { color: #1d6b38; background: #e3f1e7; }
+.st-tag.st-todo { color: #8a4b00; background: #fff0dc; }
+.st-tag.st-optional { color: #45525a; background: #eef1f2; }
+.st-tag.st-stale { color: #9a2c12; background: #fde8e1; }
+.st-tag.st-blocked { color: #5b6770; background: #f4f5f6; border-style: dashed; border-color: #b0bec5; font-weight: 400; }
+.st-tag.st-skip { color: #5b6770; background: transparent; border-color: #d5dede; font-weight: 400; }
+
+/* The seven stages across the top of every page; each opens its page */
+.journey { margin: 0 0 0.9rem; }
+.journey ol { display: flex; gap: 0.35rem; list-style: none; padding: 0; margin: 0; overflow-x: auto; }
+.journey .j-step { flex: 1 1 0; min-width: 7.8rem; }
+.journey .j-link { width: 100%; height: 100%; text-align: left; background: white; border: 1px solid #d5dede;
+  border-top: 3px solid #d5dede; border-radius: 6px; padding: 0.35rem 0.5rem 0.4rem; display: flex;
+  flex-direction: column; gap: 0.2rem; color: var(--faire-ink); font-size: 0.8rem; line-height: 1.2; }
+.journey .j-link:hover { background: #f3f8f8; }
+.journey .j-link:focus-visible { outline: 3px solid var(--faire-yellow); outline-offset: 1px; }
+.journey .j-top { display: flex; gap: 0.3rem; }
+.journey .j-num { font-weight: 700; color: var(--faire-teal); }
+.journey .j-num::after { content: "."; }
+.journey .j-label { font-weight: 600; }
+.journey .j-foot { display: flex; gap: 0.3rem; align-items: center; flex-wrap: wrap; margin-top: auto; }
+.journey .j-next { font-size: 0.7rem; font-weight: 700; color: white; background: var(--faire-teal); border-radius: 0.6rem;
+  padding: 0.05rem 0.4rem; }
+.journey .st-done .j-link { border-top-color: #2e8b57; }
+.journey .st-todo .j-link { border-top-color: var(--faire-orange); }
+.journey .st-stale .j-link { border-top-color: #c0392b; }
+.journey .st-optional .j-link { border-top-color: #90a4ae; }
+.journey .j-current .j-link { border: 2px solid var(--faire-teal); border-top-width: 3px; background: #eef7f7;
+  box-shadow: 0 1px 4px rgba(24, 108, 120, 0.25); }
+
+/* The next step: at the top of the sidebar, and at the top of the page on narrow screens */
+.next-step-card { border: 1px solid #b9d3d6; border-left: 5px solid var(--faire-teal); border-radius: 6px;
+  background: #f1f8f8; padding: 0.6rem 0.75rem 0.7rem; margin-bottom: 1rem; font-size: 0.86rem; }
+.next-step-card.st-stale { border-left-color: #c0392b; background: #fdf3f0; }
+.next-step-card.st-done, .next-step-card.st-optional { border-left-color: #2e8b57; background: #f3f9f5; }
+.ns-head { font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--faire-teal);
+  display: flex; justify-content: space-between; gap: 0.4rem; }
+.ns-num { font-weight: 600; text-transform: none; letter-spacing: 0; color: #5b6770; }
+.ns-done { margin: 0.35rem 0 0.1rem; font-size: 0.8rem; color: #1d6b38; display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap; }
+.ns-title { font-size: 1.02rem; font-weight: 700; margin: 0.35rem 0 0.15rem; color: var(--faire-navy); line-height: 1.25; }
+.ns-attention { font-weight: 600; }
+.ns-why { color: #4a5a60; margin: 0.2rem 0 0.55rem; font-size: 0.82rem; }
+.ns-go { width: 100%; }
+.ns-alt { display: flex; flex-direction: column; align-items: flex-start; margin-top: 0.25rem; }
+.ns-more { padding-left: 0; padding-right: 0; font-size: 0.8rem; }
+.ns-narrow { display: none; }
+@media (max-width: 575.98px) {
+  .ns-narrow { display: block; }
+  .journey .j-step { min-width: 6.6rem; }
+}

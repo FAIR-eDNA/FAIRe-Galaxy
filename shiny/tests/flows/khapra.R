@@ -11,6 +11,7 @@ testServer(app, {
   ans <- DEMOS$khapra$decisions
   for (i in seq_len(nrow(r))) { k <- match(r$input[i], ans$input); if (!is.na(k)) { set(dec_id(i), ans$decision[k]); set(rep_id(i), ans$replacement[k]) } }
   session$setInputs(save_review = 1)
+  next_is(journey_now(), "Find the primers and method details")
   cat("mandatory project terms still to give:", paste(missing_terms(rv), collapse = ", "), "\n")
   session$setInputs(pr_texts = DEMOS$khapra$methods, pr_mode = "text", pr_source = "bundled", run_primers = 1)
   p <- rv$primers; cat("primer pairs found:", nrow(p), "| likely:", paste(likely_of(p), collapse = ", "), "\n")
@@ -57,13 +58,19 @@ testServer(app, {
   cat("project values:\n"); show_pv(rv$pv)
   cat("still to give:", paste(missing_terms(rv), collapse = ", "), "\n")
   bv <- rv$block_version
+  session$setInputs(pv_term = "project_id", pv_value = "khapra_eDNA", pv_assay = "", pv_add = 99)
+  # a targeted assay asks for qPCR or ddPCR results, not OTU tables
+  set(paste0("amp", bv, "_1_file"), "")
+  build <- journey_now()$stages$detail[journey_now()$stages$id == "build"]
+  expect(identical(build, "No qPCR or ddPCR results chosen yet"), paste("with no results chosen, step 5 asks for qPCR or ddPCR results:", build))
   set(paste0("amp", bv, "_1_file"), "khapra_qpcr_prepared.csv")
   set(paste0("amp", bv, "_1_assay_column"), "assay_name")
   set(paste0("amp", bv, "_1_sheet"), "")
-  session$setInputs(pv_term = "project_id", pv_value = "khapra_eDNA", pv_assay = "", pv_add = 99)
+  next_is(journey_now(), "Build the FAIRe workbook")
   session$setInputs(ap_utc_offset = "", ap_date_order = "dmy", ap_include_review = FALSE,
                     ap_req_lev = c("HR", "R", "O"), ap_drop_unmapped = FALSE, run_apply = 1)
   res <- rv$res$apply
+  next_is(journey_now(), "Check the workbook")
   cat("apply ok:", res$ok, "\n"); cat(grep("^WARNING|^INFO: wrote", strsplit(res$log, "\n")[[1]], value = TRUE), sep = "\n")
   session$setInputs(ck_wb = "__current__", ck_version = "auto", run_fairefier = 1)
   fr <- rv$res$fairefier

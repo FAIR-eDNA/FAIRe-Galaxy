@@ -27,6 +27,11 @@ save_outputs <- function(name, apply, fairefier, dwc) {
   cp(dwc$outputs$report, paste0(name, "_dwc_report.md"))
   cat("outputs copied to", out_dir, "\n")
 }
+# The journey's next step (R/journey.R) is the one wanted
+next_is <- function(j, want) {
+  got <- j$next_step$title
+  expect(identical(got, want), paste0("next step: ", want, if (!identical(got, want)) paste0(" (got: ", got, ")") else ""))
+}
 show_pv <- function(pv) { for (i in seq_len(nrow(pv))) cat(sprintf("  %-28s %-14s %s\n", pv$term[i], pv$assay[i], substr(pv$value[i], 1, 70))) }
 missing_terms <- function(rv) {
   m <- read_tsv(rv$map$outputs$missing)

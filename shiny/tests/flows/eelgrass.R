@@ -3,13 +3,19 @@ testServer(app, {
   set <- function(id, value) do.call(session$setInputs, setNames(list(value), id))
   session$setInputs(demo_choice = "eelgrass", load_demo = 1)
   cat("demo:", rv$demo, "| files:", paste(names(rv$files), collapse = ", "), "| pv:", nrow(rv$pv), "\n")
+  next_is(journey_now(), "Identify your files")
   session$setInputs(run_identify = 1)
+  next_is(journey_now(), "Map your sample information")
   session$setInputs(map_table = "eelgrass_samples_prepared.csv", map_dictionary = "Dryad_README.md", map_assay_type = "metabarcoding",
                     map_sample_types = "Water", map_header_row = 1, run_map = 1)
+  next_is(journey_now(), "Review the uncertain matches")
+  expect(grepl("columns? needs? your decision", journey_now()$next_step$attention), "the card says how many columns need a decision")
   r <- review()$rows
   ans <- DEMOS$eelgrass$decisions
   for (i in seq_len(nrow(r))) { k <- match(r$input[i], ans$input); if (!is.na(k)) { set(dec_id(i), ans$decision[k]); set(rep_id(i), ans$replacement[k]) } }
+  next_is(journey_now(), "Save your review")
   session$setInputs(save_review = 1)
+  next_is(journey_now(), "Find the primers and method details")
   cat("mandatory project terms still to give:", paste(missing_terms(rv), collapse = ", "), "\n")
   # d. find primers in the README and the notes
   session$setInputs(pr_texts = DEMOS$eelgrass$methods, pr_mode = "text", pr_source = "bundled", run_primers = 1)
@@ -30,6 +36,7 @@ testServer(app, {
   set(paste0("md_val_", sl), "Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo (samples from 2019) | The Centre for Applied Genomics, Toronto (samples from 2023)")
   session$setInputs(md_kept = rel, md_add = 1)
   cat("mandatory project terms still to give:", paste(missing_terms(rv), collapse = ", "), "\n")
+  next_is(journey_now(), "Complete the mandatory project information")
   # values typed by hand
   cat("missing-terms form lists:", paste(pv_left(), collapse = ", "), "\n")
   session$setInputs(mt_value_pcr_0_1 = "1", mt_value_project_id = "NS.eelgrass", mt_add = 1)
@@ -50,15 +57,23 @@ testServer(app, {
                     ap_drop_unmapped = FALSE, run_apply = 1)
   res <- rv$res$apply
   cat("apply ok:", res$ok, "\n")
+  next_is(journey_now(), "Check the workbook")
   cat(grep("^WARNING|^INFO: wrote", strsplit(res$log, "\n")[[1]], value = TRUE), sep = "\n")
   session$setInputs(ck_wb = "__current__", ck_version = "auto", run_fairefier = 1)
   cat(grep("Success|Error", strsplit(rv$res$fairefier$log, "\n")[[1]], value = TRUE), sep = "\n")
+  next_is(journey_now(), if (isTRUE(rv$checked$valid)) "Convert it, if you need to" else "Fix the errors and check again")
   w <- DEMOS$eelgrass$dwc
   session$setInputs(cv_wb = "__current__", dw_assays = NULL, dw_taxa = "eelgrass_taxa.tsv", dw_target = "gbif", dw_country_code = "",
                     dw_absences = TRUE, dw_title = w$title, dw_abstract = w$abstract, dw_keywords = w$keywords, dw_given = w$given,
                     dw_surname = w$surname, dw_org = w$org, dw_email = w$email, dw_orcid = "", dw_licence = "workbook", run_dwc = 1)
   d <- rv$res$dwc
   cat("dwc ok:", d$ok, "\n"); rep <- readLines(d$outputs$report); cat(rep[grepl("^- ", rep)], sep = "\n")
+  next_is(journey_now(), "Download what you want to keep")
+  # a change to the project values after the workbook was built makes it out of date
+  Sys.sleep(1.1)
+  session$setInputs(pv_term = "samp_store_sol", pv_value = "none", pv_assay = "", pv_add = 99)
+  next_is(journey_now(), "Rebuild the workbook")
+  expect(journey_now()$stages$status[journey_now()$stages$id == "check"] == "blocked", "checking waits for the rebuild")
   expect(res$ok, "eelgrass: the workbook is written")
   expect(!is.null(rv$res$fairefier) && file.exists(rv$res$fairefier$outputs$summary %||% ""), "eelgrass: FAIRe-fier ran")
   expect(isTRUE(rv$res$dwc$ok), "eelgrass: the Darwin Core archive is written")
