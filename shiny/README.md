@@ -37,6 +37,8 @@ calls in the review coloured as in the counts above it, one link to the review s
 two, and CSV copies of the tools' tables for opening in Excel.
 Version 0.8.2 (26 November 2026) adds user-defined experimentRunMetadata fields to the blank
 template (metabarcoding only), from FAIRe-ator's new `experimentRunMetadata_user`.
+Version 0.8.3 (27 November 2026) folds the instructions for choosing primer pairs, in find primers,
+under *Instructions*, closed until opened.
 
 ## What it covers
 
