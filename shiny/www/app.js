@@ -44,19 +44,21 @@
   });
 })();
 
-// The status of each FAIRe mapper step (done, not saved, redo), shown after its name in the step list.
+// The status of each FAIRe mapper step, from the journey (R/journey.R), shown after its name in the step
+// list: a sign and a word, as in the journey bar, so it does not rest on colour alone.
 (function () {
-  var LABEL = {'done': '\u2713 done', 'not saved': '! not saved', 'redo': '\u21bb redo'};
+  var SIGN = {done: '\u2713', todo: '!', stale: '\u21bb', blocked: '\u2026', optional: '\u25cb', skip: '\u2013'};
   function show(st) {
     document.querySelectorAll('#mapper_steps .nav-link').forEach(function (a) {
       var key = (a.textContent.trim().match(/^([a-e])\./) || [])[1];
       if (!key) return;
-      var s = st[key] || '';
+      var s = st[key];
       var tag = a.querySelector('.step-status');
-      if (!s) { if (tag) tag.remove(); return; }
+      if (!s || !s.status) { if (tag) tag.remove(); return; }
       if (!tag) { tag = document.createElement('span'); a.appendChild(tag); }
-      tag.className = 'step-status st-' + s.replace(' ', '-');
-      tag.textContent = LABEL[s] || s;
+      tag.className = 'step-status st-' + s.status;
+      tag.textContent = (SIGN[s.status] || '') + ' ' + s.word;
+      tag.title = s.detail || '';
     });
   }
   document.addEventListener('DOMContentLoaded', function () {
@@ -158,3 +160,32 @@
     });
   });
 })();
+
+// After going to a stage from the journey bar or the next-step card, the page starts at its top and keyboard
+// focus moves to its first heading, or to the part named (the missing project terms, say).
+(function () {
+  function land(id) {
+    setTimeout(function () {
+      var to = id && document.getElementById(Array.isArray(id) ? id[0] : id);
+      if (!to) {
+        var panes = Array.prototype.filter.call(document.querySelectorAll('.tab-pane.active'), function (p) { return p.offsetParent !== null; });
+        var pane = panes[panes.length - 1];
+        to = pane && pane.querySelector('.card-header, h4, h5');
+        window.scrollTo({top: 0});
+      } else {
+        to.scrollIntoView({block: 'start', behavior: 'smooth'});
+      }
+      if (to) { if (!to.hasAttribute('tabindex')) to.setAttribute('tabindex', '-1'); to.focus({preventScroll: true}); }
+    }, 350);
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.Shiny && Shiny.addCustomMessageHandler) Shiny.addCustomMessageHandler('after_go', land);
+  });
+})();
+
+// c. Review: a row whose decision is changed stays in view when its group (the mapper's accepted matches, or
+// the decisions carried over) is hidden
+document.addEventListener('change', function (e) {
+  var row = e.target && e.target.closest && e.target.closest('#review-grid .rv-row');
+  if (row && e.target.tagName === 'SELECT') row.classList.add('rv-changed');
+});

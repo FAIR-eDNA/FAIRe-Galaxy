@@ -44,17 +44,17 @@ installers, ask your IT support before the workshop.
 
 1. On the app's **Start** page, choose **Khapra beetle** and press *Load the demonstration data*.
    (Or download the prepared files and add them yourself with *Add files*.)
-2. **1. Make a workbook, FAIRe mapper, a. Your files**: run it. It should find a sample table, the
+2. **Make a workbook, FAIRe mapper, a. Prepare your files**: run it. It should find a sample table, the
    qPCR results, a taxon table, the README and the notes.
-3. **b. Propose a mapping**: run it on `khapra_samples_prepared.csv`, with the README as the data
+3. **b. Map sample information**: run it on `khapra_samples_prepared.csv`, with the README as the data
    dictionary and *Targeted* as the assay type.
-4. **c. Review the mapping**. Decide the rows for review, then save the review. Suggested answers:
+4. **c. Review the matches**. Decide the rows for review, then save the review. Suggested answers:
    - Reject *sample type* (the authors' own categories, kept as their own column);
    - Change *Category* to samp_category;
    - Change *Extraction technique* to nucl_acid_ext_kit.
 
    *Fill in the authors' answers* does this for you.
-5. **d. Methods and project values**: the values for the whole project start empty, and each
+5. **d. Methods and project information**: the values for the whole project start empty, and each
    assay needs its own. Open *1. Find the primers*, run *Find primers* on the README and the notes, tick each pair and
    give the two assays that used it as its assay names (*OlsonViiA7, OlsonFranklin* for the 16S pair,
    *FuruiViiA7, FuruiFranklin* for the ND6 pair).
@@ -62,10 +62,10 @@ installers, ask your IT support before the workshop.
    belong in the sample table instead? Which cycling conditions belong to which machine? Which values
    are the LAMP assay's, and so not for these data? In step 3, give the rest from the notes in the fields
    for the mandatory terms still to give; the steps on the Start page give each value.
-6. **e. Write the workbook**: the qPCR results are filled in. Write the workbook and read its
+6. **e. DNA results and the workbook**: the qPCR results are filled in. Build the workbook and read its
    warnings.
-7. **2. Check**: run FAIRe-fier on the workbook.
-8. **3. Convert, GBIF and OBIS (presence and absence)**: write the Darwin Core archive and read its
+7. **Check**: run FAIRe-fier on the workbook.
+8. **Convert, GBIF and OBIS (presence and absence)**: write the Darwin Core archive and read its
    report.
 
 ## What to look for

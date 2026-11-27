@@ -23,6 +23,11 @@ help_text <- function(...) tags$p(class = "help-text", ...)
 # between children), for a link or emphasis followed by punctuation.
 inline <- function(...) HTML(paste(vapply(list(...), function(x) as.character(x), ""), collapse = ""))
 step_intro <- function(...) div(class = "step-intro", ...)
+# A card header that leads with the task, with the tool or FAIRe name after it, smaller
+task_header <- function(task, term = NULL) tagList(tags$span(task), if (!is.null(term)) tags$span(class = "card-term", term))
+# The fuller explanation of a step, folded under the one or two sentences that say what to do. A
+# details element opens with the keyboard (Enter or Space on its summary) as well as the mouse.
+more_about <- function(..., title = "More about this step") tags$details(class = "more-about", tags$summary(title), div(...))
 run_button <- function(id, label) actionButton(id, label, class = "btn-primary run-btn", icon = icon("play"))
 
 # Short explanations of the words the app uses, shown when the pointer rests on (or keyboard focus
@@ -80,7 +85,7 @@ GLOSSARY <- c(
                     "sequence. Choose your FASTA file here if your OTU table gives the OTU or ASV names (ASV_1, ASV_2",
                     "and so on) but not their sequences. The names in the FASTA file must match those",
                     "in the OTU table. The list shows every file named as FASTA (such as .fa or .fasta). If your FASTA",
-                    "file has another ending (such as .txt) and is not listed, go back to a. Your files and set its Kind",
+                    "file has another ending (such as .txt) and is not listed, go back to a. Prepare your files and set its Kind",
                     "to sequences (FASTA)."),
   stage = paste("Final: the reads you report, after your curation. Raw: the reads as they came from the pipeline,",
                 "before curation. FAIRe keeps each in its own pair of sheets."),
@@ -153,18 +158,18 @@ GLOSSARY <- c(
 
 # Each kind of file identify reports, and where it goes in this app.
 KIND_PLACE <- c(
-  "sample table" = "b. Propose a mapping: Sample table",
-  "OTU or ASV table" = "e. Write the workbook: OTU or ASV table",
-  "taxonomy table" = paste("e. Write the workbook: Taxonomy table (under More settings for this table); or, with a name column,",
-                           "3. Convert, GBIF and OBIS (presence and absence): Taxon table"),
-  "library table" = "e. Write the workbook: Library table",
-  "qPCR results" = "e. Write the workbook: qPCR or ddPCR results",
-  "crosswalk" = "c. Review: Add a review sheet you filled in, or Use a crosswalk you edited yourself",
-  "data dictionary" = "b. Propose a mapping: Data dictionary",
-  "project values" = "d. Methods and project values: Or load a table of values",
-  "primer table" = "d. Methods and project values, 1. Find the primers: My own primer table",
-  "sequences (FASTA)" = "e. Write the workbook: Sequences of this table (under More settings for this table)",
-  "text" = "d. Methods and project values: Your methods (text or PDF)",
+  "sample table" = "b. Map sample information: Sample table",
+  "OTU or ASV table" = "e. DNA results and the workbook: OTU or ASV table",
+  "taxonomy table" = paste("e. DNA results and the workbook: Taxonomy table (under More settings for this table); or, with a name column,",
+                           "the Convert page, GBIF and OBIS (presence and absence): Taxon table"),
+  "library table" = "e. DNA results and the workbook: Library table",
+  "qPCR results" = "e. DNA results and the workbook: qPCR or ddPCR results",
+  "crosswalk" = "c. Review the matches: Review in Excel instead, or Use a crosswalk you edited yourself",
+  "data dictionary" = "b. Map sample information: Data dictionary",
+  "project values" = "d. Methods and project information: Or load a table of values",
+  "primer table" = "d. Methods and project information, 1. Find the primers: My own primer table",
+  "sequences (FASTA)" = "e. DNA results and the workbook: Sequences of this table (under More settings for this table)",
+  "text" = "d. Methods and project information: Your methods (text or PDF)",
   "not recognised" = "Check the file: its column names may be below a title (set the header row) or on another sheet.")
 
 # A label with a question mark beside it that explains the term on hover or focus.
@@ -191,7 +196,6 @@ need_item <- function(icon_name, title, what, forms) {
 }
 needs_block <- function() {
   div(class = "needs",
-      tags$h5("What you'll need"),
       tags$p("Five kinds of information, in whatever form you already have them. The tools read your files as",
              "they are and put each value into FAIRe's format."),
       div(class = "needs-list",
@@ -224,29 +228,24 @@ start_page <- function() {
                    "Accessible, Interoperable and Reusable. It runs the same scripts as the FAIRe tools in the",
                    "Galaxy Australia eDNA Lab, on your own computer, so you can try them on your data before",
                    "you submit anything.")),
-        needs_block(),
-        tags$p("Each tool does one step of the job. You make a metadata workbook in the FAIRe format, check",
-               "it, and then convert it for the place where your data are going: a sequence archive (NCBI",
-               "or ENA), a biodiversity database (GBIF or OBIS), or an analysis in QIIME 2."),
         tags$h5("Where to start"),
         tags$ul(
-          tags$li(HTML("<b>If you have no metadata yet</b>, or are planning a study, start with <b>FAIRe-ator</b> under",
-                       "<em>1. Make a workbook</em>. It makes a blank template for you to fill in."),
-                  tags$br(), actionLink("start_faireator", "Open FAIRe-ator", icon = icon("arrow-right"))),
-          tags$li(HTML("<b>If you have a sample table in your own format</b>, start with the <b>FAIRe mapper</b> under",
-                       "<em>1. Make a workbook</em>. It builds the workbook from your table, your OTU and taxonomy",
-                       "tables and your methods text."),
+          class = "start-ways",
+          tags$li(HTML("<b>If you have a sample table in your own format</b>, build the workbook from your own tables",
+                       "with the <b>FAIRe mapper</b>: your sample table, methods and OTU or qPCR results."),
                   tags$br(), actionLink("start_mapper", "Start the FAIRe mapper", icon = icon("arrow-right"))),
-          tags$li(HTML("<b>If you already have a FAIRe workbook</b>, add it to your files and go to <em>2. Check</em>."),
-                  tags$br(), actionLink("start_check", "Go to 2. Check", icon = icon("arrow-right")))),
-        tags$h5("The steps"),
-        div(class = "flow",
-            div(class = "flow-step", tags$b("1. Make a workbook"), tags$span("FAIRe-ator or the FAIRe mapper")),
-            div(class = "flow-arrow", icon("arrow-right")),
-            div(class = "flow-step", tags$b("2. Check"), tags$span("FAIRe-fier")),
-            div(class = "flow-arrow", icon("arrow-right")),
-            div(class = "flow-step", tags$b("3. Convert"),
-                tags$span("NCBI, ENA, GBIF, OBIS, QIIME 2"))),
+          tags$li(HTML("<b>If you already have a FAIRe workbook</b>, add it to Your files and check it."),
+                  tags$br(), actionLink("start_check", "Go to the Check page", icon = icon("arrow-right"))),
+          tags$li(HTML("<b>If you have no metadata yet</b>, or are planning a study, make a blank template with",
+                       "<b>FAIRe-ator</b> to fill in."),
+                  tags$br(), actionLink("start_faireator", "Make a blank template", icon = icon("arrow-right")))),
+        help_text("The bar across the top shows the seven steps from your files to a checked workbook and its",
+                  "conversions, and where you are. The Next step box, on the left, says what to do next. You can",
+                  "open any step at any time."),
+        more_about(title = "What you'll need", needs_block(),
+                   tags$p("You make a metadata workbook in the FAIRe format, check it, and then convert it for the place",
+                          "where your data are going: a sequence archive (NCBI or ENA), a biodiversity database (GBIF or",
+                          "OBIS), or an analysis in QIIME 2.")),
         help_text(HTML(paste(
           "The files you add stay on this computer. Each tool run gets its own folder, listed under <em>Outputs</em>.",
           "Everything is deleted when you close the app, or reload or close this page, so download what you want to",
@@ -275,11 +274,11 @@ start_page <- function() {
 
 faireator_panel <- function() {
   nav_panel(
-    "FAIRe-ator: a blank template",
+    "Make a blank template (FAIRe-ator)", value = "FAIRe-ator: a blank template",
     layout_columns(
       col_widths = c(5, 7),
       card(
-        card_header("Make a blank FAIRe template"),
+        card_header(task_header("Make a blank FAIRe template", "FAIRe-ator")),
         step_intro("FAIRe-ator makes an Excel template for your study, with the fields that suit your assay",
                    "type and sample types. You fill it in outside the app, then add it to your files and check",
                    "it with FAIRe-fier."),
@@ -308,20 +307,19 @@ faireator_panel <- function() {
 
 mapper_panel <- function() {
   nav_panel(
-    "FAIRe mapper: from your own tables",
+    "Build from your own tables (FAIRe mapper)", value = "FAIRe mapper: from your own tables",
     navset_pill_list(
       id = "mapper_steps", widths = c(2, 10), well = FALSE,
       nav_panel(
-        "a. Your files",
+        "a. Prepare your files", value = "a. Your files",
         card(
-          card_header("Describe your files automatically, then check them"),
-          step_intro("Add every file you have for the dataset to ", tags$em("Your files"), " (on the left):",
-                     " the sample table, OTU or ASV tables, taxonomy tables, sequences (FASTA), run reports, and",
-                     " your methods or ReadMe (text or PDF). This step looks at each one and says what it seems to",
-                     " be and which step it goes to. If it gets one wrong, choose the right kind in the table."),
-          tags$h6("Unsure how your files should be described?"),
-          help_text("Once the files are identified, you check that each one has been described properly. Here is",
-                    "some help:"),
+          card_header(task_header("Prepare your files", "identify what each file is")),
+          step_intro("Add every file you have for the dataset to ", tags$em("Your files"), ", on the left, then",
+                     " identify them. Check the kind found for each file, and choose the right one where it is wrong."),
+          more_about(
+            title = "What each kind of file is",
+            help_text("The app looks at each file and says what it seems to be and which step it goes to. Here is",
+                      "what each kind holds:"),
           tags$ul(
             class = "help-text kind-help",
             tags$li(tags$b("Sample table:"), " the spreadsheet you keep for your samples, with one row per sample",
@@ -337,65 +335,82 @@ mapper_panel <- function() {
             tags$li(tags$b("Methods or ReadMe:"), " text or a PDF describing how the samples were collected and",
                     " processed. A PDF of scanned pages has no text the tools can read.")),
           help_text("Reads per OTU, ASV or taxon, and taxon assignments, go in separately as OTU and taxonomy",
-                    "tables, even if you keep them in the same spreadsheet."),
+                    "tables, even if you keep them in the same spreadsheet.")),
           run_button("run_identify", "Identify my files"),
           uiOutput("identify_result")
         )
       ),
       nav_panel(
-        "b. Propose a mapping",
+        "b. Map sample information", value = "b. Propose a mapping",
         layout_columns(
           col_widths = c(4, 8),
           card(
-            card_header("Your sample table"),
-            step_intro(HTML(paste(
-              "This step proposes a FAIRe term for each column of your sample table. You do it once, for the",
-              "sample table only. Your other files need no mapping: the methods go in at <em>d. Methods and",
-              "project values</em>, and the OTU, taxonomy and library tables at <em>e. Write the workbook</em>."))),
-            tags$h6(class = "group-head", "Your table"),
+            card_header(task_header("Map your sample information", "FAIRe mapper: propose mapping")),
+            step_intro("Choose your sample table and say what kind of study it is. The mapper proposes a FAIRe",
+                       "term for each column, for you to review in c."),
+            more_about(HTML(paste(
+              "You map the sample table only, once. Your other files need no mapping: the methods go in at",
+              "<em>d. Methods and project information</em>, and the OTU, taxonomy and library tables at",
+              "<em>e. DNA results and the workbook</em>. The assay type and sample types decide which FAIRe",
+              "terms apply to your samples."))),
             uiOutput("map_table_ui"),
             uiOutput("map_sheet_ui"),
-            numericInput("map_header_row", term_label("Row holding the column headers", "header_row"), 1, min = 1, max = 50),
-            help_text("Change this when the sheet has a title or notes above the headers. Comment lines",
-                      "starting with # (as in NCBI and ENA submission sheets) are skipped without it."),
-            tags$h6(class = "group-head", "Dates and times in your table"),
-            help_text("These are used when the workbook is written, in e. Write the workbook."),
-            textInput("ap_utc_offset", term_label("UTC offset of the times of collection (optional)", "utc_offset"), placeholder = "for example +10:00"),
-            help_text("When the table gives the time of collection in its own column, the time is joined to its",
-                      "date in eventDate, in local time. Give the offset of local time from UTC, such as +10:00",
-                      "for Australian Eastern Standard Time; times the column name says are UTC are converted to",
-                      "local time with it."),
-            selectInput("ap_date_order", term_label("How your table writes dates such as 06/09/2017", "date_order"),
-                        c("Not sure: stop and ask me" = "stop", "Day first: 6 September 2017 (as in Australia)" = "dmy",
-                          "Month first: June 9, 2017 (as in the USA)" = "mdy")),
-            tags$h6(class = "group-head", "Your study"),
-            help_text("These decide which FAIRe terms apply to your samples."),
             radioButtons("map_assay_type", term_label("Assay type", "assay_type"), c("Metabarcoding" = "metabarcoding",
                                                            "Targeted" = "targeted"), inline = TRUE),
             sample_type_input("map_sample_types", term_label("Sample types", "sample_types")),
-            uiOutput("map_dictionary_ui"),
-            checkboxInput("map_other_terms", term_label("Suggest MIxS or Darwin Core terms for columns with no FAIRe term", "other_terms"), TRUE),
-            help_text("The FAIRe guidelines ask for a MIxS or Darwin Core term, where one exists, before a name of",
-                      "your own. These suggestions are always for review."),
-            tags$h6(class = "group-head", "Mapping this table again?"),
-            uiOutput("map_earlier_ui"),
+            # Settings that are usually right as they are, folded away with a line saying how they are set
+            accordion(
+              id = "map_more", open = FALSE, class = "map-more",
+              accordion_panel(
+                "Table-reading settings and previous mappings", value = "settings", icon = icon("sliders"),
+                tags$h6(class = "group-head", "Reading the table"),
+                numericInput("map_header_row", term_label("Row holding the column headers", "header_row"), 1, min = 1, max = 50),
+                help_text("Change this when the sheet has a title or notes above the headers. Comment lines",
+                          "starting with # (as in NCBI and ENA submission sheets) are skipped without it."),
+                tags$h6(class = "group-head", "Dates and times in your table"),
+                help_text("Used when the workbook is built, in e."),
+                selectInput("ap_date_order", term_label("How your table writes dates such as 06/09/2017", "date_order"),
+                            c("Not sure: stop and ask me" = "stop", "Day first: 6 September 2017 (as in Australia)" = "dmy",
+                              "Month first: June 9, 2017 (as in the USA)" = "mdy")),
+                textInput("ap_utc_offset", term_label("UTC offset of the times of collection (optional)", "utc_offset"), placeholder = "for example +10:00"),
+                help_text("When the table gives the time of collection in its own column, the time is joined to its",
+                          "date in eventDate, in local time. Give the offset of local time from UTC, such as +10:00",
+                          "for Australian Eastern Standard Time; times the column name says are UTC are converted to",
+                          "local time with it."),
+                tags$h6(class = "group-head", "Help for the mapper"),
+                uiOutput("map_dictionary_ui"),
+                checkboxInput("map_other_terms", term_label("Suggest MIxS or Darwin Core terms for columns with no FAIRe term", "other_terms"), TRUE),
+                help_text("The FAIRe guidelines ask for a MIxS or Darwin Core term, where one exists, before a name of",
+                          "your own. These suggestions are always for review."),
+                tags$h6(class = "group-head", "Mapping this table again?"),
+                uiOutput("map_earlier_ui"))),
+            uiOutput("map_settings_summary"),
             run_button("run_map", "Propose a mapping for the information in your sample table")
           ),
           card(card_header("Proposed mapping"), uiOutput("map_result"))
         )
       ),
       nav_panel(
-        "c. Review the mapping",
+        "c. Review the matches", value = "c. Review the mapping",
         card(
-          card_header("Review the mapping"),
-          step_intro("This is the review sheet propose mapping writes, row for row. Each row is one column heading",
-                     "(an input term) of your sample table, with the term the mapper proposes, its score (0 to 1),",
-                     "the mapper's call and why. The mapper's accepted matches have Accept already. For each row,",
-                     "choose Accept to use the proposed term, Reject to keep the column as your own term, or Change",
-                     "and pick a replacement: the best candidates for the column come first. A MIxS or Darwin Core",
-                     "term is used by accepting it, or by choosing it as the replacement. A row for review with",
-                     "no decision is kept as your own term. Do the review here and",
-                     "save it, or, if you would rather, do it in Excel (see below)."),
+          card_header(task_header("Review the matches", "the review sheet")),
+          step_intro("Check the uncertain matches below. For each one, accept the proposed FAIRe term, choose a",
+                     "better term, or keep the original column name. Then save the review."),
+          more_about(
+            title = "How reviewing works",
+            tags$p("Each row is one column of your sample table: your column and some of its values, the FAIRe term",
+                   "the mapper proposes with its score (0 to 1), the mapper's call, and the evidence for it (the",
+                   "mapper's reasoning). Your decision is the last part:"),
+            tags$ul(
+              tags$li(tags$b("Accept"), " uses the proposed term. The mapper's own accepted matches have Accept already."),
+              tags$li(tags$b("Change"), " uses a better term: pick it as the replacement, where the best candidates for",
+                      " the column come first. Choosing a replacement sets the decision to Change."),
+              tags$li(tags$b("Reject"), " keeps the column under its own name, as a user-defined field.")),
+            tags$p("A MIxS or Darwin Core term is used by accepting it, or by choosing it as the replacement. A row",
+                   "for review with no decision is kept as your own term. Rows the mapper accepted, and decisions",
+                   "carried over from an earlier review, are hidden at first so that the uncertain ones come first:",
+                   "show them with the controls above the rows. Save the review at the top or the bottom; the",
+                   "workbook is built from the saved review.")),
           uiOutput("review_toolbar"),
           uiOutput("review_saved"),
           uiOutput("review_table")
@@ -435,17 +450,19 @@ mapper_panel <- function() {
         )
       ),
       nav_panel(
-        "d. Methods and project values",
+        "d. Methods and project information", value = "d. Methods and project values",
         layout_columns(
           col_widths = c(6, 6),
           card(
-            card_header("Your methods"),
-            step_intro("Most values for the whole project come from your methods (text or PDF). Take three steps,",
-                       "in order. First find the primers: the assay you give each pair is used in step 2. Then find",
-                       "the other method details, such as the filters, extraction kit, PCR conditions, sequencing kit,",
-                       "software and reference databases. Both steps propose values for you to check, and what you",
-                       "keep goes into projectMetadata, on the right. Last, check the values there and add what is",
-                       "still missing. Open each step below in turn."),
+            card_header(task_header("Your methods", "find primers and find method details")),
+            step_intro("Open each step below in turn: find the primers first, then the other method details. What",
+                       "you keep goes into the project information, on the right."),
+            more_about(
+              "Most values for the whole project come from your methods (text or PDF). The primers come first",
+              "because the assay name you give each pair is used in step 2. Step 2 finds the other method details,",
+              "such as the filters, extraction kit, PCR conditions, sequencing kit, software and reference",
+              "databases. Both steps propose values for you to check. Last, in step 3, check the values and give",
+              "what is still missing."),
             conditionalPanel("input.pr_mode == 'text' || [].concat(input.methods_steps || []).indexOf('details') >= 0",
                              uiOutput("pr_texts_ui")),
             uiOutput("pr_texts_open"),
@@ -487,12 +504,14 @@ mapper_panel <- function() {
           ),
           card(
             class = "step-card",
-            card_header(term_label("3. Check projectMetadata and add what is missing", "project_values")),
-            step_intro("Some FAIRe fields hold one value for the whole project or for each assay: the primers, the",
-                       "extraction kit, the sequencing platform, the reference database and so on. The values you keep",
-                       "in steps 1 and 2 are listed here and written to projectMetadata. Check them, then give the",
-                       "mandatory terms still missing in the fields below. Add a value by hand, further down, gives",
-                       "any other term. Leave the assay empty for a value that applies to every assay."),
+            card_header(task_header(term_label("3. Check the project information and add what is missing", "project_values"),
+                                    "projectMetadata")),
+            step_intro("Check the values you kept in steps 1 and 2, then give the mandatory terms still missing."),
+            more_about(
+              "Some FAIRe fields hold one value for the whole project or for each assay: the primers, the",
+              "extraction kit, the sequencing platform, the reference database and so on. The values here are",
+              "written to projectMetadata. Add a value by hand, further down, gives any other term. Leave the",
+              "assay empty for a value that applies to every assay."),
             uiOutput("pv_missing"),
             DTOutput("pv_table", fill = FALSE),
             div(class = "btn-row",
@@ -516,7 +535,7 @@ mapper_panel <- function() {
             actionButton("pv_add", "Add", icon = icon("plus"))),
               accordion_panel(
                 "Rename an assay", icon = icon("pen"),
-            help_text("Renames the assay in every row here. e. Write the workbook uses the new name."),
+            help_text("Renames the assay in every row here. e. DNA results and the workbook uses the new name."),
             layout_columns(
               col_widths = c(5, 5, 2),
               selectInput("pv_rename_from", "Assay", choices = NULL, width = "100%"),
@@ -529,18 +548,17 @@ mapper_panel <- function() {
             uiOutput("pv_file_ui"),
             actionButton("pv_load", "Load these values", icon = icon("file-import")))),
             tags$p(class = "next-step", inline("When you have added what you can, go on to ",
-                                               actionLink("goto_write", "e. Write the workbook"), "."))
+                                               actionLink("goto_write", "e. DNA results and the workbook"), "."))
           )
         )
       ),
       nav_panel(
-        "e. Write the workbook",
+        "e. DNA results and the workbook", value = "e. Write the workbook",
         card(
           class = "step-card",
           card_header("1. Check what goes into the workbook"),
-          step_intro("Your FAIRe workbook brings together what you have given so far with your DNA results, as",
-                     "shown below. Check each box: green is ready, and orange still needs something. Then add your",
-                     "DNA results in step 2, and write the workbook."),
+          step_intro("Your FAIRe workbook joins what you have given so far to your DNA results. Check each box",
+                     "below, then add your DNA results in step 2 and build the workbook."),
           uiOutput("e_flow")),
         layout_columns(
           col_widths = c(5, 7),
@@ -549,13 +567,15 @@ mapper_panel <- function() {
             conditionalPanel("input.map_assay_type != 'targeted'",
             card(
               class = "step-card",
-              card_header("2. Add your OTU or ASV tables"),
-              help_text("An OTU or ASV table holds your DNA results: each sequence found (an OTU or ASV), its number",
-                        "of reads in each sample and, usually, its taxonomy. The workbook writes the reads to otuFinal",
-                        "and the taxonomy to taxaFinal. Give one block for each table: choose the file (added in a.",
-                        "Your files), the assay it belongs to, and whether it holds the reads you report, after",
-                        "filtering and curation (final), or the reads before (raw). If the taxonomy is in a separate",
-                        "file, choose it under More settings."),
+              card_header(task_header("2. Add your OTU or ASV tables", "otuFinal and taxaFinal")),
+              help_text("For each table, choose the file, the assay it belongs to, and whether it holds the reads you",
+                        "report (final) or the reads before filtering (raw)."),
+              more_about(
+                "An OTU or ASV table holds your DNA results: each sequence found (an OTU or ASV), its number of",
+                "reads in each sample and, usually, its taxonomy. The workbook writes the reads to otuFinal and the",
+                "taxonomy to taxaFinal (or otuRaw and taxaRaw). Give one block for each table, from the files added",
+                "in a. Prepare your files. Final reads are those you report, after filtering and curation. If the",
+                "taxonomy is in a separate file, choose it under More settings for this table."),
               div(class = "e-check", icon("magnifying-glass"), tags$b(" Check: "),
                   "the reads are linked to your samples by name, so the sample names in each table must be those in",
                   "your sample table. After writing, the mapper's notes on the right warn of any that are not."),
@@ -566,13 +586,16 @@ mapper_panel <- function() {
             ),
             card(
               class = "step-card",
-              card_header(term_label("3. Add your run reports or library tables (optional)", "library_table")),
-              help_text("experimentRunMetadata describes each sequencing library: its name, its sequence files and",
-                        "their checksums. The conversions for NCBI and ENA build their run tables from it. Give a file",
-                        "that lists your libraries, such as the run report you can download from ENA or NCBI for your",
-                        "project, or your sequencing facility's run sheet. Each row should be one library in the FAIRe",
-                        "sense: one amplicon of one sample, with its own index sequences (MIDs). Leave this step out",
-                        "if you have none."),
+              card_header(task_header(term_label("3. Sequencing libraries and runs (optional)", "library_table"),
+                                      "experimentRunMetadata")),
+              help_text("A run report or library sheet lists each sequencing library and its files. The NCBI and ENA",
+                        "conversions need it; leave this step out if you have none."),
+              more_about(
+                "experimentRunMetadata describes each sequencing library: its name, its sequence files and their",
+                "checksums. The conversions for NCBI and ENA build their run tables from it. Give a file that lists",
+                "your libraries, such as the run report you can download from ENA or NCBI for your project, or your",
+                "sequencing facility's run sheet. Each row should be one library in the FAIRe sense: one amplicon of",
+                "one sample, with its own index sequences (MIDs)."),
               uiOutput("lib_blocks"),
               div(class = "btn-row",
                   actionButton("lib_add", "Add a run report or library table", icon = icon("plus"), class = "btn-sm"),
@@ -581,7 +604,7 @@ mapper_panel <- function() {
             conditionalPanel("input.map_assay_type == 'targeted'",
             card(
               class = "step-card",
-              card_header(term_label("2. Add your qPCR or ddPCR results", "amp_table")),
+              card_header(task_header(term_label("2. Add your qPCR or ddPCR results", "amp_table"), "ampData")),
               help_text("One row per reaction: the sample, the assay and the Cq, or the copies for ddPCR. The",
                         "reactions go to ampData, and each sample's detected_notDetected is worked out from them",
                         "where your sample table gives none. Give the assay names as they are in this table."),
@@ -592,11 +615,10 @@ mapper_panel <- function() {
             )),
             card(
               class = "step-card",
-              card_header(conditionalPanel("input.map_assay_type == 'targeted'", "3. Write the workbook"),
-                          conditionalPanel("input.map_assay_type != 'targeted'", "4. Write the workbook")),
-              help_text("Writes your FAIRe workbook from all of the above. It appears on the right, with the",
-                        "mapper's notes on what it wrote: read them, then check the workbook with FAIRe-fier, in",
-                        "2. Check."),
+              card_header(conditionalPanel("input.map_assay_type == 'targeted'", "3. Build the workbook"),
+                          conditionalPanel("input.map_assay_type != 'targeted'", "4. Build the workbook")),
+              help_text("Builds your FAIRe workbook from all of the above. It appears on the right, with the",
+                        "mapper's notes on what it wrote: read them, then check the workbook on the Check page."),
               accordion(
                 open = FALSE,
                 accordion_panel(
@@ -607,7 +629,7 @@ mapper_panel <- function() {
                   help_text("For a first draft only. Matches for Mandatory and commonly confused terms are still left out",
                             "until you decide them, and the workbook's README and log say it is a draft."),
                   checkboxInput("ap_drop_unmapped", "Leave out columns not matched to a FAIRe term", FALSE))),
-              run_button("run_apply", "Write the FAIRe workbook"))
+              run_button("run_apply", "Build the FAIRe workbook"))
           ),
           card(card_header("The workbook"), uiOutput("apply_result"), wb_preview_ui("apply_preview"))
         )
@@ -618,15 +640,19 @@ mapper_panel <- function() {
 
 check_page <- function() {
   nav_panel(
-    "2. Check", icon = icon("clipboard-check"),
+    "Check", value = "2. Check", icon = icon("clipboard-check"),
     layout_columns(
       col_widths = c(4, 8),
       card(
-        card_header("Check the workbook with FAIRe-fier"),
-        step_intro("FAIRe-fier lists missing mandatory fields and values in the wrong format, and suggests",
-                   "corrections. If it finds problems it returns a workbook with a list of the errors and",
-                   "warnings and a copy of each problem sheet, with those cells highlighted: red for errors and",
-                   "yellow for warnings. Correct the workbook, add it to your files and check it again until it passes."),
+        card_header(task_header("Check the workbook", "FAIRe-fier")),
+        step_intro("FAIRe-fier checks that every mandatory field has a value and that values are in the right format."),
+        more_about(
+          "It lists missing mandatory fields and values in the wrong format, and suggests corrections. If it finds",
+          "problems it returns a workbook with a list of the errors and warnings and a copy of each problem sheet,",
+          "with those cells highlighted: red for errors and yellow for warnings. Correct them, in the app (then build",
+          "the workbook again) or in the workbook itself (then add it to your files), and check it again until it",
+          "passes. A pass means the format and the required fields are right, not that the values are: those rest",
+          "on your review of the mapping and the method details."),
         workbook_picker("ck_wb"),
         selectInput("ck_version", term_label("FAIRe checklist version", "checklist_version"),
                     c("Read it from the workbook" = "auto", "v1.0.2", "v1.0")),
@@ -639,13 +665,14 @@ check_page <- function() {
 
 convert_page <- function() {
   nav_panel(
-    "3. Convert", icon = icon("right-left"),
+    "Convert", value = "3. Convert", icon = icon("right-left"),
     card(
       class = "convert-top",
       layout_columns(
         col_widths = c(5, 7),
         workbook_picker("cv_wb"),
-        help_text("Each tool writes the files for one destination, and you then upload them yourself. NCBI and",
+        help_text("Converting is optional: choose a destination only if you are publishing or analysing the data.",
+                  "Each tool writes the files for one destination, and you then upload them yourself. NCBI and",
                   "ENA take the sample and run tables, GBIF takes data through its Metabarcoding Data Toolkit",
                   "(MDT) or an IPT, OBIS through an IPT, and QIIME 2 takes the metadata and manifests. qPCR and",
                   "ddPCR results go to GBIF and OBIS as presence and absence records.")),

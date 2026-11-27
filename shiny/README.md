@@ -85,13 +85,32 @@ Galaxy tools and the AI assistant: letters, digits, hyphens and underscores only
 in the name of a qPCR or ddPCR assay (FAIRe-fier reads it after the last underscore). It suggests
 hyphens for underscores in a targeted assay's name. It allowed dots before, which the tools refuse.
 
+Version 0.9.0 (28 November 2026) guides first-time and occasional users through the job, from a
+review of the app's experience: it says at every stage what to do next, while leaving every step open.
+A journey bar across the top of every page shows seven steps (prepare files, map sample information,
+review matches, methods and project information, DNA results and the workbook, check, export or
+convert) and the status of each, and a *Next step* box at the top of the sidebar (at the top of the
+page on narrow screens) says what was just done, what needs attention and why, with one button to go
+there (see *Finding your way*, below). Both come from one status model (`R/journey.R`), which the
+mapper's step list and the boxes of *e* also show, in one language of icons and words: Done, To do,
+Optional, Out of date, Waiting and Not needed. Step *b* keeps the sample table, assay type and sample
+types in view and folds the rest into *Table-reading settings and previous mappings*; the review in
+*c* starts with the uncertain matches; and each step opens with one or two sentences, with the fuller
+explanation under *More about this step*. Labels lead with the task, with the FAIRe term second, and
+the mapper's steps are renamed (*a. Prepare your files*, *b. Map sample information*, *c. Review the
+matches*, *d. Methods and project information*, *e. DNA results and the workbook*); the navbar is
+*Make a workbook*, *Check* and *Convert*. The tools, their arguments and what they write are
+unchanged: the three demonstrations give the same workbooks, FAIRe-fier findings and Darwin Core
+reports as 0.8.12 (`tests/compare_outputs.py`). The app before this change is 0.8.12, at commit
+c123241 of this repository.
+
 ## What it covers
 
 | Step | Tools |
 |---|---|
-| 1. Make a workbook | FAIRe-ator (a blank template); the FAIRe mapper (identify your files, profile and propose a mapping, review it, find primers, values for the whole project, write the workbook with OTU tables, library tables or qPCR results), with the optional language model step |
-| 2. Check | FAIRe-fier |
-| 3. Convert | FAIRe2NCBI (BioSample and SRA), FAIRe2ENA (samples, and experiments and runs), FAIRe2MDT, edna2obis (match taxa and build the Darwin Core archive), FAIRe to Darwin Core (presence and absence) and FAIRe2QIIME |
+| Make a workbook | FAIRe-ator (a blank template); the FAIRe mapper (identify your files, profile and propose a mapping, review it, find primers, values for the whole project, build the workbook with OTU tables, library tables or qPCR results), with the optional language model step |
+| Check | FAIRe-fier |
+| Convert | FAIRe2NCBI (BioSample and SRA), FAIRe2ENA (samples, and experiments and runs), FAIRe2MDT, edna2obis (match taxa and build the Darwin Core archive), FAIRe to Darwin Core (presence and absence) and FAIRe2QIIME |
 
 The review screen is the review sheet that propose mapping writes, row for row: each column heading
 of the sample table (an input term), with some of its values, the proposed term and its score, the
@@ -105,25 +124,25 @@ input term. Either way, the mapper's conversions, such as reading Y and N as *ne
 
 A few things that help along the way:
 
-- **What you'll need**, at the top of the Start page, lists the five kinds of information a FAIRe
+- **What you'll need**, on the Start page (under *Where to start*), lists the five kinds of information a FAIRe
   dataset needs: sample details, methods, OTU or ASV tables and taxonomy, library and run details,
   and a few details about the project. Each comes with the forms it can take, such as your own
   spreadsheet in any layout, so no one feels they must format their data first. Together they fill
   the mandatory terms of the FAIRe checklist for a metabarcoding study.
-- **Your files** (on the left) lists every file you add, with what *a. Your files* found it to be.
+- **Your files** (on the left) lists every file you add, with what *a. Prepare your files* found it to be.
   The eye beside a file shows what is in it: the first rows of a table as they are in the file, with
   their row numbers (so you can see which row holds the column names), the first rows of each sheet
   of a workbook, the first lines of a FASTA file, or the text of a methods file or PDF as the tools
   read it. The cross removes a file; *Remove all files* starts again.
-- **a. Your files** says what each file seems to be and where it goes in the app. It recognises
+- **a. Prepare your files** says what each file seems to be and where it goes in the app. It recognises
   FASTA files and PDFs by their content, whatever they are called. If it gets one wrong, choose the
   right kind in its table: the app then offers the file in the right places. *Look inside* shows the
   file, to help you decide.
-- **b. Propose a mapping** is done once, for the sample table only. Once *a. Your files* has run, it
+- **b. Map sample information** is done once, for the sample table only. Once *a. Prepare your files* has run, it
   offers only the files found to be sample tables. The other files need no mapping: the methods go in
-  at *d. Methods and project values*, and the OTU, taxonomy and run report tables at *e. Write the
+  at *d. Methods and project information*, and the OTU, taxonomy and run report tables at *e. Write the
   workbook*.
-- **Methods** can be text or a PDF. *d. Methods and project values* takes three steps, in order:
+- **Methods** can be text or a PDF. *d. Methods and project information* takes three steps, in order:
   *1. Find the primers*, *2. Find the other method details* (such as PCR conditions and the
   sequencing platform), and *3. Check projectMetadata and add what is missing*, on the right. Step 3
   lists the mandatory project terms still to give, each with its description and a field to give it
@@ -149,7 +168,7 @@ A few things that help along the way:
   qPCR results, and appears in file names and record IDs (GBIF occurrenceIDs, NCBI and ENA library
   names). The primer names, sequences, gene and references that people search on go to their own
   fields, from the reference table, whatever the assay is called. *Rename an assay*, in step 3,
-  renames it in every row. *e. Write the workbook* shows the names given in *d* and uses them for the
+  renames it in every row. *e. DNA results and the workbook* shows the names given in *d* and uses them for the
   OTU tables and libraries; it asks for names only when *d* has none.
 - **Other method details**: in step 2, after the primers, *Find method details* reads the
   same methods for the filters, extraction kit, PCR conditions, sequencing kit, software, settings
@@ -162,7 +181,7 @@ A few things that help along the way:
   have checked them before it adds them. Keep one value per term: if two are ticked for the same
   term (two sample volumes, say), the app asks you to choose one. Choose *Targeted (qPCR, ddPCR)*
   for methods of a targeted assay, so the values go to the targeted terms; the choice follows the
-  assay type given under *b. Propose a mapping*. If the methods never mention DNA, PCR, primers or
+  assay type given under *b. Map sample information*. If the methods never mention DNA, PCR, primers or
   amplification, the step says so and proposes nothing. Its review sheet, which also lists the
   method terms not found, can be downloaded, filled in with Excel and loaded back on the right.
 - **Adding a value** offers the FAIRe terms for one part of the checklist at a time, PCR and primers
@@ -176,6 +195,37 @@ A few things that help along the way:
   *final* and so on) when the pointer rests on it, or when you move to it with the Tab key.
 - **Optional fields**, such as the data dictionary, can be set back to *None* after choosing a file.
 
+## Finding your way: the journey and the next step
+
+The app answers, at every stage, *what should I do next?* Across the top of every page, the journey
+bar shows the seven steps of the job, each with its status:
+
+1. Prepare files (identify what each file is)
+2. Map sample information (FAIRe mapper: propose mapping)
+3. Review matches (the review sheet)
+4. Complete methods and project information (projectMetadata)
+5. Add DNA results and build the workbook (sampleMetadata, otuFinal and experimentRunMetadata, or ampData)
+6. Check the workbook (FAIRe-fier)
+7. Export or convert (NCBI, ENA, GBIF, OBIS or QIIME 2)
+
+The *Next step* box, at the top of the sidebar, says what was just done, what needs attention and why,
+and offers one button that goes there: identify the files, map the table, review the matches (with how
+many need a decision), save a review that has changed, find the primers and method details, give the
+mandatory terms still missing (with how many), add the DNA results, build the workbook, build it again
+when the review or project values changed after it, check it, fix FAIRe-fier's errors and check again,
+and, once it passes, convert it if you are publishing or analysing the data (converting is optional).
+With no files, it offers your own files, the demonstration data or a blank template; with a FAIRe
+workbook of your own, it goes straight to checking it (steps 1 to 5 are *Not needed*); and after
+FAIRe-ator, it says to fill in the template, add it and check it.
+
+Each status has an icon and a word as well as a colour: **Done**, **To do**, **Optional**, **Out of
+date**, **Waiting** (for an earlier step) and **Not needed**. The bar, the box, the mapper's step list
+and the boxes of *e* all show one result, worked out by `R/journey.R` from what the app already keeps
+(files, identification, mapping, review, project values and the mandatory terms still missing, the DNA
+tables, the workbook and whether it is out of date, the last FAIRe-fier check), so they cannot
+disagree. The journey recommends; it never stops you. Every step and page stays open, in any order,
+and each step of the bar is a button that goes there.
+
 ## Going back, mistakes and warnings
 
 Making a workbook takes several steps, and people go back to change one. The app keeps track:
@@ -186,9 +236,9 @@ Making a workbook takes several steps, and people go back to change one. The app
   mapping* asks first, and can carry your decisions over to the new mapping (see *Mapping in rounds*,
   below).
 - **Writing the workbook checks the review first.** If the review has changes not yet saved, or has
-  not been done, *e. Write the workbook* says so and offers to save it, or to go to the review, before
+  not been done, *e. DNA results and the workbook* says so and offers to save it, or to go to the review, before
   writing.
-- **e. Write the workbook goes in steps.** Step 1 shows what goes into the workbook, as boxes that
+- **e. DNA results and the workbook goes in steps.** Step 1 shows what goes into the workbook, as boxes that
   join into it: projectMetadata from *d*, sampleMetadata from your sample table as mapped in *b* and
   reviewed in *c*, and your DNA results. Each box says where it comes from and whether it is ready
   (green), still needs something (orange) or is optional (grey). Step 2 asks for the OTU or ASV tables
@@ -210,7 +260,7 @@ Making a workbook takes several steps, and people go back to change one. The app
   template. Assay names are checked when you add them in *d*, and the project_id in *d* when the
   workbook is written.
 - **Dates that could be read two ways are caught early.** If a date column has values such as
-  06/09/2017 and none settles whether the day or the month comes first, *b. Propose a mapping* asks,
+  06/09/2017 and none settles whether the day or the month comes first, *b. Map sample information* asks,
   and your answer sets the date order beside the table.
 - **The Convert forms offer the workbook's own fields**, such as the field that marks replicates for
   NCBI, in drop-downs you can also type into.
@@ -225,20 +275,20 @@ Data often arrive in rounds: more samples, or new measurements for samples alrea
 not review the whole table again.
 
 - **In the same session**, change the table (add it again under the same name, or choose the new
-  version) and run *b. Propose a mapping* again: it asks whether to keep your decisions.
+  version) and run *b. Map sample information* again: it asks whether to keep your decisions.
 - **In a later session**, add the new table and the review sheet you downloaded at *c. Review the
-  mapping* last time. At *b. Propose a mapping*, under *Mapping this table again?*, choose the review
-  sheet as the *Earlier review*. *a. Your files* recognises review sheets, so only they are offered.
+  mapping* last time. At *b. Map sample information*, under *Mapping this table again?*, choose the review
+  sheet as the *Earlier review*. *a. Prepare your files* recognises review sheets, so only they are offered.
 
 Either way, the decisions are carried over: every rejection and change, and every acceptance where
 the mapper still proposes the same term. They are saved as the review in use, and a message says
-how many were carried over and which columns are left to review. In *c. Review the mapping*, those
+how many were carried over and which columns are left to review. In *c. Review the matches*, those
 come first: columns marked *check again* (you accepted another term before) and new columns for
 review. The carried-over decisions follow, marked *carried over*; *Show the decisions carried over*
 hides them. Propose mapping does the carrying over, so Galaxy users get the same result from its
 *Earlier review* input.
 
-A review sheet added at *c. Review the mapping* (the Excel route) is for this mapping. If it lacks a
+A review sheet added at *c. Review the matches* (the Excel route) is for this mapping. If it lacks a
 row for a column, that column's decision is left as it is, and an Accept of a term the mapper no
 longer proposes is left for you to decide; the message suggests choosing the sheet at step b
 instead.
@@ -255,7 +305,7 @@ the app makes the review hard to skip and leaves a record of how it was done:
 - **Values to check need a second look.** Adding values to check from *Find method details* opens a list
   of them with their sentences, to confirm before they are added.
 - **Matches still for review stay out of Mandatory and commonly confused terms.** Ticking *Also write the
-  matches still for review* in *e. Write the workbook* gives a first draft only: the matches for Mandatory
+  matches still for review* in *e. DNA results and the workbook* gives a first draft only: the matches for Mandatory
   terms and for terms that are often confused (such as `samp_size` and `samp_vol_we_dna_ext`) are still
   left out until you decide them, and the workbook's README and log say it is a draft.
 - **The workbook says how it was reviewed.** The README sheet and the log have a *Review* section: how
@@ -534,7 +584,7 @@ workbook for Fish16S, and FAIRe2QIIME, which writes a metadata file and a manife
 version 0.8.0 gave the same mapping, workbook and FAIRe-fier result through the app's server code,
 and FAIRe to Darwin Core wrote 108 presence records for the 11 samples, leaving out the 2 controls.)
 
-For the khapra beetle demonstration: *a. Your files* finds the sample table, the qPCR results, the
+For the khapra beetle demonstration: *a. Prepare your files* finds the sample table, the qPCR results, the
 taxon table, the README and the notes from the paper. *Fill in the authors' answers* rejects *sample
 type* (kept as the authors' own term) and changes *Category* to samp_category and *Extraction
 technique* to nucl_acid_ext_kit. The workbook has 90 rows (57 samples, 33 controls), ampData with the
@@ -597,7 +647,7 @@ settle then:
 
 ## qPCR and ddPCR results
 
-For a targeted assay, *e. Write the workbook* takes one or more tables of qPCR or ddPCR results, one
+For a targeted assay, *e. DNA results and the workbook* takes one or more tables of qPCR or ddPCR results, one
 row per reaction, under *qPCR or ddPCR results*. The reactions go to ampData, and each sample's
 detected_notDetected for each assay is worked out from them, as apply mapping does in Galaxy:
 
@@ -608,9 +658,9 @@ detected_notDetected for each assay is worked out from them, as apply mapping do
 
 The table's columns are found by name (Sample ID, Assay or Target, Cq or Ct, Replicate, Plate,
 Copies). Its assay values must be the assay names given in *d*. Choose *Targeted* as the assay type
-in *b. Propose a mapping* first. *a. Your files* recognises such a table as *qPCR results*.
+in *b. Map sample information* first. *a. Prepare your files* recognises such a table as *qPCR results*.
 
-*3. Convert*, *GBIF and OBIS (presence and absence)*, runs FAIRe to Darwin Core on the workbook: one
+the *Convert* page, *GBIF and OBIS (presence and absence)*, runs FAIRe to Darwin Core on the workbook: one
 record per sample and assay for a targeted assay (present or absent), or per sample and sequence for
 metabarcoding data (present), with the controls left out. Its report shows below the result.
 
