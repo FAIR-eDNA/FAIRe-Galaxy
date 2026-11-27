@@ -445,12 +445,12 @@ mapper_panel <- function() {
                        "the other method details, such as the filters, extraction kit, PCR conditions, sequencing kit,",
                        "software and reference databases. Both steps propose values for you to check, and what you",
                        "keep goes into projectMetadata, on the right. Last, check the values there and add what is",
-                       "still missing."),
+                       "still missing. Open each step below in turn."),
             conditionalPanel("input.pr_mode == 'text' || [].concat(input.methods_steps || []).indexOf('details') >= 0",
                              uiOutput("pr_texts_ui")),
             uiOutput("pr_texts_open"),
             accordion(
-              id = "methods_steps", multiple = FALSE, open = "primers", class = "method-steps",
+              id = "methods_steps", multiple = FALSE, open = FALSE, class = "method-steps",
               accordion_panel(
                 "1. Find the primers", value = "primers",
                 radioButtons("pr_mode", "Look for primers in", c("My methods" = "text", "Names or citations I type" = "names"),
@@ -486,6 +486,7 @@ mapper_panel <- function() {
             )
           ),
           card(
+            class = "step-card",
             card_header(term_label("3. Check projectMetadata and add what is missing", "project_values")),
             step_intro("Some FAIRe fields hold one value for the whole project or for each assay: the primers, the",
                        "extraction kit, the sequencing platform, the reference database and so on. The values you keep",

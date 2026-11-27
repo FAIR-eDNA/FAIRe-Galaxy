@@ -43,7 +43,7 @@ installers, ask your IT support before the workshop.
    - Reject replicate, bioproject_accession and Location.
 
    *Fill in the authors' answers* does this for you.
-4. **d. Methods and project values**: the values for the whole project start empty. In *1. Find the primers*, find primers in
+4. **d. Methods and project values**: the values for the whole project start empty. Open *1. Find the primers* and find primers in
    `methods.txt` and the notes: two pairs match exactly. Which one goes with these data? Add it, and
    check its ampliconSize. Go on to *2. Find the other method details*: the reliable values come ticked. Add them, then
    look through the others. In step 3, add the rest by hand: the app lists the mandatory terms still to give.

@@ -16,7 +16,7 @@ for (f in c("runner.R", "tools.R", "helpers.R", "demos.R", "ui.R"))
 
 options(shiny.maxRequestSize = 500 * 1024^2, DT.fillContainer = FALSE)
 
-APP_VERSION <- "0.8.6"
+APP_VERSION <- "0.8.7"
 
 # Colours from the logo: petrol, teal, navy, red, orange and yellow (darkened where white text sits
 # on them, to keep it readable).
@@ -1044,12 +1044,9 @@ server <- function(input, output, session) {
         if (length(s$bad)) tags$span(class = "text-danger", sprintf(" Change with no replacement term for %s: these are kept as their own terms.", paste(s$bad, collapse = ", "))),
         tags$br(), inline("Next, ", actionLink("goto_primers", "d. Methods and project values"), "."))
   })
-  observeEvent(input$goto_primers, {
-    nav_select("mapper_steps", "d. Methods and project values")
-    accordion_panel_set("methods_steps", "primers")
-  })
+  observeEvent(input$goto_primers, nav_select("mapper_steps", "d. Methods and project values"))
   # d. Methods and project values goes in three steps: the primers, the other method details, then the
-  # values on the right; each ends by pointing to the next
+  # values on the right; steps 1 and 2 start closed, and each step ends by pointing to the next
   observeEvent(input$goto_details, accordion_panel_set("methods_steps", "details"))
   observeEvent(input$goto_write, nav_select("mapper_steps", "e. Write the workbook"))
 
