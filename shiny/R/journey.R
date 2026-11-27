@@ -60,6 +60,8 @@ journey_status <- function(f) {
   if (path %in% c("mapper", "empty")) {
     # 1. files
     if (n_files == 0) set("files", "todo", "No files yet")
+    # identifying is a help, not a gate: once the table is mapped, files not yet identified are optional
+    else if (n_unid > 0 && mapped) set("files", "optional", paste(plural(n_unid, "file"), "not identified (optional)"))
     else if (n_unid > 0) set("files", "todo", paste(plural(n_unid, "file"), "not identified yet"))
     else set("files", "done", paste(plural(n_files, "file"), "identified"), paste(plural(n_files, "file"), "identified"))
     # 2. map

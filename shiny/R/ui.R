@@ -400,15 +400,24 @@ mapper_panel <- function() {
       nav_panel(
         "c. Review the mapping",
         card(
-          card_header("Review the mapping"),
-          step_intro("This is the review sheet propose mapping writes, row for row. Each row is one column heading",
-                     "(an input term) of your sample table, with the term the mapper proposes, its score (0 to 1),",
-                     "the mapper's call and why. The mapper's accepted matches have Accept already. For each row,",
-                     "choose Accept to use the proposed term, Reject to keep the column as your own term, or Change",
-                     "and pick a replacement: the best candidates for the column come first. A MIxS or Darwin Core",
-                     "term is used by accepting it, or by choosing it as the replacement. A row for review with",
-                     "no decision is kept as your own term. Do the review here and",
-                     "save it, or, if you would rather, do it in Excel (see below)."),
+          card_header(task_header("Review the matches", "the review sheet")),
+          step_intro("Check the uncertain matches below. For each one, accept the proposed FAIRe term, choose a",
+                     "better term, or keep the original column name. Then save the review."),
+          more_about(
+            title = "How reviewing works",
+            tags$p("Each row is one column of your sample table: your column and some of its values, the FAIRe term",
+                   "the mapper proposes with its score (0 to 1), the mapper's call, and the evidence for it (the",
+                   "mapper's reasoning). Your decision is the last part:"),
+            tags$ul(
+              tags$li(tags$b("Accept"), " uses the proposed term. The mapper's own accepted matches have Accept already."),
+              tags$li(tags$b("Change"), " uses a better term: pick it as the replacement, where the best candidates for",
+                      " the column come first. Choosing a replacement sets the decision to Change."),
+              tags$li(tags$b("Reject"), " keeps the column under its own name, as a user-defined field.")),
+            tags$p("A MIxS or Darwin Core term is used by accepting it, or by choosing it as the replacement. A row",
+                   "for review with no decision is kept as your own term. Rows the mapper accepted, and decisions",
+                   "carried over from an earlier review, are hidden at first so that the uncertain ones come first:",
+                   "show them with the controls above the rows. Save the review at the top or the bottom; the",
+                   "workbook is built from the saved review.")),
           uiOutput("review_toolbar"),
           uiOutput("review_saved"),
           uiOutput("review_table")

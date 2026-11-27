@@ -182,3 +182,10 @@
     if (window.Shiny && Shiny.addCustomMessageHandler) Shiny.addCustomMessageHandler('after_go', land);
   });
 })();
+
+// c. Review: a row whose decision is changed stays in view when its group (the mapper's accepted matches, or
+// the decisions carried over) is hidden
+document.addEventListener('change', function (e) {
+  var row = e.target && e.target.closest && e.target.closest('#review-grid .rv-row');
+  if (row && e.target.tagName === 'SELECT') row.classList.add('rv-changed');
+});

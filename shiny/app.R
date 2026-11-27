@@ -825,8 +825,17 @@ server <- function(input, output, session) {
     }
   }
 
+  # The mapper's accepted matches and the decisions carried over are hidden at first, so that the rows to
+  # decide come first, unless there is nothing else to show
+  hide_first <- reactive({
+    r <- review()$rows
+    any(r$kind != "accept" & r$earlier_kind != "carried")
+  })
+  # Whether a group is shown: as the person last set it, or hidden at first; the toolbar and the rows are
+  # drawn at different times, so both read this
+  show_group <- function(id) isTRUE(isolate(input[[id]]) %||% !isolate(hide_first()))
   output$review_toolbar <- renderUI({
-    if (is.null(rv$map)) return(help_text("Propose a mapping first (step b)."))
+    if (is.null(rv$map)) return(help_text("Map your sample table first (step b)."))
     r <- review()$rows
     tagList(
       div(class = "review-toolbar",
@@ -838,26 +847,28 @@ server <- function(input, output, session) {
           if (any(r$earlier_kind == "check" | (r$earlier_kind == "new" & r$kind == "review")))
             tags$span(class = "badge text-bg-warning", sum(r$earlier_kind == "check" | (r$earlier_kind == "new" & r$kind == "review")),
                       "new or changed to review"),
-          tags$label(class = "toggle", tags$input(type = "checkbox", checked = NA,
+          # the uncertain rows come first: the mapper's accepted matches and the decisions carried over start
+          # hidden (when there is anything else to show), with these to show them
+          tags$label(class = "toggle", tags$input(type = "checkbox", id = "rv_show_accepted", checked = if (show_group("rv_show_accepted")) NA,
                                                   onchange = "document.getElementById('review-grid').classList.toggle('hide-accepted', !this.checked)"),
-                     " Show the mapper's accepted matches"),
+                     sprintf(" Show the mapper's accepted matches (%d)", sum(r$kind == "accept"))),
           if (any(r$earlier_kind == "carried"))
-            tags$label(class = "toggle", tags$input(type = "checkbox", checked = NA,
+            tags$label(class = "toggle", tags$input(type = "checkbox", id = "rv_show_carried", checked = if (show_group("rv_show_carried")) NA,
                                                     onchange = "document.getElementById('review-grid').classList.toggle('hide-carried', !this.checked)"),
-                       " Show the decisions carried over"),
+                       sprintf(" Show the decisions carried over (%d)", sum(r$earlier_kind == "carried"))),
           if (nzchar(rv$demo) && identical(rv$map_args$table_name, DEMOS[[rv$demo]]$sample_table))
             actionButton("demo_answers", "Fill in the authors' answers", icon = icon("flask"), class = "btn-sm"),
           actionButton("save_review", "Save the review", icon = icon("floppy-disk"), class = "btn-primary btn-sm")),
       help_text(paste0("The decisions in use: ", rv$crosswalk_from, ".")),
-      div(class = "review-excel",
-          tags$h6("Or do the review in Excel"),
-          help_text("If you would rather do the review in Excel, download the review sheet, fill in the decisions",
-                    "(sorting or filtering the rows is fine, but keep every row), then add it back here when you",
-                    "have finished. Its decisions then show in the rows below, and are saved."),
-          div(class = "review-files",
-              downloadButton("review_download", "Download the review sheet", class = "btn-sm"),
-              fileInput("review_upload", NULL, accept = ".xlsx", buttonLabel = "Add the review sheet you filled in",
-                        placeholder = "Excel (.xlsx)", width = "440px"))))
+      tags$details(class = "review-excel more-about",
+          tags$summary("Review in Excel instead"),
+          div(help_text("If you would rather do the review in Excel, download the review sheet, fill in the decisions",
+                        "(sorting or filtering the rows is fine, but keep every row), then add it back here when you",
+                        "have finished. Its decisions then show in the rows below, and are saved."),
+              div(class = "review-files",
+                  downloadButton("review_download", "Download the review sheet", class = "btn-sm"),
+                  fileInput("review_upload", NULL, accept = ".xlsx", buttonLabel = "Add the review sheet you filled in",
+                            placeholder = "Excel (.xlsx)", width = "440px")))))
   })
 
   # The mapper's call in each row, coloured as in the counts above the review
@@ -886,8 +897,10 @@ server <- function(input, output, session) {
         if (length(lists$best)) tags$optgroup(label = "Best candidates for this column", opt(lists$best)),
         if (length(lists$rest)) tags$optgroup(label = "Every other term", opt(lists$rest)))
       m <- if (!is.null(model)) model[model$column == x$input, , drop = FALSE] else NULL
+      changed <- !identical(dsel, init_choice(r, i, "decision")) || !identical(rsel, init_choice(r, i, "replacement"))
       tags$div(
-        class = paste("rv-row", paste0("call-", x$kind), if (nzchar(x$earlier_kind)) paste0("earlier-", x$earlier_kind)),
+        class = paste("rv-row", paste0("call-", x$kind), if (nzchar(x$earlier_kind)) paste0("earlier-", x$earlier_kind),
+                      if (changed) "rv-changed"),
         div(class = "rv-col", tags$b(x$input), tags$div(class = "examples", x$examples)),
         div(class = "rv-proposed", if (has_term) x$proposed else tags$span(class = "muted", "none"),
             if (nzchar(x$score)) tags$small(class = "score", paste0(" ", x$score))),
@@ -910,10 +923,11 @@ server <- function(input, output, session) {
         div(class = "rv-replace", rep_select))
     })
     tagList(
-      div(id = "review-grid",
-        div(class = "rv-row rv-head", div(term_label("Input term", "input_term"), " and some values (grey text)"),
-            div("Proposed FAIRe term and score"), div(term_label("Mapper's call", "mappers_call")), div("Mapper's reasoning"),
-            div(term_label("Reviewer's decision", "decision")), div("Replacement FAIRe term")),
+      div(id = "review-grid", class = paste(if (!show_group("rv_show_accepted")) "hide-accepted",
+                                            if (!show_group("rv_show_carried")) "hide-carried"),
+        div(class = "rv-row rv-head", div(term_label("Your column", "input_term"), " and some values (grey text)"),
+            div("Proposed FAIRe term and score"), div(term_label("Mapper's call", "mappers_call")),
+            div("Evidence: the mapper's reasoning"), div(term_label("Your decision", "decision")), div("Replacement FAIRe term")),
         rows),
       div(class = "review-foot",
           actionButton("save_review_bottom", "Save the review", icon = icon("floppy-disk"), class = "btn-primary"),
@@ -1067,7 +1081,7 @@ server <- function(input, output, session) {
                                       if (s$open == 1) "it is" else "they are", if (s$open == 1) "its" else "their",
                                       if (s$open == 1) "" else "s")),
         if (length(s$bad)) tags$span(class = "text-danger", sprintf(" Change with no replacement term for %s: these are kept as their own terms.", paste(s$bad, collapse = ", "))),
-        tags$br(), inline("Next, ", actionLink("goto_primers", "d. Methods and project values"), "."))
+        tags$br(), inline("Next, ", actionLink("goto_primers", "d. Methods and project information"), "."))
   })
   observeEvent(input$goto_primers, nav_select("mapper_steps", "d. Methods and project values"))
   # d. Methods and project values goes in three steps: the primers, the other method details, then the

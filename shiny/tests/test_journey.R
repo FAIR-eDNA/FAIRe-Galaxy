@@ -32,6 +32,12 @@ check("2 not identified: next step", j$next_step$title, "Identify your files")
 check("2 not identified: says how many", j$next_step$attention, "3 files not identified yet.")
 check("2 not identified: files to do", unname(status(j)["files"]), "todo")
 
+# Identifying is optional once the table is mapped: the next step moves on
+j <- journey_status(list(n_files = 3, n_unidentified = 3, mapped = TRUE, n_columns = 10, review = "unreviewed",
+                         n_open = 2))
+check("2 mapped without identifying: files optional", unname(status(j)["files"]), "optional")
+check("2 mapped without identifying: next step is the review", j$next_step$title, "Review the uncertain matches")
+
 # 3. Identified, no mapping
 j <- journey_status(list(n_files = 3, identified = TRUE))
 check("3 no mapping: next step", j$next_step$title, "Map your sample information")
