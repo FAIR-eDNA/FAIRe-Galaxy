@@ -40,7 +40,7 @@ python "$tools/faire_method_details.py" "$d/Trujillo_Gonzalez_et_al_2022_README.
 echo "== 4. apply mapping"
 python "$tools/faire_mapper_apply.py" "$out/mapper/samples.csv" --crosswalk "$out/mapper/reviewed.sssom.tsv" \
     --checklist "$ck" --template "$tpl" --assay_type targeted --sample_types Air,other --project_id khapra_eDNA \
-    --assay_name "$assays" --country Australia --date_order dmy --project_values "$here/project_values.tsv" \
+    --assay_name "$assays" --date_order dmy --project_values "$here/project_values.tsv" \
     --amp "$out/mapper/results.csv" --amp_assay_column assay_name \
     --amp_name Amplification_data_khapra_05012022_dryad.csv --table_name Sample_metadata.csv \
     -o "$out/faire/khapra.xlsx" --log "$out/faire/khapra.log"

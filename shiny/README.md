@@ -39,6 +39,8 @@ Version 0.8.2 (26 November 2026) adds user-defined experimentRunMetadata fields 
 template (metabarcoding only), from FAIRe-ator's new `experimentRunMetadata_user`.
 Version 0.8.3 (27 November 2026) folds the instructions for choosing primer pairs, in find primers,
 under *Instructions*, closed until opened.
+Version 0.8.4 (27 November 2026) goes with FAIRe mapper 0.13.0: the review sheet colours only the
+mapper's call, and *e. Write the workbook* no longer asks for a country or sea for geo_loc_name.
 
 ## What it covers
 
@@ -493,7 +495,7 @@ November 2026.)
   function for each Galaxy tool, building its command line; `R/runner.R` finds Python, R and the tools and runs a
   command; `R/helpers.R` reads the review sheet and the other files the tools exchange; and
   `python/fill_review_sheet.py` writes the decisions from the review screen into a copy of the review
-  sheet, leaving the rest of it (the drop-downs, the shading and the other sheets) as it was.
+  sheet, leaving the rest of it (the drop-downs, the colours and the other sheets) as it was.
 - `setup.R` installs what the app needs, `run_app.R` starts it, and `start.R` is the one-line start:
   it downloads the repository (or a newer version of it) into one folder, runs setup.R when needed,
   then runs run_app.R. It checks for a newer version by reading the commit at the tip of `main` from

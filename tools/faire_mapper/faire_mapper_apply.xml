@@ -23,9 +23,6 @@ python '$__tool_directory__/faire_mapper_apply.py'
     #if str($assay_name).strip():
         --assay_name '$assay_name'
     #end if
-    #if str($country).strip():
-        --country '$country'
-    #end if
     --date_order '$date_order'
     #if str($utc_offset).strip():
         '--utc_offset=$utc_offset'
@@ -97,10 +94,6 @@ python '$__tool_directory__/faire_mapper_apply.py'
         <param name="assay_name" type="text" value="" optional="true" label="Assay name(s)"
             help="Separate several with commas, for example MiFish, crust16S. With one assay, the name is written to projectMetadata and to every sample; with several, each gets a column in projectMetadata, as FAIRe-ator makes them.">
             <validator type="regex" message="Use letters, digits, _ or - in names, separated by commas">^\s*([A-Za-z0-9_-]+\s*(,\s*[A-Za-z0-9_-]+\s*)*)?$</validator>
-        </param>
-        <param name="country" type="text" value="" optional="true" label="Country or sea for geo_loc_name (optional)"
-            help="Put first in geo_loc_name when no column of the table gives a country or sea, for example Australia or Coral Sea Islands (INSDC names).">
-            <validator type="regex" message="Letters, spaces, commas, brackets, apostrophes and hyphens only">^[A-Za-z ,()'-]*$</validator>
         </param>
         <param name="date_order" type="select" label="Dates such as 06/09/2017"
             help="Used only when no date in a column settles it (a value such as 13/09/2017 can only be day first).">
@@ -405,7 +398,6 @@ python '$__tool_directory__/faire_mapper_apply.py'
             <param name="crosswalk" value="apply_dates_ambiguous.sssom.tsv" ftype="tabular"/>
             <param name="project_id" value="dates"/>
             <param name="date_order" value="mdy"/>
-            <param name="country" value="Australia"/>
             <output name="workbook" ftype="xlsx">
                 <assert_contents>
                     <has_archive_member path="xl/worksheets/sheet3.xml">
@@ -574,7 +566,6 @@ python '$__tool_directory__/faire_mapper_apply.py'
             <param name="sample_types" value="Water"/>
             <param name="project_id" value="lizard_test"/>
             <param name="assay_name" value="COIElasmo"/>
-            <param name="country" value="Australia"/>
             <repeat name="otu_tables">
                 <param name="otu" value="otu_fastq_names.tsv" ftype="tabular"/>
                 <param name="otu_run" value="reef_run1"/>
@@ -1110,7 +1101,6 @@ python '$__tool_directory__/faire_mapper_apply.py'
             <param name="sample_types" value="Water"/>
             <param name="project_id" value="reef_times"/>
             <param name="assay_name" value="Fish16S,COILeray"/>
-            <param name="country" value="Australia"/>
             <param name="utc_offset" value="+10:00"/>
             <param name="project_values" value="apply_reef_times_values.tsv" ftype="tabular"/>
             <repeat name="otu_tables">
@@ -1133,6 +1123,8 @@ python '$__tool_directory__/faire_mapper_apply.py'
                     <has_text text="eventDate: the times in 'Time' (verbatimEventTime) joined to the dates, with the UTC offset +10:00, in 4 rows (e.g. '2017-09-06' at '10:00' as '2017-09-06T10:00+10:00')"/>
                     <has_text_matching expression="env_broad_scale, env_local_scale, env_medium: written as 'not applicable: control sample' for the 2 controls"/>
                     <has_text_matching expression="'not applicable: control sample' written in the 2 empty mandatory cells of 1 control \(eventDate, geo_loc_name\)"/>
+                    <!-- no column gives the country, so the site names are kept as they are, with a warning -->
+                    <has_text text="'Site' to geo_loc_name: 4 rows have no INSDC country or sea name first; correct them in your table, or fill in geo_loc_name in the workbook"/>
                     <has_text text="ampliconSize = 178-228 (projectMetadata, assay Fish16S)"/>
                     <not_has_text text="ampliconSize = 178-228 (projectMetadata, assay Fish16S) (not an allowed value)"/>
                     <!-- a commonly confused term given in the values for the whole project gets the same check -->
@@ -1430,8 +1422,9 @@ converts them:
   (samp_size and samp_size_unit). Where the term has a set unit, the tool keeps just the number, so
   "0.2 micron" for size_frac becomes 0.2, and millimetres are converted to µm.
 - **Place names in several columns** are combined into geo_loc_name, in the order given in the
-  crosswalk: "Australia: Great Barrier Reef, Lizard Island". If no column gives the country, set it
-  on the form.
+  crosswalk: "Australia: Great Barrier Reef, Lizard Island". The first part must be an INSDC country
+  or sea name; when it is not (no column gives the country), the tool keeps the values as they are
+  and warns, so you can correct them in your table or in the workbook.
 - **Latitude and longitude in one cell** (MIxS lat_lon, "40.57773667 S 148.7301917 E") are split
   into decimalLatitude and decimalLongitude, with south and west written as negative numbers.
 - **Yes/no** values become 1 and 0, allowed values take the checklist's spelling, and country names

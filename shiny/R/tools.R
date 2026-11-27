@@ -167,7 +167,7 @@ read_method_review <- function(path) {
 
 # otu_tables and library_tables are lists of lists, one per table, with the wrapper's fields.
 run_apply <- function(session_dir, table, sheet, header_row, crosswalk, assay_type, sample_types, project_id,
-                      assay_name = "", country = "", utc_offset = "", date_order = "stop", include_review = FALSE,
+                      assay_name = "", utc_offset = "", date_order = "stop", include_review = FALSE,
                       project_values = NULL, req_lev = c("HR", "R", "O"), drop_unmapped = FALSE,
                       otu_tables = list(), library_tables = list(), amp_tables = list(),
                       table_name = basename(table)) {
@@ -180,7 +180,6 @@ run_apply <- function(session_dir, table, sheet, header_row, crosswalk, assay_ty
             if (length(sample_types)) c("--sample_types", paste(sample_types, collapse = ",")),
             "--project_id", project_id,
             if (!blank(assay_name)) c("--assay_name", assay_name),
-            if (!blank(country)) c("--country", country),
             if (!blank(utc_offset)) paste0("--utc_offset=", trimws(utc_offset)),
             "--date_order", date_order,
             if (include_review) "--include_review",

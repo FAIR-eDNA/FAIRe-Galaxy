@@ -163,8 +163,8 @@ table of primers built into the tools.
 The *propose mapping* tool writes a **review sheet**, an Excel workbook with one row for each
 column of the table you gave it: the input term (the column heading), the proposed FAIRe term, its
 score, the mapper's call (accept, review or no match), the mapper's reasoning, your decision and a
-replacement term. Rows to review are shaded across the whole row. For each row, choose a decision
-from the drop-down:
+replacement term. The mapper's call is coloured: yellow for review, grey for no match and green for
+accept. For each row, choose a decision from the drop-down:
 
 - **Accept**: the proposed term is right. Rows the mapper accepted are marked Accept already. When
   no FAIRe term fits, the mapper may propose a MIxS or Darwin Core term instead, as the FAIRe
@@ -195,8 +195,8 @@ mapping* on the new table and give it the review sheet from the earlier round as
 review*. Your decisions are carried over: every rejection and change, and every acceptance where the
 mapper still proposes the same term. The new review sheet has them filled in, and a last column,
 *Earlier review*, says for each row whether its decision was carried over, the column is new, or you
-should check it again because the mapper now proposes another term. Only the shaded rows need your
-attention.
+should check it again because the mapper now proposes another term. Only the rows without a decision
+(new columns, and those marked *check again*) need your attention.
 
 Any column without a `skos:exactMatch` row is kept as a user-defined field at the end of
 sampleMetadata, unless you tick *Leave out columns that are not matched to a FAIRe term* in the

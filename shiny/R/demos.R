@@ -18,7 +18,6 @@ DEMOS <- list(
     sample_types = "Water",
     project_id = "SEA-MES_eDNA",
     assay_name = "Fish16S",
-    country = "Australia",
     date_order = "stop",
     otu = list(
       list(file = "4_SEA-MES_16S_ASV_level_output_with_seq.csv", assay = "Fish16S", run = "AGRF_2024-12", stage = "raw"),
@@ -75,7 +74,6 @@ DEMOS <- list(
     sample_types = "Air",
     project_id = "khapra_eDNA",
     assay_name = "OlsonViiA7, OlsonFranklin, FuruiViiA7, FuruiFranklin",
-    country = "Australia",
     date_order = "dmy",
     otu = list(),
     lib = list(),
@@ -147,7 +145,6 @@ DEMOS <- list(
     sample_types = "Water",
     project_id = "NS_eelgrass_eDNA",
     assay_name = "LerayCOI",
-    country = "Canada",
     date_order = "stop",
     otu = list(list(file = "Final_ASVTable_withTaxonomy_Filtered.csv", assay = "LerayCOI", run = "", stage = "final")),
     lib = list(),

@@ -55,7 +55,7 @@ $py "$tools/faire_primers.py" text "$out/mapper/methods.txt" -o "$out/mapper/pri
 echo "== 5. apply mapping"
 $py "$tools/faire_mapper_apply.py" "$out/mapper/samples_prepared.xlsx" --crosswalk "$out/mapper/reviewed.sssom.tsv" \
     --checklist "$ck" --template "$tpl" --assay_type metabarcoding --sample_types Water \
-    --project_id West2024_DayNight --assay_name 16S_Fish,COI_Leray --country Australia --utc_offset +11:00 \
+    --project_id West2024_DayNight --assay_name 16S_Fish,COI_Leray --utc_offset +11:00 \
     --project_values "$here/project_values.tsv" --drop_unmapped \
     --otu "$d/Day_night_16S_LCA_output.txt" --otu_assay 16S_Fish --otu_run AGRF_NovaSeq6000_SP \
     --otu_sequences "$d/Day_night_16S_ASV.fasta" \

@@ -43,7 +43,11 @@ DECISIONS = ('Accept', 'Reject', 'Change')
 # The mapper's call, as the walkthrough shows it
 CALL = {'accept': 'accept', 'review': 'review', 'confirmed': 'set by a reviewer', 'model': 'review (chosen by a model)',
         'no match': 'no match'}
-TO_DECIDE = PatternFill('solid', fgColor='FBEFD9')
+# The mapper's call is coloured as in the Shiny app's review: review yellow, no match grey, accept (and
+# set by a reviewer) green
+CALL_FILL = {'review': (PatternFill('solid', fgColor='F0CC3C'), Font(bold=True, color='000000')),
+             'no match': (PatternFill('solid', fgColor='5B6770'), Font(bold=True, color='FFFFFF')),
+             'accept': (PatternFill('solid', fgColor='1D7F74'), Font(bold=True, color='FFFFFF'))}
 HEAD = PatternFill('solid', fgColor='DDE7F0')
 # The crosswalk's words for what a reviewer does, in the review sheet's words
 WORDING = [
@@ -307,10 +311,8 @@ def write_review_sheet(path, proposals, profiles, terms, review_rows, table_name
         gloss = _gloss(pr, by_name)
         if gloss:
             ws.cell(i, at[PROPOSED]).comment = Comment(gloss, 'FAIRe mapper', width=320, height=160)
-        status = c['status'] if c else ''
-        if (call not in ('accept', 'set by a reviewer', 'no match') and status != 'carried') or status == 'changed':
-            for j in range(1, len(headers) + 1):
-                ws.cell(i, j).fill = TO_DECIDE
+        kind = 'review' if call.startswith('review') else 'no match' if call == 'no match' else 'accept'
+        ws.cell(i, at[CALL_HEAD]).fill, ws.cell(i, at[CALL_HEAD]).font = CALL_FILL[kind]
     # Each column of Choices holds one input term's list, under the term itself in row 1. The replacement
     # drop-down finds its list by the input term in column A of its own row, not by its position, so it
     # stays right when the rows are sorted (Excel does not move drop-downs with sorted rows).
@@ -383,7 +385,8 @@ def how_to_review(table_name, earlier_name=None):
         'mapper\'s call and why.',
         '',
         "The mapper's call: accept (a strong match), review (a match to check), or no match (no term proposed; "
-        'the column is kept as your own term). Rows to review are shaded: put your effort there.',
+        "the column is kept as your own term). The mapper's call is coloured: yellow for review (put your "
+        'effort there), grey for no match, green for accept.',
         '',
         "For each row, choose a Reviewer's decision:",
         '- Accept: the proposed term is right. When no FAIRe term fits, the mapper may propose a MIxS or Darwin '

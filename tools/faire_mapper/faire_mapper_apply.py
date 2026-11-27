@@ -666,8 +666,9 @@ def convert_value(v, t, notes_seen):
     return (v if isinstance(v, (int, float)) else s), None
 
 
-def geo_value(parts, country):
-    """'Country: region, locality' from the parts in order."""
+def geo_value(parts):
+    """'Country: region, locality' from the parts in order. With no INSDC country or sea name first, the
+    parts are joined as they are and the problem returned, for a warning."""
     parts = [str(p).strip() for p in parts if not _blank(p) and not fm.is_missing(p)]
     if not parts:
         return None, None
@@ -676,8 +677,6 @@ def geo_value(parts, country):
         rest = parts[1:]
     elif ':' in parts[0] and fm.insdc_country(parts[0].split(':', 1)[0]):
         return ', '.join(parts), None   # already "Country: region"
-    elif country:
-        first, rest = country, parts
     else:
         return ', '.join(parts), 'no country or sea name'
     return (f"{first}: {', '.join(rest)}" if rest else first), None
@@ -801,7 +800,7 @@ def build_workbook(args, df, rows, terms, by_name, log, others=()):
             cols = [r['column'] for r in group]
             values, missing_country = [], 0
             for i in range(n):
-                v, problem = geo_value([df[c].iloc[i] for c in cols], args.country) if t.kind == 'geoloc' else \
+                v, problem = geo_value([df[c].iloc[i] for c in cols]) if t.kind == 'geoloc' else \
                     (' | '.join(str(df[c].iloc[i]) for c in cols if not _blank(df[c].iloc[i])) or None, None)
                 values.append(v)
                 missing_country += bool(problem)
@@ -811,8 +810,8 @@ def build_workbook(args, df, rows, terms, by_name, log, others=()):
                 ex = next((v for v in values if v), '')
                 log.add('Columns written', f"{desc} to {term} ({sheet}), combined in this order, e.g. '{ex}'")
             if missing_country:
-                log.add('Warnings', f'{term}: {missing_country} rows have no country or sea name first; set the '
-                                    f'country on the form, or add a country column')
+                log.add('Warnings', f'{term}: {missing_country} rows have no INSDC country or sea name first; add a '
+                                    f'country column to your table, or fill in {term} in the workbook')
             continue
         for r in group:
             col = r['column']
@@ -867,12 +866,12 @@ def build_workbook(args, df, rows, terms, by_name, log, others=()):
             elif t.kind == 'geoloc':
                 values, problem_rows = [], 0
                 for v in raw:
-                    gv, problem = geo_value([v], args.country)
+                    gv, problem = geo_value([v])
                     values.append(gv)
                     problem_rows += bool(problem)
                 if problem_rows:
-                    log.add('Warnings', f"'{col}' to {term}: {problem_rows} rows have no country or sea name first; "
-                                        f"set the country on the form, or add a country column")
+                    log.add('Warnings', f"'{col}' to {term}: {problem_rows} rows have no INSDC country or sea name "
+                                        f"first; correct them in your table, or fill in {term} in the workbook")
             else:
                 values = []
                 for v in raw:
@@ -2218,7 +2217,6 @@ def main(argv=None):
     ap.add_argument('--project_id', default='', help='project identifier (letters, digits, _ or -)')
     ap.add_argument('--assay_name', default='', help='assay name(s), comma-separated')
     ap.add_argument('--req_lev', default='M,HR,R,O', help='requirement levels to include (M is always included)')
-    ap.add_argument('--country', default='', help='country or sea name to put first in geo_loc_name when the table has none')
     ap.add_argument('--date_order', choices=['stop', 'dmy', 'mdy'], default='stop',
                     help='how to read dates such as 06/09/2017 when no value settles it (default: stop)')
     ap.add_argument('--include_review', action='store_true', help='also apply skos:closeMatch rows (for review)')
@@ -2290,10 +2288,6 @@ def main(argv=None):
     try:
         if args.project_id and not re.match(r'^[A-Za-z0-9_-]+$', args.project_id):
             raise StopError('the project ID can only hold letters, digits, _ and -')
-        if args.country and not fm.insdc_country(args.country):
-            raise StopError(f"'{args.country}' is not an INSDC country or sea name (for example Australia, "
-                            f"Indian Ocean, Coral Sea Islands)")
-        args.country = fm.insdc_country(args.country) if args.country else ''
         df = fm.read_table(args.table, args.sheet, args.header_row)
         sample_types = [s.strip() for s in args.sample_types.split(',')] if args.sample_types else None
         terms = fm.load_checklist(args.checklist, assay_type=args.assay_type, sample_types=sample_types)
