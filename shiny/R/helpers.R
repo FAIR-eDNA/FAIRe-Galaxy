@@ -16,6 +16,12 @@ split_assays <- function(x) {
   if (length(a)) a else ""
 }
 
+# "six terms", "one term", "12 terms": a count in words up to nine, as in prose
+count_of <- function(n, noun) {
+  words <- c("one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
+  paste(if (n >= 1 && n <= 9) words[n] else n, if (n == 1) noun else paste0(noun, "s"))
+}
+
 # Always UTF-8, whatever the computer's own character set: write.table's fileEncoding goes through the
 # native encoding, which turns ° and µ into <U+00B0> and <U+00B5> where that is not UTF-8.
 write_tsv <- function(df, path) {
