@@ -167,7 +167,7 @@ KIND_PLACE <- c(
   "crosswalk" = "c. Review: Add a review sheet you filled in, or Use a crosswalk you edited yourself",
   "data dictionary" = "b. Propose a mapping: Data dictionary",
   "project values" = "d. Methods and project values: Or load a table of values",
-  "primer table" = "d. Methods and project values, Primers: My own primer table",
+  "primer table" = "d. Methods and project values, 1. Find the primers: My own primer table",
   "sequences (FASTA)" = "e. Write the workbook: Sequences of this table (under More settings for this table)",
   "text" = "d. Methods and project values: Your methods (text or PDF)",
   "not recognised" = "Check the file: its column names may be below a title (set the header row) or on another sheet.")
@@ -435,17 +435,19 @@ mapper_panel <- function() {
           col_widths = c(6, 6),
           card(
             card_header("Your methods"),
-            step_intro("Your methods (text or PDF) are where most values for the whole project come from. The app",
-                       "reads them for the primers, which it checks against a reference table of published primers,",
-                       "and for the other method details, such as the filters, extraction kit, PCR conditions,",
-                       "sequencing kit, software and reference databases. Both give proposals for you to check;",
-                       "what you keep goes into projectMetadata, on the right."),
-            conditionalPanel("input.methods_tabs != 'Primers' || input.pr_mode == 'text'", uiOutput("pr_texts_ui")),
+            step_intro("Most values for the whole project come from your methods (text or PDF). Take three steps,",
+                       "in order. First find the primers: the assay you give each pair is used in step 2. Then find",
+                       "the other method details, such as the filters, extraction kit, PCR conditions, sequencing kit,",
+                       "software and reference databases. Both steps propose values for you to check, and what you",
+                       "keep goes into projectMetadata, on the right. Last, check the values there and add what is",
+                       "still missing."),
+            conditionalPanel("input.pr_mode == 'text' || [].concat(input.methods_steps || []).indexOf('details') >= 0",
+                             uiOutput("pr_texts_ui")),
             uiOutput("pr_texts_open"),
-            navset_underline(
-              id = "methods_tabs",
-              nav_panel(
-                "Primers",
+            accordion(
+              id = "methods_steps", multiple = FALSE, open = "primers", class = "method-steps",
+              accordion_panel(
+                "1. Find the primers", value = "primers",
                 radioButtons("pr_mode", "Look for primers in", c("My methods" = "text", "Names or citations I type" = "names"),
                              inline = TRUE),
                 conditionalPanel("input.pr_mode == 'names'",
@@ -462,25 +464,29 @@ mapper_panel <- function() {
                           "primers are not in it."),
                 conditionalPanel("input.pr_source != 'bundled'", uiOutput("pr_own_ui")),
                 run_button("run_primers", "Find primers"),
-                uiOutput("primers_result")
+                uiOutput("primers_result"),
+                tags$p(class = "next-step", inline("When you have added the primer pair for each assay, go on to ",
+                                                   actionLink("goto_details", "2. Find the other method details"), "."))
               ),
-              nav_panel(
-                "Other method details",
+              accordion_panel(
+                "2. Find the other method details", value = "details",
                 help_text("Reads your methods for the filtration, extraction, PCR, sequencing and bioinformatics, and",
                           "proposes a FAIRe value for each term it recognises, with a snippet of text from the source so",
                           "that you can check it."),
                 radioButtons("md_assay_type", term_label("Assay type", "assay_type"),
                              c("Metabarcoding" = "metabarcoding", "Targeted (qPCR, ddPCR)" = "targeted"), inline = TRUE),
                 run_button("run_details", "Find method details"),
-                uiOutput("details_result")
+                uiOutput("details_result"),
+                tags$p(class = "next-step", "When you have added the values that fit, go on to step 3, on the right.")
               )
             )
           ),
           card(
-            card_header(term_label("projectMetadata: values for the whole project or each assay", "project_values")),
+            card_header(term_label("3. Check projectMetadata and add what is missing", "project_values")),
             step_intro("Some FAIRe fields hold one value for the whole project or for each assay: the primers, the",
-                       "extraction kit, the sequencing platform, the reference database and so on. Most come from",
-                       "your methods. List them here and they are written to projectMetadata. Leave the assay empty",
+                       "extraction kit, the sequencing platform, the reference database and so on. The values you keep",
+                       "in steps 1 and 2 are listed here and written to projectMetadata. Check them, then add what is",
+                       "still missing by hand, starting with the mandatory terms listed below. Leave the assay empty",
                        "for a value that applies to every assay."),
             uiOutput("pv_missing"),
             DTOutput("pv_table", fill = FALSE),
@@ -508,7 +514,9 @@ mapper_panel <- function() {
             help_text("A table with the columns term, value and (optionally) assay, or a review sheet from find",
                       "method details that you filled in with Excel, from your files. Its values are added to these."),
             uiOutput("pv_file_ui"),
-            actionButton("pv_load", "Load these values", icon = icon("file-import"))))
+            actionButton("pv_load", "Load these values", icon = icon("file-import")))),
+            tags$p(class = "next-step", inline("When you have added what you can, go on to ",
+                                               actionLink("goto_write", "e. Write the workbook"), "."))
           )
         )
       ),

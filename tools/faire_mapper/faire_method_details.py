@@ -39,7 +39,7 @@ from pathlib import Path
 
 import faire_mapper_text as ft
 
-__version__ = '0.12.3'
+__version__ = '0.12.4'
 
 HERE = Path(__file__).resolve().parent
 VOCABULARY = HERE / 'method_details' / 'vocabulary.tsv'
@@ -1388,17 +1388,21 @@ def reliability_of(term, rel):
     if term in ALWAYS_CHECK:
         return 'check', ALWAYS_CHECK[term]
     if not c or not c['papers_agreed'] + c['papers_differed']:
-        return 'check', 'not yet tested against papers'
+        return 'check', 'Not yet tested on published papers.'
     a, d, t = c['papers_agreed'], c['papers_differed'], c['papers_tool_only']
-    text = f"agreed in {a} of {a + d} paper{'s' if a + d != 1 else ''} tested" + \
-        (f'; proposed in {t} more where an independent reading found none' if t else '')
+    # in words a reader can follow: what the tool was tested against, and how often it matched
+    times = {1: 'once', 2: 'twice'}.get(a, f'{a} times')
+    text = (f"Accuracy assessment for this term is based on correctly finding it {times} in {a + d} different "
+            f"manuscript{'s' if a + d != 1 else ''} inspected." +
+            (f" In {t} more, it gave a value where a person reading the manuscript found none." if t else ''))
     ok = term not in DESCRIPTION_TERMS and a >= 5 and a >= 0.9 * (a + d) and t <= a
     return ('reliable' if ok else 'check'), text
 
 
 # Terms always to check, whatever their record, and why
-ALWAYS_CHECK = {'samp_vol_we_dna_ext': 'the volume filtered: it is the volume extracted only if the whole filter was extracted',
-                'samp_vol_we_dna_ext_unit': 'the unit of the volume filtered (see samp_vol_we_dna_ext)'}
+ALWAYS_CHECK = {'samp_vol_we_dna_ext': 'Always to check: methods usually give the volume filtered, which is the volume '
+                                       'extracted only if the whole filter was extracted.',
+                'samp_vol_we_dna_ext_unit': 'Always to check: the unit of the volume filtered (see samp_vol_we_dna_ext).'}
 
 INSTRUMENT_PLATFORM = [(r'MiSeq|NovaSeq|HiSeq|NextSeq|iSeq|MiniSeq|Illumina', 'ILLUMINA'), (r'\bIon\b|PGM|Ion\s+S5', 'ION_TORRENT'),
                        (r'MinION|GridION|PromethION|Flongle|Nanopore', 'OXFORD_NANOPORE'), (r'PacBio|Sequel|Revio', 'PACBIO_SMRT'),
@@ -1615,7 +1619,7 @@ def write_review_sheet(rows, terms, path, read, label):
         part(key)
         for p in group:
             t = terms[p.term]
-            how = ('Reliable' if p.tier == 'reliable' else 'Check') + (f': {p.tested}' if p.tested else '')
+            how = ('Reliable' if p.tier == 'reliable' else 'Check') + (f'. {p.tested}' if p.tested else '')
             ws.append([SECTION_NAMES.get(t['section'], t['section']), p.term, LEVEL_NAMES.get(t['level'], ''), asks(t),
                        clean(p.value), how, p.assay, clean(excerpt(p)),
                        p.found_by + (f' (and {p.others} more sentences)' if p.others else ''), clean(p.note), '', ''])

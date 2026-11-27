@@ -50,13 +50,13 @@ installers, ask your IT support before the workshop.
    data dictionary.
 4. **c. Review the mapping**: Reject *Replicate* (FAIRe's biological_rep is the number of replicates
    for the whole project), then save the review. *Fill in the authors' answers* does this for you.
-5. **d. Methods and project values**: the values for the whole project start empty. Run *Find
+5. **d. Methods and project values**: the values for the whole project start empty. In *1. Find the primers*, run *Find
    primers* on `Dryad_README.md` alone first. It names only "the Leray et al. (2013) primer set": how
    many published pairs fit that? Then run it on the README and `eelgrass_notes.md`, which gives the
    sequences in the authors' QIIME 2 script. Add the exact match, with *LerayCOI* as its assay, and
    check what it adds in the table on the right: is Sabella spallanzanii the right target taxon?
-   Then run *Other method details*, tick the reliable values, check sequencing_location against the
-   notes, and add them. Add the rest by hand: the app lists the mandatory terms still to give.
+   Then go on to *2. Find the other method details*: the reliable values come ticked. Check sequencing_location against the
+   notes, and add them. In step 3, add the rest by hand: the app lists the mandatory terms still to give.
 6. **e. Write the workbook**: the species table is filled in as otuFinal. Write the workbook and read
    its warnings.
 7. **2. Check**: run FAIRe-fier.

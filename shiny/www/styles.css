@@ -232,3 +232,7 @@ h6.group-head { margin: 0.6rem 0 0.1rem; font-weight: 600; color: var(--faire-na
 .earlier.check { border-color: #e2b65a; color: #7a5600; background: #fff7e4; font-weight: 600; }
 .earlier.new { border-color: #c9d3d6; color: #3f4a50; }
 .rv-status { display: flex; flex-direction: column; align-items: flex-start; }
+
+/* d. Methods and project values: the numbered steps, and the line pointing to the next one */
+.method-steps .accordion-button { font-weight: 600; }
+.next-step { margin: 0.8rem 0 0.2rem; font-size: 0.9rem; }

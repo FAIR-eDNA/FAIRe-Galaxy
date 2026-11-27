@@ -23,6 +23,10 @@
   document.addEventListener('DOMContentLoaded', function () {
     if (window.Shiny && Shiny.addCustomMessageHandler) Shiny.addCustomMessageHandler('md_tick', tick);
   });
+  // The values found reliably arrive ticked: report them once the list is on the page
+  if (window.jQuery) jQuery(document).on('shiny:value', function (e) {
+    if (e.name === 'details_result') setTimeout(report, 0);
+  });
 })();
 
 // Leaving or reloading the page ends the session and deletes its files, so the browser asks first while

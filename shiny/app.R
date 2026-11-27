@@ -1054,7 +1054,14 @@ server <- function(input, output, session) {
         if (length(s$bad)) tags$span(class = "text-danger", sprintf(" Change with no replacement term for %s: these are kept as their own terms.", paste(s$bad, collapse = ", "))),
         tags$br(), inline("Next, ", actionLink("goto_primers", "d. Methods and project values"), "."))
   })
-  observeEvent(input$goto_primers, nav_select("mapper_steps", "d. Methods and project values"))
+  observeEvent(input$goto_primers, {
+    nav_select("mapper_steps", "d. Methods and project values")
+    accordion_panel_set("methods_steps", "primers")
+  })
+  # d. Methods and project values goes in three steps: the primers, the other method details, then the
+  # values on the right; each ends by pointing to the next
+  observeEvent(input$goto_details, accordion_panel_set("methods_steps", "details"))
+  observeEvent(input$goto_write, nav_select("mapper_steps", "e. Write the workbook"))
 
   run_model_step <- function(preview) {
     req(rv$map)
@@ -1334,8 +1341,9 @@ server <- function(input, output, session) {
         desc <- ck$description[match(d$term[i], ck$term)]
         div(class = "md-item",
             div(class = "md-head",
+                # the values found reliably come ticked; the others each need their own tick
                 tags$input(type = "checkbox", id = paste0("md_keep_", i), class = "md-keep", `data-tier` = tier[i],
-                           `aria-label` = paste("Keep", d$term[i])),
+                           checked = if (tier[i] == "reliable") NA, `aria-label` = paste("Keep", d$term[i])),
                 tags$label(`for` = paste0("md_keep_", i), tags$b(d$term[i])),
                 if ("level" %in% names(d) && nzchar(d$level[i]))
                   tags$span(class = paste("md-level", if (d$level[i] %in% c("Mandatory", "Highly recommended")) "md-level-high"),
@@ -1349,7 +1357,7 @@ server <- function(input, output, session) {
                                     `aria-label` = paste("Value for", d$term[i]), .cssSelector = "textarea"),
                 tagAppendAttributes(textInput(paste0("md_assay_", i), NULL, d$assay[i], placeholder = "assay (all)"),
                                     `aria-label` = paste("Assay for", d$term[i]), .cssSelector = "input")),
-            if ("tested" %in% names(d) && nzchar(d$tested[i])) div(class = "md-tested", "Record: ", d$tested[i]),
+            if ("tested" %in% names(d) && nzchar(d$tested[i])) div(class = "md-tested", d$tested[i]),
             if (nzchar(d$note[i])) div(class = "md-note", d$note[i]),
             tags$details(class = "md-evidence", tags$summary(substr(d$evidence[i], 1, 140),
                                                              if (nchar(d$evidence[i]) > 140) "…"),
@@ -1358,17 +1366,18 @@ server <- function(input, output, session) {
       rel <- which(tier == "reliable")
       chk <- which(tier != "reliable")
       tbl <- tagList(
-        help_text("Tick the values to keep, after checking each against its sentence (open a sentence to read all of",
-                  "it). Correct a value in its box if it is nearly right. When a term has several values (two storage",
-                  "temperatures, say), keep the one for your eDNA samples. Give the assay only for a value that",
-                  "holds for some assays and not others; separate several with commas (Fish16S, MiFish)."),
+        help_text("The values found reliably come ticked. Check each against its sentence (open a sentence to read",
+                  "all of it) and untick any that do not fit your study. Tick the others you want to keep, after",
+                  "checking them. Correct a value in its box if it is nearly right. When a term has several values",
+                  "(two storage temperatures, say), keep the one for your eDNA samples. Give the assay only for a",
+                  "value that holds for some assays and not others; separate several with commas (Fish16S, MiFish)."),
         div(class = "md-list",
-            if (length(rel)) tagList(div(class = "md-part md-part-reliable", paste0(
-              "Found reliably (", length(rel), "): terms the tool has proposed reliably in published papers it was ",
-              "tested on")), lapply(rel, item)),
-            if (length(chk)) tagList(div(class = "md-part md-part-check", paste0(
-              "Also found in the methods (", length(chk), "): check each against its sentence before you tick it. ",
-              "These terms are less reliable, or a check found a problem")), lapply(chk, item))),
+            if (length(rel)) tagList(div(class = "md-part md-part-reliable", sprintf(
+              "Found %s in your methods that the tool usually finds with high accuracy",
+              count_of(length(rel), "term"))), lapply(rel, item)),
+            if (length(chk)) tagList(div(class = "md-part md-part-check", sprintf(
+              "Please check. Found %s in your methods that the tool finds less accurately, or where it has identified a problem",
+              count_of(length(chk), "term"))), lapply(chk, item))),
         div(class = "btn-row",
             actionButton("md_add", "Add the ticked values to the projectMetadata", icon = icon("arrow-right")),
             if (length(rel)) actionLink("md_all", "Tick all reliable values"), actionLink("md_none", "Untick all")),
