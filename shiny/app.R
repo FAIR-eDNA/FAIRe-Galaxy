@@ -16,7 +16,7 @@ for (f in c("runner.R", "tools.R", "helpers.R", "demos.R", "journey.R", "ui.R"))
 
 options(shiny.maxRequestSize = 500 * 1024^2, DT.fillContainer = FALSE)
 
-APP_VERSION <- "0.9.0"
+APP_VERSION <- "0.9.1"
 
 # Colours from the logo: petrol, teal, navy, red, orange and yellow (darkened where white text sits
 # on them, to keep it readable).
@@ -58,7 +58,10 @@ ui <- page_navbar(
   convert_page(),
   outputs_page(),
   nav_spacer(),
-  nav_item(tags$span(class = "version", paste("version", APP_VERSION)))
+  nav_item(tags$span(class = "version", paste("version", APP_VERSION))),
+  # The app is part of the Make eDNA FAIR initiative (the logo at the left is the Southern eDNA Society's)
+  nav_item(tags$img(src = "make_edna_fair.png", alt = "Make eDNA FAIR", class = "partner-logo",
+                    title = "Part of the Make eDNA FAIR initiative"))
 )
 
 server <- function(input, output, session) {
@@ -825,14 +828,13 @@ server <- function(input, output, session) {
     }
   }
 
-  # The mapper's accepted matches and the decisions carried over are hidden at first, so that the rows to
-  # decide come first, unless there is nothing else to show
+  # The uncertain rows come first. The mapper's accepted matches, and the decisions carried over, follow in
+  # their own folds, closed at first when there is anything to decide (open when there is not).
   hide_first <- reactive({
     r <- review()$rows
     any(r$kind != "accept" & r$earlier_kind != "carried")
   })
-  # Whether a group is shown: as the person last set it, or hidden at first; the toolbar and the rows are
-  # drawn at different times, so both read this
+  # Whether a fold is open: as the person last set it, or as it starts
   show_group <- function(id) isTRUE(isolate(input[[id]]) %||% !isolate(hide_first()))
   output$review_toolbar <- renderUI({
     if (is.null(rv$map)) return(help_text("Map your sample table first (step b)."))
@@ -847,15 +849,6 @@ server <- function(input, output, session) {
           if (any(r$earlier_kind == "check" | (r$earlier_kind == "new" & r$kind == "review")))
             tags$span(class = "badge text-bg-warning", sum(r$earlier_kind == "check" | (r$earlier_kind == "new" & r$kind == "review")),
                       "new or changed to review"),
-          # the uncertain rows come first: the mapper's accepted matches and the decisions carried over start
-          # hidden (when there is anything else to show), with these to show them
-          tags$label(class = "toggle", tags$input(type = "checkbox", id = "rv_show_accepted", checked = if (show_group("rv_show_accepted")) NA,
-                                                  onchange = "document.getElementById('review-grid').classList.toggle('hide-accepted', !this.checked)"),
-                     sprintf(" Show the mapper's accepted matches (%d)", sum(r$kind == "accept"))),
-          if (any(r$earlier_kind == "carried"))
-            tags$label(class = "toggle", tags$input(type = "checkbox", id = "rv_show_carried", checked = if (show_group("rv_show_carried")) NA,
-                                                    onchange = "document.getElementById('review-grid').classList.toggle('hide-carried', !this.checked)"),
-                       sprintf(" Show the decisions carried over (%d)", sum(r$earlier_kind == "carried"))),
           if (nzchar(rv$demo) && identical(rv$map_args$table_name, DEMOS[[rv$demo]]$sample_table))
             actionButton("demo_answers", "Fill in the authors' answers", icon = icon("flask"), class = "btn-sm"),
           actionButton("save_review", "Save the review", icon = icon("floppy-disk"), class = "btn-primary btn-sm")),
@@ -879,7 +872,10 @@ server <- function(input, output, session) {
     model <- rv$model
     show <- order(r$earlier_kind == "carried", r$earlier_kind != "check",
                   match(r$kind, c("review", "no-match", "accept")), seq_len(nrow(r)))
-    rows <- lapply(show, function(i) {
+    # three groups: the rows to decide; the mapper's accepted matches; the decisions carried over
+    group <- ifelse(r$earlier_kind == "carried", "carried",
+                    ifelse(r$kind == "accept" & r$earlier_kind != "check", "accepted", "decide"))
+    row_ui <- function(i) {
       x <- r[i, ]
       has_term <- nzchar(x$proposed)
       dec_choices <- c("No decision" = "", if (has_term) c("Accept" = "Accept"), "Reject" = "Reject", "Change" = "Change")
@@ -921,14 +917,36 @@ server <- function(input, output, session) {
                                 `aria-label` = paste("Reviewer's decision for", x$input), .cssSelector = "select"),
             tags$small(class = "kept-as", "If rejected, kept as ", x$kept_as)),
         div(class = "rv-replace", rep_select))
-    })
+    }
+    # A fold of rows: a button across the grid saying what it holds, then its rows. A row whose decision is
+    # changed stays in view when the fold is closed.
+    fold <- function(id, which, show_label, hide_label, note) {
+      if (!length(which)) return(NULL)
+      open <- show_group(id)
+      tagList(
+        tags$button(type = "button", class = "rv-group-head", id = paste0(id, "_btn"),
+                    `aria-expanded` = if (open) "true" else "false", `aria-controls` = paste0(id, "_rows"),
+                    onclick = sprintf("faireToggleGroup('%s')", id),
+                    icon("chevron-right", class = "rv-chev"),
+                    tags$span(class = "rv-show", show_label), tags$span(class = "rv-hide", hide_label),
+                    tags$small(class = "rv-note", note)),
+        div(class = paste("rv-group", if (!open) "collapsed"), id = paste0(id, "_rows"), lapply(which, row_ui)))
+    }
+    n_acc <- sum(group == "accepted"); n_car <- sum(group == "carried")
     tagList(
-      div(id = "review-grid", class = paste(if (!show_group("rv_show_accepted")) "hide-accepted",
-                                            if (!show_group("rv_show_carried")) "hide-carried"),
+      div(id = "review-grid",
         div(class = "rv-row rv-head", div(term_label("Your column", "input_term"), " and some values (grey text)"),
             div("Proposed FAIRe term and score"), div(term_label("Mapper's call", "mappers_call")),
             div("Evidence: the mapper's reasoning"), div(term_label("Your decision", "decision")), div("Replacement FAIRe term")),
-        rows),
+        lapply(show[group[show] == "decide"], row_ui),
+        fold("rv_show_accepted", show[group[show] == "accepted"],
+             sprintf("Show %s that will be accepted by default", plural(n_acc, "high-confidence match", "high-confidence matches")),
+             sprintf("Hide the %s", plural(n_acc, "high-confidence match", "high-confidence matches")),
+             "The mapper is confident of these and has accepted them. Open them to see what it did; change any that is wrong."),
+        fold("rv_show_carried", show[group[show] == "carried"],
+             sprintf("Show %s carried over from your earlier review", plural(n_car, "decision")),
+             sprintf("Hide the %s carried over", plural(n_car, "decision")),
+             "As you decided them before. Change any that no longer fits.")),
       div(class = "review-foot",
           actionButton("save_review_bottom", "Save the review", icon = icon("floppy-disk"), class = "btn-primary"),
           help_text("Saves the decisions above. You can also save at the top of the review.")))
@@ -1757,6 +1775,32 @@ server <- function(input, output, session) {
     }
   })
 
+  # Step 2 of e says what to do: check the tables already chosen (as a demonstration chooses its own), or
+  # add them when none is chosen
+  output$otu_head <- renderUI({
+    task_header(if (length(e_files("otu", rv$otu_n))) "2. Check your OTU or ASV tables" else "2. Add your OTU or ASV tables",
+                "otuFinal and taxaFinal")
+  })
+  output$otu_intro <- renderUI({
+    n <- length(e_files("otu", rv$otu_n))
+    if (n) help_text(sprintf(paste(
+      "%s already chosen below. Check that %s the right file and assay, and whether it holds the reads you report",
+      "(final) or the reads before filtering (raw). Add another table if you have more."),
+      if (n == 1) "A table is" else paste(n, "tables are"), if (n == 1) "it is" else "each is"))
+    else help_text("Choose each OTU or ASV table: the file, the assay it belongs to, and whether it holds the reads",
+                   "you report (final) or the reads before filtering (raw).")
+  })
+  output$amp_head <- renderUI({
+    task_header(term_label(if (length(e_files("amp", rv$amp_n))) "2. Check your qPCR or ddPCR results"
+                           else "2. Add your qPCR or ddPCR results", "amp_table"), "ampData")
+  })
+  output$amp_intro <- renderUI({
+    n <- length(e_files("amp", rv$amp_n))
+    if (n) help_text(sprintf("%s already chosen below. Check that %s the right file. Add another if you have more.",
+                             if (n == 1) "A results table is" else paste(n, "results tables are"), if (n == 1) "it is" else "each is"))
+    else help_text("Choose the table of your qPCR or ddPCR results.")
+  })
+
   output$otu_blocks <- renderUI({
     n <- rv$otu_n
     if (!n) return(help_text("No OTU tables. The workbook will hold the sample and project metadata only."))
@@ -1768,13 +1812,12 @@ server <- function(input, output, session) {
       div(class = "block",
           tags$h6(paste("OTU table", i)),
           selectInput(b("file"), term_label("OTU or ASV table", "otu_table"), ch, selected = bval("otu", i, "file")),
-          layout_columns(
-            col_widths = c(4, 4, 4),
-            assay_input(b("assay"), term_label("Assay", "assay"),
-                        bval("otu", i, "assay", if (length(pv_assays()) == 1) pv_assays() else "")),
-            textInput(b("run"), term_label("Sequencing run ID", "run_id", run_note), bval("otu", i, "run")),
-            selectInput(b("stage"), term_label("Write as", "stage"), c("final (otuFinal, taxaFinal)" = "final", "raw (otuRaw, taxaRaw)" = "raw"),
-                        selected = bval("otu", i, "stage", "final"))),
+          # one to a row, so an assay name such as mlCOIintF_jgHCO2198 fits its box in this narrow column
+          assay_input(b("assay"), term_label("Assay", "assay"),
+                      bval("otu", i, "assay", if (length(pv_assays()) == 1) pv_assays() else "")),
+          selectInput(b("stage"), term_label("Write as", "stage"), c("final (otuFinal, taxaFinal)" = "final", "raw (otuRaw, taxaRaw)" = "raw"),
+                      selected = bval("otu", i, "stage", "final")),
+          textInput(b("run"), term_label("Sequencing run ID", "run_id", run_note), bval("otu", i, "run")),
           accordion(open = FALSE, accordion_panel(
             "More settings for this table (optional)",
             help_text(GLOSSARY[["more_for_table"]]),

@@ -13,7 +13,7 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 URL = 'http://127.0.0.1:8765/'
-WORKBOOK = sys.argv[1] if len(sys.argv) > 1 else '/tmp/ux_after/eelgrass_workbook.xlsx'
+WORKBOOK = sys.argv[1] if len(sys.argv) > 1 else '/tmp/ux_091/eelgrass_workbook.xlsx'
 WORDS = {'Done', 'To do', 'Optional', 'Out of date', 'Waiting', 'Not needed'}
 failures = []
 
@@ -61,9 +61,15 @@ def active_pill(pg):
     return pg.evaluate("() => { const a = document.querySelector('#mapper_steps .nav-link.active'); return a ? a.innerText.split('\\n')[0] : ''; }")
 
 
+def menus_closed(pg):
+    return not pg.evaluate("() => Array.from(document.querySelectorAll('.navbar .dropdown-menu')).some(m => m.classList.contains('show'))")
+
+
 def go_card(pg):
     pg.click('#next-step-side .ns-go')
     pg.wait_for_timeout(1500)
+    if not menus_closed(pg):
+        check(False, 'after going to a step, the Make a workbook menu is closed')
 
 
 def load_demo(pg, name):
@@ -126,7 +132,20 @@ with sync_playwright() as p:
     expect_card(pg, 'Review the uncertain matches', 'mapped')
     check('need' in pg.inner_text('#next-step-side .ns-attention'), 'mapped: the card says how many columns need a decision')
     go_card(pg)
+    check(menus_closed(pg), 'after going to a step, the Make a workbook menu is closed')
     pg.wait_for_selector('#demo_answers', state='visible', timeout=60000)
+    # the high-confidence matches are in a fold below the rows to decide, closed at first
+    fold_btn = '#rv_show_accepted_btn'
+
+    def shown():
+        return pg.evaluate("() => Array.from(document.querySelectorAll('#rv_show_accepted_rows .rv-row')).filter(e => e.offsetParent !== null).length")
+    label = pg.inner_text(fold_btn)
+    check('high-confidence match' in label and 'accepted by default' in label and shown() == 0,
+          f'review: the accepted matches are folded under "{label.splitlines()[0]}"')
+    pg.click(fold_btn)
+    pg.wait_for_timeout(400)
+    n_open = shown()
+    check(n_open > 0 and pg.get_attribute(fold_btn, 'aria-expanded') == 'true', f'review: opening the fold shows the {n_open} matches')
     pg.click('#demo_answers')
     expect_card(pg, 'Save your review', 'decisions changed, not saved', 30000)
     check('To do' in pg.inner_text('#mapper_steps .nav-link.active'), 'unsaved: step c says To do')
@@ -142,6 +161,8 @@ with sync_playwright() as p:
     check(card(pg) == 'Save your review', 'moving about does not lose the unsaved state')
     pg.click('#save_review')
     expect_card(pg, 'Find the primers and method details', 'review saved', 30000)
+    pg.wait_for_timeout(1000)
+    check(shown() == n_open, 'review: the fold stays open after saving')
     go_card(pg)
     pg.click('#methods_steps > .accordion-item[data-value=primers] .accordion-button')
     pg.wait_for_timeout(800)
@@ -256,6 +277,7 @@ with sync_playwright() as p:
     pg.keyboard.press('Enter')
     pg.wait_for_timeout(1500)
     check(active_pill(pg).startswith('b.'), 'keyboard: Enter on a journey step goes there')
+    check(menus_closed(pg), 'keyboard: the Make a workbook menu is closed after going to a step')
     summ = pg.locator('summary:visible', has_text='More about this step').first
     summ.focus()
     pg.keyboard.press('Enter')
