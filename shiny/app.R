@@ -50,7 +50,7 @@ ui <- page_navbar(
   ),
   start_page(),
   nav_menu(
-    "1. Make a workbook", icon = icon("table"),
+    "Make a workbook", value = "1. Make a workbook", icon = icon("table"),
     faireator_panel(),
     mapper_panel()
   ),
@@ -163,7 +163,7 @@ server <- function(input, output, session) {
   }
 
   # Choices from the files the person added: those whose names end as the pattern says, and those
-  # a. Your files found to be of one of the kinds (a FASTA file need not end in .fa, say).
+  # a. Prepare your files found to be of one of the kinds (a FASTA file need not end in .fa, say).
   file_names <- function(pattern = NULL, kinds = NULL) {
     n <- names(rv$files)
     if (is.null(pattern) && is.null(kinds)) return(n)
@@ -254,7 +254,7 @@ server <- function(input, output, session) {
     }
     if (id == "seames") seames_forms()
     rv$changed <- Sys.time()
-    notify_info("The demonstration files are in Your files. Start with 1. Make a workbook, FAIRe mapper.", duration = 6)
+    notify_info("The demonstration files are in Your files. The Next step box, on the left, says what to do first.", duration = 6)
   }
   # The conversion forms for the SEA-MES demonstration, which has reads in the SRA
   seames_forms <- function() {
@@ -423,16 +423,16 @@ server <- function(input, output, session) {
   wb_stale <- reactive(identical(rv$workbook_from, "written by the FAIRe mapper") && !is.null(rv$written) &&
                          !is.null(rv$changed) && rv$changed > rv$written)
   stale_note <- function(link_id) {
-    div(class = "res-warn stale-note", icon("triangle-exclamation"),
-        tags$b("Warning: "), "out of date. It was written before your latest changes to the review or the project values. ",
-        actionLink(link_id, "Write it again"))
+    div(class = "res-warn stale-note", status_tag("stale"),
+        " It was built before your latest changes to the review or the project values. ",
+        actionLink(link_id, "Build it again"))
   }
   goto_write <- function() {
     nav_select("main", "FAIRe mapper: from your own tables")
     nav_select("mapper_steps", "e. Write the workbook")
   }
   output$current_workbook <- renderUI({
-    if (is.null(rv$workbook)) return(help_text("None yet. Write one with the FAIRe mapper, or choose one of your files on the Check page."))
+    if (is.null(rv$workbook)) return(help_text("None yet. Build one with the FAIRe mapper, or choose one of your files on the Check page."))
     tagList(div(class = "wb-card", icon("file-excel"), file_link(rv$workbook), tags$br(), tags$small(rv$workbook_from)),
             if (wb_stale()) stale_note("goto_write_sidebar"))
   })
@@ -480,7 +480,7 @@ server <- function(input, output, session) {
     observeEvent(input[[paste0("goto_write_", id)]], goto_write())
     output[[paste0(id, "_ui")]] <- renderUI({
       ch <- workbook_choices()
-      if (!length(ch)) return(help_text("No workbook yet. Write one with the FAIRe mapper, or add a FAIRe workbook to your files."))
+      if (!length(ch)) return(help_text("No workbook yet. Build one with the FAIRe mapper, or add a FAIRe workbook to your files."))
       cur <- isolate(input[[id]])
       selectInput(id, "Workbook", ch, selected = if (!is.null(cur) && cur %in% ch) cur else ch[1])
     })
@@ -564,7 +564,7 @@ server <- function(input, output, session) {
   })
 
   # ------------------------------------------------------------ mapper b: propose
-  # The sample table: once a. Your files has run, only the files it found to be sample tables are
+  # The sample table: once a. Prepare your files has run, only the files it found to be sample tables are
   # offered, with a note saying where the choice came from.
   output$map_table_ui <- renderUI({
     idf <- rv$identify
@@ -573,14 +573,14 @@ server <- function(input, output, session) {
     demo_table <- if (nzchar(rv$demo)) DEMOS[[rv$demo]]$sample_table else ""
     default <- if (demo_table %in% ch) demo_table else guess_file("sample table")
     note <- if (length(found) == 1) {
-      help_text("This is the file ", tags$em("a. Your files"), " identified as your sample table. If that is wrong,",
+      help_text("This is the file ", tags$em("a. Prepare your files"), " identified as your sample table. If that is wrong,",
                 "change its kind there.")
     } else if (length(found) > 1) {
-      help_text(tags$em("a. Your files"), " found ", length(found), " files that look like sample tables. The mapping",
+      help_text(tags$em("a. Prepare your files"), " found ", length(found), " files that look like sample tables. The mapping",
                 "is for one table: choose the one that holds your sample details. If they are parts of one",
                 "table, combine them into one file first.")
     } else {
-      help_text("Choose the file that holds your sample details. Running ", tags$em("a. Your files"),
+      help_text("Choose the file that holds your sample details. Running ", tags$em("a. Prepare your files"),
                 " first finds it for you.")
     }
     tagList(selectInput("map_table", term_label("Sample table", "sample_table"), c("Choose a file" = "", ch),
@@ -602,16 +602,16 @@ server <- function(input, output, session) {
   })
 
   # An earlier review sheet (or crosswalk) of this table, to carry its decisions over. None by default: it
-  # is used only when chosen. a. Your files finds review sheets and crosswalks (kind "crosswalk").
+  # is used only when chosen. a. Prepare your files finds review sheets and crosswalks (kind "crosswalk").
   output$map_earlier_ui <- renderUI({
     idf <- rv$identify
     found <- if (is.null(idf)) character() else intersect(unique(idf$file[idf$kind == "crosswalk"]), names(rv$files))
-    # before a. Your files has run, any workbook or tab-separated file; after, only those it found
+    # before a. Prepare your files has run, any workbook or tab-separated file; after, only those it found
     ch <- if (!is.null(idf)) found else file_names("\\.(xlsx|tsv)$")
     tagList(
       selectInput("map_earlier", term_label("Earlier review (optional)", "earlier_review"), c("None" = "", ch),
                   selected = keep_or("map_earlier", ""), selectize = FALSE),
-      help_text(if (length(found)) tagList(tags$em("a. Your files"),
+      help_text(if (length(found)) tagList(tags$em("a. Prepare your files"),
                                            sprintf("found %d %s.", length(found),
                                                    if (length(found) == 1) "review sheet or crosswalk" else "review sheets or crosswalks")),
                 "If you mapped this table before and kept the review sheet, choose it here. Your decisions are",
@@ -699,7 +699,7 @@ server <- function(input, output, session) {
         msg <- c(kept,
                  if (!e$carried && length(unlist(e$new)) == nrow(review()$rows))
                    sprintf("None of the columns of this table is in %s: is it the review of another table?", earlier_name),
-                 if (length(todo)) sprintf("%d %s to review in c. Review the mapping: %s.", length(todo),
+                 if (length(todo)) sprintf("%d %s to review in c. Review the matches: %s.", length(todo),
                                            if (length(todo) == 1) "column" else "columns", listed(todo))
                  else "Nothing new needs reviewing.",
                  if (length(unlist(e$not_in_table)))
@@ -731,8 +731,8 @@ server <- function(input, output, session) {
                 s$ambiguous_dates$example[1], paste(unique(s$ambiguous_dates$column), collapse = ", ")),
         radioButtons("map_date_order", NULL, inline = TRUE, selected = isolate(input$ap_date_order) %||% "stop",
                      c("Day first (dd/mm/yyyy)" = "dmy", "Month first (mm/dd/yyyy)" = "mdy", "Not sure yet" = "stop")),
-        tags$small("This sets the date order in e. Write the workbook.")),
-      tags$p("Next, go to ", actionLink("goto_review", "c. Review the mapping"), " to confirm or correct the matches."),
+        tags$small("This sets the date order in e. DNA results and the workbook.")),
+      tags$p("Next, go to ", actionLink("goto_review", "c. Review the matches"), " to confirm or correct the matches."),
       navset_underline(
         nav_panel("Mapping report", DTOutput("map_report_table")),
         nav_panel("Additional checks to make", help_text(
@@ -1024,7 +1024,7 @@ server <- function(input, output, session) {
                                  if (length(extra) == 1) "was" else "were", paste(extra, collapse = ", ")),
       if (any(duplicated(up$rows$input))) "Some input terms are in the sheet twice; their first rows were used.",
       if (length(gone) || length(extra) || any(stale))
-        "If it is from an earlier mapping, choose it at b. Propose a mapping, under Mapping this table again?, instead.")
+        "If it is from an earlier mapping, choose it at b. Map sample information, under Mapping this table again?, instead.")
     msg <- paste(c(sprintf("The decisions in %s are on screen and saved.", f$name), notes), collapse = " ")
     if (length(notes)) notify_warning(msg, duration = 15) else notify_info(msg)
   })
@@ -1084,7 +1084,7 @@ server <- function(input, output, session) {
         tags$br(), inline("Next, ", actionLink("goto_primers", "d. Methods and project information"), "."))
   })
   observeEvent(input$goto_primers, nav_select("mapper_steps", "d. Methods and project values"))
-  # d. Methods and project values goes in three steps: the primers, the other method details, then the
+  # d. Methods and project information goes in three steps: the primers, the other method details, then the
   # values on the right; steps 1 and 2 start closed, and each step ends by pointing to the next
   observeEvent(input$goto_details, accordion_panel_set("methods_steps", "details"))
   observeEvent(input$goto_write, nav_select("mapper_steps", "e. Write the workbook"))
@@ -1179,7 +1179,7 @@ server <- function(input, output, session) {
                       "commas."),
               tags$li("Press Add the ticked pairs to the projectMetadata. The pairs' names, sequences, gene, target",
                       "taxon and references go into the table on the right: check them there, and change any that do",
-                      "not fit your study. e. Write the workbook uses the assay names you give here.")))),
+                      "not fit your study. e. DNA results and the workbook uses the assay names you give here.")))),
         primer_list(d),
         help_text("Give each assay a short name you will keep, with letters, digits, hyphens and underscores only,",
                   if (md_assay_type() == "targeted") "and no underscores for a qPCR or ddPCR assay,",
@@ -1381,7 +1381,7 @@ server <- function(input, output, session) {
     rv$res$details <- res
     rv$details <- if (res$ok) read_tsv(res$outputs$proposals) else NULL
   })
-  # Method details are read with the terms of the assay type chosen in b. Propose a mapping (the one the
+  # Method details are read with the terms of the assay type chosen in b. Map sample information (the one the
   # mapping was run with, or the one on b's form before then); it is shown here, not asked again.
   md_assay_type <- reactive({
     t <- if (!is.null(rv$map_args)) at_of(rv$map_args) else input$map_assay_type %||% "metabarcoding"
@@ -1389,7 +1389,7 @@ server <- function(input, output, session) {
   })
   output$md_assay_type_ui <- renderUI(help_text(
     tags$b("Assay type: "), if (md_assay_type() == "targeted") "Targeted (qPCR, ddPCR)" else "Metabarcoding",
-    inline(", as chosen in ", actionLink("goto_map_type", "b. Propose a mapping"), ".")))
+    inline(", as chosen in ", actionLink("goto_map_type", "b. Map sample information"), ".")))
   observeEvent(input$goto_map_type, nav_select("mapper_steps", "b. Propose a mapping"))
   output$details_result <- renderUI({
     res <- rv$res$details
@@ -1512,7 +1512,7 @@ server <- function(input, output, session) {
     md_add_now(vals)
   })
   # The mandatory project terms no file covers yet (propose mapping's list), less those given here.
-  # project_id is given here (e. Write the workbook takes it from projectMetadata); the tools fill the rest
+  # project_id is given here (e. DNA results and the workbook takes it from projectMetadata); the tools fill the rest
   pv_missing_map <- reactive(if (!is.null(rv$map)) read_tsv(rv$map$outputs$missing) else NULL)
   pv_left <- reactive({
     m <- pv_missing_map()
@@ -1700,7 +1700,7 @@ server <- function(input, output, session) {
     demo_block(kind, i)[[field]] %||% default
   }
 
-  # The assay names given in d. Methods and project values, offered wherever e asks for an assay, so the
+  # The assay names given in d. Methods and project information, offered wherever e asks for an assay, so the
   # names stay the same and the project values link to the right OTU tables and libraries.
   pv_assays <- reactive({ a <- unique(trimws(rv$pv$assay)); a[!is.na(a) & nzchar(a)] })
   assay_input <- function(id, label, value) {
@@ -1709,7 +1709,7 @@ server <- function(input, output, session) {
     selectizeInput(id, label, c("", ch), selected = value,
                    options = list(create = TRUE, placeholder = if (length(ch)) "choose or type" else "type a name"))
   }
-  # e. Write the workbook takes the assay names from projectMetadata in d. With none there, it passes none,
+  # e. DNA results and the workbook takes the assay names from projectMetadata in d. With none there, it passes none,
   # and the OTU tables and libraries name their own assays.
   e_assays <- reactive(paste(pv_assays(), collapse = ", "))
   # The project ID: the project-level project_id in projectMetadata, in d
@@ -1783,13 +1783,13 @@ server <- function(input, output, session) {
                         c("In the OTU table" = "", file_names("\\.(csv|tsv|tab|txt|xlsx)$", kinds = "taxonomy table")),
                         selected = bval("otu", i, "taxa"), selectize = FALSE),
             selectInput(b("sequences"), term_label("Sequences of this table (FASTA, optional)", "sequences"),
-                        # FASTA files by name, or a .txt file only when a. Your files found it holds sequences
+                        # FASTA files by name, or a .txt file only when a. Prepare your files found it holds sequences
                         c("In the OTU table" = "", file_names("\\.(fa|fasta|fna|fas)$", kinds = "sequences (FASTA)")),
                         selected = bval("otu", i, "sequences"), selectize = FALSE),
             help_text("Choose a taxonomy table if this OTU table does not hold the taxonomy itself. Choose a FASTA",
                       "file if the table names its sequences (ASV_1, ASV_2 and so on) without holding the DNA",
                       "sequences; the names in the FASTA file must match those in the table.",
-                      "Both files must first be added in a. Your files."),
+                      "Both files must first be added in a. Prepare your files."),
             help_text("If the OTU table or the taxonomy table is an Excel workbook with more than one sheet,",
                       "choose the sheet that holds it. The lists show the sheets of the files chosen above, and",
                       "the first sheet is used if you leave them as they are."),
@@ -1861,13 +1861,13 @@ server <- function(input, output, session) {
 
   do_apply <- function() {
     a <- rv$map_args
-    if (is.null(a)) return(notify_error("Propose a mapping first (step b)."))
+    if (is.null(a)) return(notify_error("Map your sample table first (step b)."))
     pid <- e_project_id()
     if (!nzchar(pid))
-      return(notify_error(paste("Give project_id in projectMetadata, in d. Methods and project values (Add a value by",
+      return(notify_error(paste("Give project_id in projectMetadata, in d. Methods and project information (Add a value by",
                                 "hand): a short ID for the project, with letters, digits, hyphens and underscores only.")))
     if (!grepl("^[A-Za-z0-9_-]+$", pid))
-      return(notify_error(sprintf(paste("The project_id in d. Methods and project values, %s, can only hold letters,",
+      return(notify_error(sprintf(paste("The project_id in d. Methods and project information, %s, can only hold letters,",
                                         "digits, hyphens and underscores. Correct it there."), pid)))
     g <- function(kind, i, field) { v <- input[[bid(kind, i, field)]]; if (is.null(v)) "" else trimws(v) }
     otus <- list()
@@ -1894,14 +1894,14 @@ server <- function(input, output, session) {
     }
     if (length(amps) && at_of(a) != "targeted")
       return(notify_error(paste("qPCR and ddPCR results are for targeted assays: choose Targeted as the assay type in",
-                                "b. Propose a mapping and run it again, or remove the results tables.")))
+                                "b. Map sample information and run it again, or remove the results tables.")))
     # The assay names used here should be the ones the project values were given for in d.
     used <- trimws(unlist(strsplit(c(e_assays(), vapply(otus, `[[`, "", "assay"),
                                      vapply(libs, `[[`, "", "assay")), ",")))
     odd <- setdiff(unique(used[nzchar(used)]), pv_assays())
     if (length(pv_assays()) && length(odd))
       return(notify_error(sprintf(paste(
-        "The assay name%s %s %s not among the assays in d. Methods and project values (%s). Use the same names,",
+        "The assay name%s %s %s not among the assays in d. Methods and project information (%s). Use the same names,",
         "so the project values go with the right OTU tables and libraries."),
         if (length(odd) == 1) "" else "s", paste(odd, collapse = ", "), if (length(odd) == 1) "is" else "are",
         paste(pv_assays(), collapse = ", "))))
