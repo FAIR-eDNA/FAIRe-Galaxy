@@ -14,6 +14,7 @@ CC0 licence.
 
 ## Status
 
+- 2026.07.23+galaxy7 (28 November 2026): the help says what the tool needs from the workbook (*What this needs from the workbook*), as the FAIRe tools app's Convert page checks before a tool is run.
 - `planemo lint`: passes with no warnings.
 - `planemo shed_lint`: passes.
 - `planemo test`: all tests pass in Galaxy 25.0 (summary at the end of this file).

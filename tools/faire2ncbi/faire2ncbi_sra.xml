@@ -391,6 +391,16 @@ FAIRe2NCBI normally asks you questions as it runs. In Galaxy, the tool answers t
 It also writes a **config** file holding those answers, so that the same run can be repeated
 outside Galaxy.
 
+**What this needs from the workbook**
+
+- experimentRunMetadata with samp_name, assay_name, lib_id and filename (and filename2 for paired
+  reads) for every library, each file name used once.
+- The sequencing instrument, from projectMetadata's instrument as NCBI names it (*Illumina NextSeq
+  2000* is taken as NCBI's *NextSeq 2000*), or chosen on the form. A value that does not give the
+  model, such as *Illumina NextSeq*, must be chosen on the form.
+- To link the runs to BioSamples by accession: the accession table NCBI returned for the BioSamples.
+- Runs with an accession in associatedSequences are in an archive already.
+
 -----
 
 **Inputs**

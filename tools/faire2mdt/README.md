@@ -15,6 +15,7 @@ here as `LICENSE.upstream`.
 
 ## Status
 
+- 1.1.0+galaxy2 (28 November 2026): the help says what the tool needs from the workbook (*What this needs from the workbook*), as the FAIRe tools app's Convert page checks before a tool is run.
 - `planemo lint`: passes with no warnings.
 - `planemo test`: all 6 tests pass in Galaxy 25.0 (summary at the end of this file).
 - Run on the 11 assay and run combinations of the FAIRe example workbooks that have otuFinal and

@@ -18,6 +18,7 @@ metabarcoding data published as presence, such as a species-by-sample table with
 
 ## Status
 
+- 0.2.0+galaxy2 (28 November 2026): the help says what the tool needs from the workbook (*What this needs from the workbook*), as the FAIRe tools app's Convert page checks before a tool is run.
 - Version 0.2.0 (24 November 2026) reads otuFinal_<assay>_<run> sheets, for an assay sequenced in
   several runs, with the run in each occurrenceID. Version 0.1.0 (23 November 2026) was written for
   the khapra beetle demonstration (`demo/khapra/`, `dev/faire_mapper_khapra/run.sh`), at Oliver
