@@ -534,24 +534,74 @@ def text(value):
     return '' if is_blank(value) else str(value).strip()
 
 
-def library_layouts(path):
-    """lib_layout from projectMetadata: ({assay_name: layout} for assays with their own value, the
-    project_level value). FAIRe's values are 'paired end', 'single end' and 'other: ...'."""
+def project_term(path, term):
+    """A projectMetadata term: ({assay_name: value} for assays with their own value, the
+    project_level value)."""
     pm = read_sheet(path, 'projectMetadata')
     if 'term_name' not in pm.columns:
         return {}, ''
     terms = pm['term_name'].astype(str).str.strip()
-    layout_rows, assay_rows = pm[terms == 'lib_layout'], pm[terms == 'assay_name']
-    if layout_rows.empty:
+    term_rows, assay_rows = pm[terms == term], pm[terms == 'assay_name']
+    if term_rows.empty:
         return {}, ''
-    layout = layout_rows.iloc[0]
-    project = text(layout['project_level']) if 'project_level' in pm.columns else ''
+    row = term_rows.iloc[0]
+    project = text(row['project_level']) if 'project_level' in pm.columns else ''
     per_assay = {}
     if not assay_rows.empty:
         for column in pm.columns:
-            if column not in PROJECT_COLUMNS and text(assay_rows.iloc[0][column]) and text(layout[column]):
-                per_assay[text(assay_rows.iloc[0][column])] = text(layout[column])
+            if column not in PROJECT_COLUMNS and text(assay_rows.iloc[0][column]) and text(row[column]):
+                per_assay[text(assay_rows.iloc[0][column])] = text(row[column])
     return per_assay, project
+
+
+def library_layouts(path):
+    """lib_layout from projectMetadata. FAIRe's values are 'paired end', 'single end' and 'other: ...'."""
+    return project_term(path, 'lib_layout')
+
+
+# ENA's instrument_model values that the run tool offers: upstream writes ILLUMINA as the platform
+ENA_INSTRUMENTS = ['Illumina MiSeq', 'Illumina iSeq 100', 'Illumina MiniSeq', 'NextSeq 500', 'NextSeq 550',
+                   'NextSeq 1000', 'NextSeq 2000', 'Illumina NovaSeq 6000', 'Illumina NovaSeq X',
+                   'Illumina HiSeq 2500', 'Illumina HiSeq 4000']
+# Makers' names that FAIRe's instrument values put before some models that ENA names without them
+MAKER_PREFIX = r'^(Illumina|Oxford Nanopore( Technologies)?|ONT|PacBio|Pacific Biosciences|MGI|Thermo Fisher)\s+'
+
+
+def ena_instrument(value):
+    """ENA's name for a FAIRe instrument value, or '': 'Illumina MiSeq [OBI_0002003]' -> 'Illumina MiSeq',
+    'Illumina NextSeq 2000' -> 'NextSeq 2000'."""
+    v = re.sub(r'\s*\[[A-Za-z]+[_:]\d+\]\s*$', '', text(value))
+    for candidate in (v, re.sub(MAKER_PREFIX, '', v, flags=re.I), 'Illumina ' + v):
+        for name in ENA_INSTRUMENTS:
+            if candidate.lower() == name.lower():
+                return name
+    return ''
+
+
+def workbook_instrument(path, assays):
+    """The instrument_model for the runs of these assays, from projectMetadata's instrument (the assay's
+    column, or else project_level). Upstream writes one instrument for every run, so the assays must
+    share it."""
+    per_assay, project = project_term(path, 'instrument')
+    given = {a: per_assay.get(a, project) for a in assays}
+    missing = [a for a, v in given.items() if not v]
+    if missing:
+        fail(f"projectMetadata gives no instrument for {', '.join(missing)}. Fill instrument in projectMetadata, "
+             "or choose the sequencing instrument on the tool form.")
+    names = {a: ena_instrument(v) for a, v in given.items()}
+    bad = [f"'{given[a]}' ({a})" for a, n in names.items() if not n]
+    if bad:
+        fail(f"the instrument {', '.join(bad)} in projectMetadata is not one of the ENA instruments this tool "
+             f"writes ({', '.join(ENA_INSTRUMENTS)}); it may not give the model. Choose the sequencing instrument "
+             "on the tool form.")
+    distinct = sorted(set(names.values()))
+    if len(distinct) > 1:
+        fail("the assays chosen were sequenced on different instruments ("
+             + ', '.join(f"{a}: {n}" for a, n in names.items()) + "), and the run XML names one instrument for "
+             "all runs. Submit each assay separately (Assays to include: one assay).")
+    shown = ', '.join(sorted(set(given.values())))
+    print(f"INFO: instrument_model '{distinct[0]}', from instrument in projectMetadata ({shown})")
+    return distinct[0]
 
 
 def layout_kind(value):
@@ -608,6 +658,7 @@ def run_run(args):
         df = df[values.isin(wanted)]
         print(f"INFO: kept {len(df)} row(s) with seq_run_id in: {', '.join(wanted)}")
 
+    unjoined = df.copy()
     df, joined, assays, join_problems, bad, join_notes = join_shared_libraries(df)
     per_assay, project_layout = library_layouts(args.input_file)
     df['_lib_layout'] = df['assay_name'].apply(lambda a: per_assay.get(text(a), project_layout))
@@ -690,6 +741,9 @@ def run_run(args):
     if suffix and selected['lib_id'].astype(str).str.endswith(suffix).all():
         print(f"INFO: every lib_id already ends with '{suffix}', so it is not added again")
         suffix = None
+    if args.instrument_model == 'from_workbook':
+        used = unjoined[unjoined['samp_name'].isin(selected['samp_name'])]['assay_name']
+        args.instrument_model = workbook_instrument(args.input_file, sorted({text(a) for a in used if text(a)}))
     upstream_run.process_run_metadata(
         df,
         args.receipt_file,
@@ -726,7 +780,8 @@ def main():
     r.add_argument('--center_name', required=True)
     r.add_argument('--experiment_output', required=True)
     r.add_argument('--run_output', required=True)
-    r.add_argument('--instrument_model', required=True)
+    r.add_argument('--instrument_model', required=True,
+                   help="ENA's instrument_model, or from_workbook for projectMetadata's instrument")
     r.add_argument('--assay_name')
     r.add_argument('--seq_run_id', help='sequencing runs to include (seq_run_id values, comma-separated)')
     r.add_argument('--add_assay_suffix', action='store_true')

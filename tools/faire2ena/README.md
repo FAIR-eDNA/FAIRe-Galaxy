@@ -12,6 +12,7 @@ Upstream: [FAIR-eDNA/FAIRe2ENA](https://github.com/FAIR-eDNA/FAIRe2ENA) at commi
 
 ## Status
 
+- 2025.11.12+galaxy7 (28 November 2026): the help says what the tool needs from the workbook (*What this needs from the workbook*), as the FAIRe tools app's Convert page checks before a tool is run.
 - `planemo lint`: passes with no warnings.
 - `planemo shed_lint`: passes.
 - `planemo test`: all tests pass in Galaxy 25.0 (summary at the end of this file).
@@ -132,6 +133,14 @@ before and after them:
     easily missed. The driver now gives one warning per field, with the number of samples, the
     first five names and what to fill in sampleMetadata if the default is wrong. The FAIRe tools
     app says the same on its Convert page before the tool is run.
+16. **The instrument from the workbook** (28 November 2026, 2025.11.12+galaxy7). The run tool's form
+    started at *Illumina NovaSeq 6000*, so runs from another instrument were written as NovaSeq runs
+    unless the person changed it. Its first and default choice is now *From the workbook*: the
+    instrument in projectMetadata (the assay's column, or project_level) for the runs being written,
+    given ENA's name (*Illumina MiSeq [OBI_0002003]* is *Illumina MiSeq*, *Illumina NextSeq 2000* is
+    *NextSeq 2000*). It stops, and asks for the instrument on the form, when the workbook gives none,
+    gives one that is not in ENA's Illumina list (or does not give the model), or gives different
+    instruments for the assays chosen (upstream writes one instrument for every run). New test.
 
 ## Upstream issues to report
 

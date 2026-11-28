@@ -206,6 +206,16 @@ This is the first of two steps. Once ENA accepts the samples, it returns a **rec
 accession for each sample. Upload the receipt to Galaxy and use it in **FAIRe2ENA: experiments and
 runs**.
 
+**What this needs from the workbook**
+
+- For every sample in sampleMetadata: eventDate, decimalLatitude, decimalLongitude, geo_loc_name,
+  env_broad_scale and env_medium, and project_id in projectMetadata. ENA holds the samples behind
+  sequence reads, so a targeted (qPCR or ddPCR) study has nothing to submit here.
+- A sample with no minimumDepthInMeters or maximumDepthInMeters is written with a depth of 0 m, and
+  one with no env_local_scale as *marine pelagic zone* (the log says which). Fill them if that is
+  wrong.
+- The centre name of your Webin account, on the form.
+
 -----
 
 **Inputs**
