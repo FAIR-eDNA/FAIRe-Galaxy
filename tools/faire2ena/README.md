@@ -12,10 +12,17 @@ Upstream: [FAIR-eDNA/FAIRe2ENA](https://github.com/FAIR-eDNA/FAIRe2ENA) at commi
 
 ## Status
 
-- 2025.11.12+galaxy7 (28 November 2026): the help says what the tool needs from the workbook (*What this needs from the workbook*), as the FAIRe tools app's Convert page checks before a tool is run.
+- 2025.11.12+galaxy7 (28 November 2026): the help says what the tool needs from the workbook (*What
+  this needs from the workbook*), as the FAIRe tools app's Convert page checks before a tool is run.
 - `planemo lint`: passes with no warnings.
 - `planemo shed_lint`: passes.
 - `planemo test`: all tests pass in Galaxy 25.0 (summary at the end of this file).
+- ENA's test server accepted SEA-MES samples, and the whole chain from samples to runs (11 and 12
+  November 2026).
+
+<details>
+<summary>Show the trials on ENA's test server</summary>
+
 - ENA's test server, 11 November 2026: three SEA-MES samples submitted through the test Webin
   Portal were checked by ENA and refused for missing units and an "Unknown" value. With item 11
   below, ENA accepted them the same day (`dev/faire2ena_ena_trial/README.md`). On 12 November, with
@@ -23,6 +30,8 @@ Upstream: [FAIR-eDNA/FAIRe2ENA](https://github.com/FAIR-eDNA/FAIRe2ENA) at commi
   experiments and runs (with small made-up read files in place of the real reads). The trials also
   showed the size-fraction fields going in under the wrong names and the wrong way round, and
   Wilderlab's single-end runs stopping the run tool: items 12 and 13 fix these.
+
+</details>
 
 ## Files
 
@@ -45,6 +54,9 @@ Galaxy would store that in the user's history.
 
 The upstream scripts are imported as they are. The driver (`faire2ena_galaxy.py`) runs extra steps
 before and after them:
+
+<details>
+<summary>Show each addition, with when it was made and what found the need</summary>
 
 1. **Collection dates.** ENA's date pattern does not accept time zone offsets written as `+hh:mm`.
    The upstream script replaces every such date with "not provided". In the GOMECC-4 example
@@ -142,7 +154,12 @@ before and after them:
     gives one that is not in ENA's Illumina list (or does not give the model), or gives different
     instruments for the assays chosen (upstream writes one instrument for every run). New test.
 
+</details>
+
 ## Upstream issues to report
+
+<details>
+<summary>Show the issues</summary>
 
 These are worth raising with the FAIRe2ENA authors. If they are fixed upstream, the driver can shrink.
 
@@ -171,7 +188,12 @@ These are worth raising with the FAIRe2ENA authors. If they are fixed upstream, 
   the driver handles the taxon (item 3) and single-end runs (item 13).
   A tagged release and a pip or bioconda package would also help (see below).
 
+</details>
+
 ## Before deployment on Galaxy Australia
+
+<details>
+<summary>Show what is still to do</summary>
 
 ### Must do
 
@@ -225,7 +247,12 @@ These are worth raising with the FAIRe2ENA authors. If they are fixed upstream, 
     run. Single-end Illumina runs are supported since 12 November 2026 (item 13).
 12. Compute MD5 checksums in Galaxy when the reads are already in the user's history.
 
+</details>
+
 ## Test data
+
+<details>
+<summary>Show the test data</summary>
 
 `test-data/faire_two_assays.xlsx` is a cut-down copy of the GOMECC-4 generic FAIRe example in
 [aomlomics/edna2obis](https://github.com/aomlomics/edna2obis) (MIT): four samples (three
@@ -254,6 +281,8 @@ written by `dev/faire2ena_ena_trial/make_testdata.py`.
 (ERS9999901 to ERS9999903) for the three seawater samples. The control is left out on purpose so
 the tests check that unregistered samples are skipped.
 
+</details>
+
 ## Running the tests
 
 ```bash
@@ -263,6 +292,9 @@ planemo test faire2ena/
 ```
 
 ## planemo test results
+
+<details>
+<summary>Show the latest results</summary>
 
 Run on 3 November 2026, and again on 5 November with the sequencing-run filter and the joining of shared libraries, with planemo 0.75.47 against Galaxy `release_25.0`, with dependencies
 resolved through conda (python 3.12, pandas 2.2.3, openpyxl 3.1.5). All tests passed. On 12 November
@@ -290,3 +322,5 @@ the tests for items 12 to 14 were written first and failed (in planemo's numberi
 | faire2ena_sample | 4 (13 Nov) | An offset with minutes (+09:30) written in UTC (2021-10-02T04:57Z) and listed in the log | passed |
 | faire2ena_run | single end (12 Nov) | lib_layout *single end*: 3 experiments with SINGLE, 3 runs with one file each, no `nan` | passed |
 | faire2ena_run | single end, second file (12 Nov) | lib_layout *single end* with filename2 given: stops with advice | passed |
+
+</details>

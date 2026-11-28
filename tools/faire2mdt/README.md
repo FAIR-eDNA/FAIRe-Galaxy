@@ -15,11 +15,18 @@ here as `LICENSE.upstream`.
 
 ## Status
 
-- 1.1.0+galaxy2 (28 November 2026): the help says what the tool needs from the workbook (*What this needs from the workbook*), as the FAIRe tools app's Convert page checks before a tool is run.
+- 1.1.0+galaxy2 (28 November 2026): the help says what the tool needs from the workbook (*What this
+  needs from the workbook*), as the FAIRe tools app's Convert page checks before a tool is run.
 - `planemo lint`: passes with no warnings.
 - `planemo test`: all 6 tests pass in Galaxy 25.0 (summary at the end of this file).
 - Run on the 11 assay and run combinations of the FAIRe example workbooks that have otuFinal and
   taxaFinal tables: all 11 converted (5 by hand). See `dev/faire2mdt/README.md`.
+- Tried on MDT's test site (3 November 2026 and later): MDT accepted and processed the workbooks,
+  and GBIF's data validator found that the archive MDT made from one can be indexed.
+
+<details>
+<summary>Show the trials on MDT's test site</summary>
+
 - Uploaded to MDT's test site on 3 November 2026 (IOT-eDNA, COILeray, Library_2021): MDT accepted
   the workbook and processed it (95 samples, 578 sequences, 74,767 reads, as in the OTU table). At
   the mapping step it took the Study values as defaults and mapped id, eventDate and the
@@ -48,6 +55,8 @@ here as `LICENSE.upstream`.
   `missing: not collected`; and informational flags (country and continent derived from the
   coordinates, coordinates rounded, WGS84 assumed, no institution match, ASV taxon IDs not found).
 
+</details>
+
 ## Files
 
 | File | Purpose |
@@ -72,6 +81,9 @@ The workbook it writes becomes the Galaxy output. A future upstream version can 
 long as it keeps that line and those table names.
 
 ## What the wrapper adds
+
+<details>
+<summary>Show each addition, with when it was made and what found the need</summary>
 
 1. **Exact matching of assay and run.** Upstream selects rows of experimentRunMetadata with
    `grepl`, so `COILeray` also takes `COILeray2`, `run1` also takes `run10`, and characters such as
@@ -128,7 +140,12 @@ long as it keeps that line and those table names.
    as it is INSDC's term; whether GBIF wants it or an empty field is a question for GBIF.
 9. **R packages from conda,** so the script's `install.packages()` step never runs.
 
+</details>
+
 ## Decisions
+
+<details>
+<summary>Show the decisions</summary>
 
 - **One assay and run per job,** as upstream. For several, run the tool once for each (a Galaxy
   workflow can do this). Matching OTU and taxonomy files to assays and runs by name would add
@@ -138,7 +155,12 @@ long as it keeps that line and those table names.
 - **Warnings do not stop the tool.** MDT checks the workbook again on upload, and some warnings
   (for example blank samples with no reads) may be expected.
 
+</details>
+
 ## Upstream issues to report
+
+<details>
+<summary>Show the issues</summary>
 
 To the FAIRe2MDT authors (FAIR-eDNA):
 
@@ -177,7 +199,12 @@ import", were sent on 3 November 2026 to the GBIF helpdesk and the MDT developer
 
 The workbook issues found in the FAIRe examples are in `dev/faire2mdt/README.md`.
 
+</details>
+
 ## MDT's own FAIRe import
+
+<details>
+<summary>Show the comparison</summary>
 
 The MDT backend ([gbif/metabarcoding-data-toolkit-backend](https://github.com/gbif/metabarcoding-data-toolkit-backend),
 Apache 2.0, read at commit `91506ee`, 6 October 2026) has an upload format called *FAIRe format*:
@@ -199,7 +226,12 @@ From a first read of that code (not yet tried):
 Uploading a FAIRe workbook straight to MDT (CPR_2015.xlsx has otuFinal and taxaFinal sheets) would
 show whether the site has the FAIRe format, and what this tool still adds.
 
+</details>
+
 ## Before deployment on Galaxy Australia
+
+<details>
+<summary>Show what is still to do</summary>
 
 ### Must do
 
@@ -224,7 +256,12 @@ show whether the site has the FAIRe format, and what this tool still adds.
    collections of OTU and taxonomy tables matched by FAIRe file names
    (`otuFinal_<project>_<assay>_<run>`).
 
+</details>
+
 ## Test data
+
+<details>
+<summary>Show the test data</summary>
 
 Made up for the tests by `dev/faire2mdt/make_test_data.py` (all files under 10 KB):
 
@@ -252,6 +289,8 @@ analysis.
 | 5 | Controls kept: the negative control's library is in, and its eventDate `missing: not collected` is written as `not applicable: control sample` (log note) |
 | 6 | Assay not in the workbook: stops, listing the assay and run pairs the workbook has |
 
+</details>
+
 ## Running the tests
 
 ```bash
@@ -262,7 +301,12 @@ planemo test faire2mdt/
 
 ## planemo test results
 
+<details>
+<summary>Show the latest results</summary>
+
 Run on 3 November 2026 with planemo 0.75.47 against Galaxy `release_25.0`, with dependencies
 resolved through conda (r-base 4.4.3, r-readxl 1.6.0, r-openxlsx 4.2.9, r-dplyr 1.2.1,
 r-tibble 3.3.1). All 4 tests passed. On 6 November, with the taxonomy rows that have no OTU table
 row left out, the controls left out, and a test for each, all 6 passed.
+
+</details>

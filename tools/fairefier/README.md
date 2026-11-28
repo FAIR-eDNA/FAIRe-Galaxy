@@ -94,6 +94,9 @@ These comparisons were run with warnings silenced as Galaxy silences them, and w
 
 ## Upstream issues to report
 
+<details>
+<summary>Show the issues</summary>
+
 To Suk Yee Yong (FAIRe-fier). Sent 5 November 2026; her answers of 5 and 6 November are noted
 under each item.
 
@@ -137,7 +140,12 @@ To the FAIRe checklist and FAIRe-ator authors:
    Galaxy tool reads either form when choosing a checklist, and its help tells users about the
    error. The FAIRe mapper writes the number 1 since version 0.5.1.
 
+</details>
+
 ## Before deployment on Galaxy Australia
+
+<details>
+<summary>Show what is still to do</summary>
 
 ### Must do
 
@@ -161,7 +169,12 @@ To the FAIRe checklist and FAIRe-ator authors:
    lets a Galaxy workflow stop before the ENA, NCBI or OBIS steps when metadata are invalid. The
    summary and issues table are what the mapper's validation loop will read.
 
+</details>
+
 ## Test data
+
+<details>
+<summary>Show the test data</summary>
 
 All made up, built from a mandatory-fields-only FAIRe-ator template (water, metabarcoding, one
 assay, MiFish) by `dev/fairefier_equivalence/make_fairefier_testdata.py`:
@@ -175,6 +188,8 @@ assay, MiFish) by `dev/fairefier_equivalence/make_fairefier_testdata.py`:
   re-submission.
 - `faire_duplicate.xlsx`: the valid workbook with a repeated sample name.
 
+</details>
+
 ## Running the tests
 
 ```bash
@@ -184,6 +199,9 @@ planemo test fairefier/     # run as an ordinary user, not root
 ```
 
 ## planemo test results
+
+<details>
+<summary>Show the latest results</summary>
 
 Run on 3 November 2026 with planemo 0.75.47 against Galaxy `release_25.0`, with dependencies
 resolved through conda (python 3.12, pandas 2.2.3, openpyxl 3.1.5, pydantic 2.7.0, jinja2 3.1.6).
@@ -197,3 +215,5 @@ All tests passed.
 | 4 | Re-submitted `_revise` workbook is read and checked | passed |
 | 5 | Strict mode: job stops (exit 1) when validation fails | passed |
 | 6 | Duplicate sample names: job stops (exit 2) with the app's message | passed |
+
+</details>

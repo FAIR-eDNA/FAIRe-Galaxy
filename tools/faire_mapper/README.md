@@ -26,23 +26,22 @@ model is used, as agreed; the tools are built so one can be added later (see bel
 
 ## Status
 
-- Version 0.12.1. `planemo lint`: passes with no warnings. `pyflakes`: clean.
+- Version 0.13.3. `planemo lint`: passes with no warnings. `pyflakes`: clean.
 - Goes to Galaxy Australia as an early version with the wrapped FAIRe tools (decided 6 November
   2026). Each tool's help starts with a note saying so, which asks users to check the results and
   send problems to the Galaxy Australia help desk (to confirm with Galaxy Australia, question 8).
 - `planemo test`: all tests pass in Galaxy 26.1 (summary at the end of this file); the five original
   tools' 37 tests also pass in Galaxy 25.0. The model tool needs Galaxy 25.1 or later, for its
   credentials.
-- New on 7 November 2026, from Oliver's review: *FAIRe mapper: identify your files* says what each
-  uploaded file looks like and where it goes; apply mapping says what a file in the wrong field looks
-  like, stops when an OTU table has no read counts, warns when a final table has more sequences or
-  reads than the raw one, and has a *Layout of this table* setting that overrides the detection
-  ("Recognising the input files" below).
 - Benchmarked on tables with known answers (see "How accurate is it?").
 - Tried on four published eDNA datasets from Dryad and two from Australian studies, with
   independent answer keys (`dev/faire_mapper_real_datasets/`, `dev/faire_mapper_australian_datasets/`,
   summarised below), and end to end on CSIRO's SEA-MES data (`dev/faire_mapper_seames/`). Not yet
   tried on datasets from Australian labs that already have a FAIRe version.
+
+<details>
+<summary><b>Version history</b> (newest first, with the reviews and trials behind each change)</summary>
+
 - New in 0.13.3 (28 November 2026): the chart of the reviewer's decisions, in the workbook's README
   sheet, has its legend below the bars rather than over them, the value axis at the bottom and no title
   of its own (the heading above names it), and colours that read for red-green colour blindness:
@@ -298,6 +297,11 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   Apply mapping writes `checkls_ver` as the number 1, as the checklist defines it and the FAIRe
   examples use it; the README sheet names the exact checklist. (From 0.6.1 it follows the
   checklist: text such as v2.0.0 when the checklist defines it as text, as FAIRe v2 will.)
+- New on 7 November 2026, from Oliver's review: *FAIRe mapper: identify your files* says what each
+  uploaded file looks like and where it goes; apply mapping says what a file in the wrong field looks
+  like, stops when an OTU table has no read counts, warns when a final table has more sequences or
+  reads than the raw one, and has a *Layout of this table* setting that overrides the detection
+  ("Recognising the input files" below).
 - New in 0.5.0, from the SEA-MES trial: comment lines above the header (NCBI and ENA sheets) are
   skipped; MIxS lat_lon is split into decimalLatitude and decimalLongitude; one depth fills both
   depth terms; a yes/no control column goes to samp_category; dates saved at midnight lose the time;
@@ -341,6 +345,8 @@ model is used, as agreed; the tools are built so one can be added later (see bel
   terms, and **apply mapping** writes a FAIRe workbook that FAIRe-fier reads, with OTU and taxonomy
   sheets that FAIRe2MDT converts. *Propose mapping* can read a data dictionary (column
   descriptions) as well as the table. The review Interactive Tool is not built yet.
+
+</details>
 
 ## Files
 
@@ -469,6 +475,9 @@ review.
 
 ### Mapping again
 
+<details>
+<summary>Show the details</summary>
+
 Data often arrive in rounds: a second set of samples, or new measurements such as nutrients or
 water clarity for samples already mapped. Run *propose mapping* on the new table and give it the
 review sheet from the earlier round as the *earlier review* (`--earlier_review`). Its decisions are
@@ -500,7 +509,12 @@ earlier crosswalk*.
 In the Shiny app, running the mapping again in the same session uses the same code: the review on
 screen is saved as a review sheet and given to *propose mapping* as the earlier review.
 
+</details>
+
 ### Recognising the input files
+
+<details>
+<summary>Show the details</summary>
 
 `faire_mapper_kinds.describe` says what a table looks like, from its shape, headers and values, in
 this order: a crosswalk (subject_id and object_id); text read as a table (the header is a sentence);
@@ -538,7 +552,12 @@ a table with curated names, which gives both, is not compared with itself. *Layo
 not fit the table stops with a message naming the setting, and a table whose headers and first
 column both hold sample names gets a note naming it.
 
+</details>
+
 ### Writing the FAIRe workbook (apply mapping)
+
+<details>
+<summary>Show the details</summary>
 
 `faire_mapper_apply.py` reads the table and the crosswalk, after the user has reviewed it (changed
 `skos:closeMatch` to `skos:exactMatch` to confirm a match, edited a term, or deleted a row), and
@@ -710,7 +729,12 @@ yet done: drop-down lists and cell comments in the sheets, ranks above a bare ta
 *match taxa* can fill them), and values that differ between assays (all go to *project_level*). `checkls_ver` is written as the number 1, which FAIRe-fier accepts (FAIRe-ator writes the file
 name, which it does not).
 
+</details>
+
 ### Adding a language model
+
+<details>
+<summary>Show the details</summary>
 
 The *columns to review* output is the request a model answers, and the *answers* input applies the
 replies, so the model sits between two runs of the mapper without changing it. A model's answer is
@@ -786,7 +810,12 @@ The stand-in reasoned over each request with more care than a single API call ma
 as an upper estimate of what a model adds. Run `dev/faire_mapper_benchmark/run_with_answers.sh` with
 real model answers to measure it properly.
 
+</details>
+
 ### Values from the methods text
+
+<details>
+<summary>Show the details</summary>
 
 Much of FAIRe is not in sample sheets but in the methods: primers, target gene, filter, extraction
 kit, PCR conditions, sequencer. `faire_mapper_methods.py` sends a model the methods text with the
@@ -806,7 +835,12 @@ as the adjudication script:
 `--model`, `--answers_from`, `--dry_run`. Methods in Word files need converting to text first (for
 example with pandoc).
 
+</details>
+
 ### Method details from the methods text, by rules
+
+<details>
+<summary>Show the details</summary>
 
 `faire_method_details.py` (Galaxy: **FAIRe mapper: find method details**) does without a model what
 `faire_mapper_methods.py` does with one, for the terms about how the samples were processed. It reads
@@ -858,7 +892,15 @@ written by hand from the paper as the rules stood, and 44 after three general fa
 fixed, with none of its proposals wrong; the paper comes from the same group as two of the development
 texts, so methods from other laboratories are likely to do less well (`dev/faire_method_details/`).
 
+</details>
+
 ## How accurate is it?
+
+In short: on test tables with known answers (set 1), the first choice was right for 81 to 93% of the
+columns with usable headers, and 98% of the matches the mapper accepted were right.
+
+<details>
+<summary>Show the method, and the results on each set of tables and datasets</summary>
 
 ### Method
 
@@ -1055,7 +1097,12 @@ test.
   so controlled vocabularies are clean, and all the data are from one marine metabarcoding study.
   The headers were written by AI workers, not real labs. Real bespoke datasets are the next test.
 
+</details>
+
 ## Upstream and related issues
+
+<details>
+<summary>Show the issues</summary>
 
 - The FAIRe checklist and FAIRe-ator are CC BY 4.0 (licence files added upstream on 11 November
   2026). The checklist and full template are bundled here, as they are with FAIRe-ator, and the
@@ -1068,7 +1115,12 @@ test.
   upstream. FAIRe-fier also reads a targeted project's assays from project_level, which FAIRe-ator
   leaves empty when there are several.
 
+</details>
+
 ## Before deployment on Galaxy Australia
+
+<details>
+<summary>Show what is still to do</summary>
 
 ### Must do
 
@@ -1117,7 +1169,12 @@ test.
     with the common names *filter size*, *days frozen* and region and place words for geo_loc_name,
     and a check that target_subfragment holds amplicon regions such as V4, not place names).
 
+</details>
+
 ## Test data
+
+<details>
+<summary>Show the test data</summary>
 
 - `messy_edna.csv`: the prototype's 5-row sample sheet (made up).
 - `messy_edna_responses.json`: a reviewer's answers for two of its columns.
@@ -1226,6 +1283,8 @@ test.
   called *Samples* with a title row above the headers, and a second sheet. Values from the GOMECC-4
   generic FAIRe example in aomlomics/edna2obis (MIT).
 
+</details>
+
 ## Running the tests and the benchmark
 
 ```bash
@@ -1238,6 +1297,9 @@ dev/faire_mapper_benchmark/run_benchmark.sh tools/faire_mapper/checklist/FAIRe_c
 ```
 
 ## planemo test results
+
+<details>
+<summary>Show the latest results</summary>
 
 Run on 4 November 2026 (version 0.5.0) with planemo 0.75.47 against Galaxy `release_25.0`, with
 dependencies resolved through conda (python 3.12, pandas 2.2.3, openpyxl 3.1.5), and again on 5
@@ -1347,3 +1409,5 @@ qPCR results; all 19 propose mapping, 41 apply mapping and 6 identify tests pass
 | identify | 2 | Two Excel files: each sheet on its own (the SRA sheet's library sheet, a primer register); no sample table found | passed |
 | identify | 3 | A checksum file as md5sum writes it, and a list of file names with no header: library tables, not text | passed |
 | identify | 4 | A FASTA file and a PDF uploaded as plain text: recognised by their content, as sequences and text | passed |
+
+</details>
