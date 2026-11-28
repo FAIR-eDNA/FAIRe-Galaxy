@@ -58,7 +58,11 @@ DEMOS <- list(
                    "samp_vol_we_dna_ext_unit <em>mL</em>, as the sample table gives 10000 for each 10 L sample.")),
       tags$li(HTML("In <em>e.</em>, build the workbook, then check it and convert it.")),
       tags$li("FAIRe-fier passes both sheets, with a warning for each column kept as your own term (the",
-              "checklist does not list them). Every conversion runs on the workbook as it is."))
+              "checklist does not list them). The Convert page's table says what each conversion needs, and every",
+              "one runs on this workbook. For NCBI's BioSample, choose 'not applicable' under Empty mandatory",
+              "fields (the two field controls have no depth) and replicate as the field that tells samples apart",
+              "(two pairs of samples share every other value). For ENA's runs, the sample receipt is",
+              "ena_sample_receipt.xml. edna2obis's name matching needs internet access."))
   ),
   khapra = list(
     title = "Khapra beetle: qPCR, the least a targeted study needs",

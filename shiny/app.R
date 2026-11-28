@@ -11,12 +11,12 @@ suppressPackageStartupMessages({
 })
 
 if (is.null(getOption("faire.app_dir"))) options(faire.app_dir = normalizePath("."))
-for (f in c("runner.R", "tools.R", "helpers.R", "demos.R", "journey.R", "ui.R"))
+for (f in c("runner.R", "tools.R", "helpers.R", "demos.R", "journey.R", "convert.R", "ui.R"))
   source(file.path(getOption("faire.app_dir"), "R", f), local = FALSE)
 
 options(shiny.maxRequestSize = 500 * 1024^2, DT.fillContainer = FALSE)
 
-APP_VERSION <- "0.9.2"
+APP_VERSION <- "0.10.0"
 
 # Colours from the logo: petrol, teal, navy, red, orange and yellow (darkened where white text sits
 # on them, to keep it readable).
@@ -2051,28 +2051,8 @@ server <- function(input, output, session) {
         "missing-value term where it is truly unknown (such as 'missing: not collected' or 'not applicable').",
         if (failed) tags$b("The last FAIRe-fier check did not pass: fix its errors and the mandatory terms with no value,",
                            "then check again, or the files written here are likely to be refused.")
-        else "Check the workbook with FAIRe-fier first (6. Check), and fix its errors and any mandatory term with no value.",
-        no_run_note())
+        else "Check the workbook with FAIRe-fier first (6. Check), and fix its errors and any mandatory term with no value.")
   })
-  # Where to add a missing run ID: in step e, for the workbook the mapper wrote here; otherwise in the
-  # workbook's own experimentRunMetadata sheet
-  run_fix_ui <- function(margin = "ms-1") {
-    if (identical(input$cv_wb, "__current__") && identical(rv$workbook_from, "written by the FAIRe mapper"))
-      tagList("Give it in", tags$em("Make a workbook, e"), "(the", tags$em("Sequencing run ID"), "of the OTU table),",
-              "write the workbook again, then come back here.",
-              tags$button(type = "button", class = paste("btn btn-sm btn-outline-primary", margin), onclick = go_js("run_id"),
-                          icon("arrow-right"), "Add the run ID in step e"))
-    else tagList("Fill seq_run_id in the workbook's experimentRunMetadata sheet, then add the workbook again.")
-  }
-  # FAIRe-fier lets an empty seq_run_id pass, but FAIRe makes it mandatory and FAIRe2MDT needs it
-  no_run_note <- function() {
-    w <- wb_info()
-    if (!w$n_no_run) return(NULL)
-    tags$p(class = "mt-2 mb-0", tags$b("No sequencing run ID: "),
-           if (w$n_no_run == w$n_libs) sprintf("seq_run_id is empty in all %d rows of experimentRunMetadata.", w$n_libs)
-           else sprintf("seq_run_id is empty in %d of the %d rows of experimentRunMetadata.", w$n_no_run, w$n_libs),
-           "FAIRe makes it mandatory, and FAIRe2MDT (GBIF) needs it to find the libraries.", run_fix_ui())
-  }
   output$fairefier_result <- renderUI({
     res <- rv$res$fairefier
     if (is.null(res)) return(help_text("FAIRe-fier's findings appear here."))
@@ -2117,35 +2097,105 @@ server <- function(input, output, session) {
     if (is.null(wb)) notify_error("Choose the workbook to convert, at the top of the page.", "cv_wb")
     wb
   }
-  wb_info <- reactive({
-    wb <- cv_wb()
-    if (is.null(wb) || !file.exists(wb)) return(list(assays = character(), runs = character(), sheets = character(),
-                                                      run_pairs = NULL, n_libs = 0, n_no_run = 0))
-    sheets <- xlsx_sheets(wb)
-    assays <- character()
-    pm <- tryCatch(as.data.frame(readxl::read_excel(wb, "projectMetadata", col_names = FALSE, col_types = "text")),
-                   error = function(e) NULL)
-    if (!is.null(pm)) {
-      tc <- which(apply(pm, 2, function(x) any(x == "term_name", na.rm = TRUE)))[1]
-      if (!is.na(tc)) {
-        r <- which(pm[[tc]] == "assay_name")[1]
-        # a targeted project lists its assays in project_level as 'A | B'
-        if (!is.na(r)) assays <- unique(trimws(unlist(strsplit(na.omit(unlist(pm[r, (tc + 1):ncol(pm)])), "|", fixed = TRUE))))
-      }
+  wb_info <- reactive(workbook_facts(cv_wb()))
+
+  # ------------------------------------------------ whether each conversion can run on the workbook
+  # convert_readiness() (R/convert.R) reads the workbook's facts and the choices on each form
+  rd_settings <- function(id) {
+    info <- wb_info()
+    switch(id,
+      ncbi_biosample = list(mandatory_fill = input$nb_mandatory_fill, associated = input$nb_associated,
+                            duplicates_column = input$nb_duplicates %||% ""),
+      ncbi_sra = list(runs_by = input$ns_runs_by, runs_values = input$ns_runs_values, associated = input$ns_associated,
+                      instrument = input$ns_instrument, link = input$ns_link, accessions = input$ns_accessions %||% ""),
+      ena_sample = list(center = input$es_center %||% ""),
+      ena_run = list(receipt = input$er_receipt %||% "", study = input$er_study %||% "", center = input$er_center %||% "",
+                     instrument = input$er_instrument %||% "",
+                     assay = if (identical(input$er_assay, "one")) input$er_assay_name %||% "" else "",
+                     seq_runs = input$er_seq_runs),
+      mdt = list(assay = input$mdt_assay %||% (info$assays[1] %||% ""),
+                 tables_chosen = !blank(input$mdt_otu) && !blank(input$mdt_taxa)),
+      eo_build = list(tables_chosen = length(info$assays) > 0 && all(vapply(seq_along(info$assays), function(i)
+                        !blank(input[[paste0("eo_tax_", i)]]) && !blank(input[[paste0("eo_abund_", i)]]), logical(1))),
+                      taxa_source = input$eo_taxa_source %||% "mapping",
+                      mapping = if (identical(input$eo_mapping, "__last__")) rv$eo_mapping %||% "" else
+                        fpath(sub("^file:", "", input$eo_mapping %||% "")) %||% "",
+                      text_dates = input$eo_text_dates %||% "stop"),
+      dwc = list(assays = input$dw_assays),
+      qiime = list(sample_col = input$qi_sample_col %||% "lib_id", manifests = !identical(input$qi_manifests, "no"),
+                   suffix = identical(input$qi_suffix, "yes"), suffix_col = input$qi_suffix_col %||% "seq_run_id"),
+      list())
+  }
+  readiness <- reactive({
+    f <- wb_info()
+    sapply(names(CONVERTERS), function(id) convert_readiness(f, id, rd_settings(id)), simplify = FALSE)
+  })
+  from_mapper <- reactive(identical(input$cv_wb, "__current__") && identical(rv$workbook_from, "written by the FAIRe mapper"))
+  # Opening a Convert tab from the table at the top, with the page moved to the tool's box
+  open_tab_js <- function(tab, id = "") sprintf("Shiny.setInputValue('cv_open', %s, {priority: 'event'}); return false;",
+                                                 jsonlite::toJSON(c(tab, id)))
+  observeEvent(input$cv_open, {
+    nav_select("cv_tabs", input$cv_open[1])
+    session$sendCustomMessage("after_go", if (length(input$cv_open) > 1) input$cv_open[2] else "")
+  })
+  # The box above each conversion's button: ready, what to do first (and where), or not for this study
+  readiness_box <- function(id) {
+    r <- readiness()[[id]]
+    box <- function(cls, ...) div(class = paste("rd-box", cls), id = paste0("rdbox_", id), role = "status", ...)
+    btn <- function(label, js) tags$button(type = "button", class = "btn btn-sm btn-outline-primary ms-1", onclick = js,
+                                           icon("arrow-right"), label)
+    cautions <- if (length(r$cautions)) tags$ul(class = "rd-cautions", lapply(r$cautions, tags$li))
+    switch(r$status,
+      no_workbook = NULL,
+      not_suited = box("rd-not", icon("circle-minus"), tags$b("Not for this study: "), r$why,
+                       "Its detections go to GBIF and OBIS as presence and absence records.",
+                       btn("Open that tab", open_tab_js("GBIF and OBIS (presence and absence)", "rdbox_dwc"))),
+      ready = box("rd-ready", icon("circle-check"), tags$b("Ready: "),
+                  "the workbook and the choices here give this conversion what it needs.", cautions),
+      needs = box("rd-needs", icon("triangle-exclamation"),
+                  tags$b(if (length(r$needs) == 1) "Not ready yet. Before you run it:" else
+                           sprintf("Not ready yet: %d things to do before you run it.", length(r$needs))),
+                  tags$ul(lapply(r$needs, function(n) tags$li(
+                    class = if (n$form) "rd-form" else "rd-workbook",
+                    tags$span(class = "rd-what", n$what), " ", n$fix,
+                    if (n$key == "run_id" && from_mapper()) btn("Add the run ID in step e", go_js("run_id")),
+                    if (n$key == "filenames" && from_mapper()) btn("Add a library table in step e", go_js("lib_table"))))),
+                  cautions))
+  }
+  for (id in names(CONVERTERS)) local({
+    k <- id
+    output[[paste0("rd_", k)]] <- renderUI(readiness_box(k))
+  })
+  # The table at the top of the page: each destination, what it is for, and whether this workbook is ready for it
+  output$cv_readiness_table <- renderUI({
+    r <- readiness()
+    have <- !is.null(cv_wb())
+    rows <- list(
+      list("NCBI", "raw reads not yet in a public archive: the BioSample and SRA tables", c(BioSample = "ncbi_biosample", SRA = "ncbi_sra")),
+      list("ENA", "the same, as XML for ENA", c(Samples = "ena_sample", Runs = "ena_run")),
+      list("GBIF (MDT)", "read counts, through GBIF's Metabarcoding Data Toolkit", c("mdt")),
+      list("OBIS and GBIF (Darwin Core)", "read counts, through an IPT, with names matched to WoRMS or GBIF", c("eo_build")),
+      list("GBIF and OBIS (presence and absence)", "qPCR and ddPCR results, or metabarcoding as presence only", c("dwc")),
+      list("QIIME 2", "metadata and manifests, to analyse the data", c("qiime")))
+    chip <- function(rr, part) {
+      ic <- switch(rr$status, ready = "circle-check", needs = "triangle-exclamation", not_suited = "circle-minus", "circle")
+      tags$span(class = paste0("rd-chip rd-chip-", rr$status), icon(ic), if (!is.null(part)) tags$b(paste0(part, ":")),
+                readiness_phrase(rr))
     }
-    erm <- if ("experimentRunMetadata" %in% sheets) read_faire_sheet(wb, "experimentRunMetadata") else NULL
-    runs <- if (!is.null(erm) && "seq_run_id" %in% names(erm)) unique(erm$seq_run_id[nzchar(erm$seq_run_id)]) else character()
-    libs <- if (!is.null(erm) && "lib_id" %in% names(erm)) unique(erm$lib_id[nzchar(erm$lib_id)]) else character()
-    # The libraries (rows of experimentRunMetadata) as assay and run, so a converter that picks them by
-    # both (FAIRe2MDT) offers only the runs of the assay chosen, and the page can say when there are none
-    col <- function(x) if (!is.null(erm) && x %in% names(erm)) trimws(erm[[x]]) else rep("", if (is.null(erm)) 0 else nrow(erm))
-    used <- if (is.null(erm)) logical() else nzchar(col("samp_name")) | nzchar(col("lib_id"))
-    run_pairs <- data.frame(assay = col("assay_name")[used], run = col("seq_run_id")[used], stringsAsFactors = FALSE)
-    smd <- if ("sampleMetadata" %in% sheets) read_faire_sheet(wb, "sampleMetadata") else NULL
-    list(assays = assays[nzchar(assays)], runs = runs, libs = libs, sheets = sheets,
-         run_pairs = run_pairs, n_libs = nrow(run_pairs), n_no_run = sum(!nzchar(run_pairs$run)),
-         sample_fields = if (is.null(smd)) character() else names(smd),
-         run_fields = if (is.null(erm)) character() else names(erm))
+    tags$table(class = "rd-table",
+      tags$thead(tags$tr(tags$th("Where the data goes"), tags$th("For"), if (have) tags$th("This workbook"))),
+      tags$tbody(lapply(rows, function(x) {
+        ids <- x[[3]]
+        tags$tr(tags$td(tags$a(href = "#", onclick = open_tab_js(x[[1]], paste0("rdbox_", ids[[1]])), x[[1]])),
+                tags$td(x[[2]]),
+                if (have) tags$td(lapply(seq_along(ids), function(k) chip(r[[ids[[k]]]], if (length(ids) > 1) names(ids)[k]))))
+      })))
+  })
+  # ENA's run XML names the instrument from the form: start it at the workbook's instrument
+  observe({
+    inst <- workbook_instruments(wb_info())
+    hit <- if (length(inst)) instrument_in(inst[1], ENA_INSTRUMENTS) else ""
+    if (nzchar(hit)) updateSelectInput(session, "er_instrument", selected = hit)
   })
   # The Convert fields that name the workbook's fields, assays or runs offer them, and still take typing.
   offer <- function(id, choices) {
@@ -2248,13 +2298,8 @@ server <- function(input, output, session) {
     if (length(runs))
       return(selectInput("mdt_run", term_label("Sequencing run ID", "run_id"), runs,
                          selected = if (keep_or("mdt_run", "") %in% runs) keep_or("mdt_run", "") else runs[1]))
-    if (is.null(cv_wb())) return(NULL)
-    a <- trimws(input$mdt_assay %||% "")
-    div(class = "res-warn", id = "mdt_no_run", icon("triangle-exclamation"),
-        tags$b("No sequencing run ID. "),
-        sprintf("FAIRe2MDT finds the libraries by assay and sequencing run, and this workbook gives no run ID (seq_run_id) for %s.",
-                if (nzchar(a)) a else "this assay"),
-        run_fix_ui())
+    # no run ID for the assay: the box above the button says where to add one
+    NULL
   })
   table_source_ui <- function(id, label, sheets, default_sheet) {
     ch <- c(setNames(paste0("sheet:", sheets), paste("Workbook sheet:", sheets)),
@@ -2278,7 +2323,7 @@ server <- function(input, output, session) {
     wb <- need_wb(); req(wb)
     if (blank(input$mdt_assay)) return(notify_error("Give the assay name.", "mdt_assay"))
     if (!length(mdt_runs()))
-      return(notify_error("The workbook gives no sequencing run ID for this assay, and FAIRe2MDT needs one: see the note above the button."))
+      return(notify_error("The workbook gives no sequencing run ID for this assay, and FAIRe2MDT needs one: see the box above the button."))
     o <- source_of(input$mdt_otu, wb); t <- source_of(input$mdt_taxa, wb)
     if (is.null(o) || is.null(t)) return(notify_error("Choose the OTU and taxonomy tables.", if (is.null(o)) "mdt_otu" else "mdt_taxa"))
     sheet_or <- function(x, default) if (nzchar(x$sheet)) x$sheet else default
@@ -2483,10 +2528,11 @@ server <- function(input, output, session) {
            project = go_step("d. Methods and project values"), missing = go_step("d. Methods and project values"),
            build = go_step("e. Write the workbook"), check = nav_select("main", "2. Check"),
            convert = nav_select("main", "3. Convert"), outputs = nav_select("main", "Outputs"),
-           run_id = go_step("e. Write the workbook"),
+           run_id = go_step("e. Write the workbook"), lib_table = go_step("e. Write the workbook"),
            start = nav_select("main", "Start"), faireator = nav_select("main", "FAIRe-ator: a blank template"))
     # focus moves to the page's heading, or to the missing terms, or to the first OTU table's run ID
-    session$sendCustomMessage("after_go", switch(t, missing = "pv_missing", run_id = if (rv$otu_n) bid("otu", 1, "run") else "", ""))
+    session$sendCustomMessage("after_go", switch(t, missing = "pv_missing", run_id = if (rv$otu_n) bid("otu", 1, "run") else "",
+                                                 lib_table = if (rv$lib_n) bid("lib", 1, "file") else "", ""))
   })
 
   # ------------------------------------------------------------ outputs

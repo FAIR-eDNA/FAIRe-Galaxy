@@ -680,15 +680,13 @@ convert_page <- function() {
         div(class = "convert-guide",
             help_text("Converting is optional. Open the tab for where the data is going, fill in that tab only and",
                       "press its button; the others can be left alone. Each writes files that you then upload yourself."),
-            tags$ul(
-              tags$li(tags$b("NCBI"), "or", tags$b("ENA:"), "raw reads not yet in a public archive (sample and run tables)."),
-              tags$li(tags$b("GBIF (MDT):"), "read counts, through GBIF's Metabarcoding Data Toolkit."),
-              tags$li(tags$b("OBIS and GBIF (Darwin Core):"), "read counts, through an IPT, with names matched to WoRMS or GBIF."),
-              tags$li(tags$b("GBIF and OBIS (presence and absence):"), "qPCR and ddPCR results, or metabarcoding as presence only."),
-              tags$li(tags$b("QIIME 2:"), "metadata and manifests, to analyse the data.")))),
+            help_text("The table below says whether the workbook has what each one needs. Each tab says what to add",
+                      "when it does not."))),
+      uiOutput("cv_readiness_table"),
       uiOutput("cv_mandatory_warning")
     ),
     navset_card_tab(
+      id = "cv_tabs",
       nav_panel(
         "NCBI",
         layout_columns(
@@ -723,6 +721,7 @@ convert_page <- function() {
               selectInput("nb_extra", "Other sampleMetadata fields", c("Add all" = "all", "Add all except some" = "except",
                                                                        "Add none" = "none")),
               conditionalPanel("input.nb_extra == 'except'", selectizeInput("nb_exclude", "Fields to leave out", choices = NULL, multiple = TRUE, options = list(create = TRUE, placeholder = "choose from the workbook, or type"))))),
+            uiOutput("rd_ncbi_biosample"),
             run_button("run_ncbi_biosample", "Write the BioSample table"),
             uiOutput("ncbi_biosample_result")
           ),
@@ -738,6 +737,7 @@ convert_page <- function() {
             radioButtons("ns_link", "Link runs to their BioSamples by",
                          c("Sample name (submitted together)" = "sample_name", "BioSample accessions" = "accessions"), inline = TRUE),
             conditionalPanel("input.ns_link == 'accessions'", uiOutput("ns_accessions_ui")),
+            uiOutput("rd_ncbi_sra"),
             run_button("run_ncbi_sra", "Write the SRA table"),
             uiOutput("ncbi_sra_result")
           )
@@ -757,6 +757,7 @@ convert_page <- function() {
                                                       "aquatic metagenome (1169740)" = "1169740", "Other" = "other")),
             conditionalPanel("input.es_taxon == 'other'", textInput("es_taxon_id", "NCBI taxon ID")),
             checkboxInput("es_convert_dates", "Convert eventDate values to a form ENA accepts", TRUE),
+            uiOutput("rd_ena_sample"),
             run_button("run_ena_sample", "Write the sample XML"),
             uiOutput("ena_sample_result")
           ),
@@ -775,6 +776,7 @@ convert_page <- function() {
                              checkboxInput("er_assay_suffix", "Add the assay name to experiment and run aliases", TRUE)),
             selectizeInput("er_seq_runs", "Sequencing runs to include (optional: all when empty)", choices = NULL, multiple = TRUE, options = list(create = TRUE, placeholder = "choose from the workbook, or type")),
             textInput("er_ftp", "FTP sub-folder of the read files (optional)"),
+            uiOutput("rd_ena_run"),
             run_button("run_ena_run", "Write the experiment and run XML"),
             uiOutput("ena_run_result")
           )
@@ -792,6 +794,7 @@ convert_page <- function() {
             uiOutput("mdt_assay_ui"),
             uiOutput("mdt_tables_ui"),
             selectInput("mdt_controls", "Control samples", c("Leave them out, as GBIF asks" = "omit", "Keep them" = "keep")),
+            uiOutput("rd_mdt"),
             run_button("run_mdt", "Write the MDT workbook"),
             uiOutput("mdt_result")
           )
@@ -835,6 +838,7 @@ convert_page <- function() {
                                layout_columns(textInput("eo_given", "Given name"), textInput("eo_surname", "Surname")),
                                layout_columns(textInput("eo_org", "Organisation"), textInput("eo_email", "Email")),
                                selectInput("eo_licence", "Licence", c("CC0", "CC-BY", "CC-BY-NC"), selected = "CC-BY")))),
+            uiOutput("rd_eo_build"),
             run_button("run_eo_build", "2. Build the Darwin Core archive"),
             uiOutput("eo_build_result")
           )
@@ -877,6 +881,7 @@ convert_page <- function() {
                                                                     "CC BY-NC 4.0" = "CC-BY-NC-4.0"))),
               help_text("With no name or organisation, the creator and contact come from project_contact and",
                         "institution in projectMetadata. You can also change these in the IPT."))),
+            uiOutput("rd_dwc"),
             run_button("run_dwc", "Write the Darwin Core archive"),
             uiOutput("dwc_result")
           )
@@ -903,6 +908,7 @@ convert_page <- function() {
                              selectInput("qi_suffix_dir", "Take characters from the", c("start (left)" = "left", "end (right)" = "right")),
                              numericInput("qi_suffix_n", "Number of characters", 20, min = 1),
                              textInput("qi_suffix_delim", "Text to put before the suffix", "_")),
+            uiOutput("rd_qiime"),
             run_button("run_qiime", "Write the QIIME 2 files"),
             uiOutput("qiime_result")
           )
