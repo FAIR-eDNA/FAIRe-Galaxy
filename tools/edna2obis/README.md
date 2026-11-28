@@ -13,6 +13,7 @@ Upstream: [aomlomics/edna2obis](https://github.com/aomlomics/edna2obis) at commi
 
 ## Status
 
+- 2026.10.26+galaxy7 (28 November 2026): the help says what the tool needs from the workbook (*What this needs from the workbook*), as the FAIRe tools app's Convert page checks before a tool is run.
 - `planemo lint`: passes with no warnings.
 - `planemo shed_lint`: passes; its ToolShed check needs network access and could not run here.
 - `planemo test`: the 9 tests of *build Darwin Core tables* pass in Galaxy 25.0 (results at the end
@@ -162,6 +163,15 @@ upstream reads `config.yaml` and `data_mapper.yaml` from the current folder. It 
     (kingdom, phylum, class, order, family, genus, scientificName), so they look up and use the same
     names. Found by running every conversion on the demonstration workbooks
     (`shiny/tests/conversions.R`).
+17. **Changed names** (28 November 2026, 2026.10.26+galaxy7). *match taxa* has a third output, the
+    names whose selected match differs from the name given, most important first, each with why:
+    classification disagrees with the string (none of its higher names is in the match's
+    classification, so it may be a namesake in another group), more than one candidate, not found
+    (incertae sedis), matched at a higher rank, accepted name used, matched to another spelling. Names
+    matched as given (after tidying) are only counted, in the log. The mapping table of hundreds of
+    rows no longer has to be read to find the few that need a look. `edna2obis_galaxy.py changes
+    --mapping TABLE --changes_out OUT` writes the same table for a mapping table made earlier, offline;
+    the FAIRe tools app uses it, so Galaxy and the app share one set of rules (`changed_names()`).
 
 Python warnings: Galaxy sets `PYTHONWARNINGS=ignore`. edna2obis reports through its HTML reporter,
 `print()` and `logging`, not the warnings module, so nothing is lost.

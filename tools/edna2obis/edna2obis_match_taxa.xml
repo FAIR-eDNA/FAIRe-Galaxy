@@ -12,6 +12,7 @@ set -o pipefail;
 python '$__tool_directory__/edna2obis_galaxy.py' match
     --form '$form_json'
     --mapping_out '$mapping'
+    --changes_out '$changes'
     < /dev/null
 | tee '$log'
     ]]></command>
@@ -34,11 +35,12 @@ python '$__tool_directory__/edna2obis_galaxy.py' match
                 <when input="mapping_format" value="xlsx" format="xlsx"/>
             </change_format>
         </data>
+        <data name="changes" format="tabular" label="${tool.name} on ${on_string}: changed names"/>
         <data name="log" format="txt" label="${tool.name} on ${on_string}: log"/>
     </outputs>
     <tests>
         <!-- These tests need internet access to WoRMS and GBIF. They cannot pass on a server without it. -->
-        <test expect_num_outputs="2">
+        <test expect_num_outputs="3">
             <repeat name="analyses">
                 <param name="assay_name" value="ssu16sv4v5-emp"/>
                 <param name="taxonomy" value="gomecc_16s_taxonomy.xlsx" ftype="xlsx"/>
@@ -60,16 +62,22 @@ python '$__tool_directory__/edna2obis_galaxy.py' match
                     <has_text text="Clausocalanus"/>
                 </assert_contents>
             </output>
+            <output name="changes" ftype="tabular">
+                <assert_contents>
+                    <has_line line="verbatimIdentification&#009;assay_name&#009;your_name&#009;matched_to&#009;taxonRank&#009;change&#009;why&#009;candidates&#009;kind"/>
+                </assert_contents>
+            </output>
             <output name="log">
                 <assert_contents>
                     <has_text text="WoRMS API reachable (https://www.marinespecies.org/rest/)"/>
                     <has_text text="assay 'ssu16sv4v5-emp': looking up 5 name(s) in WoRMS without the species level"/>
                     <has_text text="assay 'ssu18sv9-emp': looking up 7 name(s) in WoRMS"/>
                     <has_text text="wrote the mapping table"/>
+                    <has_text text="matched as given"/>
                 </assert_contents>
             </output>
         </test>
-        <test expect_num_outputs="2">
+        <test expect_num_outputs="3">
             <repeat name="analyses">
                 <param name="assay_name" value="Fish-12S-Riaz"/>
                 <param name="taxonomy" value="gu1901_riaz_taxonomy.tsv" ftype="tabular"/>
@@ -88,6 +96,7 @@ python '$__tool_directory__/edna2obis_galaxy.py' match
                     <has_text text="GBIF API reachable (https://api.gbif.org/v1/)"/>
                     <has_text text="assay 'Fish-12S-Riaz': looking up 6 name(s) in GBIF"/>
                     <has_text text="assay 'Fish-12S-Riaz': 6 name(s)"/>
+                    <has_text text="matched as given"/>
                 </assert_contents>
             </output>
         </test>
@@ -105,6 +114,13 @@ The tool needs internet access to www.marinespecies.org (WoRMS) or api.gbif.org 
 with a message if the service cannot be reached, or if any request fails during the run, because
 edna2obis would otherwise report those names as *incertae sedis*.
 
+**What this needs**
+
+- For each assay, a taxonomy table with the name of each ASV or OTU in verbatimIdentification, or in
+  rank columns (kingdom to genus, and scientificName), from which the names are made when
+  verbatimIdentification is empty: the FAIRe workbook's taxaFinal sheet is one.
+- Internet access to WoRMS or GBIF from the Galaxy server.
+
 -----
 
 **Inputs**
@@ -120,10 +136,28 @@ For each assay, give:
 **Outputs**
 
 - **mapping table** (tabular or Excel).
+- **changed names**: only the names whose selected match differs from the name given, each with why
+  (see below). The other names were matched as given.
 - **log**: what was looked up, and a summary for each assay (the names, the selected rows,
-  *incertae sedis*, and names with several candidates).
+  *incertae sedis*, and names with several candidates), and how many names were changed.
 
 -----
+
+**The changed names**
+
+Most names are matched as they are given (after tidying, such as ``_`` to a space or dropping
+"sp."). The changed names table lists the others, most important first, with why:
+
+- *Classification disagrees with your string*: only the name agrees; none of the string's higher names
+  is in the match's classification, so it may be a namesake in another group. Check these first.
+- *More than one candidate*: the one whose classification agrees best with the string was chosen.
+- *Not found*: recorded as *incertae sedis*.
+- *Matched at a higher rank*: the most specific name was not found, so the next name up was used.
+- *Accepted name used*: the name in the string is a synonym or not accepted.
+- *Matched to another spelling*.
+
+Nothing needs doing unless a match looks wrong. Then change the selection in the mapping table, as
+below, before building the Darwin Core tables.
 
 **Reviewing the table**
 
