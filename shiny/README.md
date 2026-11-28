@@ -125,6 +125,24 @@ in *b*, the workbook in *e*, FAIRe-fier's findings in *Check* and the template i
 shown once the tool has run. Before that it was an empty box saying what would appear there, which drew
 the eye from the step itself.
 
+Version 0.10.0 (28 November 2026): the Convert page says whether each conversion can run on the
+workbook, and how to make it possible when it cannot. A table at the top lists each destination, what
+it is for and, for the workbook chosen, *Ready*, *Needs ...* (such as *a run ID*, *read file names* or
+*a centre name (on its form)*) or *Not for a targeted study*; its links open the tab. Above each tool's
+button a box gives the same verdict in full: what is missing, where to add it (in the workbook, in
+*Make a workbook, e*, with a button for a workbook written here, or on the form) and any default the
+tool will write that may be wrong, such as FAIRe2ENA's 0 m for samples with no depth. The verdicts
+follow the form: choosing *No, metadata only* for QIIME 2, or a fill value for NCBI's empty mandatory
+fields, changes them at once. The checks are in `R/convert.R`, from each converter's own requirements.
+`tests/conversions.R` runs every conversion on the demonstration workbooks (SEA-MES, eelgrass and
+khapra) and on copies with the missing values filled, with the page's starting settings and others,
+and checks that a conversion said to be ready runs and one said to need something stops: 42 runs, all
+agreeing. The ENA runs form now starts at the workbook's instrument, where it always started at
+Illumina MiSeq. The run found three faults in the tools, fixed in FAIRe2NCBI (instrument names such as
+*Illumina NextSeq 2000*, NCBI's *NextSeq 2000*), edna2obis (*match taxa* and *build* naming taxa
+differently when verbatimIdentification is mostly empty) and FAIRe2ENA (its default depth said once
+per sample, now once).
+
 ## What it covers
 
 | Step | Tools |
@@ -626,7 +644,8 @@ November 2026.)
 ## How it works
 
 - `app.R` holds the pages' behaviour; `R/ui.R` the pages themselves; `R/demos.R` the demonstrations
-  (their files in `demo/`, the forms each fills in and the reviewer's decisions); `R/tools.R` one
+  (their files in `demo/`, the forms each fills in and the reviewer's decisions); `R/convert.R` what a
+  workbook holds and whether each conversion can run on it; `R/tools.R` one
   function for each Galaxy tool, building its command line; `R/runner.R` finds Python, R and the tools and runs a
   command; `R/helpers.R` reads the review sheet and the other files the tools exchange; and
   `python/fill_review_sheet.py` writes the decisions from the review screen into a copy of the review
@@ -645,6 +664,11 @@ November 2026.)
   lists the runs and downloads the lot as a zip. The folder is deleted when the session ends.
 - The workbook written by the mapper becomes the *workbook in use*, which the Check and Convert pages
   take by default. A workbook from the person's files can be chosen instead.
+- Tests: `tests/test_journey.R` (the journey's stages), `tests/flows/*.R` (each demonstration through the
+  mapper, writing its workbook), `tests/conversions.R` (every conversion on those workbooks, against the
+  Convert page's verdicts) and `tests/browser/journeys.py` (the pages in Chrome). From the `shiny`
+  folder: `FAIRE_TEST_OUT=/tmp/flows Rscript tests/flows/seames.R` (and eelgrass, khapra), then
+  `FAIRE_TEST_OUT=/tmp/flows Rscript tests/conversions.R`.
 - The language model step is optional, as in Galaxy. The key is passed to the tool through its
   environment and is never written to a file, and the model's answers are only suggestions that a
   person confirms, row by row.

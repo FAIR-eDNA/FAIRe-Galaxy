@@ -128,6 +128,16 @@ answer, and writes all answers to the **config** output, which the upstream scri
     applies to it, and the log counts these cells), and a value in experimentRunMetadata, where
     upstream reads `NA` or `N/A` in associatedSequences as filled. Before, runs marked `NA` were
     offered as new. Found with the differential check in `dev/normalise_faire_differential`.
+18. **Instrument names** (28 November 2026, 2026.07.23+galaxy6). FAIRe's instrument values, as the
+    FAIRe mapper writes them from OBI and the makers' product names, put the maker before some
+    models that NCBI names without it: *Illumina NextSeq 2000*, *Oxford Nanopore MinION*, *PacBio
+    Sequel II*. The SRA tool stopped on these and asked for the instrument on the form, though the
+    workbook named it. It now gives them NCBI's names (*NextSeq 2000*, *MinION*, *Sequel II*), as it
+    already removed ontology codes such as `[OBI_0002003]`. Of the FAIRe mapper's 35 instrument
+    values, 30 have an NCBI name; the five without one (a model not given, such as *Illumina
+    NextSeq*, and *Oxford Nanopore Flongle* and *DNBSEQ-G99*) still ask for the instrument on the
+    form. Found by running every conversion on the SEA-MES demonstration workbook
+    (`shiny/tests/conversions.R`).
 
 Python warnings: Galaxy sets `PYTHONWARNINGS=ignore`. FAIRe2NCBI reports everything with
 `print()`, so nothing is lost.
@@ -186,7 +196,8 @@ of input), and one checklist of the other points
 - **IDs written as text lose their leading zeros** when upstream reads the workbook itself (a
   materialSampleID of `001` becomes 1). The driver's typed reader (item 14) keeps them.
 - **Offset datetimes and Excel date cells** passed to `*collection_date` unchanged (item 3).
-- **FAIRe instrument values** (`... [OBI_xxxx]`) never match NCBI's list (item 10).
+- **FAIRe instrument values** (`... [OBI_xxxx]`, or *Illumina NextSeq 2000* for NCBI's *NextSeq 2000*) never
+  match NCBI's list (items 10 and 18).
 - **lib_id selection by assay or run** keeps rows from other assays that share a lib_id: choosing
   one assay of the GOMECC example gave 8 rows across 2 assays.
 - **No link from SRA rows to new BioSamples** (no `sample_name` column) unless an accession table

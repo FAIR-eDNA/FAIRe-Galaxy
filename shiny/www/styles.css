@@ -108,6 +108,28 @@ table.runs td { font-size: 0.85rem; vertical-align: top; }
 .convert-guide ul { margin: 0.2rem 0 0; padding-left: 1.2rem; font-size: 0.92rem; color: var(--bs-secondary-color, #555); }
 .convert-guide li { margin-bottom: 0.1rem; }
 .convert-guide .help-text { margin-bottom: 0.2rem; }
+/* Convert: whether each conversion can run on the workbook (R/convert.R). Each status has an icon and
+   a word as well as a colour. */
+.rd-table { width: 100%; font-size: 0.9rem; border-collapse: collapse; margin-top: 0.3rem; }
+.rd-table th { font-size: 0.8rem; font-weight: 600; color: #555; border-bottom: 1px solid #ddd; padding: 0.2rem 0.4rem; }
+.rd-table td { padding: 0.3rem 0.4rem; border-bottom: 1px solid #eee; vertical-align: top; }
+.rd-table td:first-child { white-space: nowrap; font-weight: 600; }
+.rd-table td:nth-child(2) { width: 34%; }
+.rd-chip { display: block; }
+.rd-chip b { font-weight: 600; margin-right: 0.2rem; }
+.rd-chip .fa, .rd-chip svg { margin-right: 0.25rem; }
+.rd-chip-ready { color: #1e6b3a; }
+.rd-chip-needs { color: #8a5a00; }
+.rd-chip-not_suited { color: #5f6b70; }
+.rd-box { padding: 0.5rem 0.75rem; border-radius: 4px; margin: 0.5rem 0; font-size: 0.92rem; border-left: 4px solid; }
+.rd-box ul { margin: 0.3rem 0 0.1rem; padding-left: 1.2rem; }
+.rd-box li { margin-bottom: 0.25rem; }
+.rd-box .rd-what { font-weight: 600; }
+.rd-ready { background: #ecf6ef; border-color: #2e8b57; color: #1e4d2f; }
+.rd-needs { background: #fff4d6; border-color: #c98a00; color: #5c4200; }
+.rd-not { background: #eef0f1; border-color: #8a969b; color: #3c4448; }
+.rd-cautions { color: #5c4200; }
+.rd-cautions li::marker { content: "! "; }
 .run-btn, .card-body > .btn, .card-body > .shiny-download-link { align-self: flex-start; }
 table.dataTable { font-size: 0.82rem; }
 ul.lib li i { flex: 0 0 auto; }

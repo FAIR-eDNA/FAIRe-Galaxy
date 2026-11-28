@@ -415,11 +415,23 @@ def prepare_biosample(sheets, args):
     return notes
 
 
+INSTRUMENT_BY_LOWER = {m.lower(): m for m in INSTRUMENT_PLATFORM}
+# Makers' names that FAIRe's instrument values (from OBI and the makers' product names, as the FAIRe
+# mapper writes them) put before some models that NCBI names without them
+MAKER_PREFIX = r'^(Illumina|Oxford Nanopore( Technologies)?|ONT|PacBio|Pacific Biosciences|MGI|Thermo Fisher)\s+'
+
+
 def clean_instrument(value):
-    """'Illumina MiSeq [OBI_0002003]' -> 'Illumina MiSeq'."""
+    """NCBI's name for an instrument value: 'Illumina MiSeq [OBI_0002003]' -> 'Illumina MiSeq',
+    'Illumina NextSeq 2000' -> 'NextSeq 2000', 'Oxford Nanopore MinION' -> 'MinION'. A value that is not
+    one of NCBI's is left as it is, for the check that asks for it on the tool form."""
     if blank(value):
         return value
-    return re.sub(r'\s*\[[A-Za-z]+[_:]\d+\]\s*$', '', str(value).strip())
+    v = re.sub(r'\s*\[[A-Za-z]+[_:]\d+\]\s*$', '', str(value).strip())
+    for candidate in (v, re.sub(MAKER_PREFIX, '', v, flags=re.I), 'Illumina ' + v):
+        if candidate.lower() in INSTRUMENT_BY_LOWER:
+            return INSTRUMENT_BY_LOWER[candidate.lower()]
+    return v
 
 
 def prepare_sra(sheets, args):
@@ -499,8 +511,9 @@ def prepare_sra(sheets, args):
                 changed += new != erm.df.at[i, erm.col('instrument')]
                 erm.df.at[i, erm.col('instrument')] = new
         if changed:
-            info(f"removed ontology codes such as [OBI_0002003] from {changed} instrument value(s)")
-            notes.append(f"removed ontology codes from {changed} instrument value(s)")
+            info(f"gave {changed} instrument value(s) NCBI's name (such as NextSeq 2000 for Illumina NextSeq 2000, "
+                 "and without ontology codes such as [OBI_0002003])")
+            notes.append(f"gave {changed} instrument value(s) NCBI's name")
 
     sheets['experimentRunMetadata'] = erm.df
     sheets['projectMetadata'] = pm

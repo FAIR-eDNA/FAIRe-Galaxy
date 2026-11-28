@@ -147,7 +147,36 @@ def find_header_row(df, limit=10):
     return None
 
 
-def prepare_table(dataset, label, out_name):
+# upstream's occurrence builder (DWC_RANKS_ORDER) names a taxon from these when verbatimIdentification is mostly empty
+RANKS = ['kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'scientificName']
+
+
+def name_from_ranks(body, label):
+    """Give each row with no verbatimIdentification the name upstream's occurrence builder makes for
+    it, its ranks joined with ';' (such as 'Annelida;Polychaeta;Alitta;Alitta virens'). The builder
+    does this only when the column is mostly empty, and the match step looks up only the names in the
+    column, so a FAIRe taxaFinal sheet with ranks but few verbatimIdentification values was matched on
+    a few names and then could not be built."""
+    ranks = [c for c in RANKS if c in body.columns]
+    if not ranks or any(str(c).lower() in ('taxonomy', 'taxon') for c in body.columns):
+        return body
+    if 'verbatimIdentification' not in body.columns:
+        body['verbatimIdentification'] = ''
+    have = body['verbatimIdentification'].astype(str).str.strip()
+    empty = have.isin(['', 'nan', 'None', 'NA'])
+    if not empty.any():
+        return body
+    joined = body[ranks].astype(str).apply(
+        lambda row: ';'.join(v.strip() for v in row if v.strip() and v.strip().lower() not in ('nan', 'none', 'na')), axis=1)
+    filled = empty & (joined != '')
+    body.loc[filled, 'verbatimIdentification'] = joined[filled]
+    if filled.any():
+        info(f"{label}: named {int(filled.sum())} row(s) with no verbatimIdentification from their ranks "
+             f"({', '.join(ranks)}, joined with ';')")
+    return body
+
+
+def prepare_table(dataset, label, out_name, taxonomy=False):
     """Copy a taxonomy or abundance table to TSV with its field names on row 1.
     FAIRe templates have two rows ('# requirement_level_code', '# section')
     above the field names; spreadsheets may have other sheets."""
@@ -180,6 +209,8 @@ def prepare_table(dataset, label, out_name):
         fail(f"{label}: no rows below the field names.")
     if body.columns.duplicated().any():
         fail(f"{label}: repeated column names: {listing(sorted(set(body.columns[body.columns.duplicated()])))}")
+    if taxonomy:
+        body = name_from_ranks(body.copy(), label)
     body.to_csv(out_name, sep='\t', index=False)
     where = f" (sheet '{name}')" if name else ''
     note = f", field names on row {row + 1}" if row else ''
@@ -1046,7 +1077,7 @@ def run_match(form, out_path):
     for i, a in enumerate(analyses, 1):
         assay = a['assay_name'].strip()
         run = f'analysis{i}'
-        tax = prepare_table(a['taxonomy'], f"assay '{assay}' taxonomy table", f'{run}_taxonomy.tsv')
+        tax = prepare_table(a['taxonomy'], f"assay '{assay}' taxonomy table", f'{run}_taxonomy.tsv', taxonomy=True)
         out_dir = os.path.join(OUT_DIR, run)
         os.makedirs(out_dir, exist_ok=True)
         params = upstream_main.load_config('config.yaml')
@@ -1121,7 +1152,8 @@ def run_build(form, outputs):
         headers_to_lib_id(abundance, f"{label} abundance table", a['assay'], erm)
         datafiles[a['run']] = {
             'assay_name': a['assay'],
-            'taxonomy_file': prepare_table(a['taxonomy'], f"{label} taxonomy table", f'analysis{i}_taxonomy.tsv'),
+            'taxonomy_file': prepare_table(a['taxonomy'], f"{label} taxonomy table", f'analysis{i}_taxonomy.tsv',
+                                           taxonomy=True),
             'abundance_file': abundance,
         }
 

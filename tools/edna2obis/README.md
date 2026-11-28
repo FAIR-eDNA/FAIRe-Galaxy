@@ -152,6 +152,16 @@ upstream reads `config.yaml` and `data_mapper.yaml` from the current folder. It 
     (`keep_values_as_written`). No upstream file is changed, and the run stops if upstream no
     longer reads that way. On the test inputs the outputs are the same as before, except eMoF
     diss_oxygen, which reads `190` as in the workbook, where it read `190.0`.
+16. **The same names in both steps** (28 November 2026, 2026.10.26+galaxy6). When a taxonomy
+    table's verbatimIdentification is mostly empty, upstream's occurrence builder names each taxon
+    from its ranks joined with `;` (`Annelida;Polychaeta;Alitta;Alitta virens`), but *match taxa*
+    looked up only the names in verbatimIdentification. A FAIRe taxaFinal sheet with rank columns and
+    few verbatimIdentification values (the eelgrass demonstration's has 2 of 138) was matched on a
+    few names, and *build* then stopped with "136 name(s) are not in the mapping table". Both steps
+    now give each row with no verbatimIdentification the name the builder makes from its ranks
+    (kingdom, phylum, class, order, family, genus, scientificName), so they look up and use the same
+    names. Found by running every conversion on the demonstration workbooks
+    (`shiny/tests/conversions.R`).
 
 Python warnings: Galaxy sets `PYTHONWARNINGS=ignore`. edna2obis reports through its HTML reporter,
 `print()` and `logging`, not the warnings module, so nothing is lost.

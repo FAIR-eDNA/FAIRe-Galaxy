@@ -56,7 +56,7 @@ python '$__tool_directory__/faire2ncbi_galaxy.py' sra
             <option value="blank_only">Yes, only runs with an empty associatedSequences cell</option>
         </param>
         <param name="instrument_model" type="select" label="Sequencing instrument"
-            help="NCBI's controlled values (from the SRA metadata template). 'From the workbook' uses the platform and instrument rows of projectMetadata for each assay, after removing ontology codes such as [OBI_0002003]; the tool stops if they are missing or not NCBI values. Choosing an instrument sets it, and its platform, for every run.">
+            help="NCBI's controlled values (from the SRA metadata template). 'From the workbook' uses the platform and instrument rows of projectMetadata for each assay, after removing ontology codes such as [OBI_0002003] and the maker's name where NCBI names the model without it (Illumina NextSeq 2000 is NCBI's NextSeq 2000); the tool stops if they are missing or not NCBI values. Choosing an instrument sets it, and its platform, for every run.">
             <option value="from_workbook" selected="true">From the workbook</option>
             <option value="HiSeq X Five">HiSeq X Five (ILLUMINA)</option>
             <option value="HiSeq X Ten">HiSeq X Ten (ILLUMINA)</option>
@@ -185,8 +185,28 @@ python '$__tool_directory__/faire2ncbi_galaxy.py' sra
             </output>
             <output name="log">
                 <assert_contents>
-                    <has_text text="removed ontology codes"/>
+                    <has_text text="gave 2 instrument value(s) NCBI's name"/>
                     <has_text text="wrote 4 SRA row(s)"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- The instrument as FAIRe's vocabulary writes it, with the maker before a model NCBI names without it -->
+        <test expect_num_outputs="3">
+            <param name="input_file" value="faire_ncbi_nextseq.xlsx"/>
+            <conditional name="runs">
+                <param name="runs_by" value="assay"/>
+                <param name="runs_values" value="ssu16sv4v5-emp"/>
+            </conditional>
+            <output name="sra_table">
+                <assert_contents>
+                    <has_n_lines n="5"/>
+                    <has_text text="&#009;paired&#009;ILLUMINA&#009;NextSeq 2000&#009;"/>
+                    <not_has_text text="Illumina NextSeq 2000"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="gave 2 instrument value(s) NCBI's name"/>
                 </assert_contents>
             </output>
         </test>

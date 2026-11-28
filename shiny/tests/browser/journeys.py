@@ -61,6 +61,23 @@ def active_pill(pg):
     return pg.evaluate("() => { const a = document.querySelector('#mapper_steps .nav-link.active'); return a ? a.innerText.split('\\n')[0] : ''; }")
 
 
+def wait_rd_table(pg):
+    """The readiness table, once it has its 'This workbook' column (the workbook is read)."""
+    pg.wait_for_function("() => document.querySelectorAll('.rd-table thead th').length === 3", timeout=30000)
+    pg.wait_for_timeout(500)
+
+
+def rd_row(pg, dest):
+    """The 'This workbook' cell of a destination in the Convert page's readiness table."""
+    return pg.evaluate("""(d) => { const r = Array.from(document.querySelectorAll('.rd-table tbody tr'))
+                                     .find(tr => tr.cells[0].innerText.trim() === d);
+                                   return r && r.cells[2] ? r.cells[2].innerText : ''; }""", dest)
+
+
+def active_cv_tab(pg):
+    return pg.evaluate("() => { const a = document.querySelector('#cv_tabs .nav-link.active'); return a ? a.innerText.trim() : ''; }")
+
+
 def shown(pg, sel):
     return pg.evaluate("(s) => { const e = document.querySelector(s); return !!(e && e.offsetParent); }", sel)
 
@@ -230,12 +247,16 @@ with sync_playwright() as p:
         go_card(pg)
         check(pg.evaluate("() => document.querySelector('.navbar .nav-link.active').textContent.includes('Convert')"),
               'passed: the card goes to the Convert page')
-        # The demonstration gives no sequencing run ID: FAIRe2MDT says so, and its button goes to the
-        # run ID of the OTU table in step e
-        pg.click('a.nav-link:has-text("GBIF (MDT)")')
-        pg.wait_for_selector('#mdt_no_run button', timeout=20000)
-        check('no run ID' in pg.inner_text('#mdt_no_run'), 'convert: FAIRe2MDT says the workbook has no run ID')
-        pg.click('#mdt_no_run button')
+        # The demonstration gives no sequencing run ID: the table says GBIF (MDT) needs one, its link opens
+        # the tab, and the box above the button goes to the run ID of the OTU table in step e
+        wait_rd_table(pg)
+        check('Needs a run ID' in rd_row(pg, 'GBIF (MDT)'), 'convert: the table says GBIF (MDT) needs a run ID')
+        check('Ready' in rd_row(pg, 'GBIF and OBIS (presence and absence)'), 'convert: the table says presence records are ready')
+        pg.click('.rd-table a:has-text("GBIF (MDT)")')
+        pg.wait_for_selector('#rdbox_mdt button', timeout=20000)
+        check(active_cv_tab(pg) == 'GBIF (MDT)', 'convert: the table opens the GBIF (MDT) tab')
+        check('run ID' in pg.inner_text('#rdbox_mdt'), 'convert: FAIRe2MDT says the workbook has no run ID')
+        pg.click('#rdbox_mdt button')
         pg.wait_for_timeout(1500)
         focus = pg.evaluate("() => document.activeElement && document.activeElement.id")
         check(focus.endswith('_1_run') and pg.is_visible(f'#{focus}'), f'convert: the button goes to the run ID in step e ({focus})')
@@ -247,8 +268,8 @@ with sync_playwright() as p:
         pg.click('a.nav-link:has-text("GBIF (MDT)")')
         pg.wait_for_timeout(2000)
         runs = pg.evaluate("() => { const s = document.getElementById('mdt_run'); return s ? Array.from(s.options).map(o => o.value) : []; }")
-        check(runs == ['AGRF_2024-12'] and pg.locator('#mdt_no_run').count() == 0, f'convert: FAIRe2MDT now offers the run ({runs})')
-        check('No sequencing run ID' not in pg.inner_text('#cv_mandatory_warning'), 'convert: the page no longer warns about the run ID')
+        check(runs == ['AGRF_2024-12'] and pg.locator('#rdbox_mdt.rd-ready').count() == 1, f'convert: FAIRe2MDT now offers the run ({runs})')
+        check(rd_row(pg, 'GBIF (MDT)').strip().startswith('Ready'), 'convert: the table says GBIF (MDT) is ready')
         pg.click('#run_mdt')
         pg.wait_for_selector('#mdt_result .res-ok, #mdt_result .res-fail', timeout=240000)
         check(pg.locator('#mdt_result .res-ok').count() > 0, 'convert: FAIRe2MDT writes the MDT workbook')
@@ -266,16 +287,26 @@ with sync_playwright() as p:
     go_card(pg)
     check(pg.evaluate("() => document.querySelector('.navbar .nav-link.active').textContent.includes('Convert')"),
           'workbook: on to the Convert page')
-    # The eelgrass workbook gives no sequencing run ID: the page says so before FAIRe2MDT is run, and, as
-    # the workbook was added rather than written here, says to fill it in the workbook
-    pg.wait_for_timeout(1500)
-    top = pg.inner_text('#cv_mandatory_warning')
-    check('No sequencing run ID' in top and 'experimentRunMetadata' in top, 'convert: the page says the workbook has no run ID')
+    # The eelgrass workbook gives no sequencing run ID: the table says so before FAIRe2MDT is run, and, as
+    # the workbook was added rather than written here, the box says to fill it in the workbook
+    wait_rd_table(pg)
+    check('Needs a run ID' in rd_row(pg, 'GBIF (MDT)'), 'convert: the table says the workbook has no run ID')
+    check('read file names' in rd_row(pg, 'NCBI'), 'convert: the table says NCBI SRA needs read file names')
     pg.click('a.nav-link:has-text("GBIF (MDT)")')
-    pg.wait_for_selector('#mdt_no_run', timeout=20000)
-    note = pg.inner_text('#mdt_no_run')
-    check('no run ID' in note and 'Fill seq_run_id' in note and pg.locator('#mdt_no_run button').count() == 0,
-          'convert: FAIRe2MDT says why it has no run to offer, and where to add one')
+    pg.wait_for_selector('#rdbox_mdt', timeout=20000)
+    note = pg.inner_text('#rdbox_mdt')
+    check('run ID' in note and 'fill seq_run_id' in note and pg.locator('#rdbox_mdt button').count() == 0,
+          'convert: FAIRe2MDT says why it is not ready, and where to add a run ID')
+    # The QIIME 2 box follows its form: metadata only needs no read files
+    pg.click('a.nav-link:has-text("QIIME 2")')
+    pg.wait_for_selector('#rdbox_qiime', timeout=20000)
+    check('rd-needs' in pg.get_attribute('#rdbox_qiime', 'class'), 'convert: QIIME 2 with manifests needs read file names')
+    pg.check('input[name=qi_manifests][value=no]')
+    pg.wait_for_timeout(1500)
+    check('rd-ready' in pg.get_attribute('#rdbox_qiime', 'class'), 'convert: QIIME 2 metadata only is ready')
+    pg.click('#run_qiime')
+    pg.wait_for_selector('#qiime_result .res-ok, #qiime_result .res-fail', timeout=240000)
+    check(pg.locator('#qiime_result .res-ok').count() > 0, 'convert: QIIME 2 writes the metadata, as the box said it would')
     pg.close()
 
     print('== 4. Targeted (khapra)')
@@ -288,6 +319,26 @@ with sync_playwright() as p:
     heads = pg.evaluate("() => Array.from(document.querySelectorAll('.step-card > .card-header')).filter(e => e.offsetParent !== null).map(e => e.innerText.trim())")
     check(any(h.startswith('3. Build the workbook') for h in heads), 'targeted: three steps in e')
     pg.close()
+    # The khapra workbook the flows wrote, next to WORKBOOK: only presence and absence records suit it
+    khapra = Path(WORKBOOK).with_name('khapra_workbook.xlsx')
+    if not khapra.exists():
+        check(False, f'targeted: no {khapra} (run tests/flows/khapra.R with the same FAIRE_TEST_OUT)')
+    else:
+        pg = open_app(b)
+        pg.set_input_files('#upload', str(khapra))
+        expect_card(pg, 'Check the workbook', 'targeted workbook added', 60000)
+        pg.click('.navbar a.nav-link:has-text("Convert")')
+        wait_rd_table(pg)
+        check('Not for a targeted study' in rd_row(pg, 'GBIF (MDT)') and 'Not for a targeted study' in rd_row(pg, 'NCBI'),
+              'targeted: the table says the sequence conversions are not for this study')
+        check(rd_row(pg, 'GBIF and OBIS (presence and absence)').strip().startswith('Ready'),
+              'targeted: presence and absence is ready')
+        pg.click('a.nav-link:has-text("QIIME 2")')
+        pg.wait_for_selector('#rdbox_qiime.rd-not button', timeout=20000)
+        pg.click('#rdbox_qiime button')
+        pg.wait_for_timeout(1000)
+        check(active_cv_tab(pg) == 'GBIF and OBIS (presence and absence)', 'targeted: the box opens the presence and absence tab')
+        pg.close()
 
     print('== 5. Narrow screen')
     pg = open_app(b, 390, 844)
