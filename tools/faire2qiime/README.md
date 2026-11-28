@@ -11,7 +11,8 @@ Upstream: [aomlomics/faire2qiime](https://github.com/aomlomics/faire2qiime) at c
 
 ## Status
 
-- 2026.07.23+galaxy5 (28 November 2026): the help says what the tool needs from the workbook (*What this needs from the workbook*), as the FAIRe tools app's Convert page checks before a tool is run.
+- 2026.07.23+galaxy5 (28 November 2026): the help says what the tool needs from the workbook (*What
+  this needs from the workbook*), as the FAIRe tools app's Convert page checks before a tool is run.
 - `planemo lint`: passes with no warnings.
 - `planemo shed_lint`: passes.
 - `planemo test`: all tests pass in Galaxy 25.0 (summary at the end of this file).
@@ -34,6 +35,9 @@ Upstream: [aomlomics/faire2qiime](https://github.com/aomlomics/faire2qiime) at c
 | `.shed.yml` | ToolShed metadata (owner `fair-edna`) |
 
 ## What the wrapper adds
+
+<details>
+<summary>Show each addition, with when it was made and what found the need</summary>
 
 1. **Works with FAIRe-ator workbooks.** FAIRe2QIIME was written for the FAIRe-NOAA layout, in
    which each assay has a projectMetadata column headed by its assay name. The FAIRe checklist and
@@ -79,7 +83,12 @@ Upstream: [aomlomics/faire2qiime](https://github.com/aomlomics/faire2qiime) at c
    empties FAIRe's missing-value terms in those two rows of projectMetadata, so the files are named
    by the gene alone (`16S_metadata.tsv`), and says so in the log.
 
+</details>
+
 ## Upstream issues
+
+<details>
+<summary>Show the issues</summary>
 
 We emailed the upstream authors (NOAA 'Omics, AOML) about these on 9 November 2026, and they invited
 GitHub issues. All of them were posted on 17 November 2026, after checking them against the latest
@@ -110,7 +119,12 @@ overwrite each other's files, and one checklist of the smaller points
   names (`16S-not`); the wrapper works around it (item 8).
 - A tagged release and a pip or bioconda package would help (see below).
 
+</details>
+
 ## Before deployment on Galaxy Australia
+
+<details>
+<summary>Show what is still to do</summary>
 
 ### Must do
 
@@ -139,7 +153,12 @@ overwrite each other's files, and one checklist of the smaller points
 7. **Decide where the code lives long term.** As for FAIRe2ENA, the IUC expects a conda package;
    that needs a tagged upstream release or a consolidated FAIRe package.
 
+</details>
+
 ## Test data
+
+<details>
+<summary>Show the test data</summary>
 
 - `test-data/faire_two_assays.xlsx`: a cut-down copy of the GOMECC-4 generic FAIRe example in
   [aomlomics/edna2obis](https://github.com/aomlomics/edna2obis) (MIT), with four samples and their
@@ -161,6 +180,8 @@ overwrite each other's files, and one checklist of the smaller points
 The GOMECC-4 data reuse some `lib_id` values across the two assays. That is a feature of the
 example data, and it shows up in the manifests as 16S-style IDs in an 18S run.
 
+</details>
+
 ## Running the tests
 
 ```bash
@@ -170,6 +191,9 @@ planemo test faire2qiime/
 ```
 
 ## planemo test results
+
+<details>
+<summary>Show the latest results</summary>
 
 Run on 3 November 2026 with planemo 0.75.47 against Galaxy `release_25.0`, with dependencies
 resolved through conda (python 3.12, pandas 2.2.3, openpyxl 3.1.5). All tests passed, and all 5
@@ -187,3 +211,5 @@ workbook for FAIRe2QIIME (item 7; tests 6 and 7).
 | 6 | Text values reach both metadata tables as written: `=see notes`, `Sta1 #2` (upstream alone cuts the row off at the `#`) and materialSampleID `001` (upstream alone writes `1`) | passed |
 | 7 | Assays converted one at a time: `=see notes` reaches both metadata tables | passed |
 | 8 (12 Nov) | target_subfragment *not applicable*: the metadata file named by the gene alone (`16S`), with a note in the log | see below |
+
+</details>

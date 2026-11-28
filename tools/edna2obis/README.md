@@ -13,7 +13,8 @@ Upstream: [aomlomics/edna2obis](https://github.com/aomlomics/edna2obis) at commi
 
 ## Status
 
-- 2026.10.26+galaxy7 (28 November 2026): the help says what the tool needs from the workbook (*What this needs from the workbook*), as the FAIRe tools app's Convert page checks before a tool is run.
+- 2026.10.26+galaxy7 (28 November 2026): the help says what the tool needs from the workbook (*What
+  this needs from the workbook*), as the FAIRe tools app's Convert page checks before a tool is run.
 - `planemo lint`: passes with no warnings.
 - `planemo shed_lint`: passes; its ToolShed check needs network access and could not run here.
 - `planemo test`: the 9 tests of *build Darwin Core tables* pass in Galaxy 25.0 (results at the end
@@ -53,6 +54,9 @@ example data apart from the eMoF template.
 The driver imports the upstream modules and runs them in a working folder of the job, because
 upstream reads `config.yaml` and `data_mapper.yaml` from the current folder. It writes upstream's
 `config.yaml` from the form. No upstream file is changed.
+
+<details>
+<summary>Show each addition, with when it was made and what found the need</summary>
 
 1. **Taxonomy lookup separated from building the archive.** *match taxa* runs the pipeline's own
    taxonomy step (`assign_taxonomy`, `create_taxa_assignment_info`, the GBIF de-duplication and the
@@ -176,7 +180,12 @@ upstream reads `config.yaml` and `data_mapper.yaml` from the current folder. It 
 Python warnings: Galaxy sets `PYTHONWARNINGS=ignore`. edna2obis reports through its HTML reporter,
 `print()` and `logging`, not the warnings module, so nothing is lost.
 
+</details>
+
 ## Decisions
+
+<details>
+<summary>Show the decisions</summary>
 
 - **Pipeline step, not `taxamapper.py`.** `taxamapper.py` matches a list of names with one dummy
   assay, so the per-assay *ignore species-level names* setting and the rank depth taken from each
@@ -216,7 +225,12 @@ Python warnings: Galaxy sets `PYTHONWARNINGS=ignore`. edna2obis reports through 
   whose `name_backbone` takes the arguments upstream passes (issues below); the only change to
   pygbif's species functions in 0.6.6 is that one.
 
+</details>
+
 ## Upstream issues
+
+<details>
+<summary>Show the issues</summary>
 
 Evidence is in the test data, the local checks or the upstream code at the pinned commit.
 
@@ -297,7 +311,12 @@ end. The others are not yet reported: they are to be checked against 4.0.0 first
   HTTPS) and retries each failed request 10 times, 5 seconds apart. *4.0.0 is a tagged release
   (16 November 2026); a conda package is still to come.*
 
+</details>
+
 ## Before deployment on Galaxy Australia
+
+<details>
+<summary>Show what is still to do</summary>
 
 ### Must do
 
@@ -334,7 +353,12 @@ end. The others are not yet reported: they are to be checked against 4.0.0 first
 10. **Decide where the code lives long term** (conda package from a tagged release, as for the other
     wrappers).
 
+</details>
+
 ## Test data
+
+<details>
+<summary>Show the test data</summary>
 
 All files are under 50 KB. The two GOMECC-4 workbooks are the FAIRe2QIIME test workbooks; the
 GU19-01 workbook is the FAIRe2NCBI one with sheets added. The tables were cut from the MIT example
@@ -375,6 +399,8 @@ workbook's samples, plus one ASV seen only in a control.
 - `eml_config_test.yaml` and `contacts_test.yaml`: made for the tests, with a fictional person and
   example.org addresses. The EML file sets `contacts_path` to check that it is ignored.
 
+</details>
+
 ## Running the tests
 
 ```bash
@@ -412,6 +438,9 @@ Run directly with the driver in a scratch folder, not as Galaxy tests (on 3 Nove
 
 ## planemo test results
 
+<details>
+<summary>Show the latest results</summary>
+
 Run on 3 November 2026 with planemo 0.75.47 against Galaxy `release_25.0`, with dependencies
 resolved through conda (the versions under Decisions). 11 tests: the 9 offline tests passed; the 2
 tests that need WoRMS and GBIF failed because this workspace cannot reach them, each with the
@@ -436,3 +465,5 @@ The build tool's 12 tests all passed on 9 November 2026, with the text-values te
 | edna2obis_dwc | 12 | NA-like text with *stop*: stops and lists the 2 cells | passed |
 | edna2obis_match_taxa | 1 | WoRMS, two assays (16S without species level, 18S), tabular output | passed on GitHub with internet access (6 November 2026); failed here: "could not reach the WoRMS API at www.marinespecies.org: the server name could not be looked up" (needs internet) |
 | edna2obis_match_taxa | 2 | GBIF, one assay, Excel output | passed on GitHub with internet access (6 November 2026, after the fixes); failed here: "could not reach the GBIF API at api.gbif.org: the server name could not be looked up" (needs internet) |
+
+</details>

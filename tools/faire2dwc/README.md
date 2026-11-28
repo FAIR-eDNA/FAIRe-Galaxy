@@ -18,7 +18,8 @@ metabarcoding data published as presence, such as a species-by-sample table with
 
 ## Status
 
-- 0.2.0+galaxy2 (28 November 2026): the help says what the tool needs from the workbook (*What this needs from the workbook*), as the FAIRe tools app's Convert page checks before a tool is run.
+- 0.2.0+galaxy2 (28 November 2026): the help says what the tool needs from the workbook (*What this
+  needs from the workbook*), as the FAIRe tools app's Convert page checks before a tool is run.
 - Version 0.2.0 (24 November 2026) reads otuFinal_<assay>_<run> sheets, for an assay sequenced in
   several runs, with the run in each occurrenceID. Version 0.1.0 (23 November 2026) was written for
   the khapra beetle demonstration (`demo/khapra/`, `dev/faire_mapper_khapra/run.sh`), at Oliver
@@ -84,6 +85,9 @@ scientificNameID (for OBIS), a licence and a creator.
 
 ## Decisions
 
+<details>
+<summary>Show the decisions</summary>
+
 - **Presence and absence, not read counts.** FAIRe2MDT and edna2obis already publish read counts,
   and the MDT is GBIF's route for them. This tool does what they do not.
 - **Absences by default for targeted assays.** A targeted assay looks for one species, so a
@@ -97,7 +101,12 @@ scientificNameID (for OBIS), a licence and a creator.
 - **Licence.** GBIF takes CC0 1.0, CC BY 4.0 and CC BY-NC 4.0. The form can take the workbook's
   license or set one of these.
 
+</details>
+
 ## Related tools and upstream notes
+
+<details>
+<summary>Show the notes</summary>
 
 - edna2obis (`tools/edna2obis`) writes DNA derived data terms with `http://rs.gbif.org/terms/1.0/`
   URIs for all of them. The extension as GBIF issued it uses the MIxS, MIQE and GGBN URIs above.
@@ -105,12 +114,19 @@ scientificNameID (for OBIS), a licence and a creator.
 - FAIRe-fier's assay name check splits on the last underscore; see
   `tools/faire_mapper/README.md`.
 
+</details>
+
 ## Before deployment on Galaxy Australia
+
+<details>
+<summary>Show what is still to do</summary>
 
 - Load an archive into an IPT (GBIF's test IPT or the ALA's) and confirm the extension mapping and
   the EML.
 - Try the OBIS route with a marine targeted dataset and WoRMS LSIDs.
 - ToolShed owner `fair-edna` and maintainers in `<creator>`: done (23 November 2026).
+
+</details>
 
 ## Files
 
@@ -126,6 +142,9 @@ scientificNameID (for OBIS), a licence and a creator.
 
 ## Test data
 
+<details>
+<summary>Show the test data</summary>
+
 Made-up values for real species, built by `dev/faire2dwc/make_test_data.py`:
 
 - `targeted_two_assays.xlsx`: two qPCR assays for green crab (*Carcinus maenas*), CmaeCOI and
@@ -137,6 +156,8 @@ Made-up values for real species, built by `dev/faire2dwc/make_test_data.py`:
 - `metabarcoding_two_runs.xlsx`: the same, with the assay sequenced in two runs
   (otuFinal_MiFish_runA with P1; otuFinal_MiFish_runB with P2 and the blank).
 - `taxa_carcinus.tsv`: the taxon table for green crab, with its WoRMS LSID.
+
+</details>
 
 ## Tests
 

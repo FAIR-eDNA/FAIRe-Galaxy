@@ -13,7 +13,12 @@ sheet, to the one the same steps give from the command line (`dev/faire_mapper_s
 the same files and the same values for the whole project.
 
 This version is a demonstration that runs on one computer. It is written so that it can later be
-hosted on a server (see *Hosting later*, below). It was first built in a private repository and moved
+hosted on a server (see *Hosting later*, below). The current version is 0.10.2 (28 November 2026).
+
+<details>
+<summary><b>Version history</b> (oldest first)</summary>
+
+It was first built in a private repository and moved
 here, beside the tools it runs, on 13 November 2026 (version 0.2.0). Version 0.3.0 has the changes
 from the FAIRe team's first trial of it, and version 0.4.0 those from the second (14 November 2026).
 Version 0.4.1 (15 November 2026) adds the choice of assay type to *Find method details* and shows the
@@ -165,6 +170,8 @@ page. QIIME 2 is no longer said to need a target_subfragment for each assay on t
 it converts each on its own and names its files by assay, as `tests/conversions.R` now checks on
 FAIRe2QIIME's own test workbook. The Galaxy converters' help says what each needs from the workbook,
 and the assistant's `convert check` reports the same for its conversions.
+
+</details>
 
 ## What it covers
 

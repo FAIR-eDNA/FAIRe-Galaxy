@@ -14,7 +14,8 @@ CC0 licence.
 
 ## Status
 
-- 2026.07.23+galaxy7 (28 November 2026): the help says what the tool needs from the workbook (*What this needs from the workbook*), as the FAIRe tools app's Convert page checks before a tool is run.
+- 2026.07.23+galaxy7 (28 November 2026): the help says what the tool needs from the workbook (*What
+  this needs from the workbook*), as the FAIRe tools app's Convert page checks before a tool is run.
 - `planemo lint`: passes with no warnings.
 - `planemo shed_lint`: passes.
 - `planemo test`: all tests pass in Galaxy 25.0 (summary at the end of this file).
@@ -52,6 +53,9 @@ field without a `_unit` field, per empty mandatory field, per assay). The driver
 `main()` with stdin closed. It answers each question from the form as it is asked, records the
 answer, and writes all answers to the **config** output, which the upstream script accepts with
 `--config_file`.
+
+<details>
+<summary>Show each addition, with when it was made and what found the need</summary>
 
 1. **Unanswered questions fail fast.** At end of input upstream raises `EOFError` with a
    traceback. The driver turns this into one plain error that names the question. If upstream
@@ -143,7 +147,12 @@ answer, and writes all answers to the **config** output, which the upstream scri
 Python warnings: Galaxy sets `PYTHONWARNINGS=ignore`. FAIRe2NCBI reports everything with
 `print()`, so nothing is lost.
 
+</details>
+
 ## Decisions
+
+<details>
+<summary>Show the decisions</summary>
 
 - **Two tools.** BioSample and SRA are separate steps in the NCBI portal and have different inputs.
 - **Scope.** BioSample and SRA metadata tables only. Fastq checking (`--filter-fastq`), splitting by
@@ -168,7 +177,12 @@ Python warnings: Galaxy sets `PYTHONWARNINGS=ignore`. FAIRe2NCBI reports everyth
   `project_level` with columns already named A and B). It now passes these through. The fix is
   also in `faire2qiime/normalise_faire.py`, so the two copies stay identical.
 
+</details>
+
 ## Upstream issues
+
+<details>
+<summary>Show the issues</summary>
 
 Evidence for each is in the wrapper's test data or the upstream code at the pinned commit.
 
@@ -218,7 +232,12 @@ of input), and one checklist of the other points
   supplied.
 - A tagged release and a pip or bioconda package would help, as for the other FAIRe tools.
 
+</details>
+
 ## Before deployment on Galaxy Australia
+
+<details>
+<summary>Show what is still to do</summary>
 
 ### Must do
 
@@ -253,7 +272,12 @@ of input), and one checklist of the other points
 9. **Decide where the code lives long term.** As for the other wrappers, the IUC expects a conda
    package, which needs a tagged upstream release or a consolidated FAIRe package.
 
+</details>
+
 ## Test data
+
+<details>
+<summary>Show the test data</summary>
 
 - `test-data/faire_ncbi_two_assays.xlsx`: the FAIRe2QIIME test workbook (a cut-down GOMECC-4
   generic FAIRe example from [aomlomics/edna2obis](https://github.com/aomlomics/edna2obis), MIT;
@@ -287,6 +311,8 @@ of input), and one checklist of the other points
 - `test-data/accessions_odd_columns.tsv`: the same accessions under the headers `BioSample` and
   `Name`, which upstream cannot recognise (tests the unanswered-question error).
 
+</details>
+
 ## Running the tests
 
 ```bash
@@ -296,6 +322,9 @@ planemo test faire2ncbi/
 ```
 
 ## planemo test results
+
+<details>
+<summary>Show the latest results</summary>
 
 Run on 4 November 2026 with planemo 0.75.47 against Galaxy `release_25.0`, with dependencies
 resolved through conda (python 3.12, pandas 2.2.3, openpyxl 3.1.5, pyyaml 6.0.3), after the
@@ -325,3 +354,5 @@ inside a cell and IDs such as `001` are kept.
 | faire2ncbi_sra | 8 | Unknown assay name: stops and lists the assays | passed |
 | faire2ncbi_sra | 9 | Single assay in project_level, defaults | passed |
 | faire2ncbi_sra | 11 | Runs not yet submitted only: runs with NA and N/A in associatedSequences are left out (8 of 10 kept) | passed |
+
+</details>

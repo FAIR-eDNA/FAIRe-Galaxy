@@ -60,6 +60,9 @@ Choices made in the wrapper:
 
 ## Upstream issues to report
 
+<details>
+<summary>Show the issues</summary>
+
 - **Dangling drawing references in the output.** Each sheet with comments refers to a
   `xl/drawings/drawingN.xml` part that is not in the file. pandas reads the workbook, but
   openpyxl cannot open it in full (`KeyError: There is no item named 'xl/drawings/drawing1.xml'`).
@@ -75,7 +78,12 @@ Choices made in the wrapper:
   change as well as new files.
 - No tagged releases. The tool version is the commit date (`2026.11.26`).
 
+</details>
+
 ## Before deployment on Galaxy Australia
+
+<details>
+<summary>Show what is still to do</summary>
 
 ### Must do
 
@@ -101,6 +109,8 @@ Choices made in the wrapper:
 7. **Package for bioconda** once there is a licence and a tagged release, ideally as part of an R
    package (FAIR-eDNA already has a FAIRe-r repository of helper functions).
 
+</details>
+
 ## Tests
 
 The tool has no input datasets, so there is no `test-data` folder. The tests check the contents of
@@ -118,6 +128,9 @@ planemo test faireator/
 
 ## planemo test results
 
+<details>
+<summary>Show the latest results</summary>
+
 Run on 3 November 2026 with planemo 0.75.47 against Galaxy `release_25.0`, with dependencies
 resolved through conda (r-base 4.4.3, r-readxl 1.6.0, r-openxlsx 4.2.9, r-dplyr 1.2.1,
 r-rcolorbrewer 1.1_3, r-here 1.0.2). All tests passed. Tests 1 and 2 gained the user-defined
@@ -129,3 +142,5 @@ release_26.1.
 | 1 | Metabarcoding, water and sediment, two assays, all levels, user-defined experimentRunMetadata fields: metabarcoding sheets, assay1 column, assay names, README settings, the user-defined fields | passed |
 | 2 | Targeted, soil, one assay, mandatory and highly recommended only, user-defined fields: targeted sheets, no assay columns, project and sample fields present, experimentRunMetadata fields not used | passed |
 | 3 | All sample types with two targeted assays (the case that crashes upstream): one detection column per assay | passed |
+
+</details>
