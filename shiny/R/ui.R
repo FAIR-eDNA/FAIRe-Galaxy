@@ -19,6 +19,10 @@ SRA_INSTRUMENTS <- c("Taken from the workbook" = "from_workbook", "Illumina MiSe
 stat_tile <- function(value, label, kind = "") div(class = paste("stat", kind), div(class = "stat-value", value),
                                                   div(class = "stat-label", label))
 help_text <- function(...) tags$p(class = "help-text", ...)
+
+# The panel beside a step for its tool's result, shown once the tool has run (output.<flag> is set by
+# the server). Before that it would be an empty box that draws the eye from the step itself.
+result_panel <- function(flag, ...) conditionalPanel(sprintf("output.%s", flag), class = "result-panel", card(...))
 # Text and tags run together with no space between them (htmltools puts a line break, read as a space,
 # between children), for a link or emphasis followed by punctuation.
 inline <- function(...) HTML(paste(vapply(list(...), function(x) as.character(x), ""), collapse = ""))
@@ -300,7 +304,7 @@ faireator_panel <- function() {
                     placeholder = "for example flowcell_lot, operator")),
         run_button("run_faireator", "Make the template")
       ),
-      card(card_header("Result"), uiOutput("faireator_result"))
+      result_panel("has_faireator", card_header("Result"), uiOutput("faireator_result"))
     )
   )
 }
@@ -387,7 +391,7 @@ mapper_panel <- function() {
             uiOutput("map_settings_summary"),
             run_button("run_map", "Propose a mapping for the information in your sample table")
           ),
-          card(card_header("Proposed mapping"), uiOutput("map_result"))
+          result_panel("has_map", card_header("Proposed mapping"), uiOutput("map_result"))
         )
       ),
       nav_panel(
@@ -633,7 +637,7 @@ mapper_panel <- function() {
                   checkboxInput("ap_drop_unmapped", "Leave out columns not matched to a FAIRe term", FALSE))),
               run_button("run_apply", "Build the FAIRe workbook"))
           ),
-          card(card_header("The workbook"), uiOutput("apply_result"), wb_preview_ui("apply_preview"))
+          result_panel("has_apply", card_header("The workbook"), uiOutput("apply_result"), wb_preview_ui("apply_preview"))
         )
       )
     )
@@ -660,7 +664,7 @@ check_page <- function() {
                     c("Read it from the workbook" = "auto", "v1.0.2", "v1.0")),
         run_button("run_fairefier", "Check the workbook")
       ),
-      card(card_header("Result"), uiOutput("fairefier_result"))
+      result_panel("has_fairefier", card_header("Result"), uiOutput("fairefier_result"))
     )
   )
 }

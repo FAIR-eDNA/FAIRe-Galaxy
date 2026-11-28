@@ -61,6 +61,10 @@ def active_pill(pg):
     return pg.evaluate("() => { const a = document.querySelector('#mapper_steps .nav-link.active'); return a ? a.innerText.split('\\n')[0] : ''; }")
 
 
+def shown(pg, sel):
+    return pg.evaluate("(s) => { const e = document.querySelector(s); return !!(e && e.offsetParent); }", sel)
+
+
 def menus_closed(pg):
     return not pg.evaluate("() => Array.from(document.querySelectorAll('.navbar .dropdown-menu')).some(m => m.classList.contains('show'))")
 
@@ -102,8 +106,10 @@ with sync_playwright() as p:
     pg.wait_for_timeout(1200)
     pg.fill('#fa_project_id', 'UXtest')
     pg.fill('#fa_assay_name', 'Fish16S')
+    check(not shown(pg, '#faireator_result'), 'FAIRe-ator: no result panel before the template is made')
     pg.click('#run_faireator')
     expect_card(pg, 'Fill in your template', 'template made', 120000)
+    check(shown(pg, '#faireator_result'), 'FAIRe-ator: the result panel appears once the template is made')
     href = pg.get_attribute('#next-step-side a.ns-go', 'href') or ''
     check(href.endswith('UXtest.xlsx'), 'template made: the card downloads the template')
     check(bar_status(pg, 1) == 'Not needed', 'template: the mapper steps are not needed')
@@ -128,8 +134,10 @@ with sync_playwright() as p:
     pg.click('#run_identify')
     expect_card(pg, 'Map your sample information', 'identified')
     go_card(pg)
+    check(not shown(pg, '#map_result'), 'b: no Proposed mapping panel before the mapping is proposed')
     pg.click('#run_map')
     expect_card(pg, 'Review the uncertain matches', 'mapped')
+    check(shown(pg, '#map_result'), 'b: the Proposed mapping panel appears once the mapping is proposed')
     check('need' in pg.inner_text('#next-step-side .ns-attention'), 'mapped: the card says how many columns need a decision')
     go_card(pg)
     check(menus_closed(pg), 'after going to a step, the Make a workbook menu is closed')

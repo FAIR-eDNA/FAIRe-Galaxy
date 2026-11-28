@@ -16,7 +16,7 @@ for (f in c("runner.R", "tools.R", "helpers.R", "demos.R", "journey.R", "ui.R"))
 
 options(shiny.maxRequestSize = 500 * 1024^2, DT.fillContainer = FALSE)
 
-APP_VERSION <- "0.9.1"
+APP_VERSION <- "0.9.2"
 
 # Colours from the logo: petrol, teal, navy, red, orange and yellow (darkened where white text sits
 # on them, to keep it readable).
@@ -508,6 +508,13 @@ server <- function(input, output, session) {
     rv$res$faireator <- with_run("Making the template", run_faireator(
       sd, pid, input$fa_assay_type, input$fa_assay_name, input$fa_sample_type, input$fa_req_lev,
       input$fa_project_fields, input$fa_sample_fields, input$fa_run_fields %||% ""))
+  })
+  # Whether each side panel has a result to show (result_panel): set once its tool has run
+  for (k in c("faireator", "map", "apply", "fairefier")) local({
+    tool <- k
+    flag <- paste0("has_", tool)
+    output[[flag]] <- reactive(!is.null(rv$res[[tool]]))
+    outputOptions(output, flag, suspendWhenHidden = FALSE)
   })
   output$faireator_result <- renderUI({
     res <- rv$res$faireator
