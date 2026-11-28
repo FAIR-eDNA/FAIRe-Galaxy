@@ -130,6 +130,19 @@ table.runs td { font-size: 0.85rem; vertical-align: top; }
 .rd-not { background: #eef0f1; border-color: #8a969b; color: #3c4448; }
 .rd-cautions { color: #5c4200; }
 .rd-cautions li::marker { content: "! "; }
+/* edna2obis: the names the matching changed (R/taxa_review.R) */
+.tx-intro p { font-size: 0.92rem; margin: 0.4rem 0; }
+.tx-picked { color: var(--faire-teal); font-weight: 600; }
+.tx-group { border: 1px solid #e2e6e7; border-radius: 4px; padding: 0.3rem 0.6rem; margin: 0.4rem 0; }
+.tx-group > summary { color: var(--faire-ink); font-size: 0.95rem; }
+.tx-group .help-text { margin: 0.2rem 0 0.3rem; }
+.tx-table { width: 100%; font-size: 0.88rem; border-collapse: collapse; table-layout: fixed; }
+.tx-table th:nth-child(1) { width: 20%; } .tx-table th:nth-child(2) { width: 18%; } .tx-table th:nth-child(3) { width: 32%; }
+.tx-table th { font-size: 0.78rem; font-weight: 600; color: #555; border-bottom: 1px solid #ddd; padding: 0.2rem 0.3rem; }
+.tx-table td { padding: 0.25rem 0.3rem; border-bottom: 1px solid #eee; vertical-align: top; }
+.tx-table td:first-child span[title] { text-decoration: underline dotted; cursor: help; }
+.tx-table .form-group { margin-bottom: 0; }
+.tx-assay { font-size: 0.78rem; color: #666; }
 .run-btn, .card-body > .btn, .card-body > .shiny-download-link { align-self: flex-start; }
 table.dataTable { font-size: 0.82rem; }
 ul.lib li i { flex: 0 0 auto; }

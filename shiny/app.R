@@ -11,12 +11,12 @@ suppressPackageStartupMessages({
 })
 
 if (is.null(getOption("faire.app_dir"))) options(faire.app_dir = normalizePath("."))
-for (f in c("runner.R", "tools.R", "helpers.R", "demos.R", "journey.R", "convert.R", "ui.R"))
+for (f in c("runner.R", "tools.R", "helpers.R", "demos.R", "journey.R", "convert.R", "taxa_review.R", "ui.R"))
   source(file.path(getOption("faire.app_dir"), "R", f), local = FALSE)
 
 options(shiny.maxRequestSize = 500 * 1024^2, DT.fillContainer = FALSE)
 
-APP_VERSION <- "0.10.0"
+APP_VERSION <- "0.10.1"
 
 # Colours from the logo: petrol, teal, navy, red, orange and yellow (darkened where white text sits
 # on them, to keep it readable).
@@ -2120,7 +2120,10 @@ server <- function(input, output, session) {
                       taxa_source = input$eo_taxa_source %||% "mapping",
                       mapping = if (identical(input$eo_mapping, "__last__")) rv$eo_mapping %||% "" else
                         fpath(sub("^file:", "", input$eo_mapping %||% "")) %||% "",
-                      text_dates = input$eo_text_dates %||% "stop"),
+                      text_dates = input$eo_text_dates %||% "stop",
+                      changed = if (identical(input$eo_taxa_source %||% "mapping", "mapping") && identical(input$eo_mapping, "__last__"))
+                        length(eo_changes()$changes) else 0,
+                      picked = length(eo_picks())),
       dwc = list(assays = input$dw_assays),
       qiime = list(sample_col = input$qi_sample_col %||% "lib_id", manifests = !identical(input$qi_manifests, "no"),
                    suffix = identical(input$qi_suffix, "yes"), suffix_col = input$qi_suffix_col %||% "seq_run_id"),
@@ -2396,7 +2399,7 @@ server <- function(input, output, session) {
     if (!length(an)) return(notify_error("Choose the taxonomy and abundance tables."))
     mapping <- NULL
     if (input$eo_taxa_source == "mapping") {
-      mapping <- if (identical(input$eo_mapping, "__last__")) rv$eo_mapping else fpath(sub("^file:", "", input$eo_mapping %||% ""))
+      mapping <- if (identical(input$eo_mapping, "__last__")) eo_mapping_for_build() else fpath(sub("^file:", "", input$eo_mapping %||% ""))
       if (is.null(mapping)) return(notify_error("Choose the mapping table, or match the taxa first."))
     }
     eml <- if (isTRUE(input$eo_eml)) list(select = "form", title = input$eo_title, abstract = input$eo_abstract,
@@ -2410,15 +2413,79 @@ server <- function(input, output, session) {
   })
   output$eo_match_result <- renderUI({
     res <- rv$res$eo_match
-    if (is.null(res)) return(help_text("The matches appear here. Check them, especially for names that WoRMS or GBIF",
-                                       "know in another sense, before you build the archive."))
-    tagList(tags$h6("1. Match taxa"), result_ui(res), if (res$ok) DTOutput("eo_match_table"))
+    if (is.null(res)) return(help_text("After matching, the names the matching changed are listed here, each with why."))
+    tagList(tags$h6("1. Match taxa"), result_ui(res), if (res$ok) uiOutput("eo_changes_ui"))
   })
-  output$eo_match_table <- renderDT({
-    res <- rv$res$eo_match; req(res, res$ok)
-    d <- if (grepl("xlsx$", res$outputs$mapping)) as.data.frame(readxl::read_excel(res$outputs$mapping)) else read_tsv(res$outputs$mapping)
-    req(d); table_dt(d, page = 8)
+  # The names the matching changed (R/taxa_review.R). Only these are listed, each with why; a person can
+  # choose another candidate, or no match, but need not do anything.
+  eo_map_table <- reactive({
+    p <- rv$eo_mapping
+    if (is.null(p) || !file.exists(p)) return(NULL)
+    if (grepl("xlsx$", p)) { d <- as.data.frame(readxl::read_excel(p, col_types = "text")); d[is.na(d)] <- ""; d } else read_tsv(p)
   })
+  eo_changes <- reactive(taxa_changes(eo_map_table()))
+  eo_picks <- reactive({
+    ch <- eo_changes()
+    picks <- list()
+    for (i in seq_along(ch$changes)) {
+      v <- input[[paste0("eo_pick_", i)]]
+      c <- ch$changes[[i]]
+      if (!is.null(v) && v != as.character(c$selected) && !(v == "none" && c$kind == "not_found")) picks[[c$key]] <- v
+    }
+    picks
+  })
+  # The table build uses: step 1's, with the person's choices when there are any
+  eo_mapping_for_build <- function() {
+    picks <- eo_picks()
+    if (!length(picks)) return(rv$eo_mapping)
+    d <- file.path(sd, "edna2obis_tables"); dir.create(d, showWarnings = FALSE)
+    write_mapping(apply_taxa_choices(eo_map_table(), picks), file.path(d, "taxa_mapping_with_your_choices.tsv"))
+  }
+  output$eo_changes_ui <- renderUI({
+    ch <- eo_changes()
+    if (is.null(ch)) return(NULL)
+    n <- ch$n_names; changes <- ch$changes
+    if (!length(changes))
+      return(div(class = "rd-box rd-ready", icon("circle-check"),
+                 sprintf("All %s were matched as your taxonomy tables give them, in %s.", plural(n, "name"), ch$api)))
+    kinds <- vapply(changes, `[[`, "", "kind")
+    group <- function(k) {
+      idx <- which(kinds == k)
+      if (!length(idx)) return(NULL)
+      rows <- lapply(idx, function(i) {
+        c <- changes[[i]]
+        choices <- c(setNames(as.character(c$candidates), c$labels), "No match: incertae sedis" = "none")
+        tags$tr(tags$td(tags$span(title = c$verbatim, c$lowest), if (nzchar(c$assay)) tags$div(class = "tx-assay", c$assay)),
+                tags$td(tags$em(c$name), if (nzchar(c$rank)) paste0(" (", c$rank, ")")),
+                tags$td(c$why),
+                tags$td(if (length(c$candidates))
+                  selectInput(paste0("eo_pick_", i), NULL, choices, selected = if (c$kind == "not_found") "none" else as.character(c$selected),
+                              selectize = FALSE, width = "100%")))
+      })
+      tags$details(class = "tx-group", open = if (length(idx) <= 15) NA,
+                   tags$summary(tags$b(TAXA_CHANGE_KINDS[[k]]), sprintf(" (%d)", length(idx))),
+                   help_text(TAXA_CHANGE_NOTES[[k]]),
+                   tags$table(class = "tx-table", tags$thead(tags$tr(tags$th("Your name"), tags$th("Matched to"),
+                                                                       tags$th("Why"), tags$th("Use"))),
+                              tags$tbody(rows)))
+    }
+    tagList(
+      div(class = "tx-intro",
+          tags$p(sprintf("Of %s, %d %s matched as your taxonomy tables give them. The matching changed the %d below, each with why.",
+                         plural(n, "name"), n - length(changes), if (n - length(changes) == 1) "was" else "were", length(changes)),
+                 "Nothing needs doing unless a match looks wrong: then choose another candidate, or no match, and your",
+                 "choices are used when you build the archive. Hover over a name to see its whole taxonomy string."),
+          uiOutput("eo_picks_note")),
+      lapply(names(TAXA_CHANGE_KINDS), group),
+      downloadLink("eo_mapping_download", tagList(icon("download"), "Download the mapping table, with your choices")))
+  })
+  output$eo_picks_note <- renderUI({
+    k <- length(eo_picks())
+    if (k) tags$p(class = "tx-picked", icon("pen"), sprintf("You have changed %s; the archive will use your choices.", plural(k, "match", "matches")))
+  })
+  output$eo_mapping_download <- downloadHandler(
+    filename = function() "taxa_mapping_with_your_choices.tsv",
+    content = function(file) file.copy(eo_mapping_for_build(), file, overwrite = TRUE))
   output$eo_build_result <- renderUI({
     res <- rv$res$eo_build
     if (is.null(res)) return(NULL)

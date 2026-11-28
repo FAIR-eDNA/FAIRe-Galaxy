@@ -175,5 +175,44 @@ if (all(c("seames", "eelgrass") %in% which)) {
          convert_readiness(f4, "eo_build", list(mapping = mp, text_dates = "dmy")))
 }
 
+# ---------------------------------------------------------------- choices among the matched names
+# The names the matching changed (R/taxa_review.R), and a person's choice among them, reach the archive:
+# eelgrass with a mapping table whose Amphichaeta sannio is a plant namesake, chosen back to the annelid
+if ("eelgrass" %in% which) {
+  cat("\n== choices among matched names\n")
+  ew <- file.path(out, "eelgrass_workbook.xlsx")
+  mp <- file.path(sd, "eel_test_mapping.tsv")
+  system2(Sys.getenv("FAIRE_PYTHON", "python3"), c("tests/browser/test_mapping.py", ew, mp), stdout = FALSE)
+  map <- read_tsv(mp)
+  ch <- taxa_changes(map)
+  nm <- ch$changes[[which(vapply(ch$changes, `[[`, "", "kind") == "disagrees")]]
+  edited <- write_mapping(apply_taxa_choices(map, setNames(list(as.character(nm$candidates[2])), nm$key)), file.path(sd, "eel_chosen.tsv"))
+  d <- file.path(sd, "eel_eo3"); dir.create(d, showWarnings = FALSE)
+  an <- list(list(assay = "LerayCOI", run = "LerayCOI", taxonomy = sheet_tsv(ew, "taxaFinal", file.path(d, "t.tsv")),
+                  abundance = sheet_tsv(ew, "otuFinal", file.path(d, "o.tsv"))))
+  kingdom_of <- function(res) {
+    occ <- utils::read.csv(res$outputs$occurrence, colClasses = "character", check.names = FALSE)
+    unique(occ$kingdom[occ$scientificName == "Amphichaeta sannio"])
+  }
+  r1 <- run_edna2obis_build(sd, ew, an, mp)
+  r2 <- run_edna2obis_build(sd, ew, an, edited)
+  k1 <- if (isTRUE(r1$ok)) kingdom_of(r1) else "(stopped)"
+  k2 <- if (isTRUE(r2$ok)) kingdom_of(r2) else "(stopped)"
+  ok <- identical(k1, "Plantae") && identical(k2, "Animalia")
+  cat(sprintf("%-9s %-34s %s  (as matched: %s; with the choice: %s)\n", "eelgrass", "edna2obis uses a choice",
+              if (ok) "ok" else "FAILED", paste(k1, collapse = ","), paste(k2, collapse = ",")))
+  if (!ok) failures <- failures + 1
+  # and no match: the species matched at its genus, Alitta, recorded as incertae sedis instead
+  hi <- ch$changes[[which(vapply(ch$changes, `[[`, "", "kind") == "higher")]]
+  none <- write_mapping(apply_taxa_choices(map, setNames(list("none"), hi$key)), file.path(sd, "eel_none.tsv"))
+  r3 <- run_edna2obis_build(sd, ew, an, none)
+  occ <- if (isTRUE(r3$ok)) utils::read.csv(r3$outputs$occurrence, colClasses = "character", check.names = FALSE) else NULL
+  got <- if (is.null(occ)) "(stopped)" else unique(occ$scientificName[occ$verbatimIdentification == hi$verbatim])
+  ok <- identical(got, "incertae sedis")
+  cat(sprintf("%-9s %-34s %s  (%s: %s)\n", "eelgrass", "edna2obis uses 'no match'", if (ok) "ok" else "FAILED",
+              hi$lowest, paste(got, collapse = ",")))
+  if (!ok) failures <- failures + 1
+}
+
 cat(if (failures) sprintf("\n%d readiness verdict(s) did not match the result\n", failures) else "\nAll verdicts matched\n")
 quit(status = if (failures) 1 else 0)

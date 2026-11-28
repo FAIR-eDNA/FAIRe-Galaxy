@@ -7,10 +7,12 @@ then, from the shiny folder: python3 tests/browser/journeys.py [WORKBOOK]
 
 WORKBOOK is a FAIRe workbook for the existing-workbook journey (the eelgrass flow's, by default). Needs
 Playwright and Google Chrome. Prints PASS or FAIL for each check and exits 1 on a failure."""
+import os
 import sys
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
+from test_mapping import make_mapping
 
 URL = 'http://127.0.0.1:8765/'
 WORKBOOK = sys.argv[1] if len(sys.argv) > 1 else '/tmp/ux_091/eelgrass_workbook.xlsx'
@@ -307,6 +309,37 @@ with sync_playwright() as p:
     pg.click('#run_qiime')
     pg.wait_for_selector('#qiime_result .res-ok, #qiime_result .res-fail', timeout=240000)
     check(pg.locator('#qiime_result .res-ok').count() > 0, 'convert: QIIME 2 writes the metadata, as the box said it would')
+    # edna2obis: after matching, only the names the matching changed are listed, with why; a choice is
+    # optional and goes into the archive. The lookup needs internet access, so a mapping table made by
+    # test_mapping.py stands in for it when the app was started with FAIRE_TEST_MAPPING.
+    tm = os.environ.get('FAIRE_TEST_MAPPING')
+    if not tm:
+        print('SKIP edna2obis name review: start the app with FAIRE_TEST_MAPPING=<a path> to test it')
+    else:
+        changed, n_names = make_mapping(WORKBOOK, tm)
+        pg.click('a.nav-link:has-text("OBIS and GBIF (Darwin Core)")')
+        pg.wait_for_selector('#rdbox_eo_build', timeout=20000)
+        check('matched names' in pg.inner_text('#rdbox_eo_build'), 'OBIS: needs matched names before matching')
+        pg.click('#run_eo_match')
+        pg.wait_for_selector('.tx-group', timeout=60000)
+        pg.wait_for_timeout(1000)
+        rows = pg.locator('.tx-table tbody tr').count()
+        check(rows == len(changed), f'OBIS: only the {len(changed)} changed names of {n_names} are listed ({rows})')
+        check(f'{n_names - len(changed)} were matched as your taxonomy tables give them' in pg.inner_text('.tx-intro'),
+              'OBIS: the names matched as given are counted')
+        check(pg.locator('.tx-group summary').first.inner_text().startswith('Classification disagrees'),
+              'OBIS: the possible namesake is listed first')
+        box = pg.inner_text('#rdbox_eo_build')
+        check('rd-ready' in pg.get_attribute('#rdbox_eo_build', 'class') and f'changed {len(changed)} names' in box,
+              'OBIS: ready, with a note that names were changed')
+        sel = pg.locator('.tx-group').first.locator('select')
+        sel.select_option(sel.evaluate("s => s.options[1].value"))
+        pg.wait_for_timeout(1500)
+        check('You have changed 1 match' in pg.inner_text('#eo_picks_note'), 'OBIS: the choice is acknowledged')
+        check('your 1 choice will be used' in pg.inner_text('#rdbox_eo_build'), 'OBIS: the box says the choice will be used')
+        pg.click('#run_eo_build')
+        pg.wait_for_selector('#eo_build_result .res-ok, #eo_build_result .res-fail', timeout=300000)
+        check(pg.locator('#eo_build_result .res-ok').count() > 0, 'OBIS: the archive is built with the choice')
     pg.close()
 
     print('== 4. Targeted (khapra)')

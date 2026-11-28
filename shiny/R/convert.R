@@ -380,6 +380,10 @@ convert_readiness <- function(facts, id, settings = list()) {
     if (length(text) && st("text_dates", "stop") == "stop")
       add(short = "a date order", sprintf("eventDate has %s that are not in ISO 8601 form, such as %s.", plural(length(text), "value"), shown(unique(text), 2)),
           "Choose day first or month first under Text dates below, or write the dates as YYYY-MM-DD in sampleMetadata.", form = TRUE)
+    changed <- st("changed", 0)
+    if (changed > 0)
+      cautions <- c(cautions, sprintf("The matching changed %s, listed under 1. Match taxa with why. Nothing needs doing unless one looks wrong%s.",
+                                      plural(changed, "name"), if (st("picked", 0) > 0) sprintf("; your %s will be used", plural(st("picked", 0), "choice")) else ""))
     nocoord <- samples[is_empty(field_of(smd, "decimalLatitude")) | is_empty(field_of(smd, "decimalLongitude"))]
     if (length(nocoord))
       cautions <- c(cautions, sprintf("%s no coordinates (decimalLatitude and decimalLongitude): OBIS needs them for each record.",
