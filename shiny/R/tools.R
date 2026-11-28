@@ -395,6 +395,15 @@ run_edna2obis_match <- function(session_dir, analyses, api = "WoRMS", worms_all 
     mapping_format = mapping_format)
   jsonlite::write_json(form, file.path(d, "form.json"), auto_unbox = TRUE, null = "null", pretty = TRUE)
   ext <- if (mapping_format == "xlsx") "xlsx" else "tsv"
+  # Tests only: a mapping table named by FAIRE_TEST_MAPPING stands in for the lookup, which needs internet
+  # access (tests/browser/journeys.py)
+  test_map <- Sys.getenv("FAIRE_TEST_MAPPING", "")
+  if (nzchar(test_map) && file.exists(test_map)) {
+    file.copy(test_map, file.path(d, paste0("taxa_mapping.", ext)))
+    return(run_result("edna2obis_match", "edna2obis: match taxa", d,
+                      list(list(status = 0, cmdline = "(test mapping table)", output = paste("INFO: test mapping table", test_map))),
+                      list(mapping = file.path(d, paste0("taxa_mapping.", ext)))))
+  }
   s <- run_python(tool_path("edna2obis", "edna2obis_galaxy.py"),
                   c("match", "--form", "form.json", "--mapping_out", paste0("taxa_mapping.", ext)), d)
   run_result("edna2obis_match", "edna2obis: match taxa", d, list(s),

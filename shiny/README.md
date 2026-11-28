@@ -143,6 +143,19 @@ Illumina MiSeq. The run found three faults in the tools, fixed in FAIRe2NCBI (in
 differently when verbatimIdentification is mostly empty) and FAIRe2ENA (its default depth said once
 per sample, now once).
 
+Version 0.10.1 (28 November 2026): after *1. Match taxa* in the OBIS and GBIF (Darwin Core) tab, the
+page lists only the names the matching changed, where it used to show the whole mapping table (every
+candidate for every name, in about 20 columns). The names matched as your taxonomy tables give them
+(after tidying, such as `_` to a space or dropping `sp.`) are counted. The changed ones are grouped by
+why, each with a plain reason: *classification disagrees with your string* (only the name agrees, so it
+may be a namesake in another group, listed first), *more than one candidate*, *not found* (incertae
+sedis), *matched at a higher rank*, *accepted name used* (a synonym replaced) and *matched to another
+spelling*. Nothing needs doing: a person may choose another candidate, or no match, in the row's *Use*
+list, and the archive is then built from a copy of the table with those choices, which can also be
+downloaded. The box above *2. Build* notes how many names were changed and how many choices will be
+used. The checks are in `R/taxa_review.R` (tests in `tests/test_taxa_review.R`); `tests/conversions.R`
+checks that a choice, and *no match*, reach the archive.
+
 ## What it covers
 
 | Step | Tools |
@@ -645,7 +658,8 @@ November 2026.)
 
 - `app.R` holds the pages' behaviour; `R/ui.R` the pages themselves; `R/demos.R` the demonstrations
   (their files in `demo/`, the forms each fills in and the reviewer's decisions); `R/convert.R` what a
-  workbook holds and whether each conversion can run on it; `R/tools.R` one
+  workbook holds and whether each conversion can run on it; `R/taxa_review.R` the names edna2obis's
+  matching changed, and a copy of its mapping table with a person's choices; `R/tools.R` one
   function for each Galaxy tool, building its command line; `R/runner.R` finds Python, R and the tools and runs a
   command; `R/helpers.R` reads the review sheet and the other files the tools exchange; and
   `python/fill_review_sheet.py` writes the decisions from the review screen into a copy of the review
@@ -664,11 +678,14 @@ November 2026.)
   lists the runs and downloads the lot as a zip. The folder is deleted when the session ends.
 - The workbook written by the mapper becomes the *workbook in use*, which the Check and Convert pages
   take by default. A workbook from the person's files can be chosen instead.
-- Tests: `tests/test_journey.R` (the journey's stages), `tests/flows/*.R` (each demonstration through the
-  mapper, writing its workbook), `tests/conversions.R` (every conversion on those workbooks, against the
+- Tests: `tests/test_journey.R` (the journey's stages), `tests/test_taxa_review.R` (the names edna2obis's
+  matching changed), `tests/flows/*.R` (each demonstration through the mapper, writing its workbook), `tests/conversions.R` (every conversion on those workbooks, against the
   Convert page's verdicts) and `tests/browser/journeys.py` (the pages in Chrome). From the `shiny`
   folder: `FAIRE_TEST_OUT=/tmp/flows Rscript tests/flows/seames.R` (and eelgrass, khapra), then
-  `FAIRE_TEST_OUT=/tmp/flows Rscript tests/conversions.R`.
+  `FAIRE_TEST_OUT=/tmp/flows Rscript tests/conversions.R`. edna2obis's name matching needs internet
+  access; for the browser tests, start the app and run `journeys.py` with the same
+  `FAIRE_TEST_MAPPING=/tmp/test_mapping.tsv`, and a table made by `tests/browser/test_mapping.py` stands
+  in for the lookup (this variable is for tests only).
 - The language model step is optional, as in Galaxy. The key is passed to the tool through its
   environment and is never written to a file, and the model's answers are only suggestions that a
   person confirms, row by row.
