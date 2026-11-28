@@ -398,9 +398,20 @@ def run_sample(args):
                 df, args.output_file, project_name, taxon_id=str(args.taxon_id), center_name=args.center_name
             )
     finally:
+        # Upstream warns once per sample for each mandatory field it fills with its default (depth 0,
+        # for surface samples, and a marine env_local_scale): one line per field says so here instead.
+        defaulted = {}
         for line in upstream_log.getvalue().splitlines():
-            if not line.startswith('Generated ENA XML with '):
+            m = re.match(r"WARNING: Sample name (.*) missing mandatory field '(.*)', setting to default '(.*)'$", line)
+            if m:
+                defaulted.setdefault((m.group(2), m.group(3)), []).append(m.group(1))
+            elif not line.startswith('Generated ENA XML with '):
                 print(line)
+        for (field, value), samples in defaulted.items():
+            shown = ', '.join(samples[:5]) + (' ...' if len(samples) > 5 else '')
+            term = {'depth': 'minimumDepthInMeters or maximumDepthInMeters'}.get(field, field)
+            print(f"WARNING: {len(samples)} sample(s) have no {field}, so FAIRe2ENA wrote its default '{value}' "
+                  f"for them: {shown}. If that is wrong, fill {term} in sampleMetadata and run the tool again.")
     if not calls['xml']:
         fail("FAIRe2ENA no longer writes samples through generate_ena_xml, so the wrapper could not add "
              "ENA's units. The wrapper needs updating for this FAIRe2ENA version.")

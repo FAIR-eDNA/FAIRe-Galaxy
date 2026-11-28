@@ -125,6 +125,13 @@ before and after them:
     writes it.
 14. **Log.** Upstream's "Generated ENA XML with N samples" counts the XML lines (282 for three
     samples), so the driver leaves it out of the log and gives its own count.
+15. **Default values said once** (28 November 2026, 2025.11.12+galaxy6). Upstream fills an empty
+    depth with `0` and an empty env_local_scale with *marine pelagic zone*, its defaults for
+    OceanOmics surface samples, and warns once per sample. For a study with no depth in its
+    workbook (the eelgrass and khapra demonstrations, say) that was 50 or 90 lines among the log,
+    easily missed. The driver now gives one warning per field, with the number of samples, the
+    first five names and what to fill in sampleMetadata if the default is wrong. The FAIRe tools
+    app says the same on its Convert page before the tool is run.
 
 ## Upstream issues to report
 
