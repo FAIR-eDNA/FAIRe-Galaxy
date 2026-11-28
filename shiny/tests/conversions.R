@@ -81,9 +81,9 @@ for (name in which) {
   report(name, "ENA samples", run_ena_sample(sd, wb, "TESTCENTRE", "408172"), ready("ena_sample", list(center = "TESTCENTRE")))
   if (!is.null(dfile(demo$receipt)))
     report(name, "ENA experiments and runs", run_ena_run(sd, wb, dfile(demo$receipt), "PRJEB00000", "TESTCENTRE",
-                                                         "NextSeq 2000"),
+                                                         "from_workbook"),
            ready("ena_run", list(receipt = dfile(demo$receipt), study = "PRJEB00000", center = "TESTCENTRE",
-                                 instrument = "NextSeq 2000")))
+                                 instrument = "from_workbook")))
   report(name, "GBIF (MDT)", if (nzchar(run)) run_mdt(sd, wb, assay, run) else list(ok = FALSE, steps = list(list(output =
     "ERROR: no rows in experimentRunMetadata have assay_name 'x' and seq_run_id ''. The workbook has: x / NA (1 rows)."))),
     ready("mdt"))
@@ -175,6 +175,12 @@ if (all(c("seames", "eelgrass") %in% which)) {
          convert_readiness(f4, "eo_build", list(mapping = mp, text_dates = "dmy")))
 }
 
+# A workbook with two assays on the same target gene (FAIRe2QIIME's own test workbook): QIIME 2 converts
+# each assay on its own and names its files by assay_name
+sg <- normalizePath("../tools/faire2qiime/test-data/faire_same_gene.xlsx")
+report("same-gene", "QIIME 2 (metadata only)", run_qiime(sd, sg, write_manifests = FALSE),
+       convert_readiness(workbook_facts(sg), "qiime", list(manifests = FALSE)))
+
 # ---------------------------------------------------------------- choices among the matched names
 # The names the matching changed (R/taxa_review.R), and a person's choice among them, reach the archive:
 # eelgrass with a mapping table whose Amphichaeta sannio is a plant namesake, chosen back to the annelid
@@ -184,7 +190,10 @@ if ("eelgrass" %in% which) {
   mp <- file.path(sd, "eel_test_mapping.tsv")
   system2(Sys.getenv("FAIRE_PYTHON", "python3"), c("tests/browser/test_mapping.py", ew, mp), stdout = FALSE)
   map <- read_tsv(mp)
-  ch <- taxa_changes(map)
+  chp <- file.path(sd, "eel_changes.tsv")
+  system2(Sys.getenv("FAIRE_PYTHON", "python3"), c("../tools/edna2obis/edna2obis_galaxy.py", "changes", "--mapping", mp,
+                                                   "--changes_out", chp), stdout = FALSE)
+  ch <- taxa_changes(map, read_tsv(chp))
   nm <- ch$changes[[which(vapply(ch$changes, `[[`, "", "kind") == "disagrees")]]
   edited <- write_mapping(apply_taxa_choices(map, setNames(list(as.character(nm$candidates[2])), nm$key)), file.path(sd, "eel_chosen.tsv"))
   d <- file.path(sd, "eel_eo3"); dir.create(d, showWarnings = FALSE)

@@ -397,17 +397,19 @@ run_edna2obis_match <- function(session_dir, analyses, api = "WoRMS", worms_all 
   ext <- if (mapping_format == "xlsx") "xlsx" else "tsv"
   # Tests only: a mapping table named by FAIRE_TEST_MAPPING stands in for the lookup, which needs internet
   # access (tests/browser/journeys.py)
+  outs <- list(mapping = file.path(d, paste0("taxa_mapping.", ext)), changes = file.path(d, "changed_names.tsv"))
   test_map <- Sys.getenv("FAIRE_TEST_MAPPING", "")
   if (nzchar(test_map) && file.exists(test_map)) {
-    file.copy(test_map, file.path(d, paste0("taxa_mapping.", ext)))
-    return(run_result("edna2obis_match", "edna2obis: match taxa", d,
-                      list(list(status = 0, cmdline = "(test mapping table)", output = paste("INFO: test mapping table", test_map))),
-                      list(mapping = file.path(d, paste0("taxa_mapping.", ext)))))
+    file.copy(test_map, outs$mapping)
+    s <- run_python(tool_path("edna2obis", "edna2obis_galaxy.py"),
+                    c("changes", "--mapping", outs$mapping, "--changes_out", "changed_names.tsv"), d)
+    s$output <- paste("INFO: test mapping table", test_map, s$output, sep = "\n")
+    return(run_result("edna2obis_match", "edna2obis: match taxa", d, list(s), outs))
   }
   s <- run_python(tool_path("edna2obis", "edna2obis_galaxy.py"),
-                  c("match", "--form", "form.json", "--mapping_out", paste0("taxa_mapping.", ext)), d)
-  run_result("edna2obis_match", "edna2obis: match taxa", d, list(s),
-             list(mapping = file.path(d, paste0("taxa_mapping.", ext))))
+                  c("match", "--form", "form.json", "--mapping_out", paste0("taxa_mapping.", ext),
+                    "--changes_out", "changed_names.tsv"), d)
+  run_result("edna2obis_match", "edna2obis: match taxa", d, list(s), outs)
 }
 
 run_edna2obis_build <- function(session_dir, workbook, analyses, mapping = NULL, api = "WoRMS",

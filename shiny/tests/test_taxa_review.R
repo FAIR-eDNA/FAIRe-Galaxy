@@ -1,10 +1,21 @@
-# Tests of R/taxa_review.R: which names edna2obis: match taxa changed, and the copy of the mapping table
-# with a person's choices. The tables follow the columns and values edna2obis writes
-# (WoRMS_v3_matching.py and GBIF_matching.py); the names are real, the IDs made up.
-#   Rscript tests/test_taxa_review.R      (from the shiny folder)
+# Tests of which names edna2obis: match taxa changed (changed_names() in tools/edna2obis/edna2obis_galaxy.py,
+# run here through its 'changes' mode, as the app runs it), the app's join of that table to the mapping
+# table (R/taxa_review.R), and the copy of the mapping table with a person's choices. The tables follow
+# the columns and values edna2obis writes (WoRMS_v3_matching.py and GBIF_matching.py); the names are
+# real, the IDs made up.
+#   Rscript tests/test_taxa_review.R      (from the shiny folder; FAIRE_PYTHON to choose the Python)
 
 suppressMessages(library(shiny))
+source("R/helpers.R")
 source("R/taxa_review.R")
+py <- Sys.getenv("FAIRE_PYTHON", "python3")
+# the changed names table for a mapping table, from the Galaxy tool's own code, joined as the app does
+changes_of <- function(map) {
+  mp <- tempfile(fileext = ".tsv"); out <- tempfile(fileext = ".tsv")
+  write_mapping(map, mp)
+  system2(py, c("../tools/edna2obis/edna2obis_galaxy.py", "changes", "--mapping", mp, "--changes_out", out), stdout = FALSE)
+  taxa_changes(map, read_tsv(out))
+}
 fails <- 0
 expect <- function(ok, what) { cat(if (isTRUE(ok)) "PASS" else "FAIL", what, "\n"); if (!isTRUE(ok)) fails <<- fails + 1 }
 
@@ -45,7 +56,7 @@ worms <- rbind(
   row("Eukaryota;Arthropoda;Insecta;Diptera;Chironomidae;Chironomus;Chironomus_sp", "Arthropoda;Insecta;Diptera;Chironomidae;Chironomus",
       "True", "Arthropoda", "Phylum", "Animalia", "Arthropoda", type = "Success_Batch_Arthropoda")
 )
-r <- taxa_changes(worms)
+r <- changes_of(worms)
 kinds <- setNames(vapply(r$changes, `[[`, "", "kind"), vapply(r$changes, `[[`, "", "lowest"))
 expect(r$n_names == 6, sprintf("six names in the table (%d)", r$n_names))
 expect(!"Alitta succinea" %in% names(kinds), "a name matched as given is not listed")
@@ -76,7 +87,7 @@ expect(identical(m2[-c(nrows, arow), ], worms[-c(nrows, arow), ]), "other rows a
 tmp <- tempfile(fileext = ".tsv"); write_mapping(m2, tmp)
 back <- utils::read.delim(tmp, colClasses = "character", na.strings = character(), check.names = FALSE, quote = "")
 expect(identical(names(back), names(worms)) && nrow(back) == nrow(worms), "the copy keeps the columns and rows")
-again <- taxa_changes(back)
+again <- changes_of(back)
 expect(identical(vapply(again$changes, `[[`, "", "kind")[vapply(again$changes, `[[`, "", "lowest") == "Navicula"], "several"),
        "after choosing the diatom, Navicula agrees with the string (two candidates remain)")
 
@@ -90,13 +101,15 @@ gbif <- rbind(cbind(gbif, taxonID = character()),
       "Chordata", "Actinopteri", "Gadus", type = "GBIF_FUZZY"),
   add("Chordata;Actinopteri;Gadus;Gadus_novus", "", "True", "Gadus Linnaeus, 1758", "genus", "Animalia",
       "Chordata", "Actinopteri", "Gadus", type = "GBIF_HIGHERRANK"))
-g <- taxa_changes(gbif)
+g <- changes_of(gbif)
 gk <- setNames(vapply(g$changes, `[[`, "", "kind"), vapply(g$changes, `[[`, "", "lowest"))
 expect(!"Alitta virens" %in% names(gk), "GBIF: a name with its authorship is matched as given")
-expect(identical(gk[["Gadus morhuaa"]], "spelling") && grepl("Matched as Gadus morhua", g$changes[[1]]$why),
+expect(identical(gk[["Gadus morhuaa"]], "spelling") && grepl("Matched as Gadus morhua", g$changes[[which(names(gk) == "Gadus morhuaa")]]$why),
        "GBIF: a fuzzy match to another spelling")
 expect(identical(gk[["Gadus novus"]], "higher"), "GBIF: a genus with its authorship, for a species not found, is a higher rank")
 expect(g$api == "GBIF", "the register is named from the table")
+expect(identical(unname(vapply(r$changes, `[[`, "", "kind")), c("disagrees", "not_found", "higher", "higher", "accepted")),
+       "the changes come most important first")
 
 cat(if (fails) sprintf("%d failed\n", fails) else "All passed\n")
 quit(status = if (fails) 1 else 0)

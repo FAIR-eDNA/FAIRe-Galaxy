@@ -216,7 +216,9 @@ convert_readiness <- function(facts, id, settings = list()) {
         }, logical(1))]
         add(short = "a field that tells samples apart", sprintf("%s identical BioSample attributes apart from their names, and NCBI will not register them: %s.",
                     if (length(g) == 1) "Two or more samples have" else paste(length(g), "groups of samples have"),
-                    paste0(paste(head(vapply(g, paste, "", collapse = " and "), 3), collapse = "; "), if (length(g) > 3) "; ..." else "")),
+                    paste0(paste(head(vapply(g, function(x) if (length(x) > 3) sprintf("%s, %s and %d more", x[1], x[2], length(x) - 2)
+                                                        else paste(x, collapse = " and "), ""), 3), collapse = "; "),
+                           if (length(g) > 3) sprintf("; and %d more groups", length(g) - 3) else "")),
             paste0("Choose a field that tells them apart under 'Field that tells apart samples with identical attributes' below",
                    if (length(apart)) paste0(", such as ", shown(apart, 3)) else
                      ", or add one (such as a replicate number) to sampleMetadata", "."),
@@ -328,11 +330,26 @@ convert_readiness <- function(facts, id, settings = list()) {
           paste("Add a library table in Make a workbook, e (ENA's or the SRA's run report gives file names and MD5",
                 "checksums) and build the workbook again, or fill them in experimentRunMetadata. For single-end reads,",
                 "set lib_layout to 'single end' in projectMetadata."), key = "filenames")
-    inst <- workbook_instruments(facts)
-    chosen <- st("instrument", "")
-    known <- vapply(inst, instrument_in, "", names = ENA_INSTRUMENTS)
-    if (length(inst) && nzchar(chosen) && any(nzchar(known)) && !chosen %in% known)
-      cautions <- c(cautions, sprintf("The workbook gives the instrument as %s, but %s is chosen below.", shown(inst), chosen))
+    # the instrument: FAIRe2ENA takes it from projectMetadata (the assays of the runs chosen) when asked,
+    # and writes one for every run
+    chosen <- st("instrument", "from_workbook")
+    used <- unique(trimws(field_of(erm, "assay_name")[rows]))
+    inst <- setNames(vapply(used, function(x) project_value(facts, "instrument", x), ""), used)
+    ena <- vapply(inst, instrument_in, "", names = ENA_INSTRUMENTS)
+    if (chosen == "from_workbook") {
+      if (any(!nzchar(inst)))
+        add(short = "the instrument", sprintf("projectMetadata gives no instrument for %s.", shown(used[!nzchar(inst)])),
+            "Fill instrument in projectMetadata, or choose the instrument under Sequencing instrument below.", form = TRUE)
+      else if (any(!nzchar(ena)))
+        add(short = "the instrument", sprintf("The workbook's instrument %s is not one of ENA's Illumina names (it may not give the model).",
+                                              paste0("'", unique(inst[!nzchar(ena)]), "'", collapse = ", ")),
+            "Choose the instrument under Sequencing instrument below.", form = TRUE)
+      else if (length(unique(ena)) > 1)
+        add(short = "one instrument", sprintf("The assays chosen were sequenced on different instruments (%s), and ENA's run XML names one.",
+                                              paste(used, ena, sep = ": ", collapse = "; ")),
+            "Choose one assay under Assays to include below, and run it once for each.", form = TRUE)
+    } else if (any(nzchar(ena)) && !chosen %in% ena)
+      cautions <- c(cautions, sprintf("The workbook gives the instrument as %s, but %s is chosen below.", shown(unique(inst)), chosen))
     return(done())
   }
 
@@ -424,13 +441,6 @@ convert_readiness <- function(facts, id, settings = list()) {
         add(short = "read file names, or metadata only", sprintf("%s of %s libraries have no read file name (filename), which the manifest files list.", length(nofile), nrow(erm)),
             paste("Choose 'No, metadata only' below, or add a library table in Make a workbook, e (a run report, or a sheet",
                   "naming each library's read files) and build the workbook again."), key = "filenames")
-    }
-    if (length(facts$assays) > 1) {
-      key <- vapply(facts$assays, function(a) paste(project_value(facts, "target_gene", a), project_value(facts, "target_subfragment", a)), "")
-      if (any(duplicated(key)))
-        add(short = "a target_subfragment for each assay", sprintf("Assays %s share a target_gene and target_subfragment, so their QIIME 2 files would have the same names.",
-                    shown(facts$assays[key %in% key[duplicated(key)]])),
-            "Give each assay its own target_subfragment in projectMetadata.")
     }
     if (isTRUE(st("suffix", FALSE))) {
       sc <- st("suffix_col", "seq_run_id")
