@@ -16,7 +16,7 @@ for (f in c("runner.R", "tools.R", "helpers.R", "demos.R", "journey.R", "convert
 
 options(shiny.maxRequestSize = 500 * 1024^2, DT.fillContainer = FALSE)
 
-APP_VERSION <- "0.10.1"
+APP_VERSION <- "0.10.2"
 
 # Colours from the logo: petrol, teal, navy, red, orange and yellow (darkened where white text sits
 # on them, to keep it readable).
@@ -84,7 +84,7 @@ server <- function(input, output, session) {
                        pv = data.frame(term = character(), value = character(), assay = character()),
                        md_prov = data.frame(term = character(), assay = character(), value = character(),
                                             proposed = character(), tier = character()),
-                       otu_n = 1, lib_n = 1, amp_n = 0, block_version = 0, demo = "", eo_mapping = NULL)
+                       otu_n = 1, lib_n = 1, amp_n = 0, block_version = 0, demo = "", eo_mapping = NULL, eo_changes = NULL)
 
   # ------------------------------------------------------------ shared helpers
   file_href <- function(path) {
@@ -269,7 +269,7 @@ server <- function(input, output, session) {
     updateTextInput(session, "es_center", value = "CSIRO")
     updateTextInput(session, "er_center", value = "CSIRO")
     updateTextInput(session, "er_study", value = "PRJNA1263580")
-    updateSelectInput(session, "er_instrument", selected = "NextSeq 2000")
+    updateSelectInput(session, "er_instrument", selected = "from_workbook")
     updateRadioButtons(session, "eo_taxa_source", selected = "mapping")
   }
 
@@ -2194,12 +2194,6 @@ server <- function(input, output, session) {
                 if (have) tags$td(lapply(seq_along(ids), function(k) chip(r[[ids[[k]]]], if (length(ids) > 1) names(ids)[k]))))
       })))
   })
-  # ENA's run XML names the instrument from the form: start it at the workbook's instrument
-  observe({
-    inst <- workbook_instruments(wb_info())
-    hit <- if (length(inst)) instrument_in(inst[1], ENA_INSTRUMENTS) else ""
-    if (nzchar(hit)) updateSelectInput(session, "er_instrument", selected = hit)
-  })
   # The Convert fields that name the workbook's fields, assays or runs offer them, and still take typing.
   offer <- function(id, choices) {
     cur <- isolate(input[[id]])
@@ -2386,7 +2380,7 @@ server <- function(input, output, session) {
     if (!length(an)) return(notify_error("Choose a taxonomy table for at least one assay."))
     res <- with_run("Matching names (this needs internet access)", run_edna2obis_match(sd, an, input$eo_api, input$eo_worms_all))
     rv$res$eo_match <- res
-    if (res$ok) rv$eo_mapping <- res$outputs$mapping
+    if (res$ok) { rv$eo_mapping <- res$outputs$mapping; rv$eo_changes <- res$outputs$changes }
   })
   output$eo_mapping_ui <- renderUI({
     ch <- c(if (!is.null(rv$eo_mapping)) c("The table from step 1" = "__last__"),
@@ -2423,7 +2417,7 @@ server <- function(input, output, session) {
     if (is.null(p) || !file.exists(p)) return(NULL)
     if (grepl("xlsx$", p)) { d <- as.data.frame(readxl::read_excel(p, col_types = "text")); d[is.na(d)] <- ""; d } else read_tsv(p)
   })
-  eo_changes <- reactive(taxa_changes(eo_map_table()))
+  eo_changes <- reactive(taxa_changes(eo_map_table(), read_tsv(rv$eo_changes)))
   eo_picks <- reactive({
     ch <- eo_changes()
     picks <- list()
@@ -2463,7 +2457,7 @@ server <- function(input, output, session) {
                               selectize = FALSE, width = "100%")))
       })
       tags$details(class = "tx-group", open = if (length(idx) <= 15) NA,
-                   tags$summary(tags$b(TAXA_CHANGE_KINDS[[k]]), sprintf(" (%d)", length(idx))),
+                   tags$summary(tags$b(changes[[idx[1]]]$label), sprintf(" (%d)", length(idx))),
                    help_text(TAXA_CHANGE_NOTES[[k]]),
                    tags$table(class = "tx-table", tags$thead(tags$tr(tags$th("Your name"), tags$th("Matched to"),
                                                                        tags$th("Why"), tags$th("Use"))),
@@ -2476,7 +2470,7 @@ server <- function(input, output, session) {
                  "Nothing needs doing unless a match looks wrong: then choose another candidate, or no match, and your",
                  "choices are used when you build the archive. Hover over a name to see its whole taxonomy string."),
           uiOutput("eo_picks_note")),
-      lapply(names(TAXA_CHANGE_KINDS), group),
+      lapply(unique(kinds), group),
       downloadLink("eo_mapping_download", tagList(icon("download"), "Download the mapping table, with your choices")))
   })
   output$eo_picks_note <- renderUI({
@@ -2633,7 +2627,7 @@ server <- function(input, output, session) {
     rv$files <- character(); rv$workbook <- NULL; rv$res <- list(); rv$runs <- list(); rv$identify <- NULL
     rv$map <- NULL; rv$map_args <- NULL; rv$profile <- NULL; rv$crosswalk <- NULL; rv$review_saved <- NULL
     rv$review_saved_d <- NULL; rv$changed <- NULL; rv$written <- NULL
-    rv$model <- NULL; rv$model_used <- character(); rv$primers <- NULL; rv$demo <- ""; rv$eo_mapping <- NULL
+    rv$model <- NULL; rv$model_used <- character(); rv$primers <- NULL; rv$demo <- ""; rv$eo_mapping <- NULL; rv$eo_changes <- NULL
     rv$pv <- data.frame(term = character(), value = character(), assay = character())
     rv$md_prov <- rv$md_prov[0, , drop = FALSE]
     rv$otu_n <- 1; rv$lib_n <- 1; rv$amp_n <- 0; rv$block_version <- rv$block_version + 1

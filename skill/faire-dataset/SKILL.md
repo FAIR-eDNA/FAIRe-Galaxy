@@ -255,26 +255,22 @@ warnings can stay if the data were recorded that way.
 GBIF, OBIS, NCBI and ENA need at least every mandatory FAIRe term, so `convert` runs only when the
 workbook has them all and FAIRe-fier finds no errors. Until then, do not offer conversion or run a
 converter any other way: say why, and go back to Step 6 for the mandatory terms still empty (a value,
-or a FAIRe missing-value term where it is truly unknown). Then offer to convert it for the databases
-and archives the researcher plans to use. Ask one question, as a checklist, with these choices:
+or a FAIRe missing-value term where it is truly unknown).
 
-- GBIF or OBIS: a Darwin Core archive of occurrence records (`convert gbif`)
-- NCBI: BioSample table, and SRA table for metabarcoding (`convert ncbi`)
-- ENA: sample XML (`convert ena`)
-- QIIME 2: sample metadata and manifests (`convert qiime`)
-- None for now
+Then run `convert check`: it says, for each conversion, whether the workbook is ready, what it lacks
+and how to add it, or that it is not for this study (only GBIF and OBIS suit a targeted study). Ask
+one question, as a checklist, offering only the conversions it says are ready or can be made ready,
+each with what it needs, and *None for now*: GBIF or OBIS (`convert gbif`), NCBI (`convert ncbi`),
+ENA samples (`convert ena`), QIIME 2 (`convert qiime`, or `--metadata_only` without read files).
 
 Before each conversion, ask for what it needs, one question at a time, as listed in
-`references/converting.md` (licence and contact for GBIF, the metagenome for NCBI, the Webin centre
-name for ENA). Never invent these.
+`references/converting.md` and by `convert check`. Never invent these.
 
 `convert` prints the files it wrote, the messages to go through with the researcher, and what to do
-with the files. Go through every message. A converter may stop and list what it needs (an empty
-mandatory field, samples that NCBI cannot tell apart). Offer the fix: fill the value in the workbook
-(`set`, then `build` and `check`), or the matching option (`--mandatory_fill` with a missing-value
-term they choose, `--duplicates_column` with a column that tells the samples apart). A converter may
-also fill a default, such as a depth of 0 when no depth is given; tell the researcher, as the value
-would be wrong, and offer to fill the real value instead.
+with the files. Go through every message. If a converter stops, offer the fix: the value in the
+workbook (`set`, `build`, `check`), or the option (`--mandatory_fill` with a missing-value term they
+choose, `--duplicates_column` with a column that tells samples apart). A default a converter fills,
+such as a depth of 0, would be wrong: tell the researcher and offer to fill the real value.
 
 Uploading stays with the researcher, on their own accounts: say so, and do not offer to submit. For
 metabarcoding data with read counts, GBIF's Metabarcoding Data Toolkit (FAIRe2MDT) and edna2obis

@@ -4,7 +4,7 @@
         <!-- Upstream has no tagged releases. The version is the date of the pinned
              commit (aomlomics/faire2qiime 13e87de). -->
         <token name="@TOOL_VERSION@">2026.07.23</token>
-        <token name="@VERSION_SUFFIX@">4</token>
+        <token name="@VERSION_SUFFIX@">5</token>
         <import>faire_guide.xml</import>
     </macros>
     <creator>
@@ -314,6 +314,14 @@ The files are named from the project_id, the target gene and subfragment, and th
 example *myproject_COI-Leray_metadata* and *RUN01_COI-Leray_manifest*. If two assays have the same
 target gene and subfragment (for example three 12S assays), each assay is converted on its own and
 every file is named by its assay_name, for example *myproject_MiFish-U_metadata*.
+
+**What this needs from the workbook**
+
+- experimentRunMetadata with the column chosen as the sample ID (lib_id or samp_name) filled on every
+  row.
+- For the manifests: filename (and filename2 for paired reads) for every library. Without them, write
+  the metadata only.
+- Sequence reads: a targeted (qPCR or ddPCR) study has none to analyse here.
 
 -----
 

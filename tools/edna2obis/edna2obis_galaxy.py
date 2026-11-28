@@ -1024,6 +1024,156 @@ def summarise_mapping(info_df):
     return f"{names} name(s), {len(sel)} selected row(s), {incertae} 'incertae sedis', {amb} with several candidates"
 
 
+# ------------------------------------------------------------- the names the matching changed
+
+# Why a name's selected match differs from the name given, most important first. Names matched as
+# given (after tidying, such as '_' to a space or dropping 'sp.') are left out.
+CHANGE_KINDS = [
+    ('disagrees', 'Classification disagrees with your string'),
+    ('several', 'More than one candidate'),
+    ('not_found', 'Not found'),
+    ('higher', 'Matched at a higher rank'),
+    ('accepted', 'Accepted name used'),
+    ('spelling', 'Matched to another spelling'),
+]
+CHANGE_COLUMNS = ['verbatimIdentification', 'assay_name', 'your_name', 'matched_to', 'taxonRank', 'change', 'why',
+                  'candidates', 'kind']
+CLASSIFICATION = ['kingdom', 'phylum', 'class', 'order', 'family', 'genus']
+
+
+def taxon_parts(value):
+    """The names in a taxonomy string, tidied as upstream's matchers do: split at ';', rank prefixes such
+    as 'g__' removed, '_', '-' and '/' to spaces, numbers, 'sp.' and 'unassigned' dropped."""
+    out = []
+    for part in str(value).split(';'):
+        part = re.sub(r'^[a-zA-Z]__', '', part.strip())
+        part = re.sub(r'[_/-]', ' ', part)
+        part = re.sub(r' spp?\.', '', part)
+        part = re.sub(r'[0-9]+', '', part)
+        part = re.sub(r'\s+', ' ', part).strip()
+        if len(part) > 1 and part.lower() != 'unassigned':
+            out.append(part)
+    return out
+
+
+def is_name(sci, name):
+    """'Alitta virens' is the name of 'Alitta virens' and of GBIF's 'Alitta virens (M.Sars, 1835)': what
+    follows a name is its authorship (a capital or a bracket), where a species' epithet is lower case."""
+    s, n = re.sub(r'\s+', ' ', str(sci)).strip(), re.sub(r'\s+', ' ', str(name)).strip()
+    if not n:
+        return False
+    if s.lower() == n.lower():
+        return True
+    return s.lower().startswith(n.lower() + ' ') and re.match(r'[A-Z(]', s[len(n) + 1:]) is not None
+
+
+def changed_names(info_df):
+    """One row for each name (and assay) whose selected match differs from the name given, with why.
+    The rules match the FAIRe tools app's (shiny/R/taxa_review.R reads this table)."""
+    df = info_df.copy()
+    if 'assay_name' not in df.columns:
+        df['assay_name'] = ''
+    for c in df.columns:
+        df[c] = df[c].apply(lambda v: '' if v is None or (not isinstance(v, str) and pd.isna(v)) else str(v))
+
+    def truthy(v):
+        return str(v).strip().lower() in ('true', '1', 'yes')
+
+    def norm(v):
+        return re.sub(r'\s+', ' ', str(v)).strip().lower()
+
+    def get(row, c):
+        return row[c] if c in row.index else ''
+
+    apis = [v for v in df.get('nameAccordingTo', pd.Series(dtype=str)) if v.strip()]
+    api = apis[0] if apis else 'the register'
+    out = []
+    for (verbatim, assay), group in df.groupby(['verbatimIdentification', 'assay_name'], sort=False):
+        chosen = group[group['selected_match'].apply(truthy)] if 'selected_match' in group.columns else group.iloc[:0]
+        sel = chosen.iloc[0] if len(chosen) else group.iloc[0]
+        cleaned = get(sel, 'cleanedTaxonomy').strip()
+        parts = [p.strip() for p in cleaned.split(';') if p.strip()] if cleaned else taxon_parts(verbatim)
+        lowest = parts[-1] if parts else ''
+        sci = get(sel, 'scientificName').strip()
+        rank = get(sel, 'taxonRank').strip().lower()
+        mtype = get(sel, 'match_type_debug')
+        # the rows a person could choose from: upstream shows unaccepted names for transparency, but never selects them
+        cands = []
+        for _, r in group.iterrows():
+            name = get(r, 'scientificName').strip()
+            if truthy(get(r, 'unaccepted_match')) or not name or norm(name) == 'incertae sedis':
+                continue
+            if (norm(name), norm(get(r, 'kingdom'))) not in cands:
+                cands.append((norm(name), norm(get(r, 'kingdom'))))
+        at = [i for i, p in enumerate(parts) if is_name(sci, p)]
+        # whether the string's names above the one matched (and above its genus, which a species' name
+        # implies) appear in the match's classification: a namesake in another group shares only the name
+        upto = parts[:max(at)] if at else parts[:-1]
+        tokens = {norm(t) for t in upto} - {'eukaryota', norm(get(sel, 'genus'))}
+        tokens.discard('')
+        values = {norm(get(sel, c)) for c in CLASSIFICATION} | {norm(sci)}
+        agree = len(tokens & values)
+        queried = re.sub(r'^Success_(Batch|AphiaID)_', '', mtype)
+        if not queried or queried == mtype:
+            queried = lowest
+        found = bool(sci) and norm(sci) != 'incertae sedis' and not mtype.startswith(('Failed', 'No_GBIF'))
+        kinds, why = [], []
+        if not found:
+            kinds, why = ['not_found'], [f'Not found in {api}: recorded as incertae sedis.']
+        else:
+            group_names = ' > '.join(v for v in (get(sel, 'kingdom'), get(sel, 'phylum'), get(sel, 'class')) if v.strip())
+            if len(tokens) >= 2 and agree == 0:
+                kinds.append('disagrees')
+                why.append(f"Only the name agrees with your string: {api} places it in {group_names or 'another group'}.")
+            if len(cands) > 1:
+                kinds.append('several')
+                why.append(f'{len(cands)} candidates.')
+            if at and max(at) < len(parts) - 1:
+                kinds.append('higher')
+                why.append(f"'{lowest}' was not found, so the match is at {rank or 'a higher rank'}.")
+            if truthy(get(sel, 'replaced_unaccepted')):
+                kinds.append('accepted')
+                why.append(f"'{queried}' is not an accepted name; {api} gives {sci}.")
+            elif not at:
+                kinds.append('spelling')
+                why.append(f'Matched as {sci}.')
+        if not kinds:
+            continue
+        kind = next(k for k, _ in CHANGE_KINDS if k in kinds)
+        out.append({'verbatimIdentification': verbatim, 'assay_name': assay, 'your_name': lowest,
+                    'matched_to': sci if found else 'incertae sedis', 'taxonRank': rank,
+                    'change': dict(CHANGE_KINDS)[kind], 'why': ' '.join(why), 'candidates': len(cands), 'kind': kind})
+    order = {k: i for i, (k, _) in enumerate(CHANGE_KINDS)}
+    out.sort(key=lambda r: order[r['kind']])
+    names = df.groupby(['verbatimIdentification', 'assay_name'], sort=False).ngroups
+    return pd.DataFrame(out, columns=CHANGE_COLUMNS), names
+
+
+def summarise_changes(changes, names):
+    if changes.empty:
+        return f"all {names} name(s) matched as given"
+    counts = changes['change'].value_counts()
+    return (f"{names - len(changes)} of {names} name(s) matched as given; {len(changes)} changed ("
+            + ', '.join(f"{label.lower()}: {counts[label]}" for _, label in CHANGE_KINDS if label in counts)
+            + "), listed in the changed names table")
+
+
+def run_changes(mapping, changes_out):
+    """The changed names table for a mapping table made earlier (no internet access needed)."""
+    ext = 'xlsx' if is_xlsx(mapping, '') else 'tabular'
+    if ext == 'xlsx':
+        sheets = pd.read_excel(mapping, sheet_name=None, dtype=str)
+        df = sheets.get('taxa_mapping_INFO', next(iter(sheets.values())))
+    else:
+        df = pd.read_csv(mapping, sep='\t', dtype=str, keep_default_na=False)
+    for c in ('verbatimIdentification', 'selected_match', 'scientificName'):
+        if c not in df.columns:
+            raise Stop(f"the mapping table has no {c} column. Use the table written by 'edna2obis: match taxa'.")
+    changes, names = changed_names(df)
+    changes.to_csv(changes_out, sep='\t', index=False)
+    info(summarise_changes(changes, names))
+
+
 # ------------------------------------------------------------- subcommands
 
 def base_config(settings):
@@ -1057,7 +1207,7 @@ def enter_workdir():
     shutil.copy(os.path.join(HERE, 'data_mapper.yaml'), 'data_mapper.yaml')
 
 
-def run_match(form, out_path):
+def run_match(form, out_path, changes_out=None):
     analyses = form['analyses']
     api_form = form['api']
     settings = matcher_settings(api_form)
@@ -1125,6 +1275,10 @@ def run_match(form, out_path):
     combined = pd.concat(tables, ignore_index=True)
     os.chdir(start)
     write_table(combined, out_path, fmt)
+    if changes_out:
+        changes, names = changed_names(combined)
+        changes.to_csv(changes_out, sep='\t', index=False)
+        info(summarise_changes(changes, names))
     info(f"wrote the mapping table: {len(combined)} rows. Review it, change selected_match where needed (one "
          "True row for each name and assay), then use it in 'edna2obis: build Darwin Core tables'.")
 
@@ -1301,16 +1455,26 @@ def run_build(form, outputs):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument('mode', choices=['match', 'build'])
-    parser.add_argument('--form', required=True, help='Galaxy inputs JSON (staging_path_and_source_path)')
+    parser.add_argument('mode', choices=['match', 'build', 'changes'])
+    parser.add_argument('--form', help='match and build: Galaxy inputs JSON (staging_path_and_source_path)')
     parser.add_argument('--mapping_out', help='match: output mapping table')
+    parser.add_argument('--changes_out', help='match and changes: the names the matching changed, with why')
+    parser.add_argument('--mapping', help='changes: a mapping table made by match')
     parser.add_argument('--outputs', default='outputs', help='build: folder for the outputs')
     args = parser.parse_args()
-    with open(args.form, encoding='utf-8') as fh:
-        form = json.load(fh)
     try:
+        if args.mode == 'changes':
+            if not args.mapping or not args.changes_out:
+                raise Stop('changes needs --mapping and --changes_out.')
+            run_changes(args.mapping, args.changes_out)
+            return
+        if not args.form:
+            raise Stop(f'{args.mode} needs --form.')
+        with open(args.form, encoding='utf-8') as fh:
+            form = json.load(fh)
         if args.mode == 'match':
-            run_match(form, os.path.abspath(args.mapping_out))
+            run_match(form, os.path.abspath(args.mapping_out),
+                      os.path.abspath(args.changes_out) if args.changes_out else None)
         else:
             run_build(form, args.outputs)
     except Stop as err:

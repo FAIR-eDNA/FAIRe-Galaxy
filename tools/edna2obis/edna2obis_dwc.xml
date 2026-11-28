@@ -676,6 +676,18 @@ using `edna2obis <https://github.com/aomlomics/edna2obis>`_. It writes:
 - the **eml.xml** dataset metadata and **meta.xml**, zipped with the tables as a Darwin Core archive
   that you can load into an IPT (Integrated Publishing Toolkit) for OBIS or GBIF.
 
+**What this needs from the workbook**
+
+- For each assay, a taxonomy table and an abundance table: the workbook's taxaFinal and otuFinal
+  sheets (or the tables themselves), with the assay names used in the workbook.
+- The taxonomy: a mapping table from *edna2obis: match taxa*, or internet access to look the names up
+  again.
+- eventDate as an ISO 8601 date (2024-12-07); text dates such as 7/12/24 need *Day first* or
+  *Month first*.
+- Coordinates (decimalLatitude and decimalLongitude) for each sample: OBIS needs them for each record.
+- A metabarcoding study: a targeted (qPCR or ddPCR) study goes to OBIS as presence and absence
+  records (FAIRe to Darwin Core).
+
 -----
 
 **Inputs**

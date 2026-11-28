@@ -1793,6 +1793,204 @@ CONVERT_NOTES = {
 }
 
 
+# ---------------------------------------------------------------- whether each conversion can run
+# The same checks as the FAIRe tools app's Convert page (shiny/R/convert.R), for the conversions this
+# skill runs: what the workbook lacks for each, and how to add it.
+
+NOT_SUITED = {
+    'ncbi': 'NCBI holds the samples and reads behind sequence data, and a targeted (qPCR or ddPCR) study has none.',
+    'ena': 'ENA holds the samples behind sequence reads, and a targeted (qPCR or ddPCR) study has none.',
+    'qiime': 'QIIME 2 analyses sequence reads, and a targeted (qPCR or ddPCR) study has none.',
+}
+
+
+def workbook_tables(wbk):
+    """The workbook's sheets as lists of rows (strings), and projectMetadata as {term: {column: value}}."""
+    from openpyxl import load_workbook
+    wb = load_workbook(wbk, read_only=True, data_only=True)
+    sheets = {}
+    for name in wb.sheetnames:
+        sheets[name] = [['' if v is None else str(v).strip() for v in row] for row in wb[name].iter_rows(values_only=True)]
+    pm = {}
+    rows = sheets.get('projectMetadata', [])
+    head = next((r for r in rows if 'term_name' in r), None)
+    if head:
+        t = head.index('term_name')
+        for r in rows[rows.index(head) + 1:]:
+            if len(r) > t and r[t]:
+                pm[r[t]] = {head[i]: r[i] for i in range(t + 1, min(len(head), len(r))) if head[i] and r[i]}
+    return sheets, pm
+
+
+def sheet_records(sheets, name):
+    """A FAIRe sheet's rows below its field names (row 3) as dicts, and each field's section (row 2)."""
+    rows = sheets.get(name)
+    if not rows or len(rows) < 3:
+        return None, {}
+    head = rows[2]
+    recs = [dict(zip(head, r)) for r in rows[3:] if any(r)]
+    return recs, dict(zip(head, rows[1]))
+
+
+def project_value(pm, term, assay=None):
+    """A projectMetadata value: the assay's own column, or else project_level."""
+    vals = pm.get(term, {})
+    if assay:
+        col = next((c for c, v in pm.get('assay_name', {}).items() if c != 'project_level' and v == assay), None)
+        if col and vals.get(col):
+            return vals[col]
+    return vals.get('project_level', '')
+
+
+def ncbi_instrument_name(value):
+    """NCBI's name for an instrument value (the bundled FAIRe2NCBI driver's rule), or ''."""
+    import importlib.util
+    try:
+        spec = importlib.util.spec_from_file_location('faire2ncbi_galaxy', TOOLS / 'faire2ncbi' / 'faire2ncbi_galaxy.py')
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+    except Exception:
+        return value
+    name = mod.clean_instrument(value)
+    return name if name in mod.INSTRUMENT_PLATFORM else ''
+
+
+def conversion_readiness(wbk, args):
+    """{target: (status, [(what, how), ...], [caution, ...])}: 'ready', 'needs' or 'not_suited'."""
+    sheets, pm = workbook_tables(wbk)
+    smd, sections = sheet_records(sheets, 'sampleMetadata')
+    erm, _ = sheet_records(sheets, 'experimentRunMetadata')
+    smd = [r for r in (smd or []) if r.get('samp_name')]
+    erm = [r for r in (erm or []) if r.get('samp_name') or r.get('lib_id')] if erm is not None else None
+    assays = [a.strip() for a in project_value(pm, 'assay_name').split('|') if a.strip()]
+    kind = project_value(pm, 'assay_type').lower() or (
+        'targeted' if erm is None and any(n.startswith(('ampData', 'stdData')) for n in sheets) else 'metabarcoding')
+    samples = [r['samp_name'] for r in smd]
+
+    def empty(field, rows=None):
+        return [r['samp_name'] for r in (smd if rows is None else rows) if not r.get(field, '')]
+
+    def listing(xs, n=5):
+        return ', '.join(xs[:n]) + (', ...' if len(xs) > n else '')
+    out = {}
+    for target in ('gbif', 'ncbi', 'ena', 'qiime'):
+        needs, cautions = [], []
+        if kind == 'targeted' and target in NOT_SUITED:
+            out[target] = ('not_suited', [(NOT_SUITED[target], 'Publish the detections with convert gbif.')], [])
+            continue
+        if target in ('ncbi', 'qiime') and erm is None:
+            needs.append(('No experimentRunMetadata sheet.', 'Build the workbook with the OTU tables (build).'))
+        if target == 'gbif':
+            for a in assays:
+                if kind == 'targeted':
+                    det = [f'detected_notDetected_{a}'] + (['detected_notDetected'] if len(assays) == 1 else [])
+                    if not any(r.get(f) for r in smd for f in det) and not any(n.startswith('ampData') for n in sheets):
+                        needs.append((f'No detections for {a} (detected_notDetected_{a}, or an ampData sheet).',
+                                      'Give the qPCR or ddPCR results and build again.'))
+                    if not project_value(pm, 'targetTaxonomicAssay', a):
+                        needs.append((f'targetTaxonomicAssay is empty for {a}: it names the taxon each record is about.',
+                                      'Ask for it, set it, and build again.'))
+                elif not any(f'{b}_{a}' in sheets or b in sheets for b in ('otuFinal',)) or \
+                        not any(f'{b}_{a}' in sheets or b in sheets for b in ('taxaFinal',)):
+                    needs.append((f'No otuFinal and taxaFinal sheets for {a}.', 'Give the OTU and taxonomy tables and build again.'))
+            if args.publish_to in ('obis', 'both') and not args.taxa:
+                cautions.append('OBIS needs a WoRMS ID for each name: offer a taxon table with scientificNameID (--taxa).')
+        if target == 'ncbi' and erm is not None:
+            mand = [('collection_date', ['eventDate']), ('depth', ['maximumDepthInMeters']), ('env_broad_scale', ['env_broad_scale']),
+                    ('env_local_scale', ['env_local_scale']), ('env_medium', ['env_medium']), ('geo_loc_name', ['geo_loc_name']),
+                    ('lat_lon', ['decimalLatitude', 'decimalLongitude'])]
+            gaps = []
+            for field, terms in mand:
+                miss = sorted({n for t in terms for n in empty(t)}, key=samples.index)
+                if miss:
+                    gaps.append(f"{field} ({' and '.join(terms)}) for {len(miss)} sample(s): {listing(miss)}")
+            if gaps and args.mandatory_fill == 'stop':
+                needs.append(('BioSample: mandatory fields are empty: ' + '; '.join(gaps) + '.',
+                              'Fill them (set, build, check), or, with the researcher\'s agreement, --mandatory_fill with a '
+                              "missing-value term such as 'not applicable' for a field that does not apply to a control."))
+            elif gaps:
+                cautions.append(f"BioSample: empty mandatory fields will be '{args.mandatory_fill}': " + '; '.join(gaps) + '.')
+            # NCBI refuses samples whose checklist fields are all the same; own terms (User defined) do not count
+            fields = [f for f in (smd[0].keys() if smd else []) if f and f not in ('samp_name', 'sample_title', 'description')
+                      and sections.get(f) and sections.get(f) != 'User defined']
+            if args.duplicates_column:
+                fields.append(args.duplicates_column)
+            groups = {}
+            for r in smd:
+                groups.setdefault(tuple(r.get(f, '') for f in fields), []).append(r['samp_name'])
+            same = [g for g in groups.values() if len(g) > 1]
+            if same:
+                apart = [f for f in (smd[0].keys() if smd else []) if f and f not in ('samp_name', 'sample_title', 'description')
+                         and all(len({r.get(f, '') for r in smd if r['samp_name'] in g}) == len(g)
+                                 and all(r.get(f) for r in smd if r['samp_name'] in g) for g in same)]
+                needs.append((f'BioSample: {len(same)} group(s) of samples have identical attributes apart from their names, '
+                              'and NCBI will not register them: ' + '; '.join(
+                                  (f'{g[0]}, {g[1]} and {len(g) - 2} more' if len(g) > 3 else ' and '.join(g)) for g in same[:3])
+                              + (f'; and {len(same) - 3} more groups' if len(same) > 3 else '') + '.',
+                              '--duplicates_column with a field that tells them apart'
+                              + (f", such as {', '.join(apart[:3])}" if apart else ', or add one (such as a replicate number)')
+                              + '.'))
+            if kind == 'metabarcoding':
+                libs = [r.get('lib_id') or r.get('samp_name') for r in erm]
+                nofile = [lib for lib, r in zip(libs, erm) if not r.get('filename')]
+                if nofile:
+                    needs.append((f'SRA: {len(nofile)} of {len(libs)} libraries have no read file name (filename): {listing(nofile)}.',
+                                  'Give a run report or a table of each library\'s read files with the OTU table, and build again. '
+                                  'If the reads are already in an archive, the SRA table is not needed.'))
+                if not args.instrument_model:
+                    inst = {project_value(pm, 'instrument', a) for a in assays} - {''}
+                    if not inst:
+                        needs.append(('SRA: the workbook gives no sequencing instrument.', 'Ask which, and pass --instrument_model.'))
+                    for v in sorted(inst):
+                        if not ncbi_instrument_name(v):
+                            needs.append((f"SRA: the instrument '{v}' is not one of NCBI's names (it may not give the model).",
+                                          'Ask which model, and pass --instrument_model.'))
+        if target == 'ena':
+            if not args.center_name:
+                needs.append(('No centre name.', "Ask for the centre name of the researcher's Webin account (--center_name)."))
+            gaps = []
+            for f, what in (('eventDate', 'collection date'), ('decimalLatitude', 'latitude'), ('decimalLongitude', 'longitude'),
+                            ('geo_loc_name', 'country or sea'), ('env_broad_scale', 'broad-scale environment'),
+                            ('env_medium', 'environmental medium')):
+                miss = empty(f)
+                if miss:
+                    gaps.append(f'{f} ({what}) for {len(miss)} sample(s): {listing(miss)}')
+            if gaps:
+                needs.append(('Mandatory ENA fields are empty: ' + '; '.join(gaps) + '.', 'Fill them (set, build, check).'))
+            nodepth = [r['samp_name'] for r in smd if not r.get('minimumDepthInMeters') and not r.get('maximumDepthInMeters')]
+            if nodepth:
+                cautions.append(f'{len(nodepth)} sample(s) have no depth, so FAIRe2ENA writes 0 m: offer to fill the real depth.')
+            if empty('env_local_scale'):
+                cautions.append(f"{len(empty('env_local_scale'))} sample(s) have no env_local_scale, so FAIRe2ENA writes "
+                                "'marine pelagic zone': offer to fill the real value.")
+        if target == 'qiime' and erm is not None:
+            col = args.sample_name_column
+            if any(not r.get(col) for r in erm):
+                needs.append((f'Some rows of experimentRunMetadata have no {col}, the QIIME 2 sample ID.',
+                              f"--sample_name_column {'samp_name' if col == 'lib_id' else 'lib_id'}, or fill {col}."))
+            if not args.metadata_only and any(not r.get('filename') for r in erm):
+                needs.append(('Libraries have no read file name (filename), which the manifests list.',
+                              'Use --metadata_only, or give the read file names with the OTU table and build again.'))
+        out[target] = ('needs' if needs else 'ready', needs, cautions)
+    return kind, out
+
+
+def print_readiness(wbk, args):
+    kind, out = conversion_readiness(wbk, args)
+    names = {'gbif': 'GBIF or OBIS (Darwin Core)', 'ncbi': 'NCBI (BioSample and SRA)', 'ena': 'ENA (samples)',
+             'qiime': 'QIIME 2'}
+    print(f'Which conversions can run on this {kind} workbook (with the options given):')
+    for target, (status, needs, cautions) in out.items():
+        word = {'ready': 'ready', 'needs': f'needs {len(needs)} thing(s)', 'not_suited': 'not for this study'}[status]
+        print(f'- {target}: {names[target]}: {word}')
+        for what, how in needs:
+            print(f'    {what}' + ('' if status == 'not_suited' else f' To add: {how}'))
+        for c in cautions:
+            print(f'    Note: {c}')
+    print('Offer only the conversions that are ready, or that the researcher can make ready as said.')
+    return 0
+
+
 def mandatory_empty(w):
     """The mandatory terms apply mapping left with no value, from its log of the last build."""
     log = w / 'build' / 'apply_mapping_log.txt'
@@ -1811,6 +2009,13 @@ def cmd_convert(args):
     wbk = Path(s.get('workbook', ''))
     if not s.get('workbook') or not wbk.exists():
         raise Stop('Build the workbook first (build), and check it (check).')
+    if args.target == 'check':
+        # what each conversion needs, before the researcher decides, with the gate below said first
+        empty = mandatory_empty(w)
+        if empty:
+            print(f"First: {len(empty)} mandatory term(s) have no value ({short(', '.join(empty), 300)}); no conversion "
+                  "runs until each has a value or a FAIRe missing-value term, and FAIRe-fier passes.\n")
+        return print_readiness(wbk, args)
     c = s.get('checked') or {}
     if not c.get('ran'):
         raise Stop('Check the workbook with FAIRe-fier first (check): converting an unchecked workbook passes its '
@@ -1834,6 +2039,8 @@ def cmd_convert(args):
                    'Go back to the gaps with the researcher: give each mandatory term its value, or a FAIRe '
                    "missing-value term (such as 'missing: not collected') where it is truly unknown, then build and "
                    'check again.')
+    if args.target in NOT_SUITED and conversion_readiness(wbk, args)[0] == 'targeted':
+        raise Stop(f"Not converted: {NOT_SUITED[args.target]} Publish the detections with convert gbif.")
     if args.target == 'ncbi':
         import importlib.util
         if importlib.util.find_spec('yaml') is None:
@@ -1879,8 +2086,8 @@ def cmd_convert(args):
         logs.append(('Darwin Core archive', code, out))
     elif args.target == 'qiime':
         q = TOOLS / 'faire2qiime'
-        code, out = run_tool(q / 'normalise_faire.py', [wbk, d / 'normalised.xlsx', '--check_column',
-                                                       args.sample_name_column], d, quiet=True)
+        code, out = run_tool(q / 'normalise_faire.py', [wbk, d / 'normalised.xlsx', '--check_column', args.sample_name_column]
+                             + ([] if args.metadata_only else ['--check_filled', 'filename']), d, quiet=True)
         logs.append(('normalise', code, out))
         if code == 0:
             (d / 'out').mkdir()
@@ -1891,6 +2098,9 @@ def cmd_convert(args):
             out = '\n'.join(ln for ln in out.splitlines() if ln.strip() and 'pyfiglet' not in ln
                             and not set(ln.strip()) <= set('=_|/\\ ()`\'-.,<>'))
             logs.append(('FAIRe2QIIME', code, out))
+            if args.metadata_only:
+                for f in (d / 'out').rglob('*manifest*'):
+                    f.unlink()
     made = sorted(str(p.relative_to(d)) for p in d.rglob('*')
                   if p.is_file() and p.name not in ('normalised.xlsx', 'prepared.xlsx', 'answers.yaml'))
     ok = all(c == 0 for _, c, _ in logs)
@@ -2279,9 +2489,10 @@ def main(argv=None):
     p.set_defaults(fn=cmd_check)
 
     p = sub.add_parser('convert', help='convert the checked workbook for a database or archive')
-    p.add_argument('target', choices=['ncbi', 'ena', 'gbif', 'qiime'],
-                   help='ncbi: BioSample and SRA tables; ena: ENA sample XML; gbif: a Darwin Core archive for GBIF '
-                        'or OBIS (presence and absence); qiime: QIIME 2 metadata')
+    p.add_argument('target', choices=['check', 'ncbi', 'ena', 'gbif', 'qiime'],
+                   help='check: which conversions can run on the workbook, and what each needs; ncbi: BioSample and '
+                        'SRA tables; ena: ENA sample XML; gbif: a Darwin Core archive for GBIF or OBIS (presence and '
+                        'absence); qiime: QIIME 2 metadata')
     p.add_argument('--organism', default='marine metagenome',
                    help='ncbi: the metagenome the samples are, such as freshwater metagenome or air metagenome')
     p.add_argument('--bioproject', help='ncbi: the BioProject accession, if there is one')
@@ -2306,6 +2517,7 @@ def main(argv=None):
         p.add_argument(f'--{k}', help='gbif: for the dataset description (EML)')
     p.add_argument('--sample_name_column', default='lib_id', help='qiime: the column that names the samples')
     p.add_argument('--sequences_folder', default='/path/to/sequences', help='qiime: where the fastq files are')
+    p.add_argument('--metadata_only', action='store_true', help='qiime: the metadata files only, no manifests')
     p.set_defaults(fn=cmd_convert)
 
     p = sub.add_parser('envo', help='search the bundled ENVO for habitat terms, or show a class')

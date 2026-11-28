@@ -156,6 +156,16 @@ downloaded. The box above *2. Build* notes how many names were changed and how m
 used. The checks are in `R/taxa_review.R` (tests in `tests/test_taxa_review.R`); `tests/conversions.R`
 checks that a choice, and *no match*, reach the archive.
 
+Version 0.10.2 (28 November 2026): the Convert page's checks reach Galaxy and the AI assistant. The
+ENA runs form starts at *Taken from the workbook*, which FAIRe2ENA now does itself (its Galaxy form
+started at a fixed instrument). The names edna2obis's matching changed are found by the Galaxy tool,
+as its *changed names* output (`changed_names()` in `edna2obis_galaxy.py`); the app reads that table,
+so Galaxy and the app share one set of rules, and `R/taxa_review.R` keeps only the choices on the
+page. QIIME 2 is no longer said to need a target_subfragment for each assay on the same target gene:
+it converts each on its own and names its files by assay, as `tests/conversions.R` now checks on
+FAIRe2QIIME's own test workbook. The Galaxy converters' help says what each needs from the workbook,
+and the assistant's `convert check` reports the same for its conversions.
+
 ## What it covers
 
 | Step | Tools |

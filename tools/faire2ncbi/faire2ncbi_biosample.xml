@@ -310,6 +310,18 @@ FAIRe2NCBI normally asks you questions as it runs. In Galaxy, the tool answers t
 It also writes a **config** file holding those answers, so that the same run can be repeated
 outside Galaxy.
 
+**What this needs from the workbook**
+
+- A metabarcoding workbook, with an experimentRunMetadata sheet. NCBI holds the samples behind
+  sequence reads, so a targeted (qPCR or ddPCR) study has nothing to submit here.
+- For every sample in sampleMetadata: eventDate, maximumDepthInMeters, env_broad_scale,
+  env_local_scale, env_medium, geo_loc_name, decimalLatitude and decimalLongitude. Where one is
+  truly unknown or does not apply (no depth for a field control, say), choose a missing-value term
+  under *Empty mandatory fields* instead.
+- Samples that differ in no checklist field (field replicates, say) need a field that tells them
+  apart, under *Field that tells apart samples with identical attributes*. Your own terms (section
+  *User defined*) do not tell them apart unless named there.
+
 -----
 
 **Inputs**

@@ -3,7 +3,7 @@
     <macros>
         <!-- FAIRe2MDT.R script version 1.1.0 (16 Jul 2025), FAIR-eDNA/FAIRe2MDT commit 13d1fcc -->
         <token name="@TOOL_VERSION@">1.1.0</token>
-        <token name="@VERSION_SUFFIX@">1</token>
+        <token name="@VERSION_SUFFIX@">2</token>
         <token name="@NAME_RE@">^\s*[A-Za-z0-9_.+() -]+\s*$</token>
         <token name="@SHEET_RE@">^[A-Za-z0-9 _.,+()#-]{1,31}$</token>
         <import>faire_guide.xml</import>
@@ -232,6 +232,16 @@ assay and one sequencing run into the Excel workbook that GBIF's
 `Metabarcoding Data Toolkit (MDT) <https://www.gbif.org/metabarcoding>`_ takes, so that you can
 publish eDNA occurrence data through GBIF. For a study with several assays or runs, run the tool
 once for each assay and run.
+
+**What this needs from the workbook**
+
+- experimentRunMetadata rows with the assay and a sequencing run ID (seq_run_id): the tool picks the
+  libraries by both. The FAIRe mapper fills seq_run_id from the run ID given with each OTU table.
+- The OTU and taxonomy tables: the workbook's otuFinal and taxaFinal sheets (or otuFinal_<assay> and
+  taxaFinal_<assay>), or the tables themselves.
+- target_gene for the assay in projectMetadata; MDT asks for the marker if it does not know the value.
+- A metabarcoding study: a targeted (qPCR or ddPCR) study goes to GBIF as presence and absence
+  records (FAIRe to Darwin Core).
 
 -----
 

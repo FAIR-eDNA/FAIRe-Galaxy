@@ -2,7 +2,7 @@
     <description>presence and absence records for GBIF and OBIS</description>
     <macros>
         <token name="@TOOL_VERSION@">0.2.0</token>
-        <token name="@VERSION_SUFFIX@">1</token>
+        <token name="@VERSION_SUFFIX@">2</token>
         <token name="@NAMES_RE@">^[A-Za-z0-9_.+() ,-]*$</token>
         <token name="@TEXT_RE@">^[^'\\`$]*$</token>
         <import>faire_guide.xml</import>
@@ -270,6 +270,15 @@ for **presence and absence** data:
   **FAIRe2MDT** or **edna2obis**.
 
 Controls (samp_category other than *sample*) are always left out.
+
+**What this needs from the workbook**
+
+- Metabarcoding: an otuFinal and a taxaFinal sheet for each assay (otuFinal_<assay> and
+  taxaFinal_<assay> when there are several).
+- Targeted (qPCR or ddPCR): detected_notDetected_<assay> in sampleMetadata, or an ampData sheet, and
+  targetTaxonomicAssay for each assay in projectMetadata (the taxon each record is about).
+- For OBIS: a WoRMS ID for each name (taxonID from WoRMS in taxaFinal, or a taxon table on the form).
+- A licence and a contact for the dataset, in projectMetadata or on the form.
 
 -----
 

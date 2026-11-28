@@ -41,7 +41,8 @@ python '$__tool_directory__/faire2ena_galaxy.py' run
         </param>
         <expand macro="center_name"/>
         <param name="instrument_model" type="select" label="Sequencing instrument"
-            help="Values from the ENA controlled list for the Illumina platform.">
+            help="From the workbook: the instrument in projectMetadata (the assay's column, or project_level), given ENA's name (Illumina NextSeq 2000 is ENA's NextSeq 2000). The tool stops if it is missing, not one of these, or differs between the assays chosen. The others are values from the ENA controlled list for the Illumina platform.">
+            <option value="from_workbook" selected="true">From the workbook (instrument in projectMetadata)</option>
             <option value="Illumina MiSeq">Illumina MiSeq</option>
             <option value="Illumina iSeq 100">Illumina iSeq 100</option>
             <option value="Illumina MiniSeq">Illumina MiniSeq</option>
@@ -49,7 +50,7 @@ python '$__tool_directory__/faire2ena_galaxy.py' run
             <option value="NextSeq 550">NextSeq 550</option>
             <option value="NextSeq 1000">NextSeq 1000</option>
             <option value="NextSeq 2000">NextSeq 2000</option>
-            <option value="Illumina NovaSeq 6000" selected="true">Illumina NovaSeq 6000</option>
+            <option value="Illumina NovaSeq 6000">Illumina NovaSeq 6000</option>
             <option value="Illumina NovaSeq X">Illumina NovaSeq X</option>
             <option value="Illumina HiSeq 2500">Illumina HiSeq 2500</option>
             <option value="Illumina HiSeq 4000">Illumina HiSeq 4000</option>
@@ -121,6 +122,28 @@ python '$__tool_directory__/faire2ena_galaxy.py' run
             <output name="log">
                 <assert_contents>
                     <has_text text="Skipped 1 samples without accessions"/>
+                </assert_contents>
+            </output>
+        </test>
+        <!-- The instrument from the workbook: Illumina MiSeq [OBI_0002003] in projectMetadata is ENA's Illumina MiSeq -->
+        <test expect_num_outputs="4">
+            <param name="input_file" value="faire_two_assays.xlsx"/>
+            <param name="receipt_file" value="ena_sample_receipt.xml"/>
+            <param name="study_accession" value="PRJEB99999"/>
+            <param name="center_name" value="CSIRO"/>
+            <conditional name="assay">
+                <param name="assay_select" value="one"/>
+                <param name="assay_name" value="ssu16sv4v5-emp"/>
+            </conditional>
+            <output name="experiments_xml">
+                <assert_contents>
+                    <has_n_elements_with_path path="./EXPERIMENT" n="3"/>
+                    <has_text text="&lt;INSTRUMENT_MODEL&gt;Illumina MiSeq&lt;/INSTRUMENT_MODEL&gt;"/>
+                </assert_contents>
+            </output>
+            <output name="log">
+                <assert_contents>
+                    <has_text text="instrument_model 'Illumina MiSeq', from instrument in projectMetadata (Illumina MiSeq [OBI_0002003])"/>
                 </assert_contents>
             </output>
         </test>
@@ -296,6 +319,16 @@ to ENA, and upload the receipt that ENA returns.
 The tool converts only the rows whose samp_name appears in the receipt, so that each run is linked
 to its ENA sample accession. Other rows, for example controls you did not register, are skipped and
 listed in the log.
+
+**What this needs from the workbook**
+
+- ENA's receipt for the samples: submit the sample XML first, and use the receipt ENA returns.
+- experimentRunMetadata with, for every run, filename and its MD5 checksum (checksum_filename), and
+  filename2 and checksum_filename2 for paired reads. lib_layout in projectMetadata says which:
+  *paired end* (or empty) or *single end*.
+- The sequencing instrument, from projectMetadata's instrument (one for all the assays chosen), or
+  chosen on the form.
+- The study accession and the centre name of your Webin account, on the form.
 
 -----
 
