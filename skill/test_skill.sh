@@ -85,6 +85,15 @@ $S --work "$W" build \
     --library "$D/fastq_file_names.txt" assay=16S_Fish filter=16S_Fish run=AGRF_NovaSeq6000_SP \
     --library "$D/fastq_file_names.txt" assay=COI_Leray filter=COI_Leray run=AGRF_NovaSeq6000_SP > /dev/null
 $S --work "$W" check > /dev/null || true
+# convert check says what each conversion needs before any runs: NCBI a field that tells the replicate
+# samples apart, ENA a centre name; the Darwin Core archive and QIIME 2 are ready
+$S --work "$W" convert check --mandatory_fill "not collected" > "$out/daynight_check.txt"
+grep -q "gbif: GBIF or OBIS (Darwin Core): ready" "$out/daynight_check.txt" \
+    && grep -q "qiime: QIIME 2: ready" "$out/daynight_check.txt" \
+    && grep -q "ncbi: NCBI (BioSample and SRA): needs" "$out/daynight_check.txt" \
+    && grep -q "identical attributes" "$out/daynight_check.txt" \
+    && grep -q "ena: ENA (samples): needs" "$out/daynight_check.txt" \
+    || { echo "FAIL day-night: convert check"; cat "$out/daynight_check.txt"; fail=1; }
 # Conversions: the Darwin Core archive, ENA samples and QIIME 2 metadata are written; NCBI stops,
 # as these replicate samples have identical BioSample attributes, and says so.
 $S --work "$W" convert gbif --licence CC-BY-4.0 --given_name Katrina --surname West > /dev/null
@@ -127,6 +136,13 @@ $S --work "$W" set pcr_0_1 1 > /dev/null
 $S --work "$W" set amp_vis_method qPCR > /dev/null
 $S --work "$W" build --amp "$K/Amplification_data_khapra_05012022_dryad.csv" assay_column=assay_name > /dev/null
 $S --work "$W" check > /dev/null || true
+# convert check: only the Darwin Core archive suits a targeted study, and the empty mandatory terms come first
+$S --work "$W" convert check > "$out/khapra_check.txt"
+grep -q "^First: .* mandatory term" "$out/khapra_check.txt" \
+    && grep -q "ncbi: NCBI (BioSample and SRA): not for this study" "$out/khapra_check.txt" \
+    && grep -q "qiime: QIIME 2: not for this study" "$out/khapra_check.txt" \
+    && ! grep -q "gbif: GBIF or OBIS (Darwin Core): not for this study" "$out/khapra_check.txt" \
+    || { echo "FAIL khapra: convert check"; cat "$out/khapra_check.txt"; fail=1; }
 # Mandatory terms are left for the researcher, so convert refuses, names them, and says why
 if $S --work "$W" convert gbif > "$out/khapra_convert.txt" 2>&1; then echo "FAIL khapra: converted with mandatory terms empty"; fail=1; fi
 grep -q "need at least every mandatory FAIRe term" "$out/khapra_convert.txt" && grep -q "recordedBy" "$out/khapra_convert.txt" \

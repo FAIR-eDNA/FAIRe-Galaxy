@@ -127,7 +127,8 @@ build --otu PATH [assay=NAME] [run=RUN_ID] [stage=final|raw] [sequences=FASTA] [
 ## Converting
 
 `convert TARGET [options]` converts the checked workbook into `faire_work/convert/TARGET/`. It stops
-until the workbook has every mandatory FAIRe term (a value or a FAIRe missing-value term) and FAIRe-fier
+for NCBI, ENA and QIIME 2 on a targeted study, which has no sequence reads, and until the workbook
+has every mandatory FAIRe term (a value or a FAIRe missing-value term) and FAIRe-fier
 finds no errors, as GBIF, OBIS, NCBI and ENA need them all; it names the terms still empty. It also
 stops if the workbook was built again after the last check. It
 prints the files written, the converter's messages (a message repeated for many samples is shown
@@ -135,10 +136,11 @@ once, with a count) and what to do with the files. Uploading stays with the rese
 
 | Target | Writes | Options |
 |---|---|---|
+| `check` | Nothing: says, for each conversion, whether the workbook is ready, what it lacks and how to add it (the FAIRe tools app's Convert page checks), or that it is not for this study (NCBI, ENA and QIIME 2 are not for a targeted study). It runs before the workbook has every mandatory term, and names those first. | The options of the conversions, as they would be given (`--mandatory_fill`, `--duplicates_column`, `--instrument_model`, `--center_name`, `--sample_name_column`, `--metadata_only`, `--publish_to`, `--taxa`) |
 | `gbif` | A Darwin Core archive (`dwca.zip`: occurrences with the DNA derived data extension and EML), the tables on their own, and `report.md` (FAIRe to Darwin Core). Targeted assays give presence and absence records; metabarcoding gives presence records. Controls are left out. | `--publish_to gbif\|obis\|both`, `--licence CC0-1.0\|CC-BY-4.0\|CC-BY-NC-4.0`, `--given_name`, `--surname`, `--organisation`, `--email`, `--orcid`, `--title`, `--abstract`, `--keywords`, `--assays A,B`, `--no_absences`, `--taxa TABLE` (name, then scientificName, scientificNameID, taxonRank, kingdom ... genus), `--country_code AU` |
 | `ncbi` | `biosample.tsv`, and for metabarcoding `sra.tsv` (FAIRe2NCBI). | `--organism "freshwater metagenome"`, `--bioproject PRJNA...`, `--mandatory_fill "not collected"` (or not provided, not applicable, missing, missing: control sample; default: stop and list the empty fields), `--duplicates_column COLUMN`, `--instrument_model` |
 | `ena` | `samples.xml` and `submission.xml` (FAIRe2ENA). Experiments and runs need the receipt, so they run later in the Shiny app or Galaxy. | `--center_name` (required), `--taxon_id` (408172 marine, 449393 freshwater, 410658 soil, 655179 air metagenome) |
-| `qiime` | QIIME 2 sample metadata and manifests, one set per assay (FAIRe2QIIME). | `--sample_name_column lib_id`, `--sequences_folder PATH` |
+| `qiime` | QIIME 2 sample metadata and manifests, one set per assay (FAIRe2QIIME). The manifests need each library's read file names. | `--sample_name_column lib_id`, `--sequences_folder PATH`, `--metadata_only` (no manifests) |
 
 FAIRe2MDT (GBIF's Metabarcoding Data Toolkit) and edna2obis (OBIS) are not bundled: they need R or
 the WoRMS and GBIF web services. They run in the Shiny app and Galaxy.
